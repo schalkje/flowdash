@@ -26,7 +26,7 @@ export const demoData = {
 		showGhostlines: false,
 		curved: false,
 		showConnectionPoints: false,
-		zoomToRoot: true,
+		zoomToRoot: false,
 		isDebug: false
 	},
 
