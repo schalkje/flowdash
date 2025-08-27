@@ -60,6 +60,7 @@
     <header>
       <h1>states – themes grid (adapter children collapsed)</h1>
       <p>Lane with multiple adapter nodes (all Ready), each collapsed.</p>
+      <p><button id="toggle-all" type="button">Toggle collapsed</button></p>
     </header>
 
     <section id="grid" class="grid" aria-label="Themes Grid"></section>
@@ -159,6 +160,7 @@
                 });
               `;
               doc.body.appendChild(mod);
+              try { setTimeout(updateButtonLabel, 0); } catch {}
             })
             .catch(err => {
               // Surface load issues in the parent console for easier debugging
@@ -169,6 +171,46 @@
         card.appendChild(iframe);
         grid.appendChild(card);
       });
+
+      // Toggle all containers' collapsed state across all iframes
+      const getChildContainers = (win) => {
+        const root = win?.flowdash?.main?.root;
+        if (!root || typeof root.getAllNodes !== 'function') return { root: null, containers: [] };
+        const nodes = root.getAllNodes(false);
+        const containers = nodes.filter(n => n && n.isContainer && n !== root);
+        return { root, containers };
+      };
+
+      const computeAnyExpandedAcross = () => {
+        let any = false;
+        document.querySelectorAll('.card iframe').forEach(iframe => {
+          const { containers } = getChildContainers(iframe.contentWindow);
+          if (containers.length && containers.some(n => !n.collapsed)) any = true;
+        });
+        return any;
+      };
+
+      const updateButtonLabel = () => {
+        const btn = document.getElementById('toggle-all');
+        if (!btn) return;
+        const anyExpanded = computeAnyExpandedAcross();
+        btn.textContent = anyExpanded ? 'Collapse all' : 'Expand all';
+      };
+
+      const toggleAll = () => {
+        const target = computeAnyExpandedAcross() ? true : false;
+        document.querySelectorAll('.card iframe').forEach(iframe => {
+          const { root, containers } = getChildContainers(iframe.contentWindow);
+          if (!root || !containers.length) return;
+          try { root.collapsed = false; } catch {}
+          containers.forEach(n => { try { n.collapsed = target; } catch {} });
+        });
+        updateButtonLabel();
+      };
+
+      const btn = document.getElementById('toggle-all');
+      if (btn) btn.addEventListener('click', toggleAll);
+      try { updateButtonLabel(); } catch {}
     </script>
   </body>
   </html>

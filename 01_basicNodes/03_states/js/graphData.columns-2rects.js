@@ -30,7 +30,7 @@ export const demoData = {
 		{
 			id: "columns-states",
 			label: "Columns (Collapsed by State)",
-			type: "columns",
+			type: "lane",
 			layout: {
 				arrangement: "default",
 				display: "content"
