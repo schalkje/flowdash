@@ -384,7 +384,7 @@ text, .label, .rect.label { fill: var(--fd-text); }
 .Lane.expanded > .zone-container > .container-shape,
 .columns.expanded > .zone-container > .container-shape,
 .Columns.expanded > .zone-container > .container-shape {
-  fill: none !important;
+  fill: transparent !important;
   fill-opacity: 0 !important;
   animation: none !important;
   stroke-dasharray: none !important;

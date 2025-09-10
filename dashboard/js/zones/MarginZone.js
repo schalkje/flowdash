@@ -59,7 +59,7 @@ export class MarginZone extends BaseZone {
    * Setup margin interactions (no interactions)
    */
   setupInteractions() {
-    // Margins have no interactions
+    // Margins have no interactions - they're handled by the container's capture-phase events
   }
 
   /**

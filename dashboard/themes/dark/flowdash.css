@@ -23,7 +23,7 @@ text, .label, .rect.label { fill: var(--fd-text); }
 
 /* dashboard containers */
 .container-shape, .adapter.shape, .rect.shape, .SSIS.shape { fill: var(--fd-surface); stroke: var(--fd-border); }
-.header-background { fill: none; stroke: none; }
+.header-background { fill: transparent; stroke: none; }
 .header-text { fill: var(--fd-text); }
 .zoom-button:hover circle { fill: #1f2632; stroke: #394252; }
 .zoom-icon { fill: var(--fd-text); }
@@ -171,7 +171,7 @@ text, .label, .rect.label { fill: var(--fd-text); }
 .Lane.expanded > .zone-container > .container-shape,
 .columns.expanded > .zone-container > .container-shape,
 .Columns.expanded > .zone-container > .container-shape {
-  fill: none !important;
+  fill: transparent !important;
   fill-opacity: 0 !important;
   animation: none !important;
   stroke-dasharray: none !important;

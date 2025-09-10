@@ -33,7 +33,8 @@ export class InnerContainerZone extends BaseZone {
         .attr('x', 0)
         .attr('y', 0)
         .attr('width', 0)
-        .attr('height', 0);
+        .attr('height', 0)
+        .attr('fill', 'transparent'); // Make it clickable
     } else {
       this.borderElement = null;
     }
@@ -50,7 +51,25 @@ export class InnerContainerZone extends BaseZone {
    * Setup inner container interactions
    */
   setupInteractions() {
-    // Inner container interactions are handled by child nodes
+    // Add double-click event handler for zoom functionality
+    if (this.element) {
+      this.element.on('dblclick', (event) => {
+        event.stopPropagation();
+        // Propagate to node double click handler
+        if (this.node.handleDblClicked) {
+          this.node.handleDblClicked(event, this.node);
+        }
+      });
+      
+      // Also add click handler for consistency
+      this.element.on('click', (event) => {
+        event.stopPropagation();
+        // Propagate to node click handler
+        if (this.node.handleClicked) {
+          this.node.handleClicked(event, this.node);
+        }
+      });
+    }
   }
 
   /**
