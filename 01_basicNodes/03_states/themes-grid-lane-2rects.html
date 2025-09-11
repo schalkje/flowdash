@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>states – themes grid (adapter children collapsed)</title>
+    <title>states – themes grid (lane, 2 rects)</title>
 
     <!-- Base demo styles for layout only (kept minimal, not a theme) -->
     <style>
@@ -58,8 +58,8 @@
   </head>
   <body>
     <header>
-      <h1>states – themes grid (adapter children collapsed)</h1>
-      <p>Lane with multiple adapter nodes (all Ready), each collapsed.</p>
+      <h1>states – themes grid (lane, 2 rects)</h1>
+      <p>Single lane container with two rectangular children.</p>
       <p><button id="toggle-all" type="button">Toggle collapsed</button></p>
     </header>
 
@@ -135,7 +135,7 @@
               const mod = doc.createElement('script');
               mod.type = 'module';
               mod.textContent = `
-                import { demoData } from './js/graphData.adapters-collapsed.js';
+                import { demoData } from './js/graphData.lane-2rects.js';
                 import flowDashboard from '../../dashboard/js/index.js';
                 const data = {
                   ...demoData,
@@ -172,7 +172,6 @@
         grid.appendChild(card);
       });
 
-      // Toggle all containers' collapsed state across all iframes
       const getChildContainers = (win) => {
         const root = win?.flowdash?.main?.root;
         if (!root || typeof root.getAllNodes !== 'function') return { root: null, containers: [] };
@@ -214,5 +213,6 @@
     </script>
   </body>
   </html>
+
 
 

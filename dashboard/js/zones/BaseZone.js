@@ -36,6 +36,14 @@ export class BaseZone {
     // Base implementation - subclasses should override
     this.element = this.node.element.append('g')
       .attr('class', `zone-${this.name}`);
+    
+    // Attach the node instance to the zone element for event handling
+    if (this.element) {
+      const domNode = this.element.node();
+      if (domNode) {
+        domNode.__node = this.node;
+      }
+    }
   }
 
   /**

@@ -39,6 +39,7 @@ If you are using the bundled build, initialize according to your bundling setup 
   - `zoomToNode(node)` fits a specific node
   - `zoomToBoundingBox(bbox)` fits an arbitrary region
 - **Selection**: Click to select; configurable neighbor selection; optional selection bounding box display.
+- **Custom Click Handlers**: Register additional click callbacks that are called after normal selection.
 - **Status Management**: Update status on a node or by dataset id for batch updates.
 - **Theme Support**: Works with all themes under `dashboard/themes/*`.
 - **Performance**: Minimap updates and heavy operations use `requestAnimationFrame` to stay responsive.
@@ -63,6 +64,36 @@ Notes and customization:
 - Programmatic control: call `dashboard.zoomToNode(node)` yourself to focus a node.
 - Override behavior: you can customize double‑click handling by setting `dashboard.main.root.onDblClick = (node) => { /* your logic */ }` after initialization. By default it calls `zoomToNode(node)`; click selection is handled by `onClick`.
 - Edges: double‑click on edges has no special default behavior; you may register a handler per edge type if needed.
+
+## Custom Click Handlers
+
+You can register additional click handlers that are called **after** the normal selection behavior:
+
+```javascript
+// Register a callback that gets called after normal selection
+dashboard.setNodeClickCallback((node) => {
+  console.log('Node selected:', {
+    id: node.id,
+    label: node.label,
+    status: node.status,
+    position: { x: node.x, y: node.y }
+  });
+  
+  // Your custom logic here
+  if (node.status === 'Error') {
+    showErrorDetails(node);
+  }
+});
+```
+
+**Key Features:**
+- **Non-intrusive**: Your callback runs after the normal selection, so all default behavior is preserved
+- **Node Parameter**: Receives the selected node object with all its properties
+- **Easy Registration**: Simple method call to register/unregister handlers
+- **Error Handling**: Built-in validation ensures only functions are accepted
+
+**Callback Parameters:**
+- `node` - The node object that was clicked and selected
 
 ## Zoom and Pan System
 
@@ -164,6 +195,7 @@ Styling hooks:
 - `dashboard.initialize(mainDivSelector)`
 - `dashboard.zoomToRoot()` / `dashboard.zoomToNode(node)` / `dashboard.zoomToBoundingBox(bbox)`
 - `dashboard.getSelectedNodes()` / `dashboard.deselectAll()`
+- `dashboard.setNodeClickCallback(callback)` - Register additional click handler
 - `dashboard.updateNodeStatus(nodeId, status)` / `dashboard.updateDatasetStatus(datasetId, status)`
 
 ## Configuration Highlights

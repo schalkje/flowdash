@@ -57,7 +57,8 @@ export class HeaderZone extends BaseZone {
     
     // Create background rectangle
     this.background = this.element.append('rect')
-      .attr('class', 'header-background');
+      .attr('class', 'header-background')
+      .attr('fill', 'transparent'); // Make it clickable
     
     // Create text element
     this.textElement = this.element.append('text')
@@ -143,8 +144,23 @@ export class HeaderZone extends BaseZone {
     // Setup text interactions
     this.textElement
       .on('click', (event) => this.handleTextClick(event))
+      .on('dblclick', (event) => this.handleTextDblClick(event))
       .on('mouseenter', (event) => this.handleTextMouseEnter(event))
       .on('mouseleave', (event) => this.handleTextMouseLeave(event));
+    
+    // Setup background interactions - these are the actual clickable elements
+    this.background
+      .on('click', (event) => this.handleBackgroundClick(event))
+      .on('dblclick', (event) => this.handleBackgroundDblClick(event))
+      .on('mouseenter', (event) => this.handleBackgroundMouseEnter(event))
+      .on('mouseleave', (event) => this.handleBackgroundMouseLeave(event));
+    
+    // Also setup interactions on the zone element itself for better event handling
+    this.element
+      .on('click', (event) => this.handleBackgroundClick(event))
+      .on('dblclick', (event) => this.handleBackgroundDblClick(event))
+      .on('mouseenter', (event) => this.handleBackgroundMouseEnter(event))
+      .on('mouseleave', (event) => this.handleBackgroundMouseLeave(event));
   }
 
   /**
@@ -628,6 +644,17 @@ export class HeaderZone extends BaseZone {
   }
 
   /**
+   * Handle text double click
+   */
+  handleTextDblClick(event) {
+    event.stopPropagation();
+    // Propagate to node double click handler
+    if (this.node.handleDblClicked) {
+      this.node.handleDblClicked(event, this.node);
+    }
+  }
+
+  /**
    * Handle text mouse enter
    */
   handleTextMouseEnter(event) {
@@ -649,6 +676,41 @@ export class HeaderZone extends BaseZone {
     } else {
       this.textElement.attr('fill', null); // Reset to CSS default
     }
+  }
+
+  /**
+   * Handle background click
+   */
+  handleBackgroundClick(event) {
+    // Propagate to node click handler
+    if (this.node.handleClicked) {
+      this.node.handleClicked(event, this.node);
+    }
+  }
+
+  /**
+   * Handle background double click
+   */
+  handleBackgroundDblClick(event) {
+    event.stopPropagation();
+    // Propagate to node double click handler
+    if (this.node.handleDblClicked) {
+      this.node.handleDblClicked(event, this.node);
+    }
+  }
+
+  /**
+   * Handle background mouse enter
+   */
+  handleBackgroundMouseEnter(event) {
+    this.background.classed('hover', true);
+  }
+
+  /**
+   * Handle background mouse leave
+   */
+  handleBackgroundMouseLeave(event) {
+    this.background.classed('hover', false);
   }
 
   /**

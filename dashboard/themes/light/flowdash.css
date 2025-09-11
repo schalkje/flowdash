@@ -9,7 +9,7 @@
   --fd-edge: #7795D1;
 
   /* Radius and shadows */
-  --fd-radius: 8px;
+  --fd-radius: 4px;
   --fd-shadow: 4px 3px 8px 1px #969696;
 
   /* Status colors from legacy CSS (solid, no opacity) */
@@ -57,7 +57,7 @@ svg.canvas { border: 2px solid var(--fd-border); border-radius: var(--fd-radius)
 
 /* basic shapes/labels override to use tokens */
 .shape { fill: var(--fd-accent); stroke: var(--fd-accent); stroke-width: 2; cursor: default; stroke-opacity: 1; }
-.header-background { fill: none !important; stroke: none !important; }
+.header-background { fill: transparent !important; stroke: none !important;}
 .header-text { fill: var(--fd-text) !important; }
 text, .rect.label { fill: var(--fd-text) !important; }
 .label { font-size: 12px; font-weight: normal; fill: var(--fd-accent) !important; opacity: 1; }
@@ -194,7 +194,7 @@ text, .rect.label { fill: var(--fd-text) !important; }
 .Lane.expanded > .zone-container > .container-shape,
 .columns.expanded > .zone-container > .container-shape,
 .Columns.expanded > .zone-container > .container-shape {
-  fill: none !important;
+  fill: transparent !important;
   fill-opacity: 0 !important;
   animation: none !important;
   stroke-dasharray: none !important;

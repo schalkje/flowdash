@@ -3,9 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>states – themes grid (adapter children collapsed)</title>
+    <title>states – themes grid (mart explicit)</title>
 
-    <!-- Base demo styles for layout only (kept minimal, not a theme) -->
     <style>
       :root { --card-w: 250px; --card-h: 400px; }
       body {
@@ -58,15 +57,14 @@
   </head>
   <body>
     <header>
-      <h1>states – themes grid (adapter children collapsed)</h1>
-      <p>Lane with multiple adapter nodes (all Ready), each collapsed.</p>
+      <h1>states – themes grid (mart explicit)</h1>
+      <p>Single mart node with explicit role children.</p>
       <p><button id="toggle-all" type="button">Toggle collapsed</button></p>
     </header>
 
     <section id="grid" class="grid" aria-label="Themes Grid"></section>
 
     <script>
-      // List of available themes we want to preview
       const themes = [
         'light',
         'dark',
@@ -80,8 +78,6 @@
 
       const grid = document.getElementById('grid');
 
-      // Create a card with an iframe for each theme.
-      // Each iframe uses srcdoc to load the base libs + theme CSS and render the dashboard.
       themes.forEach(theme => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -92,8 +88,6 @@
 
         const iframe = document.createElement('iframe');
         iframe.setAttribute('title', `Dashboard theme: ${theme}`);
-
-        // Build the iframe document without <script> tags to avoid parent parser issues.
         iframe.srcdoc = `<!DOCTYPE html>
 <html>
   <head>
@@ -105,7 +99,6 @@
       .wrap { flex: 1 1 auto; display: flex; }
       svg#graph.canvas { width: 100%; height: 100%; border: 1px solid #ddd; }
     </style>
-    <!-- Base dashboard CSS + theme CSS (scoped by iframe) -->
     <link rel=\"stylesheet\" href=\"../../dashboard/flowdash.css\" />
     <link rel=\"stylesheet\" href=\"../../dashboard/themes/${theme}/flowdash.css\" />
   </head>
@@ -114,9 +107,8 @@
       <svg id=\"graph\" class=\"canvas\"></svg>
     </div>
   </body>
-  </html>`;
+</html>`;
 
-        // After the iframe loads, inject scripts in order and then start the dashboard
         iframe.addEventListener('load', () => {
           const doc = iframe.contentDocument;
           const addScript = (src) => new Promise((resolve, reject) => {
@@ -127,7 +119,6 @@
             doc.head.appendChild(s);
           });
 
-          // Load d3 libs sequentially to ensure globals are available
           addScript('../../dashboard/libs/d3.min.js')
             .then(() => addScript('../../dashboard/libs/d3-shape.min.js'))
             .then(() => addScript('../../dashboard/libs/d3-dag.iife.min.js'))
@@ -135,7 +126,7 @@
               const mod = doc.createElement('script');
               mod.type = 'module';
               mod.textContent = `
-                import { demoData } from './js/graphData.adapters-collapsed.js';
+                import { demoData } from './js/graphData.mart-explicit.js';
                 import flowDashboard from '../../dashboard/js/index.js';
                 const data = {
                   ...demoData,
@@ -147,9 +138,6 @@
                 const flowdash = new flowDashboard.Dashboard(data);
                 flowdash.initialize('#graph');
                 window.flowdash = flowdash;
-
-                // Put the dashboard into maximized mode and hide the normal size button
-                // Give the toggle a moment to be inserted by initializeFullscreenToggle
                 requestAnimationFrame(() => {
                   const btn = document.querySelector('.fullscreen-toggle');
                   if (btn && !flowdash.main.svg.classed('flowdash-fullscreen')) {
@@ -162,17 +150,13 @@
               doc.body.appendChild(mod);
               try { setTimeout(updateButtonLabel, 0); } catch {}
             })
-            .catch(err => {
-              // Surface load issues in the parent console for easier debugging
-              console.error('Failed to load scripts for theme', `${theme}:`, err);
-            });
+            .catch(err => console.error('Failed to load scripts for theme', `${theme}:`, err));
         });
 
         card.appendChild(iframe);
         grid.appendChild(card);
       });
 
-      // Toggle all containers' collapsed state across all iframes
       const getChildContainers = (win) => {
         const root = win?.flowdash?.main?.root;
         if (!root || typeof root.getAllNodes !== 'function') return { root: null, containers: [] };
@@ -213,6 +197,7 @@
       try { updateButtonLabel(); } catch {}
     </script>
   </body>
-  </html>
+</html>
+
 
 

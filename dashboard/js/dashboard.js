@@ -51,6 +51,9 @@ export class Dashboard {
       neighborhood: null, // { nodes, edges, boundingBox }
     };
 
+    // Additional click callback that gets called after normal selection
+    this.onNodeClick = null;
+
     this.isMainAndMinimapSyncing = false;
     this._displayChangeScheduled = false;
     this.hasPerformedInitialZoomToRoot = false;
@@ -1022,10 +1025,27 @@ export class Dashboard {
     bbox = { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
   }
   this.renderSelectionBoundingBox(bbox);
+  
+  // Call additional click callback if registered
+  if (this.onNodeClick && typeof this.onNodeClick === 'function') {
+    this.onNodeClick(node);
+  }
   }
 
   getSelectedNodes() {
     return this.main.root.getAllNodes(true);
+  }
+
+  /**
+   * Register a callback function to be called after normal node selection
+   * @param {Function} callback - Function to call with the selected node as parameter
+   */
+  setNodeClickCallback(callback) {
+    if (typeof callback === 'function') {
+      this.onNodeClick = callback;
+    } else {
+      console.warn('setNodeClickCallback: callback must be a function');
+    }
   }
 
   getStructure() {

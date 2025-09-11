@@ -22,7 +22,8 @@ export class ContainerZone extends BaseZone {
     this.shape = this.element.append('rect')
       .attr('class', 'container-shape')
       .attr('x', 0)
-      .attr('y', 0);
+      .attr('y', 0)
+      .attr('fill', 'transparent'); // Make it clickable
     
     // Create border for selection feedback
     this.border = this.element.append('rect')
@@ -55,6 +56,20 @@ export class ContainerZone extends BaseZone {
    * Setup container interactions
    */
   setupInteractions() {
+    // Setup shape interactions - these are the actual clickable elements
+    this.shape
+      .on('click', (event) => this.handleClick(event))
+      .on('dblclick', (event) => this.handleDblClick(event))
+      .on('mouseenter', (event) => this.handleMouseEnter(event))
+      .on('mouseleave', (event) => this.handleMouseLeave(event));
+    
+    // Also setup interactions on the zone element itself for better event handling
+    this.element
+      .on('click', (event) => this.handleClick(event))
+      .on('dblclick', (event) => this.handleDblClick(event))
+      .on('mouseenter', (event) => this.handleMouseEnter(event))
+      .on('mouseleave', (event) => this.handleMouseLeave(event));
+    
     // Handle selection state changes
     this.updateSelectionState();
     
