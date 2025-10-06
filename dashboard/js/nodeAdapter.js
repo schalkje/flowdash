@@ -58,7 +58,7 @@ export default class AdapterNode extends BaseContainerNode {
     
     if (!nodeData.width) nodeData.width = 334;
     if (!nodeData.height) nodeData.height = 74;
-    if (!nodeData.layout) nodeData.layout = {};
+    if (!nodeData.layout || typeof nodeData.layout !== 'object') nodeData.layout = {};
     if (!nodeData.layout.displayMode) nodeData.layout.displayMode = DisplayMode.FULL; // Changed from ROLE to FULL for better visibility
     
     if (nodeData.layout.displayMode === DisplayMode.ROLE) {

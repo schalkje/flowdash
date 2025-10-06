@@ -28,7 +28,7 @@ export default class MartNode extends BaseContainerNode {
   static initializeNodeDataStatic(nodeData) {
     if (!nodeData.width) nodeData.width = 334;
     if (!nodeData.height) nodeData.height = 44;
-    if (!nodeData.layout) nodeData.layout = {};
+    if (!nodeData.layout || typeof nodeData.layout !== 'object') nodeData.layout = {};
     if (!nodeData.layout.displayMode) nodeData.layout.displayMode = DisplayMode.ROLE;
     if (!nodeData.layout.orientation) nodeData.layout.orientation = Orientation.HORIZONTAL;
     if (!nodeData.layout.mode) nodeData.layout.mode = MartMode.AUTO; // manual, auto

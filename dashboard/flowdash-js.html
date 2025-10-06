@@ -150,6 +150,7 @@
             "dwh-3.json",
             "dwh-4.json",
             "dwh-5.json",
+            "dwh-6.json",
             "lane-small.json",
             "lane-big.json",
             "theme_1.json",
@@ -403,6 +404,8 @@
             // loading handled by dashboard.initialize()/setData()
             flowDashboard.fetchDashboardFile(selectedFile).then(dashboardData => {
                 // Reuse existing dashboard instance when present; dashboard handles its own cleanup
+                // Ensure settings object exists
+                dashboardData.settings = dashboardData.settings || {};
                 dashboardData.settings.zoomToRoot = zoomToRoot;
 
                 // Optional: Performance monitoring (disabled by default to avoid log spam)
