@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Baseline Performance Tests</title>
-    <link rel="stylesheet" href="flowdash.css">
     <script src="libs/d3.min.js"></script>
     <script src="libs/d3-shape.min.js"></script>
     <script src="libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="flowdash.css">
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="js/themeManager.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -140,6 +142,13 @@
         .test-dashboard.error {
             border-color: #dc3545;
             background: #fff5f5;
+        }
+        /* Hide interactive controls in result dashboards (they're snapshots, not live) */
+        .test-dashboard .minimap-container,
+        .test-dashboard .button-container,
+        .test-dashboard .collapse-all-btn,
+        .test-dashboard .expand-all-btn {
+            display: none !important;
         }
         .test-section {
             margin: 30px 0;
@@ -488,7 +497,7 @@
                         
                         ${result.error ? `<p style="color: #dc3545; font-weight: bold;">⚠️ Error: ${result.error}</p>` : ''}
                         
-                        <h4>📊 Dashboard Visualization</h4>
+                        <h4>📊 Dashboard Visualization <span style="font-size: 0.8em; color: #6c757d; font-weight: normal;">(Static snapshot)</span></h4>
                         <div class="${dashboardClass}" id="result-dashboard-${index}" data-dashboard-index="${index}">
                         </div>
                         
