@@ -498,7 +498,22 @@ export class HeaderZone extends BaseZone {
       this.textElement.text(text);
       
       // Check if text needs ellipsis
-      const textLength = this.textElement.node().getComputedTextLength();
+      const textNode = this.textElement.node();
+      if (!textNode || typeof textNode.getComputedTextLength !== 'function') {
+        // Fallback: estimate text width (rough approximation)
+        const estimatedLength = text.length * 7; // Average character width
+        if (estimatedLength > maxWidth) {
+          const maxChars = Math.floor(maxWidth / 7) - 3; // Reserve space for '...'
+          const truncatedText = text.slice(0, maxChars);
+          this.textElement.text(truncatedText + '...');
+          const titleSel = this.textElement.select('title');
+          if (titleSel.empty()) this.textElement.append('title').text(text);
+          else titleSel.text(text);
+        }
+        return;
+      }
+      
+      const textLength = textNode.getComputedTextLength();
       if (textLength > maxWidth) {
         // Truncate text with ellipsis; trim trailing spaces before adding '...'
         let truncatedText = text;

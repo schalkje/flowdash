@@ -111,8 +111,11 @@
     <div class="test-controls">
         <label>Select Test File:</label>
         <select id="testFileSelect">
-            <option value="data/dwh-1.json">dwh-1.json (Baseline - ~4 nodes)</option>
-            <option value="data/dwh-6.fixed.json">dwh-6.fixed.json (Target - 885 nodes)</option>
+            <option value="dwh-1.json">dwh-1.json (Baseline - 4 nodes)</option>
+            <option value="dwh-5.json">dwh-5.json (Medium - 21 nodes)</option>
+            <option value="theme_1.json">theme_1.json (Medium with states - 52 nodes)</option>
+            <option value="theme_2.json">theme_2.json (Large with states - 875 nodes)</option>
+            <option value="dwh-6.fixed.json">dwh-6.fixed.json (Target - 885 nodes)</option>
         </select>
         <button id="runTestBtn">Run Performance Test</button>
         <button id="compareBtn">Run Comparison Test</button>
@@ -152,15 +155,39 @@
         // Performance targets
         const performanceTargets = {
             'dwh-1.json': {
-                total: 1000,  // 1 second
+                total: 1000,  // 1 second (baseline - small)
                 nodeCreation: 300,
                 nodeInitialization: 300,
                 edgeCreation: 100,
                 layoutStabilization: 200,
                 zoomSetup: 100
             },
+            'dwh-5.json': {
+                total: 2000,  // 2 seconds (medium - ~19 nodes)
+                nodeCreation: 600,
+                nodeInitialization: 500,
+                edgeCreation: 200,
+                layoutStabilization: 500,
+                zoomSetup: 200
+            },
+            'theme_1.json': {
+                total: 3000,  // 3 seconds (medium with states - ~30 nodes)
+                nodeCreation: 900,
+                nodeInitialization: 800,
+                edgeCreation: 300,
+                layoutStabilization: 800,
+                zoomSetup: 200
+            },
+            'theme_2.json': {
+                total: 18000,  // 18 seconds (large with states - ~900 nodes)
+                nodeCreation: 6000,
+                nodeInitialization: 4000,
+                edgeCreation: 2500,
+                layoutStabilization: 4500,
+                zoomSetup: 1000
+            },
             'dwh-6.fixed.json': {
-                total: 15000,  // 15 seconds (target after optimization)
+                total: 15000,  // 15 seconds (target after optimization - 885 nodes)
                 nodeCreation: 5000,
                 nodeInitialization: 3000,
                 edgeCreation: 2000,
@@ -300,13 +327,23 @@
         }
         
         async function runComparisonTest() {
-            console.log('🔬 Running comparison test (baseline vs target)...');
+            console.log('🔬 Running comprehensive comparison test...');
             
-            await runPerformanceTest('data/dwh-1.json');
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between tests
-            await runPerformanceTest('data/dwh-6.fixed.json');
+            const testFiles = [
+                'dwh-1.json',
+                'dwh-5.json',
+                'theme_1.json',
+                'theme_2.json',
+                'dwh-6.fixed.json'
+            ];
             
-            console.log('✅ Comparison test complete');
+            for (const file of testFiles) {
+                console.log(`\n--- Testing ${file} ---`);
+                await runPerformanceTest(file);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between tests
+            }
+            
+            console.log('✅ Comprehensive comparison test complete');
             console.log('📊 Test Results Summary:', testResults);
         }
         
