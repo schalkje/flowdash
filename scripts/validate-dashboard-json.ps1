@@ -386,26 +386,39 @@ function Validate-Edges {
     foreach ($edge in $edges) {
         $script:validationResults.EdgeCount++
         
-        if (-not $edge.PSObject.Properties['sourceName']) {
-            Add-Error "Edge missing 'sourceName' property"
+        $hasSource = $edge.PSObject.Properties['source']
+        $hasTarget = $edge.PSObject.Properties['target']
+        
+        # Check for required properties
+        if (-not $hasSource) {
+            Add-Error "Edge missing 'source' property"
         }
         
-        if (-not $edge.PSObject.Properties['targetName']) {
-            Add-Error "Edge missing 'targetName' property"
+        if (-not $hasTarget) {
+            Add-Error "Edge missing 'target' property"
         }
         
-        # Check if source and target nodes exist
-        if ($edge.sourceName) {
-            if (-not $script:nodeLabels.ContainsKey($edge.sourceName)) {
-                Add-Warning "Edge references non-existent source node: '$($edge.sourceName)'"
-                $script:validationResults.OrphanedEdges += "Source: $($edge.sourceName)"
+        # Check if source and target are different
+        if ($hasSource -and $hasTarget -and $edge.source -and $edge.target) {
+            if ($edge.source -eq $edge.target) {
+                Add-Error "Edge has same source and target (self-loop): source='$($edge.source)', target='$($edge.target)'"
+                $script:validationResults.OrphanedEdges += "Self-loop: $($edge.source)"
             }
         }
         
-        if ($edge.targetName) {
-            if (-not $script:nodeLabels.ContainsKey($edge.targetName)) {
-                Add-Warning "Edge references non-existent target node: '$($edge.targetName)'"
-                $script:validationResults.OrphanedEdges += "Target: $($edge.targetName)"
+        # Check if source node ID exists
+        if ($edge.source) {
+            if (-not $script:nodeIds.ContainsKey($edge.source)) {
+                Add-Error "Edge references non-existent source node ID: '$($edge.source)'"
+                $script:validationResults.OrphanedEdges += "Source ID: $($edge.source)"
+            }
+        }
+        
+        # Check if target node ID exists
+        if ($edge.target) {
+            if (-not $script:nodeIds.ContainsKey($edge.target)) {
+                Add-Error "Edge references non-existent target node ID: '$($edge.target)'"
+                $script:validationResults.OrphanedEdges += "Target ID: $($edge.target)"
             }
         }
     }
@@ -588,7 +601,7 @@ The following labels are used by multiple nodes:
 - ✓ Every node must have an `id` property
 - ✓ Every node must have a `label` property
 - ✓ Every node should have a `type` property
-- ✓ Every edge must have `sourceName` and `targetName`
+- ✓ Every edge must have `source` and `target` properties (referencing node IDs)
 
 ### Nesting Rules
 - ✓ **Foundation** nodes must have exactly 2 **Node** children with roles: 'raw' and 'base'
@@ -600,7 +613,9 @@ The following labels are used by multiple nodes:
 - ✓ **Mart** cannot contain **Mart**
 
 ### Reference Integrity
-- ✓ Edge source and target nodes must exist in the node hierarchy
+- ✓ Edge `source` property must reference an existing node ID
+- ✓ Edge `target` property must reference an existing node ID
+- ✓ Edge source and target must be different (no self-loops)
 - ✓ Node IDs must be unique across the entire file
 
 ---
@@ -620,8 +635,9 @@ Manually restructure the JSON to follow the nesting rules:
 - Verify Node types don't have children
 
 ### Orphaned Edges
-- Remove edges that reference non-existent nodes, or
+- Remove edges that reference non-existent node IDs, or
 - Add the missing nodes to the hierarchy
+- Ensure edge `source` and `target` properties reference valid node `id` values
 
 "@
     

@@ -20,6 +20,7 @@ $jsonContent = Get-Content $InputFile -Raw | ConvertFrom-Json
 # Counter for generating unique IDs
 $script:idCounter = 1
 $script:idMap = @{}
+$script:labelToIdMap = @{}
 
 # Function to generate a unique ID based on label
 function Get-UniqueId {
@@ -77,6 +78,11 @@ function Add-NodeIds {
         Write-Host ("  " * $depth) "Node already has ID '$($node.id)': $($node.label)" -ForegroundColor Gray
     }
     
+    # Map label to ID for edge processing
+    if ($node.label -and $node.id) {
+        $script:labelToIdMap[$node.label] = $node.id
+    }
+    
     # Recursively process children
     if ($node.PSObject.Properties['children'] -and $node.children -is [Array]) {
         foreach ($child in $node.children) {
@@ -88,15 +94,91 @@ function Add-NodeIds {
 # Process all nodes
 Write-Host "`nProcessing nodes..." -ForegroundColor Cyan
 $nodeCount = 0
-if ($jsonContent.PSObject.Properties['nodes'] -and $jsonContent.nodes -is [Array]) {
-    foreach ($node in $jsonContent.nodes) {
-        Add-NodeIds -node $node
-        $nodeCount++
+if ($jsonContent.PSObject.Properties['nodes']) {
+    if ($jsonContent.nodes -is [Array]) {
+        # Handle array of nodes
+        foreach ($node in $jsonContent.nodes) {
+            Add-NodeIds -node $node
+            $nodeCount++
+        }
+    } else {
+        # Handle single root node object - wrap it in an array
+        Write-Host "Converting single node object to array..." -ForegroundColor Yellow
+        $singleNode = $jsonContent.nodes
+        Add-NodeIds -node $singleNode
+        $jsonContent.nodes = @($singleNode)
+        $nodeCount = 1
     }
 }
 
 Write-Host "`nProcessed $nodeCount root node(s)" -ForegroundColor Cyan
 Write-Host "Total unique IDs in map: $($script:idMap.Count)" -ForegroundColor Cyan
+Write-Host "Total labels mapped to IDs: $($script:labelToIdMap.Count)" -ForegroundColor Cyan
+
+# Process edges
+Write-Host "`nProcessing edges..." -ForegroundColor Cyan
+$edgeCount = 0
+$edgeUpdatedCount = 0
+$edgeMissingSourceCount = 0
+$edgeMissingTargetCount = 0
+
+if ($jsonContent.PSObject.Properties['edges'] -and $jsonContent.edges -is [Array]) {
+    foreach ($edge in $jsonContent.edges) {
+        $edgeCount++
+        $updated = $false
+        
+        # Add source ID based on sourceName
+        if ($edge.PSObject.Properties['sourceName'] -and $edge.sourceName) {
+            if ($script:labelToIdMap.ContainsKey($edge.sourceName)) {
+                $sourceId = $script:labelToIdMap[$edge.sourceName]
+                
+                # Add or update source property
+                if (-not $edge.PSObject.Properties['source']) {
+                    $edge | Add-Member -MemberType NoteProperty -Name 'source' -Value $sourceId
+                } else {
+                    $edge.source = $sourceId
+                }
+                $updated = $true
+                Write-Host "  Edge: '$($edge.sourceName)' -> '$($edge.targetName)' - Added source ID: $sourceId" -ForegroundColor Green
+            } else {
+                Write-Host "  Edge: '$($edge.sourceName)' -> '$($edge.targetName)' - Warning: Source node not found" -ForegroundColor Yellow
+                $edgeMissingSourceCount++
+            }
+        }
+        
+        # Add target ID based on targetName
+        if ($edge.PSObject.Properties['targetName'] -and $edge.targetName) {
+            if ($script:labelToIdMap.ContainsKey($edge.targetName)) {
+                $targetId = $script:labelToIdMap[$edge.targetName]
+                
+                # Add or update target property
+                if (-not $edge.PSObject.Properties['target']) {
+                    $edge | Add-Member -MemberType NoteProperty -Name 'target' -Value $targetId
+                } else {
+                    $edge.target = $targetId
+                }
+                $updated = $true
+                Write-Host "  Edge: '$($edge.sourceName)' -> '$($edge.targetName)' - Added target ID: $targetId" -ForegroundColor Green
+            } else {
+                Write-Host "  Edge: '$($edge.sourceName)' -> '$($edge.targetName)' - Warning: Target node not found" -ForegroundColor Yellow
+                $edgeMissingTargetCount++
+            }
+        }
+        
+        if ($updated) {
+            $edgeUpdatedCount++
+        }
+    }
+}
+
+Write-Host "`nProcessed $edgeCount edge(s)" -ForegroundColor Cyan
+Write-Host "Updated $edgeUpdatedCount edge(s) with source/target IDs" -ForegroundColor Cyan
+if ($edgeMissingSourceCount -gt 0) {
+    Write-Host "Warning: $edgeMissingSourceCount edge(s) have missing source nodes" -ForegroundColor Yellow
+}
+if ($edgeMissingTargetCount -gt 0) {
+    Write-Host "Warning: $edgeMissingTargetCount edge(s) have missing target nodes" -ForegroundColor Yellow
+}
 
 # Restructure settings if needed
 Write-Host "`nChecking settings structure..." -ForegroundColor Cyan
