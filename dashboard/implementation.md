@@ -83,11 +83,15 @@ The dashboard expects data in the following format:
     zoomToRoot: true,
     toggleCollapseOnStatusChange: true,
     cascadeOnStatusChange: true
+    // ... many more settings available
+    // See documentation/settings.md for complete reference
   },
   nodes: [...], // Array of node definitions
   edges: [...]  // Array of edge definitions
 }
 ```
+
+For complete settings documentation, see [Settings Reference](documentation/settings.md).
 
 ## Status System
 

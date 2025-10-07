@@ -206,6 +206,8 @@ Common settings in your data/config influence behavior:
 - **`settings.selector`**: Neighbor/adjacency selection strategy
 - **`settings.showBoundingBox`**: Show selection bounds overlay
 
+For complete settings documentation, see [Settings Reference](settings.md)
+
 ## Initial Display and Scaling System
 
 ### Initial Dashboard Setup
@@ -367,5 +369,6 @@ The dashboard implements several optimizations to ensure smooth resize operation
 
 - Back to docs index: [Documentation Home](README.md)
 - Related: [Minimap](minimap.md)
+- Settings: [Complete Settings Reference](settings.md)
 
 

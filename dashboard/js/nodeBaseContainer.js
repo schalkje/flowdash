@@ -817,11 +817,11 @@ export default class BaseContainerNode extends BaseNode {
 
     this.childNodes.forEach((childNode) => {
       try {
-        console.log(`attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`);
+        // console.log(`attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`);
         
         // If DOM does not exist, re-init the child into the current child container
         if (!childNode.element) {
-          console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
+          // console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
           childNode.init(childContainer);
         } else {
           // Ensure DOM is attached to the correct container group
@@ -839,11 +839,11 @@ export default class BaseContainerNode extends BaseNode {
         }
         // Make the child visible again (containers will manage their own collapsed children)
         childNode.visible = true;
-        console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
+        // console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
         
         // For nested containers, ensure their zones and layout are refreshed
         if (childNode.isContainer) {
-          console.log(`attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`);
+          // console.log(`attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`);
           
           // Ensure descendants are visible unless they are collapsed containers
           if (typeof childNode.propagateVisibility === 'function') {
@@ -854,7 +854,7 @@ export default class BaseContainerNode extends BaseNode {
           if (childNode.zoneManager?.innerContainerZone && (!childNode.zoneManager.innerContainerZone.element || !childNode.zoneManager.innerContainerZone.initialized)) {
             // Only initialize nested inner zones if the nested container is expanded
             if (!childNode.collapsed) {
-              console.log(`attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`);
+              // console.log(`attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`);
               childNode.zoneManager.innerContainerZone.init();
                         // Ensure nested zones have correct size from child node
           if (childNode.zoneManager && !childNode.zoneManager._resizing) {
@@ -876,7 +876,7 @@ export default class BaseContainerNode extends BaseNode {
           // CRITICAL: Update children BEFORE calling updateChildPositions
           // This ensures the nested container has proper dimensions
           if (!childNode.collapsed && typeof childNode.updateChildren === 'function' && !childNode._updating) {
-            console.log(`attachChildrenToDOM: Updating children for nested container ${childNode.id}`);
+            // console.log(`attachChildrenToDOM: Updating children for nested container ${childNode.id}`);
             childNode._updating = true;
             try {
               childNode.updateChildren();
@@ -933,7 +933,7 @@ export default class BaseContainerNode extends BaseNode {
       }
     }, 0);
 
-    console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
+    // console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
   }
 
   applyMinimumSize() {

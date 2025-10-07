@@ -162,3 +162,4 @@ Comprehensive event handling for all node interactions:
 
 - **[Dashboard Overview](dashboard.md)** — How to embed and use the Dashboard, features, and API
 - **[Minimap](minimap.md)** — Overview, enabling, interactions, and styling hooks
+- **[Settings Reference](settings.md)** — Complete guide to all dashboard settings and configuration options
