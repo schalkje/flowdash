@@ -29,6 +29,30 @@ export class Dashboard {
 
     this.data.settings = ConfigManager.mergeWithDefaults(this.data.settings);
     
+    // Performance tracking
+    this.performanceMetrics = {
+      phases: {
+        dataLoad: 0,
+        nodeCreation: 0,
+        nodeInitialization: 0,
+        edgeCreation: 0,
+        layoutStabilization: 0,
+        zoomSetup: 0,
+        total: 0
+      },
+      nodeStats: {
+        totalNodes: 0,
+        containerNodes: 0,
+        leafNodes: 0,
+        maxDepth: 0
+      },
+      domStats: {
+        appendOperations: 0,
+        layoutRecalculations: 0,
+        boundingBoxQueries: 0
+      }
+    };
+    
     this.main = {
       svg: null,
       width: 0,
@@ -60,6 +84,53 @@ export class Dashboard {
     this._displayChangeCount = 0;
     this._suspendDisplayChange = false;
     this.zoomManager = new ZoomManager(this);
+  }
+
+  // --- Performance Metrics Methods ---
+  
+  reportPerformanceMetrics() {
+    console.group('🚀 Dashboard Performance Metrics');
+    console.table(this.performanceMetrics.phases);
+    console.group('Node Statistics');
+    console.table(this.performanceMetrics.nodeStats);
+    console.groupEnd();
+    console.group('DOM Statistics');
+    console.table(this.performanceMetrics.domStats);
+    console.groupEnd();
+    console.groupEnd();
+    
+    // Identify bottlenecks (phases taking > 20% of total time)
+    const totalTime = this.performanceMetrics.phases.total;
+    const bottlenecks = Object.entries(this.performanceMetrics.phases)
+      .filter(([phase, time]) => phase !== 'total' && (time / totalTime) > 0.2)
+      .map(([phase, time]) => ({ phase, time, percentage: ((time / totalTime) * 100).toFixed(1) + '%' }));
+    
+    if (bottlenecks.length > 0) {
+      console.warn('⚠️ Performance Bottlenecks (>20% of load time):', bottlenecks);
+    }
+    
+    return this.performanceMetrics;
+  }
+  
+  collectNodeStatistics() {
+    const countNodes = (node, depth = 0) => {
+      this.performanceMetrics.nodeStats.totalNodes++;
+      this.performanceMetrics.nodeStats.maxDepth = Math.max(
+        this.performanceMetrics.nodeStats.maxDepth, 
+        depth
+      );
+      
+      if (node.childNodes && node.childNodes.length > 0) {
+        this.performanceMetrics.nodeStats.containerNodes++;
+        node.childNodes.forEach(child => countNodes(child, depth + 1));
+      } else {
+        this.performanceMetrics.nodeStats.leafNodes++;
+      }
+    };
+    
+    if (this.main.root) {
+      countNodes(this.main.root);
+    }
   }
 
   // --- Selection bounding box helpers ---
@@ -216,6 +287,8 @@ export class Dashboard {
   }
 
    initialize(mainDivSelector, minimapDivSelector = null) {
+    const t0 = performance.now();
+    
     this.mainDivSelector = mainDivSelector;
     
     try { 
@@ -244,19 +317,24 @@ export class Dashboard {
       this.onMainDisplayChange();
     };
     
-  this.main.root =  this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    // Phase 1: Node Creation (includes node tree, initialization, edges)
+    const t1 = performance.now();
+    this.main.root = this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    // nodeCreation, nodeInitialization, and edgeCreation are tracked inside createDashboard
 
-  this.main.zoom = this.initializeZoom();
-  this.main.root.onClick = (node) => this.selectNode(node);
-  this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+    // Phase 4: Zoom Setup
+    const t4 = performance.now();
+    this.main.zoom = this.initializeZoom();
+    this.main.root.onClick = (node) => this.selectNode(node);
+    this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
 
     // CRITICAL FIX: Clean up any orphaned elements and use safe initialization to prevent duplicates
     this.cleanupOrphanedElements();
     this.minimap.safeInitialize();
+    this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
     
-
     this.initializeFullscreenToggle();
 
     if (typeof window !== 'undefined') {
@@ -268,6 +346,16 @@ export class Dashboard {
       };
       window.addEventListener('resize', this._onWindowResize);
     }
+    
+    // Total time
+    this.performanceMetrics.phases.total = performance.now() - t0;
+    
+    // Collect node statistics
+    this.collectNodeStatistics();
+    
+    // Report metrics
+    this.reportPerformanceMetrics();
+    
     this._isInitialized = true;
   }
 
@@ -718,15 +806,25 @@ export class Dashboard {
       };
     }
 
+    // Phase 2: Node Initialization
+    const t2 = performance.now();
     // Suspend display-change reactions during bulk initialization to avoid
     // mid-cascade zoom/fit recalculations that cause drift
     this._suspendDisplayChange = true;
     root.init();
     this._suspendDisplayChange = false;
+    this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
 
+    // Phase 3: Edge Creation & Status Initialization
+    const t3 = performance.now();
     this.initializeChildrenStatusses(root);
 
     if (dashboard.edges.length > 0) createEdges(root, dashboard.edges, dashboard.settings);
+    
+    // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
+    try { this.reparentNodesByParentIds(); } catch {}
+    
+    this.performanceMetrics.phases.edgeCreation = performance.now() - t3;
 
     if (this.data.settings.isDebug) {
       container.append("circle")
@@ -738,10 +836,6 @@ export class Dashboard {
         .attr("stroke", "darkred")
         .attr("stroke-width", 2);
     }
-
-    
-    // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
-    try { this.reparentNodesByParentIds(); } catch {}
 
     // Defer initial baseline fit and zoom until layout has fully settled
     // This will be handled by onMainDisplayChange via ZoomManager.handleLayoutChange
@@ -850,8 +944,15 @@ export class Dashboard {
     this._displayChangeScheduled = true;
 
     requestAnimationFrame(() => {
+      const isInitialStabilization = this._displayChangeCount === 0;
+      const tLayout = isInitialStabilization ? performance.now() : null;
+      
       this._displayChangeCount = (this._displayChangeCount || 0) + 1;
       try { this.zoomManager.handleLayoutChange(); } catch {}
+      
+      if (isInitialStabilization && tLayout) {
+        this.performanceMetrics.phases.layoutStabilization = performance.now() - tLayout;
+      }
       // Ensure DOM hierarchy is consistent with logical parent/child relationships
       try { this.enforceDomHierarchy(); } catch {}
       if (this.minimap.svg) {
@@ -1481,4 +1582,4 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
   }
 }
 
-export { showLoader as showLoading, hideLoader as hideLoading };
+export { showLoader as showLoading, hideLoader as hideLoading, fetchDashboardFile };
