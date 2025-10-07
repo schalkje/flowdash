@@ -11194,76 +11194,6 @@
       "target": "dwh6"
     },
     {
-      "sourceName": "BAM",
-      "targetName": "BAM",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "bam-1",
-      "target": "bam-1"
-    },
-    {
-      "sourceName": "BAM",
-      "targetName": "transform Fidor",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "bam-1",
-      "target": "transform-fidor-1"
-    },
-    {
-      "sourceName": "BTM",
-      "targetName": "transform Fidor",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "btm-1",
-      "target": "transform-fidor-1"
-    },
-    {
-      "sourceName": "BTM",
-      "targetName": "BTM",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "btm-1",
-      "target": "btm-1"
-    },
-    {
-      "sourceName": "BAN",
-      "targetName": "transform Fidor",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "ban-1",
-      "target": "transform-fidor-1"
-    },
-    {
-      "sourceName": "BTR",
-      "targetName": "transform Fidor",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "btr-1",
-      "target": "transform-fidor-1"
-    },
-    {
-      "sourceName": "FOS",
-      "targetName": "transform Fidor",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "fos-1",
-      "target": "transform-fidor-1"
-    },
-    {
       "sourceName": "EM_Calcasa",
       "targetName": "CRF",
       "label": "",
@@ -11322,36 +11252,6 @@
       "isActive": true,
       "source": "em_belgie",
       "target": "cap2-half-yearly"
-    },
-    {
-      "sourceName": "FOS",
-      "targetName": "FOS",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "fos-1",
-      "target": "fos-1"
-    },
-    {
-      "sourceName": "BTR",
-      "targetName": "BTR",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "btr-1",
-      "target": "btr-1"
-    },
-    {
-      "sourceName": "BAN",
-      "targetName": "BAN",
-      "label": "",
-      "description": "",
-      "type": "unknown",
-      "isActive": true,
-      "source": "ban-1",
-      "target": "ban-1"
     },
     {
       "sourceName": "STAGING_QUION.QIN (monthly)",

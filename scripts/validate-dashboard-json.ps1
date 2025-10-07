@@ -6,7 +6,10 @@ param(
     [string]$InputFile,
     
     [Parameter(Mandatory=$false)]
-    [string]$OutputFile = $null
+    [string]$OutputFile = $null,
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$ErrorsOnly = $true
 )
 
 # If no output file specified, use input file with .validation.md extension
@@ -90,9 +93,11 @@ function Add-Warning {
         Path = $path
         Severity = "Warning"
     }
-    Write-Host "  ⚠ WARNING: $message" -ForegroundColor Yellow
-    if ($path) {
-        Write-Host "    Path: $path" -ForegroundColor Gray
+    if (-not $ErrorsOnly) {
+        Write-Host "  ⚠ WARNING: $message" -ForegroundColor Yellow
+        if ($path) {
+            Write-Host "    Path: $path" -ForegroundColor Gray
+        }
     }
 }
 
@@ -401,7 +406,8 @@ function Validate-Edges {
         # Check if source and target are different
         if ($hasSource -and $hasTarget -and $edge.source -and $edge.target) {
             if ($edge.source -eq $edge.target) {
-                Add-Error "Edge has same source and target (self-loop): source='$($edge.source)', target='$($edge.target)'"
+                $nodePath = if ($script:nodeIds.ContainsKey($edge.source)) { $script:nodeIds[$edge.source] } else { "Unknown" }
+                Add-Error "Edge has same source and target (self-loop): id='$($edge.source)', path='$nodePath'"
                 $script:validationResults.OrphanedEdges += "Self-loop: $($edge.source)"
             }
         }
@@ -710,6 +716,16 @@ try {
     Write-Host "  Edges processed: $($script:validationResults.EdgeCount)" -ForegroundColor White
     Write-Host "  Errors found: $($script:validationResults.Errors.Count)" -ForegroundColor $(if ($script:validationResults.Errors.Count -eq 0) { "Green" } else { "Red" })
     Write-Host "  Warnings found: $($script:validationResults.Warnings.Count)" -ForegroundColor $(if ($script:validationResults.Warnings.Count -eq 0) { "Green" } else { "Yellow" })
+    
+    # Show warning breakdown if ErrorsOnly and warnings exist
+    if ($ErrorsOnly -and $script:validationResults.Warnings.Count -gt 0) {
+        Write-Host "`nWarning Summary (use without -ErrorsOnly to see details):" -ForegroundColor Yellow
+        $warningsByType = $script:validationResults.Warnings | Group-Object -Property Message
+        foreach ($group in $warningsByType) {
+            Write-Host "  - $($group.Name): $($group.Count) occurrence(s)" -ForegroundColor Yellow
+        }
+    }
+    
     Write-Host ("=" * 60) -ForegroundColor Gray
     
     if ($script:validationResults.Errors.Count -eq 0) {

@@ -1,7 +1,7 @@
 # Dashboard JSON Validation Report
 
 **File**: `.\dashboard\data\dwh-6.fixed.json`  
-**Generated**: 2025-10-07 08:46:26
+**Generated**: 2025-10-07 13:26:58
 
 ---
 
@@ -9,12 +9,12 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Nodes | 0 |
-| Total Edges | 35 |
-| Errors | 76 |
-| Warnings | 0 |
-| Unique Node IDs | 0 |
-| Unique Node Labels | 0 |
+| Total Nodes | 885 |
+| Total Edges | 25 |
+| Errors | 5 |
+| Warnings | 174 |
+| Unique Node IDs | 885 |
+| Unique Node Labels | 858 |
 
 ---
 ## ❌ Validation Status: **FAILED**
@@ -23,160 +23,161 @@ The JSON file has errors that must be fixed before it can be used.
 
 ---
 
-## ❌ Errors (76)
+## ❌ Errors (5)
 
 The following errors must be fixed:
-### 'nodes' property must be an array
+### Adapter missing required child roles: staging, archive
 
-### Edge references non-existent source node ID: 'odsklt'
+**Path**: `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 3 -> Private Bank -> Matrix -> Matrix`
 
-### Edge references non-existent target node ID: 'dwh1'
+### Adapter missing required child roles: transform
 
-### Edge references non-existent source node ID: 'odsprd_bel'
+**Path**: `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 3 -> Loans & Mortgages -> Moneyview -> Moneyview`
 
-### Edge references non-existent target node ID: 'dwh1'
+### Adapter missing required child roles: transform
 
-### Edge references non-existent source node ID: 'odsprd_spr'
+**Path**: `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 4 -> WIC (WCT) -> WIC (WCT)`
 
-### Edge references non-existent target node ID: 'dwh1'
+### Adapter missing required child roles: transform
 
-### Edge references non-existent source node ID: 'odsklt'
+**Path**: `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 4 -> Monthly -> Rijksdienst voor ondernemingen (RVO) -> RVO Energielabels (REM) -> RVO Energielabels (REM)`
 
-### Edge references non-existent target node ID: 'dwh2'
+### Adapter missing required child roles: transform
 
-### Edge references non-existent source node ID: 'odsprd_bel'
+**Path**: `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 4 -> Monthly -> Rijksdienst voor ondernemingen (RVO) -> RVO Energielabels 2019 (REV) -> RVO Energielabels 2019 (REV)`
 
-### Edge references non-existent target node ID: 'dwh2'
 
-### Edge references non-existent source node ID: 'odsprd_spr'
+---
 
-### Edge references non-existent target node ID: 'dwh2'
+## ⚠️ Warnings (174)
 
-### Edge references non-existent source node ID: 'odsklt'
+The following warnings should be reviewed:
+### Adapter child missing explicit 'role' or 'category', but can infer 'archive' from label (57 occurrences)
 
-### Edge references non-existent target node ID: 'dwh3'
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Eximius -> Eximius -> VLK DWH.ARC_LOAD_EXM_EXI_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Eximius -> Rendementen -> VLK DWH.ARC_LOAD_EXM_REN_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA CVA -> VLK DWH.ARC_LOAD_OPA_CVA_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA DMR -> VLK DWH.ARC_LOAD_OPA_DMR_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA HRT -> VLK DWH.ARC_LOAD_OPA_HRT_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA KRC -> VLK DWH.ARC_LOAD_OPA_KRC_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA OHR -> VLK DWH.ARC_LOAD_OPA_OHR_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA STP -> VLK DWH.ARC_LOAD_OPA_STP_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> IT KAN -> Timetell -> VLK DWH.ARC_LOAD_TTL_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> IT KAN -> KCM -> VLK DWH.ARC_LOAD_KCM_DAG`
 
-### Edge references non-existent source node ID: 'odsprd_bel'
+... and 47 more
 
-### Edge references non-existent target node ID: 'dwh3'
-
-### Edge references non-existent source node ID: 'odsprd_spr'
-
-### Edge references non-existent target node ID: 'dwh3'
-
-### Edge references non-existent source node ID: 'odsklt'
-
-### Edge references non-existent target node ID: 'dwh4'
-
-### Edge references non-existent source node ID: 'odsprd_bel'
-
-### Edge references non-existent target node ID: 'dwh4'
-
-### Edge references non-existent source node ID: 'odsprd_spr'
-
-### Edge references non-existent target node ID: 'dwh4'
-
-### Edge references non-existent source node ID: 'odsklt'
-
-### Edge references non-existent target node ID: 'dwh5'
-
-### Edge references non-existent source node ID: 'odsprd_bel'
-
-### Edge references non-existent target node ID: 'dwh5'
-
-### Edge references non-existent source node ID: 'odsprd_spr'
-
-### Edge references non-existent target node ID: 'dwh5'
-
-### Edge references non-existent source node ID: 'odsklt'
-
-### Edge references non-existent target node ID: 'dwh6'
-
-### Edge references non-existent source node ID: 'odsprd_bel'
-
-### Edge references non-existent target node ID: 'dwh6'
-
-### Edge references non-existent source node ID: 'odsprd_spr'
-
-### Edge references non-existent target node ID: 'dwh6'
-
-### Edge has same source and target (self-loop): source='bam-1', target='bam-1'
-
-### Edge references non-existent source node ID: 'bam-1'
-
-### Edge references non-existent target node ID: 'bam-1'
-
-### Edge references non-existent source node ID: 'bam-1'
-
-### Edge references non-existent target node ID: 'transform-fidor-1'
-
-### Edge references non-existent source node ID: 'btm-1'
-
-### Edge references non-existent target node ID: 'transform-fidor-1'
-
-### Edge has same source and target (self-loop): source='btm-1', target='btm-1'
-
-### Edge references non-existent source node ID: 'btm-1'
-
-### Edge references non-existent target node ID: 'btm-1'
-
-### Edge references non-existent source node ID: 'ban-1'
-
-### Edge references non-existent target node ID: 'transform-fidor-1'
-
-### Edge references non-existent source node ID: 'btr-1'
-
-### Edge references non-existent target node ID: 'transform-fidor-1'
-
-### Edge references non-existent source node ID: 'fos-1'
-
-### Edge references non-existent target node ID: 'transform-fidor-1'
-
-### Edge references non-existent source node ID: 'em_calcasa'
-
-### Edge references non-existent target node ID: 'crf'
-
-### Edge references non-existent source node ID: 'em_calcasa'
-
-### Edge references non-existent target node ID: 'cal'
-
-### Edge references non-existent source node ID: 'em_csd'
-
-### Edge references non-existent target node ID: 'csd-belgium'
-
-### Edge references non-existent source node ID: 'em_csd'
-
-### Edge references non-existent target node ID: 'csd-netherlands'
-
-### Edge references non-existent source node ID: 'em_belgie'
-
-### Edge references non-existent target node ID: 'cap2-daily'
-
-### Edge references non-existent source node ID: 'em_belgie'
-
-### Edge references non-existent target node ID: 'cap2-half-yearly'
-
-### Edge has same source and target (self-loop): source='fos-1', target='fos-1'
-
-### Edge references non-existent source node ID: 'fos-1'
-
-### Edge references non-existent target node ID: 'fos-1'
-
-### Edge has same source and target (self-loop): source='btr-1', target='btr-1'
-
-### Edge references non-existent source node ID: 'btr-1'
-
-### Edge references non-existent target node ID: 'btr-1'
-
-### Edge has same source and target (self-loop): source='ban-1', target='ban-1'
-
-### Edge references non-existent source node ID: 'ban-1'
-
-### Edge references non-existent target node ID: 'ban-1'
-
-### Edge references non-existent source node ID: 'staging_quionqin-monthly'
-
-### Edge references non-existent target node ID: 'stg_archive_quionqin'
+### Adapter child missing explicit 'role' or 'category', but can infer 'staging' from label (58 occurrences)
+
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Eximius -> Eximius -> VLK DWH.STG_LOAD_EXM_EXI_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Eximius -> Rendementen -> VLK DWH.STG_LOAD_EXM_REN_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA CVA -> VLK DWH.STG_LOAD_OPA_CVA_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA DMR -> VLK DWH.STG_LOAD_OPA_DMR_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA HRT -> VLK DWH.STG_LOAD_OPA_HRT_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA KRC -> VLK DWH.STG_LOAD_OPA_KRC_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA OHR -> VLK DWH.STG_LOAD_OPA_OHR_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Overige Product Administrations -> OPA STP -> VLK DWH.STG_LOAD_OPA_STP_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Treasury -> Quion (daily) -> VLK DWH.STG_LOAD_QIN_DAY`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> IT KAN -> Timetell -> VLK DWH.STG_LOAD_TTL_DAG`
+
+... and 48 more
+
+### Adapter child missing explicit 'role' or 'category', but can infer 'transform' from label (8 occurrences)
+
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 1 -> Treasury -> Quion (daily) -> VLK DWH.TFM_LOAD_QIN_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 2 -> Daughters -> DOCHTERSHEETS KCO -> VLK DWH.TFM_LOAD_DCH_KCO_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 2 -> Finance -> Coda Overige Dochters (CDO) -> VLK DWH.TFM_LOAD_CDO_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 3 -> Loans & Mortgages -> Stater -> Daily transactions MUT (STH-STT) -> VLK DWH.TFM_LOAD_STT_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 3 -> Loans & Mortgages -> Stater -> Stater Daily download (STH-STD) -> VLK DWH.TFM_LOAD_STD_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 4 -> Monthly -> Stater (monthly) -> VLK DWH.TFM_LOAD_STM_MAAND`
+- `DWH & Strada -> DWH -> VLK DWH -> Staging -> Staging 4 -> Monthly -> Fitch (Monthly) -> VLK DWH.TFM_LOAD_FCH_MAAND`
+- `DWH & Strada -> DWH -> Maintenance -> Deprecated -> DCH_VCH -> VLK DWH.TFM_LOAD_DCH_VCH_DAG`
+
+### Foundation child missing explicit 'role' or 'category', but can infer 'base' from label (7 occurrences)
+
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.stg_archive_moneyview (DFX) -> base.vl_dwh.stg_archive_moneyview`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.stg_archive_ohpen (dfx) -> base.vl_dwh.stg_archive_ohpen`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.calc_archive_irb (dfx) -> Strada Foundation.DFX.base.vl_dwh.calc_archive_irb`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.em_afo (DFX) -> base.vl_dwh.em_afo`
+- `DWH & Strada -> Strada Foundation -> Other -> corona.corona -> base.corona.corona`
+- `DWH & Strada -> Strada Foundation -> Other -> vl_vdz.vl_vdz_be (DFX) -> base.vl_vdz.vl_vdz_be`
+- `DWH & Strada -> Strada Foundation -> Other -> vl_vdz.vl_vdz (DFX) -> base.vl_vdz.vl_vdz `
+
+### Foundation child missing explicit 'role' or 'category', but can infer 'raw' from label (6 occurrences)
+
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.stg_archive_moneyview (DFX) -> raw.vl_dwh.stg_archive_moneyview`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.stg_archive_ohpen (dfx) -> raw.vl_dwh.stg_archive_ohpen`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.calc_archive_irb (dfx) -> Strada Foundation.DFX.raw.vl_dwh.calc_archive_irb`
+- `DWH & Strada -> Strada Foundation -> vl_dwh -> vl_dwh (DFX) -> vl_dwh.em_afo (DFX) -> raw.vl_dwh.em_afo`
+- `DWH & Strada -> Strada Foundation -> Other -> vl_vdz.vl_vdz_be (DFX) -> raw.vl_vdz.vl_vdz_be`
+- `DWH & Strada -> Strada Foundation -> Other -> vl_vdz.vl_vdz (DFX) -> raw.vl_vdz.vl_vdz`
+
+### Mart child missing explicit 'role' or 'category', but can infer 'load' from label (19 occurrences)
+
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> EM_AFO -> LOAD EM_AFO MONTH`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX COC -> LOAD EM_MATRIX.COC Day`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX GAR -> LOAD EM_MATRIX.GAR Day`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX MTX -> LOAD EM_MATRIX.MTX Day`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Anti-money laundry (AML) -> AML BE -> LOAD EM_AML_BE Day`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Anti-money laundry (AML) -> AML NL -> LOAD EM_AML_NL Day`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM SLP -> VLK DWH.EM_PRM_SLP_LOAD_MAAND`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM REF -> Load EM_PROMMISE REF`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM RRE -> VLK DWH.EM_PRM_RRE_LOAD_MAAND`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Quarterly extractions -> EM_CES (Quarterly) ->  LOAD EM_CESOP Quarter`
+
+... and 9 more
+
+### Mart child missing explicit 'role' or 'category', but can infer 'report' from label (19 occurrences)
+
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> EM_AFO -> VLK DWH.EM_AFO_RPRT_MONTH`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX COC -> VLK DWH.EM_MTX_RPRT_COC_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX GAR -> VLK DWH.EM_MTX_RPRT_GAR_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Matrix -> EM_MTX MTX -> VLK DWH.EM_MTX_RPRT_MTX_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Anti-money laundry (AML) -> AML BE -> VLK DWH.EM_AML_BE_RPRT_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Anti-money laundry (AML) -> AML NL -> VLK DWH.EM_AML_NL_RPRT_DAG`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM SLP -> Report EM_PROMMISE SLP`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM REF -> VLK DWH.EM_PRM_REF_RPRT_MAAND`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Monthly Extractions -> Prommise (Monthly) -> EM_PRM RRE -> VLK DWH.EM_PRM_RRE_RPRT_MAAND`
+- `DWH & Strada -> DWH -> VLK DWH -> Exporting data -> Extraction Marts 1 -> Quarterly extractions -> EM_CES (Quarterly) -> VLK DWH.EM_CES_RPRT_KWARTAAL`
+
+... and 9 more
+
+
+---
+
+## 📋 Duplicate Labels
+
+The following labels are used by multiple nodes:
+
+| Label | Count | Note |
+|-------|-------|------|
+| Archive | 2 | OK - Different paths |
+| Treasury | 2 | OK - Different paths |
+| transform Fidor | 2 | OK - Different paths |
+| BAM | 2 | OK - Different paths |
+| Market Data | 2 | OK - Different paths |
+| Report | 2 | OK - Different paths |
+| Eximius | 2 | OK - Different paths |
+| Reference | 2 | OK - Different paths |
+| Investment Bank (IB) | 2 | OK - Different paths |
+| Matrix | 3 | OK - Different paths |
+| VIA | 2 | OK - Different paths |
+| BAN | 2 | OK - Different paths |
+| BTR | 2 | OK - Different paths |
+| raw.vl_dwh.stg_archive_stater | 2 | OK - Different paths |
+| EVI | 2 | OK - Different paths |
+| Load | 2 | OK - Different paths |
+| Compliance | 2 | OK - Different paths |
+| vl_dwh.stg_archive_stater (rawbase) | 2 | OK - Different paths |
+| Calcasa (Quarterly) | 2 | OK - Different paths |
+| BTM | 2 | OK - Different paths |
+| base.vl_dwh.stg_archive_stater | 2 | OK - Different paths |
+| Staging | 3 | OK - Different paths |
+| Reports | 2 | OK - Different paths |
+| FOS | 2 | OK - Different paths |
+| DWH | 2 | OK - Different paths |
+
+> **Note**: Duplicate labels are allowed if they appear in different paths of the hierarchy.
 
 
 ---
