@@ -1,16 +1,17 @@
 # Script to add unique IDs to all nodes in a dashboard JSON file
 param(
     [Parameter(Mandatory=$true)]
-    [string]$InputFile,
-    
-    [Parameter(Mandatory=$false)]
-    [string]$OutputFile = $null
+    [string]$InputFile
 )
 
-# If no output file specified, use input file with .fixed.json extension
-if (-not $OutputFile) {
-    $OutputFile = $InputFile -replace '\.json$', '.fixed.json'
+# Check if file exists
+if (-not (Test-Path $InputFile)) {
+    Write-Host "Error: File not found: $InputFile" -ForegroundColor Red
+    exit 1
 }
+
+# Create backup filename
+$BackupFile = $InputFile -replace '\.json$', '.backup.json'
 
 Write-Host "Reading JSON file: $InputFile" -ForegroundColor Cyan
 
@@ -220,18 +221,25 @@ if (-not $jsonContent.PSObject.Properties['settings']) {
     }
 }
 
-# Write output
-Write-Host "`nWriting output to: $OutputFile" -ForegroundColor Cyan
-$jsonContent | ConvertTo-Json -Depth 100 | Set-Content $OutputFile -Encoding UTF8
+# Create backup of original file
+Write-Host "`nCreating backup: $BackupFile" -ForegroundColor Cyan
+Copy-Item -Path $InputFile -Destination $BackupFile -Force
 
-Write-Host "`nDone! Fixed JSON saved to: $OutputFile" -ForegroundColor Green
-Write-Host "Original file preserved at: $InputFile" -ForegroundColor Gray
+# Write output to original filename
+Write-Host "Writing changes to: $InputFile" -ForegroundColor Cyan
+$jsonContent | ConvertTo-Json -Depth 100 | Set-Content $InputFile -Encoding UTF8
+
+Write-Host "`nDone! Updated JSON saved to: $InputFile" -ForegroundColor Green
+Write-Host "Original file backed up to: $BackupFile" -ForegroundColor Gray
 
 # Validate the output
 Write-Host "`nValidating output JSON..." -ForegroundColor Cyan
 try {
-    Get-Content $OutputFile -Raw | ConvertFrom-Json | Out-Null
+    Get-Content $InputFile -Raw | ConvertFrom-Json | Out-Null
     Write-Host "✓ Output JSON is valid!" -ForegroundColor Green
 } catch {
     Write-Host "✗ Output JSON is invalid: $_" -ForegroundColor Red
+    Write-Host "Restoring from backup..." -ForegroundColor Yellow
+    Copy-Item -Path $BackupFile -Destination $InputFile -Force
+    Write-Host "Original file restored from backup" -ForegroundColor Yellow
 }
