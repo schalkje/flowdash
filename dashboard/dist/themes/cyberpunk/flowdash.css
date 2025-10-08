@@ -1,0 +1,510 @@
+:root, [data-theme="cyberpunk"] {
+  --fd-bg: #0b0a10;
+  --fd-surface: #141322;
+  --fd-text: #e2e8f0;
+  --fd-muted: #94a3b8;
+  --fd-accent: #ff00e5;
+  --fd-border: #2b2a3a;
+  --fd-edge: #00e5ff;
+  --fd-glow1: #ff00e5;
+  --fd-glow2: #00e5ff;
+  --fd-neon-green: #00ffa8;
+  --fd-neon-yellow: #ffc400;
+  --fd-neon-orange: #ff9e3d;
+  --fd-neon-red: #ff3366;
+  --fd-neon-cyan: #00e5ff;
+  --fd-neon-purple: #7c4dff;
+  --fd-neon-pink: #ff4dff;
+}
+
+body { background: linear-gradient(135deg, #0b0a10 0%, #11122a 100%); color: var(--fd-text); font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+
+#graph { background: radial-gradient(1200px 600px at 50% 0%, rgba(255,0,229,0.08), transparent 60%), radial-gradient(1000px 500px at 10% 80%, rgba(0,229,255,0.08), transparent 60%), var(--fd-surface) !important; border-color: var(--fd-border) !important; box-shadow: 0 0 0 1px #2b2a3a, 0 0 40px rgba(255,0,229,0.2), 0 0 60px rgba(0,229,255,0.15); }
+.minimap-svg { background-color: rgba(17,18,42,0.7) !important; border-color: var(--fd-border) !important; }
+/* Ensure uncovered minimap background matches graph surface */
+.minimap-svg rect.background { fill: var(--fd-surface) !important; stroke: var(--fd-border) !important; }
+svg.canvas { border-color: var(--fd-border) !important; box-shadow: 0 0 0 1px #2b2a3a, 0 0 24px rgba(255,0,229,0.2), 0 0 48px rgba(0,229,255,0.15) !important; }
+
+.shape { fill: #17162c !important; stroke: var(--fd-accent) !important; stroke-width: 1.5px; filter: drop-shadow(0 0 8px rgba(255,0,229,0.3)); }
+.rect.shape, .adapter.shape, .SSIS.shape, .container-shape, .circle.shape { fill: #14132a !important; stroke: #3b3a5a !important; rx: 6 !important; ry: 6 !important; }
+/* Base header styling */
+.header-background { fill: #151433 !important; stroke: #3b3a5a !important; }
+.header-text { fill: var(--fd-text) !important; text-shadow: 0 0 8px rgba(0,229,255,0.5); }
+
+/* Collapsed container headers — cyberpunk styling with status-based fills */
+.collapsed .zone-header .header-background {
+  stroke-width: 1px !important;
+}
+
+.collapsed[status="Unknown"] .zone-header .header-background {
+  fill: #18172e !important;
+  stroke: #6b6f9a !important;
+  filter: drop-shadow(0 0 6px rgba(107,111,154,0.4));
+}
+
+.collapsed[status="Ready"] .zone-header .header-background {
+  fill: #0a1f27 !important;
+  stroke: var(--fd-neon-cyan) !important;
+  filter: drop-shadow(0 0 8px rgba(0,229,255,0.5));
+}
+
+.collapsed[status="Updating"] .zone-header .header-background {
+  fill: #1e1522 !important;
+  stroke: var(--fd-glow1) !important;
+  filter: drop-shadow(0 0 10px rgba(255,0,229,0.6)) drop-shadow(0 0 6px rgba(0,229,255,0.4));
+}
+
+.collapsed[status="Updated"] .zone-header .header-background {
+  fill: #0a2f2a !important;
+  stroke: var(--fd-neon-green) !important;
+  filter: drop-shadow(0 0 8px rgba(0,255,168,0.5));
+}
+
+.collapsed[status="Skipped"] .zone-header .header-background {
+  fill: #1c1a2e !important;
+  stroke: #b38cff !important;
+  filter: drop-shadow(0 0 6px rgba(179,140,255,0.5));
+}
+
+.collapsed[status="Delayed"] .zone-header .header-background {
+  fill: #281a0e !important;
+  stroke: var(--fd-neon-orange) !important;
+  filter: drop-shadow(0 0 8px rgba(255,158,61,0.5));
+}
+
+.collapsed[status="Warning"] .zone-header .header-background {
+  fill: #2f230a !important;
+  stroke: var(--fd-neon-yellow) !important;
+  filter: drop-shadow(0 0 10px rgba(255,196,0,0.5));
+}
+
+.collapsed[status="Error"] .zone-header .header-background {
+  fill: #2a0a12 !important;
+  stroke: var(--fd-neon-red) !important;
+  filter: drop-shadow(0 0 12px rgba(255,51,102,0.6));
+}
+
+.collapsed[status="Disabled"] .zone-header .header-background {
+  fill: #14132a !important;
+  stroke: #4b4a60 !important;
+  filter: drop-shadow(0 0 4px rgba(75,74,96,0.4));
+}
+
+/* Enhanced header text glow for collapsed containers */
+.collapsed .zone-header .header-text {
+  text-shadow:
+    0 0 8px rgba(0,229,255,0.8),
+    0 0 16px rgba(0,229,255,0.4),
+    0 0 24px rgba(0,229,255,0.2) !important;
+}
+
+/* Status-specific header text colors for collapsed containers */
+.collapsed[status="Unknown"] .zone-header .header-text {
+  fill: #94a3b8 !important;
+}
+
+.collapsed[status="Ready"] .zone-header .header-text {
+  fill: #00e5ff !important;
+  text-shadow:
+    0 0 8px rgba(0,229,255,1),
+    0 0 16px rgba(0,229,255,0.6),
+    0 0 24px rgba(0,229,255,0.3) !important;
+}
+
+.collapsed[status="Updating"] .zone-header .header-text {
+  fill: #ff00e5 !important;
+  text-shadow:
+    0 0 8px rgba(255,0,229,1),
+    0 0 8px rgba(0,229,255,0.8),
+    0 0 16px rgba(255,0,229,0.6),
+    0 0 16px rgba(0,229,255,0.4),
+    0 0 24px rgba(255,0,229,0.3) !important;
+}
+
+.collapsed[status="Updated"] .zone-header .header-text {
+  fill: #00ffa8 !important;
+  text-shadow:
+    0 0 8px rgba(0,255,168,1),
+    0 0 16px rgba(0,255,168,0.6),
+    0 0 24px rgba(0,255,168,0.3) !important;
+}
+
+.collapsed[status="Skipped"] .zone-header .header-text {
+  fill: #b38cff !important;
+  text-shadow:
+    0 0 8px rgba(179,140,255,1),
+    0 0 16px rgba(179,140,255,0.6),
+    0 0 24px rgba(179,140,255,0.3) !important;
+}
+
+.collapsed[status="Delayed"] .zone-header .header-text {
+  fill: #ff9e3d !important;
+  text-shadow:
+    0 0 8px rgba(255,158,61,1),
+    0 0 16px rgba(255,158,61,0.6),
+    0 0 24px rgba(255,158,61,0.3) !important;
+}
+
+.collapsed[status="Warning"] .zone-header .header-text {
+  fill: #ffc400 !important;
+  text-shadow:
+    0 0 8px rgba(255,196,0,1),
+    0 0 16px rgba(255,196,0,0.6),
+    0 0 24px rgba(255,196,0,0.3) !important;
+}
+
+.collapsed[status="Error"] .zone-header .header-text {
+  fill: #ff3366 !important;
+  text-shadow:
+    0 0 8px rgba(255,51,102,1),
+    0 0 16px rgba(255,51,102,0.6),
+    0 0 24px rgba(255,51,102,0.3) !important;
+}
+
+.collapsed[status="Disabled"] .zone-header .header-text {
+  fill: #64748b !important;
+  text-shadow: none !important;
+}
+
+text, .label, .rect.label { fill: var(--fd-text) !important; }
+.edge .path { stroke: var(--fd-edge) !important; stroke-width: 2px; filter: drop-shadow(0 0 6px rgba(0,229,255,0.6)); }
+
+.zoom-button:hover circle { fill: rgba(255,0,229,0.1) !important; stroke: #3b3a5a !important; }
+.zoom-icon { fill: var(--fd-text) !important; }
+
+/* Minimap overlays: subtle magenta eye, crisp cyan iris */
+.minimap-svg .eye { fill: var(--fd-bg) !important; fill-opacity: 0.50; 
+}
+.minimap-svg .iris { fill: none !important; stroke: rgba(0,229,255,0.45) !important; stroke-width: 6px !important; filter: drop-shadow(0 0 8px rgba(0,229,255,0.35)); }
+
+/* Minimap size button */
+.minimap-size-button .btn-bg { fill: rgba(255,0,229,0.08) !important; stroke: #3b3a5a !important; }
+.minimap-size-button .btn-label { fill: var(--fd-text) !important; }
+
+.container-shape.selected, .rect.shape.selected { box-shadow: 0 0 0 1px var(--fd-accent), 0 0 20px rgba(255,0,229,0.4); }
+
+/* Neon state system: dark fills, saturated neon strokes + glows, distinct motion for Updating */
+@keyframes cyber-scan {
+  to { stroke-dashoffset: -90; }
+}
+@keyframes cyber-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(0,229,255,0.45)); }
+  50% { filter: drop-shadow(0 0 12px rgba(255,0,229,0.5)); }
+}
+
+/* Unknown — neutral violet-blue outline */
+.shape[status="Unknown"], .node.shape[status="Unknown"], .container-shape[status="Unknown"], .rect.shape[status="Unknown"] {
+  fill: #18172e !important;
+  stroke: #6b6f9a !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 6px rgba(107,111,154,0.35));
+}
+
+/* Disabled — desaturated neutral outline */
+.shape[status="Disabled"], .node.shape[status="Disabled"], .container-shape[status="Disabled"], .rect.shape[status="Disabled"] {
+  fill: #14132a !important;
+  stroke: #4b4a60 !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 4px rgba(75,74,96,0.35));
+}
+
+/* Ready — cyan neon edge */
+.shape[status="Ready"], .node.shape[status="Ready"], .container-shape[status="Ready"], .rect.shape[status="Ready"] {
+  fill: #0a1f27 !important;
+  stroke: var(--fd-neon-cyan) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(0,229,255,0.6));
+}
+
+/* Updating — alternating magenta/cyan marching dash */
+.shape[status="Updating"], .node.shape[status="Updating"], .container-shape[status="Updating"], .rect.shape[status="Updating"] {
+  fill: #1e1522 !important;
+  stroke: var(--fd-glow1) !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 12 8;
+  animation: cyber-scan 0.9s linear infinite, cyber-glow-pulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(255,0,229,0.55)) drop-shadow(0 0 8px rgba(0,229,255,0.35));
+}
+
+/* Updated — neon green confirmation */
+.shape[status="Updated"], .node.shape[status="Updated"], .container-shape[status="Updated"], .rect.shape[status="Updated"] {
+  fill: #0a2f2a !important;
+  stroke: var(--fd-neon-green) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(0,255,168,0.55));
+}
+
+/* Skipped — muted violet neon */
+.shape[status="Skipped"], .node.shape[status="Skipped"], .container-shape[status="Skipped"], .rect.shape[status="Skipped"] {
+  fill: #1c1a2e !important;
+  stroke: #b38cff !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 8px rgba(179,140,255,0.5));
+}
+
+/* Delayed — orange neon */
+.shape[status="Delayed"], .node.shape[status="Delayed"], .container-shape[status="Delayed"], .rect.shape[status="Delayed"] {
+  fill: #281a0e !important;
+  stroke: var(--fd-neon-orange) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(255,158,61,0.55));
+}
+
+/* Warning — yellow neon */
+.shape[status="Warning"], .node.shape[status="Warning"], .container-shape[status="Warning"], .rect.shape[status="Warning"] {
+  fill: #2f230a !important;
+  stroke: var(--fd-neon-yellow) !important;
+  stroke-width: 2.25px !important;
+  filter: drop-shadow(0 0 12px rgba(255,196,0,0.55));
+}
+
+/* Error — hot neon red with stronger glow */
+.shape[status="Error"], .node.shape[status="Error"], .container-shape[status="Error"], .rect.shape[status="Error"] {
+  fill: #2a0a12 !important;
+  stroke: var(--fd-neon-red) !important;
+  stroke-width: 2.75px !important;
+  filter: drop-shadow(0 0 14px rgba(255,51,102,0.65));
+}
+
+/* Container node state theming
+   - Expanded (default): toned down vs base nodes, no animations
+   - Collapsed: clear, full-opacity states, no animations
+   Note: container status is on the parent <g>, not the rect */
+
+/* Collapsed containers — styled like rect nodes (parent carries status) */
+.collapsed .container-shape { opacity: 1 !important; filter: none !important; }
+.collapsed[status="Unknown"] .container-shape {
+  fill: #18172e !important;
+  stroke: #6b6f9a !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 6px rgba(107,111,154,0.35));
+}
+.collapsed[status="Ready"] .container-shape {
+  fill: #0a1f27 !important;
+  stroke: var(--fd-neon-cyan) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(0,229,255,0.6));
+}
+.collapsed[status="Updating"] .container-shape {
+  fill: #1e1522 !important;
+  stroke: var(--fd-glow1) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 10px rgba(255,0,229,0.55)) drop-shadow(0 0 8px rgba(0,229,255,0.35));
+}
+.collapsed[status="Updated"] .container-shape {
+  fill: #0a2f2a !important;
+  stroke: var(--fd-neon-green) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(0,255,168,0.55));
+}
+.collapsed[status="Skipped"] .container-shape {
+  fill: #1c1a2e !important;
+  stroke: #b38cff !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 8px rgba(179,140,255,0.5));
+}
+.collapsed[status="Delayed"] .container-shape {
+  fill: #281a0e !important;
+  stroke: var(--fd-neon-orange) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 10px rgba(255,158,61,0.55));
+}
+.collapsed[status="Warning"] .container-shape {
+  fill: #2f230a !important;
+  stroke: var(--fd-neon-yellow) !important;
+  stroke-width: 2.25px !important;
+  filter: drop-shadow(0 0 12px rgba(255,196,0,0.55));
+}
+.collapsed[status="Error"] .container-shape {
+  fill: #2a0a12 !important;
+  stroke: var(--fd-neon-red) !important;
+  stroke-width: 2.75px !important;
+  filter: drop-shadow(0 0 14px rgba(255,51,102,0.65));
+}
+.collapsed[status="Disabled"] .container-shape {
+  fill: #14132a !important;
+  stroke: #4b4a60 !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 4px rgba(75,74,96,0.35));
+}
+
+/* Expanded containers — toned down (parent carries status) */
+/* Expanded subdued state — adapters, marts, foundations only */
+.adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.foundation.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Unknown"] > .zone-container > .container-shape {
+  fill: #18172e !important;
+  fill-opacity: 0.2 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.Mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.foundation.expanded[status="Ready"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Ready"] > .zone-container > .container-shape {
+  fill: #0a1f27 !important;
+  fill-opacity: 0.25 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updating"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updating"] > .zone-container > .container-shape {
+  fill: #1e1522 !important;
+  fill-opacity: 0.25 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+  animation: none !important;
+  stroke-dasharray: none !important;
+}
+
+.adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updated"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updated"] > .zone-container > .container-shape {
+  fill: #0a2f2a !important;
+  fill-opacity: 0.18 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.foundation.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Skipped"] > .zone-container > .container-shape {
+  fill: #1c1a2e !important;
+  fill-opacity: 0.9 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.foundation.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Delayed"] > .zone-container > .container-shape {
+  fill: #281a0e !important;
+  fill-opacity: 0.28 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.Mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.foundation.expanded[status="Warning"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Warning"] > .zone-container > .container-shape {
+  fill: #2f230a !important;
+  fill-opacity: 0.28 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.mart.expanded[status="Error"] > .zone-container > .container-shape,
+.Mart.expanded[status="Error"] > .zone-container > .container-shape,
+.foundation.expanded[status="Error"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Error"] > .zone-container > .container-shape {
+  fill: #2a0a12 !important;
+  fill-opacity: 0.28 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+.adapter.expanded[status="Disabled"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Disabled"] > .zone-container > .container-shape,
+.mart.expanded[status="Disabled"] > .zone-container > .container-shape,
+.Mart.expanded[status="Disabled"] > .zone-container > .container-shape,
+.foundation.expanded[status="Disabled"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Disabled"] > .zone-container > .container-shape {
+  fill: #14132a !important;
+  fill-opacity: 0.2 !important;
+  stroke: #3b3a5a !important;
+  stroke-width: 1px !important;
+}
+
+/* Expanded lanes/columns: ignore state (no fill/animation) */
+.lane.expanded > .zone-container > .container-shape,
+.Lane.expanded > .zone-container > .container-shape,
+.columns.expanded > .zone-container > .container-shape,
+.Columns.expanded > .zone-container > .container-shape {
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  animation: none !important;
+  stroke-dasharray: none !important;
+  stroke: #3b3a5a !important;
+  filter: drop-shadow(0 0 6px rgba(0,0,0,0.0));
+}
+
+/*
+  Nested container depth styling for Cyberpunk
+  Slight opacity gradation with additive glow to convey hierarchy
+*/
+/* Depth 2 */
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
+  fill-opacity: 0.98 !important;
+  stroke-opacity: 0.92 !important;
+  filter: drop-shadow(0 0 6px rgba(0,229,255,0.25));
+}
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
+  fill-opacity: 0.98 !important;
+  stroke-opacity: 0.92 !important;
+}
+
+/* Depth 3 */
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
+  fill-opacity: 0.96 !important;
+  stroke-opacity: 0.88 !important;
+  filter: drop-shadow(0 0 8px rgba(255,0,229,0.25));
+}
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
+  fill-opacity: 0.96 !important;
+  stroke-opacity: 0.88 !important;
+}
+
+/* Depth 4 */
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
+  fill-opacity: 0.92 !important;
+  stroke-opacity: 0.84 !important;
+  filter: drop-shadow(0 0 10px rgba(0,229,255,0.28)) drop-shadow(0 0 10px rgba(124,77,255,0.25));
+}
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
+  fill-opacity: 0.92 !important;
+  stroke-opacity: 0.84 !important;
+}
+
+/* Depth 5 */
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
+  fill-opacity: 0.88 !important;
+  stroke-opacity: 0.8 !important;
+  filter: drop-shadow(0 0 12px rgba(255,77,255,0.35)) drop-shadow(0 0 12px rgba(0,229,255,0.3));
+}
+.cyberpunk :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background,
+[data-theme="cyberpunk"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
+  fill-opacity: 0.88 !important;
+  stroke-opacity: 0.8 !important;
+}
