@@ -582,7 +582,8 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `baseline-results-${new Date().toISOString().split('T')[0]}.json`;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            link.download = `baseline-results-${timestamp}.json`;
             link.click();
             URL.revokeObjectURL(url);
         };
