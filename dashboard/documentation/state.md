@@ -26,7 +26,7 @@ flowchart TD
     A[UNDETERMINED] --> B[UNKNOWN]
 
     B --> C[READY]
-    subgraph Processing
+    subgraph Processing[Processing...]
     C -- Start processing --> D[UPDATING]
     C --> J[DELAYED]
     end
@@ -34,28 +34,32 @@ flowchart TD
     J -- Start processing --> D
     J -- Delay timeout --> H
 
-    subgraph Intermediate or end state
+    subgraph s2[Intermediate or end state]
     D -- Processing Failed --> H[ERROR]
     H -- Retry Processing --> D
     end
 
-    subgraph End state
+    subgraph s3[End state]
     C --> E[SKIPPED]
     D -- Complete with warnings --> I[WARNING]
     D -- Processing completed successfully --> G[UPDATED]
     end
 
     %% Coloring and styling
-    style A fill:#e0e0e0,stroke:#888
-    style B fill:#e0e0e0,stroke:#888
-    style C fill:#e0e0e0,stroke:#66ff66,stroke-width:2px
-    style D fill:#66ff66,stroke:#0b0,stroke-width:4px,stroke-dasharray: 6 2
-    style J fill:#ffd580,stroke:#ff9900
-    style H fill:#ffcccc,stroke:#c22
-    style G fill:#ccffcc,stroke:#292
-    style I fill:#ffeb99,stroke:#f90
-    style E fill:#ffeb99,stroke:#f90
+    style A fill:#e0e0e0,stroke:#888,color:#000000
+    style B fill:#e0e0e0,stroke:#888,color:#000000
+    style C fill:#e0e0e0,stroke:#66ff66,stroke-width:2px,color:#000000
+    style D fill:#66ff66,stroke:#0b0,stroke-width:4px,stroke-dasharray: 6 2,color:#000000
+    style J fill:#ffd580,stroke:#ff9900,color:#000000
+    style H fill:#ffcccc,stroke:#c22,color:#000000
+    style G fill:#ccffcc,stroke:#292,color:#000000
+    style I fill:#ffeb99,stroke:#f90,color:#000000
+    style E fill:#ffeb99,stroke:#f90,color:#000000
+    style Processing fill:white,color:#666,font-weight:bold
+    style s2 fill:white,color:#666,font-weight:bold
+    style s3 fill:white,color:#666,font-weight:bold
 ```
+
 ### State Behavior
 
 #### Status Cascading
