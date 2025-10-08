@@ -357,6 +357,17 @@ export class Dashboard {
     this.reportPerformanceMetrics();
     
     this._isInitialized = true;
+    
+    // Ensure loading popup is hidden after initialization completes
+    // This serves as a fallback if onMainDisplayChange doesn't trigger
+    // Use setTimeout to ensure all synchronous operations complete first
+    setTimeout(() => {
+      if (this._initialLoading) {
+        console.log('📊 Dashboard.initialize() - Fallback hideLoading() called');
+        this._initialLoading = false;
+        this.hideLoading();
+      }
+    }, 0);
   }
 
 
