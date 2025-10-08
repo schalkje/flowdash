@@ -251,7 +251,7 @@ export class BaseContainerNode extends RectangularNode {
 **Priority**: HIGH (Expected impact: 5-8s savings)
 
 **Files to Modify**:
-- `dashboard/js/rectangularNode.js`
+- `dashboard/js/nodeRect.js`
 - `dashboard/js/nodeBaseContainer.js`
 
 **Implementation Strategy**:
@@ -652,7 +652,7 @@ For upcoming optimizations:
 1. `dashboard/js/dashboard.js` - Main orchestration, edge creation
 2. `dashboard/js/node.js` - Node creation (Optimization #1)
 3. `dashboard/js/nodeBaseContainer.js` - Layout logic (Optimizations #2, #3)
-4. `dashboard/js/rectangularNode.js` - Resize logic (Optimization #3)
+4. `dashboard/js/nodeRect.js` - Resize logic (Optimization #3)
 5. `dashboard/js/minimap.js` - Minimap initialization (Optimization #6)
 
 ### 📊 Performance Measurement Commands
