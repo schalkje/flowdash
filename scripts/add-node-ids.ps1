@@ -20,40 +20,15 @@ $jsonContent = Get-Content $InputFile -Raw | ConvertFrom-Json
 
 # Counter for generating unique IDs
 $script:idCounter = 1
-$script:idMap = @{}
-$script:labelToIdMap = @{}
+$script:labelToIdMap = @{
 
-# Function to generate a unique ID based on label
-function Get-UniqueId {
-    param(
-        [string]$label,
-        [string]$type
-    )
-    
-    # Create a base ID from the label
-    $baseId = $label -replace '[^\w\s-]', '' -replace '\s+', '-' -replace '--+', '-'
-    $baseId = $baseId.Trim('-').ToLower()
-    
-    # If empty, use type
-    if ([string]::IsNullOrWhiteSpace($baseId)) {
-        $baseId = $type.ToLower()
-    }
-    
-    # If still empty, use generic
-    if ([string]::IsNullOrWhiteSpace($baseId)) {
-        $baseId = "node"
-    }
-    
-    # Ensure uniqueness
-    $finalId = $baseId
-    $counter = 1
-    while ($script:idMap.ContainsKey($finalId)) {
-        $finalId = "$baseId-$counter"
-        $counter++
-    }
-    
-    $script:idMap[$finalId] = $true
-    return $finalId
+}
+
+# Function to get next unique integer ID
+function Get-NextId {
+    $id = $script:idCounter
+    $script:idCounter++
+    return $id
 }
 
 # Function to recursively add IDs to nodes
@@ -66,22 +41,28 @@ function Add-NodeIds {
         [int]$depth = 0
     )
     
-    # Add ID if missing
+    # Add ID if missing or convert string ID to integer
     if (-not $node.PSObject.Properties['id']) {
-        $newId = Get-UniqueId -label $node.label -type $node.type
+        $newId = Get-NextId
         $node | Add-Member -MemberType NoteProperty -Name 'id' -Value $newId
-        Write-Host ("  " * $depth) "Added ID '$newId' to node: $($node.label)" -ForegroundColor Green
+        Write-Host ("  " * $depth) "Added ID $newId to node: $($node.label)" -ForegroundColor Green
+    } elseif ($node.id -is [string]) {
+        # Convert string ID to integer
+        $newId = Get-NextId
+        $node.id = $newId
+        Write-Host ("  " * $depth) "Converted string ID to integer $newId for node: $($node.label)" -ForegroundColor Yellow
     } else {
-        # Track existing ID to avoid duplicates
-        if ($node.id) {
-            $script:idMap[$node.id] = $true
+        # Ensure existing ID is integer and update counter
+        $node.id = [int]$node.id
+        if ($node.id -ge $script:idCounter) {
+            $script:idCounter = $node.id + 1
         }
-        Write-Host ("  " * $depth) "Node already has ID '$($node.id)': $($node.label)" -ForegroundColor Gray
+        Write-Host ("  " * $depth) "Node already has ID $($node.id): $($node.label)" -ForegroundColor Gray
     }
     
     # Map label to ID for edge processing
     if ($node.label -and $node.id) {
-        $script:labelToIdMap[$node.label] = $node.id
+        $script:labelToIdMap[$node.label] = [int]$node.id
     }
     
     # Recursively process children
@@ -113,8 +94,8 @@ if ($jsonContent.PSObject.Properties['nodes']) {
 }
 
 Write-Host "`nProcessed $nodeCount root node(s)" -ForegroundColor Cyan
-Write-Host "Total unique IDs in map: $($script:idMap.Count)" -ForegroundColor Cyan
 Write-Host "Total labels mapped to IDs: $($script:labelToIdMap.Count)" -ForegroundColor Cyan
+Write-Host "Next available ID: $script:idCounter" -ForegroundColor Cyan
 
 # Process edges
 Write-Host "`nProcessing edges..." -ForegroundColor Cyan
@@ -131,7 +112,7 @@ if ($jsonContent.PSObject.Properties['edges'] -and $jsonContent.edges -is [Array
         # Add source ID based on sourceName
         if ($edge.PSObject.Properties['sourceName'] -and $edge.sourceName) {
             if ($script:labelToIdMap.ContainsKey($edge.sourceName)) {
-                $sourceId = $script:labelToIdMap[$edge.sourceName]
+                $sourceId = [int]$script:labelToIdMap[$edge.sourceName]
                 
                 # Add or update source property
                 if (-not $edge.PSObject.Properties['source']) {
@@ -150,7 +131,7 @@ if ($jsonContent.PSObject.Properties['edges'] -and $jsonContent.edges -is [Array
         # Add target ID based on targetName
         if ($edge.PSObject.Properties['targetName'] -and $edge.targetName) {
             if ($script:labelToIdMap.ContainsKey($edge.targetName)) {
-                $targetId = $script:labelToIdMap[$edge.targetName]
+                $targetId = [int]$script:labelToIdMap[$edge.targetName]
                 
                 # Add or update target property
                 if (-not $edge.PSObject.Properties['target']) {
