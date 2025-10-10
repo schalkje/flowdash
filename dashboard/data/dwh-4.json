@@ -10,7 +10,7 @@
   "nodes": [
     {
       "label": "Main Data Warehouse",
-      "id": "pbdwh",
+      "id": 1,
       "description": "DWH",
       "type": "columns",
       "layout": {
@@ -22,17 +22,17 @@
       },
       "children": [
         {
-          "id": "sources",
+          "id": 2,
           "label": "Sources",
           "type": "columns",
           "children": [
             {
-              "id": "lane1",
+              "id": 3,
               "label": "Lane 1",
               "type": "lane",
               "children": [
                 {
-                  "id": "exm_ren",
+                  "id": 4,
                   "label": "Eximius",
                   "code": "EXM_REN",
                   "type": "adapter",
@@ -44,19 +44,13 @@
                 }
               ]
             },
-
-
-
-
-
-
             {
-              "id": "lane2",
+              "id": 5,
               "label": "Lane",
               "type": "lane",
               "children": [
                 {
-                  "id": "bankview",
+                  "id": 6,
                   "label": "Bankview",
                   "code": "BNV",
                   "type": "adapter",
@@ -68,13 +62,12 @@
                 }
               ]
             }
-
           ]
         },
         {
           "label": "ODS",
           "state": "Ready",
-          "id": "pbdwh_ods",
+          "id": 7,
           "description": "Database : ODS",
           "type": "node",
           "category": "Database",
@@ -83,31 +76,31 @@
         {
           "label": "DWH",
           "state": "Ready",
-          "id": "pbdwh_dwh",
+          "id": 8,
           "description": "Database : DWH",
           "type": "node",
           "category": "Database",
           "link": "https://example.com/DWH"
         },
         {
-          "id": "dms",
+          "id": 9,
           "label": "Data marts",
           "type": "lane",
           "children": [
             {
-              "id": "em_payments",
+              "id": 10,
               "label": "Payments",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "dm_via",
+              "id": 11,
               "label": "VIA",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "em_dgs",
+              "id": 12,
               "label": "DGS",
               "code": "EMP",
               "type": "node"
@@ -115,31 +108,30 @@
           ]
         },
         {
-          "id": "foundation",
+          "id": 13,
           "label": "Cloud Data Foundation",
           "type": "lane",
           "children": [
             {
-              "id": "foundation_em_payments",
+              "id": 14,
               "label": "Payments",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_dm_via",
+              "id": 15,
               "label": "VIA",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_em_dgs",
+              "id": 16,
               "label": "DGS",
               "code": "EMP",
               "type": "foundation"
             }
           ]
         }
-
       ]
     }
   ],
@@ -151,8 +143,6 @@
       "state": "Unknown",
       "target": "pbdwh_ods"
     },
-
-
     {
       "isActive": false,
       "source": "transform_exm_ren",
@@ -160,9 +150,6 @@
       "state": "Unknown",
       "target": "pbdwh_ods"
     },
-
-
-
     {
       "isActive": false,
       "source": "pbdwh_ods",
@@ -212,6 +199,5 @@
       "state": "Unknown",
       "target": "raw_foundation_em_dgs"
     }
-
   ]
 }

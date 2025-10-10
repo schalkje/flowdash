@@ -10,17 +10,17 @@
   "nodes": [
     {
       "label": "Main Data Warehouse",
-      "id": "pbdwh",
+      "id": 1,
       "description": "Main Data Warehouse",
       "type": "columns",
       "children": [
         {
-          "id": "sources",
+          "id": 2,
           "label": "Sources",
           "type": "lane",
           "children": [
             {
-              "id": "bankview",
+              "id": 3,
               "label": "Bankview",
               "code": "BNV",
               "type": "adapter",
@@ -31,7 +31,7 @@
               }
             },
             {
-              "id": "matrix",
+              "id": 4,
               "label": "Matrix",
               "code": "MTX",
               "type": "adapter",
@@ -42,7 +42,7 @@
               }
             },
             {
-              "id": "fidor",
+              "id": 5,
               "label": "Fidor",
               "code": "FDR",
               "type": "adapter",
@@ -57,7 +57,7 @@
         {
           "label": "ODS",
           "state": "Ready",
-          "id": "pbdwh_ods",
+          "id": 6,
           "description": "Database : ODS",
           "type": "node",
           "category": "Database",
@@ -66,31 +66,31 @@
         {
           "label": "DWH",
           "state": "Ready",
-          "id": "pbdwh_dwh",
+          "id": 7,
           "description": "Database : DWH",
           "type": "node",
           "category": "Database",
           "link": "https://example.com/DWH"
         },
         {
-          "id": "dms",
+          "id": 8,
           "label": "Data marts",
           "type": "lane",
           "children": [
             {
-              "id": "em_payments",
+              "id": 9,
               "label": "Payments",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "dm_via",
+              "id": 10,
               "label": "VIA",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "em_dgs",
+              "id": 11,
               "label": "DGS",
               "code": "EMP",
               "type": "node"
@@ -98,31 +98,30 @@
           ]
         },
         {
-          "id": "foundation",
+          "id": 12,
           "label": "Cloud Data Foundation",
           "type": "lane",
           "children": [
             {
-              "id": "foundation_em_payments",
+              "id": 13,
               "label": "Payments",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_dm_via",
+              "id": 14,
               "label": "VIA",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_em_dgs",
+              "id": 15,
               "label": "DGS",
               "code": "EMP",
               "type": "foundation"
             }
           ]
         }
-
       ]
     }
   ],
@@ -197,6 +196,5 @@
       "state": "Unknown",
       "target": "raw_foundation_em_dgs"
     }
-
   ]
 }

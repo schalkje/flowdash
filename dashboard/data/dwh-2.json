@@ -10,17 +10,17 @@
   "nodes": [
     {
       "label": "PB DWH",
-      "id": "pbdwh",
+      "id": 1,
       "description": "Main Data Warehouse",
       "type": "columns",
       "children": [
         {
-          "id": "sources",
+          "id": 2,
           "label": "Sources",
           "type": "lane",
           "children": [
             {
-              "id": "bankview",
+              "id": 3,
               "label": "Bankview",
               "code": "BNV",
               "type": "adapter",
@@ -31,7 +31,7 @@
               }
             },
             {
-              "id": "matrix",
+              "id": 4,
               "label": "Matrix",
               "code": "MTX",
               "type": "adapter",
@@ -42,7 +42,7 @@
               }
             },
             {
-              "id": "fidor",
+              "id": 5,
               "label": "Fidor",
               "code": "FDR",
               "type": "adapter",
@@ -57,7 +57,7 @@
         {
           "label": "ODS",
           "state": "Ready",
-          "id": "pbdwh_ods",
+          "id": 6,
           "description": "Database : ODS",
           "type": "node",
           "category": "Database",
@@ -66,7 +66,7 @@
         {
           "label": "DWH",
           "state": "Ready",
-          "id": "pbdwh_dwh",
+          "id": 7,
           "description": "Database : DWH",
           "type": "node",
           "category": "Database",

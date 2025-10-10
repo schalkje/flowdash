@@ -10,22 +10,22 @@
   "nodes": [
     {
       "label": "Data Warehouse",
-      "id": "pbdwh",
+      "id": 1,
       "description": "DWH",
       "type": "columns",
       "children": [
         {
-          "id": "sources",
+          "id": 2,
           "label": "Sources",
           "type": "columns",
           "children": [
             {
-              "id": "lane1",
+              "id": 3,
               "label": "Lane 1",
               "type": "lane",
               "children": [
                 {
-                  "id": "exm_ren",
+                  "id": 4,
                   "label": "Eximius",
                   "code": "EXM_REN",
                   "type": "adapter",
@@ -36,7 +36,7 @@
                   }
                 },
                 {
-                  "id": "exm_exi",
+                  "id": 5,
                   "label": "Eximius",
                   "code": "EXM_EXI",
                   "type": "adapter",
@@ -47,7 +47,7 @@
                   }
                 },
                 {
-                  "id": "cro",
+                  "id": 6,
                   "label": "CRO",
                   "code": "CRO",
                   "type": "adapter",
@@ -58,7 +58,7 @@
                   }
                 },
                 {
-                  "id": "dnb",
+                  "id": 7,
                   "label": "DNB",
                   "code": "DNB",
                   "type": "adapter",
@@ -70,19 +70,13 @@
                 }
               ]
             },
-
-
-
-
-
-
             {
-              "id": "lane2",
+              "id": 8,
               "label": "Lane",
               "type": "lane",
               "children": [
                 {
-                  "id": "bankview",
+                  "id": 9,
                   "label": "Bankview",
                   "code": "BNV",
                   "type": "adapter",
@@ -93,7 +87,7 @@
                   }
                 },
                 {
-                  "id": "matrix",
+                  "id": 10,
                   "label": "Matrix",
                   "code": "MTX",
                   "type": "adapter",
@@ -104,7 +98,7 @@
                   }
                 },
                 {
-                  "id": "fidor",
+                  "id": 11,
                   "label": "Fidor",
                   "code": "FDR",
                   "type": "adapter",
@@ -116,13 +110,12 @@
                 }
               ]
             }
-
           ]
         },
         {
           "label": "ODS",
           "state": "Ready",
-          "id": "pbdwh_ods",
+          "id": 12,
           "description": "Database : ODS",
           "type": "node",
           "category": "Database",
@@ -131,31 +124,31 @@
         {
           "label": "DWH",
           "state": "Ready",
-          "id": "pbdwh_dwh",
+          "id": 13,
           "description": "Database : DWH",
           "type": "node",
           "category": "Database",
           "link": "https://example.com/DWH"
         },
         {
-          "id": "dms",
+          "id": 14,
           "label": "Data marts",
           "type": "lane",
           "children": [
             {
-              "id": "em_payments",
+              "id": 15,
               "label": "Payments",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "dm_via",
+              "id": 16,
               "label": "VIA",
               "code": "EMP",
               "type": "node"
             },
             {
-              "id": "em_dgs",
+              "id": 17,
               "label": "DGS",
               "code": "EMP",
               "type": "node"
@@ -163,31 +156,30 @@
           ]
         },
         {
-          "id": "foundation",
+          "id": 18,
           "label": "Cloud Data Foundation",
           "type": "lane",
           "children": [
             {
-              "id": "foundation_em_payments",
+              "id": 19,
               "label": "Payments",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_dm_via",
+              "id": 20,
               "label": "VIA",
               "code": "EMP",
               "type": "foundation"
             },
             {
-              "id": "foundation_em_dgs",
+              "id": 21,
               "label": "DGS",
               "code": "EMP",
               "type": "foundation"
             }
           ]
         }
-
       ]
     }
   ],
@@ -213,8 +205,6 @@
       "state": "Unknown",
       "target": "pbdwh_ods"
     },
-
-
     {
       "isActive": false,
       "source": "transform_exm_ren",
@@ -222,9 +212,6 @@
       "state": "Unknown",
       "target": "pbdwh_ods"
     },
-
-
-
     {
       "isActive": false,
       "source": "pbdwh_ods",
@@ -274,6 +261,5 @@
       "state": "Unknown",
       "target": "raw_foundation_em_dgs"
     }
-
   ]
 }

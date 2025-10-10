@@ -9,55 +9,56 @@
   "nodes": [
     {
       "label": "sources",
-      "id": "columns1",
+      "id": 1,
       "description": "Sources",
       "type": "columns",
-      "children":[
-    {
-      "id": "bankview",
-      "label": "Bankview",
-      "code": "BNV",
-      "type": "adapter",
-      "layout": {
-        "mode": "full",
-        "displayMode": "role",
-        "arrangement": 1
-      }
-    },
-    {
-      "label": "ODS",
-      "state": "Ready",
-      "id": "pbdwh_ods",
-      "description": "Database : ODS",
-      "type": "node",
-      "category": "Database",
-      "link": "https://example.com/ODS"
-    },
-    {
-      "label": "DWH",
-      "state": "Ready",
-      "id": "pbdwh_dwh",
-      "description": "Database : DWH",
-      "type": "node",
-      "category": "Database",
-      "link": "https://example.com/DWH"
+      "children": [
+        {
+          "id": 2,
+          "label": "Bankview",
+          "code": "BNV",
+          "type": "adapter",
+          "layout": {
+            "mode": "full",
+            "displayMode": "role",
+            "arrangement": 1
+          }
+        },
+        {
+          "label": "ODS",
+          "state": "Ready",
+          "id": 3,
+          "description": "Database : ODS",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/ODS"
+        },
+        {
+          "label": "DWH",
+          "state": "Ready",
+          "id": 4,
+          "description": "Database : DWH",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/DWH"
+        }
+      ]
     }
-  ]}
   ],
   "edges": [
     {
       "isActive": false,
-      "source": "transform_bankview",
+      "source": 2,
       "type": "SSIS",
       "state": "Unknown",
-      "target": "pbdwh_ods"
+      "target": 3
     },
     {
       "isActive": false,
-      "source": "pbdwh_ods",
+      "source": 3,
       "type": "SSIS",
       "state": "Unknown",
-      "target": "pbdwh_dwh"
+      "target": 4
     }
   ]
 }
