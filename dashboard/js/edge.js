@@ -110,7 +110,7 @@ export function createEdge(rootNode, edgeData, settings)
 }
 
 
-export  function createEdges(rootNode, edges, settings) {
+export  function createEdges(rootNode, edges, settings, nodeMap = null) {
   // Normalize edges to ensure they use numeric source/target IDs only
   const normalizedEdges = edges.map(edgeData => {
     // Create a clean edge object with only the properties we need
@@ -138,9 +138,10 @@ export  function createEdges(rootNode, edges, settings) {
   }).filter(edge => edge !== null);
 
   // Continue with existing edge creation logic using normalizedEdges
+  // Use nodeMap if provided (Optimization #4), otherwise fall back to getNode
   normalizedEdges.forEach(edgeData => {
-    const sourceNode = rootNode.getNode(edgeData.source);
-    const targetNode = rootNode.getNode(edgeData.target);
+    const sourceNode = nodeMap ? nodeMap.get(edgeData.source) : rootNode.getNode(edgeData.source);
+    const targetNode = nodeMap ? nodeMap.get(edgeData.target) : rootNode.getNode(edgeData.target);
     
     if (!sourceNode) {
       console.error('Creating Edge - Source node', edgeData.source, 'not found', edgeData);

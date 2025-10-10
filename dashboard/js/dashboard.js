@@ -112,6 +112,28 @@ export class Dashboard {
     return this.performanceMetrics;
   }
   
+  /**
+   * Build a node lookup map for efficient edge creation (Optimization #4)
+   * @param {Node} rootNode - The root node to traverse
+   * @returns {Map<number, Node>} Map of node IDs to node objects
+   */
+  buildNodeMap(rootNode) {
+    const map = new Map();
+    
+    const addNode = (node) => {
+      map.set(node.id, node);
+      if (node.childNodes && node.childNodes.length > 0) {
+        node.childNodes.forEach(addNode);
+      }
+    };
+    
+    if (rootNode) {
+      addNode(rootNode);
+    }
+    
+    return map;
+  }
+  
   collectNodeStatistics() {
     const countNodes = (node, depth = 0) => {
       this.performanceMetrics.nodeStats.totalNodes++;
@@ -830,7 +852,18 @@ export class Dashboard {
     const t3 = performance.now();
     this.initializeChildrenStatusses(root);
 
-    if (dashboard.edges.length > 0) createEdges(root, dashboard.edges, dashboard.settings);
+    if (dashboard.edges.length > 0) {
+      console.log(`🔗 Creating ${dashboard.edges.length} edges...`);
+      const t3a = performance.now();
+      
+      // Build node lookup map ONCE for edge creation (Optimization #4)
+      const nodeMap = this.buildNodeMap(root);
+      console.log(`📇 Built node lookup map: ${nodeMap.size} nodes in ${(performance.now() - t3a).toFixed(2)}ms`);
+      
+      const t3b = performance.now();
+      createEdges(root, dashboard.edges, dashboard.settings, nodeMap);
+      console.log(`✅ Created edges in ${(performance.now() - t3b).toFixed(2)}ms (total with map: ${(performance.now() - t3a).toFixed(2)}ms)`);
+    }
     
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
     try { this.reparentNodesByParentIds(); } catch {}
