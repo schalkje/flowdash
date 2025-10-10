@@ -878,54 +878,52 @@ export class Dashboard {
 
     // Phase 2: Node Initialization
     const t2 = performance.now();
+    
+    // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
+    // Instead of measure-write-measure-write, we do: write-write-write, measure-once, write-write-write
+    this._batchDomOperations = true;
+    this._deferredOperations = {
+      measurements: [],
+      updates: []
+    };
+    
     // Suspend display-change reactions during bulk initialization to avoid
     // mid-cascade zoom/fit recalculations that cause drift
     this._suspendDisplayChange = true;
     // Store dashboard reference on root so handleDisplayChange() can access suspension flag
     root.__dashboard = this;
-    root.init();
-    // DON'T lift suspension yet - keep it active through edge creation and reparenting
-    this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
     
-    // DEBUG: Report suspension effectiveness
-    if (window._debugDisplayChange) {
-      console.log('📊 Init complete - handleDisplayChange called:', window._displayChangeCallCount || 0, 'times');
-      window._displayChangeCallCount = 0;
-    }
+    // Initialize all nodes (DOM creation)
+    const t2a = performance.now();
+    root.init();
+    
+    // Perform all deferred measurements in a single batch (Optimization #7)
+    const measurementCount = this._deferredOperations.measurements.length;
+    this._deferredOperations.measurements.forEach(fn => fn());
+    this._deferredOperations.measurements = [];
+    
+    // Apply any updates that depend on measurements
+    const updateCount = this._deferredOperations.updates.length;
+    this._deferredOperations.updates.forEach(fn => fn());
+    this._deferredOperations.updates = [];
+    this._batchDomOperations = false;
+    this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
 
     // Phase 3: Edge Creation & Status Initialization
     const t3 = performance.now();
     this.initializeChildrenStatusses(root);
 
     if (dashboard.edges.length > 0) {
-      console.log(`🔗 Creating ${dashboard.edges.length} edges...`);
-      const t3a = performance.now();
-      
       // Build node lookup map ONCE for edge creation (Optimization #4)
       const nodeMap = this.buildNodeMap(root);
-      console.log(`📇 Built node lookup map: ${nodeMap.size} nodes in ${(performance.now() - t3a).toFixed(2)}ms`);
-      
-      const t3b = performance.now();
       createEdges(root, dashboard.edges, dashboard.settings, nodeMap);
-      console.log(`✅ Created edges in ${(performance.now() - t3b).toFixed(2)}ms (total with map: ${(performance.now() - t3a).toFixed(2)}ms)`);
     }
     
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
     try { this.reparentNodesByParentIds(); } catch {}
     
-    // NOW lift suspension after all initialization, edge creation, and reparenting is complete
+    // Lift suspension after all initialization, edge creation, and reparenting is complete
     this._suspendDisplayChange = false;
-    
-    // DEBUG: Report post-init display changes
-    if (window._debugDisplayChange) {
-      console.log('📊 Post-init phase complete:', {
-        handleDisplayChangeCalls: window._displayChangeCallCount || 0,
-        onMainDisplayChangeCalls: window._onMainDisplayChangeCallCount || 0
-      });
-      console.log('📊 Display changes now allowed - expecting only 1-2 more calls');
-      window._displayChangeCallCount = 0;
-      window._onMainDisplayChangeCallCount = 0;
-    }
     
     this.performanceMetrics.phases.edgeCreation = performance.now() - t3;
 
@@ -1043,19 +1041,6 @@ export class Dashboard {
   }
 
   onMainDisplayChange() {
-    // DEBUG: Count and log calls
-    if (window._debugDisplayChange) {
-      window._onMainDisplayChangeCallCount = (window._onMainDisplayChangeCallCount || 0) + 1;
-      
-      if (window._onMainDisplayChangeCallCount <= 5 || window._onMainDisplayChangeCallCount % 100 === 0) {
-        console.log(`🔍 onMainDisplayChange call #${window._onMainDisplayChangeCallCount}:`, {
-          suspended: this._suspendDisplayChange,
-          scheduled: this._displayChangeScheduled,
-          willBlock: this._suspendDisplayChange || this._displayChangeScheduled
-        });
-      }
-    }
-    
     // Check suspension before scheduling
     if (this._suspendDisplayChange) return;
     if (this._displayChangeScheduled) return;
@@ -1064,15 +1049,8 @@ export class Dashboard {
     requestAnimationFrame(() => {
       // Double-check suspension inside RAF callback
       if (this._suspendDisplayChange) {
-        if (window._debugDisplayChange) {
-          console.log('🔍 RAF callback blocked by suspension');
-        }
         this._displayChangeScheduled = false;
         return;
-      }
-      
-      if (window._debugDisplayChange) {
-        console.log('🔍 RAF callback EXECUTING handleLayoutChange');
       }
       
       const isInitialStabilization = this._displayChangeCount === 0;
@@ -1133,7 +1111,6 @@ export class Dashboard {
       } catch {}
 
       if (this._initialLoading) {
-        console.log('📊 Dashboard onMainDisplayChange - Initial loading complete, calling hideLoading()');
         this._initialLoading = false;
         this.hideLoading();
       }
@@ -1462,7 +1439,6 @@ export class Dashboard {
     LoadingOverlay.show(container);
   }
   hideLoading() {
-    console.log('📊 Dashboard.hideLoading() called');
     LoadingOverlay.hide();
   }
 

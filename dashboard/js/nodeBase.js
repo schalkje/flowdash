@@ -169,47 +169,14 @@ export default class BaseNode {
     if (this.suspenseDisplayChange) {
       return;
     }
-    // If dashboard is temporarily suspending display changes during bulk init,
-    // skip bubbling to avoid mid-cascade zoom recalculation. We detect via the
-    // closest available dashboard reference on the root node if present.
-    
-    // DEBUG: Count calls during init
-    if (window._debugDisplayChange) {
-      window._displayChangeCallCount = (window._displayChangeCallCount || 0) + 1;
-    }
     
     try {
       // Check this node's dashboard reference (inherited during init)
       const dashboard = this.__dashboard;
       
-      // DEBUG: Log suspension check for first few calls
-      if (window._debugDisplayChange && window._displayChangeCallCount <= 5) {
-        console.log(`🔍 handleDisplayChange #${window._displayChangeCallCount}:`, {
-          nodeId: this.id,
-          hasParent: !!this.parentNode,
-          hasDashboard: !!dashboard,
-          suspended: dashboard?._suspendDisplayChange,
-          willBlock: !!(dashboard && dashboard._suspendDisplayChange),
-          hasOnDisplayChange: !!this.onDisplayChange
-        });
-      }
-      
+      // Check suspension - early exit during initialization
       if (dashboard && dashboard._suspendDisplayChange) {
-        if (window._debugDisplayChange && window._displayChangeCallCount <= 5) {
-          console.log(`  ✅ BLOCKED by suspension`);
-        }
         return;
-      }
-      
-      // DEBUG: Track post-suspension calls with stack trace
-      if (window._debugDisplayChange && !dashboard?._suspendDisplayChange) {
-        window._postSuspensionCallCount = (window._postSuspensionCallCount || 0) + 1;
-        if (window._postSuspensionCallCount <= 3) {
-          console.log(`⚠️ POST-SUSPENSION handleDisplayChange #${window._postSuspensionCallCount}:`, {
-            nodeId: this.id,
-            stack: new Error().stack.split('\n').slice(2, 5).join('\n')
-          });
-        }
       }
     } catch {}
     if (this.onDisplayChange) {
@@ -265,10 +232,24 @@ export default class BaseNode {
     // Initialize zone manager only for container nodes
     if (this.isContainer) {
       this.zoneManager = new ZoneManager(this);
-      this.zoneManager.init();
+      
+      // OPTIMIZATION #7: If batching DOM operations, defer complex zone initialization
+      const isBatching = this.__dashboard?._batchDomOperations;
+      if (isBatching) {
+        // Just create structure, defer measurements and complex operations
+        this.zoneManager.initStructureOnly?.() || this.zoneManager.init();
+      } else {
+        this.zoneManager.init();
+      }
 
-      // Resize zones with actual node dimensions
-      if (this.zoneManager) {
+      // Defer resize to measurement phase if batching
+      if (isBatching && this.__dashboard?._deferredOperations) {
+        this.__dashboard._deferredOperations.measurements.push(() => {
+          if (this.zoneManager) {
+            this.zoneManager.resize(this.data.width, this.data.height);
+          }
+        });
+      } else if (this.zoneManager) {
         this.zoneManager.resize(this.data.width, this.data.height);
       }
     }
