@@ -134,6 +134,33 @@ export class Dashboard {
     return map;
   }
   
+  /**
+   * Deferred minimap initialization (Optimization #6)
+   * Initialize minimap after initial dashboard load completes
+   */
+  _deferredMinimapInit() {
+    if (this._minimapInitialized) return;
+    
+    console.log('🗺️ Initializing minimap (deferred)...');
+    const t0 = performance.now();
+    
+    try {
+      this.minimap.safeInitialize();
+      this._minimapInitialized = true;
+      console.log(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
+    } catch (e) {
+      console.error('❌ Failed to initialize minimap:', e);
+    }
+  }
+  
+  /**
+   * Check if minimap is ready for operations (Optimization #6 helper)
+   * @returns {boolean} True if minimap is initialized and ready
+   */
+  _isMinimapReady() {
+    return this._minimapInitialized && this.minimap && this.minimap.active && this.minimap.svg;
+  }
+  
   collectNodeStatistics() {
     const countNodes = (node, depth = 0) => {
       this.performanceMetrics.nodeStats.totalNodes++;
@@ -283,24 +310,25 @@ export class Dashboard {
       this.main.zoom = this.initializeZoom();
     }
 
-    // CRITICAL FIX: Instead of destroying and recreating the minimap, 
-    // just reinitialize the existing one to prevent zoom-cockpit duplication
+    // OPTIMIZATION #6: Defer minimap initialization during setData
+    // Clean up any orphaned elements first, but keep minimap working for data updates
+    this.cleanupOrphanedElements();
+    
+    // For setData (data updates), we should reinitialize the minimap
+    // but do it deferred to avoid blocking
     if (this.minimap) {
       try { 
-        // Clean up any orphaned elements first
-        this.cleanupOrphanedElements();
-        // Use safe initialization to prevent duplicates
-        this.minimap.safeInitialize();
+        // Mark as needing reinitialization
+        this._minimapInitialized = false;
+        // Defer minimap reinitialization slightly
+        setTimeout(() => {
+          if (!this._minimapInitialized) {
+            this._deferredMinimapInit();
+          }
+        }, 50);
       } catch (e) {
-        // If reinitialization fails, fall back to creating a new instance
-        console.warn('Failed to reinitialize minimap, creating new instance:', e);
-        this.minimap = new Minimap(this);
-        this.minimap.initializeEmbedded();
+        console.warn('Failed to schedule minimap reinit:', e);
       }
-    } else {
-      // Only create new instance if one doesn't exist
-      this.minimap = new Minimap(this);
-      this.minimap.initializeEmbedded();
     }
 
     this.hasPerformedInitialZoomToRoot = false;
@@ -350,9 +378,12 @@ export class Dashboard {
     this.main.root.onClick = (node) => this.selectNode(node);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
 
-    // CRITICAL FIX: Clean up any orphaned elements and use safe initialization to prevent duplicates
+    // OPTIMIZATION #6: Defer minimap initialization to improve initial load time
+    // Clean up any orphaned elements but DON'T initialize minimap yet
     this.cleanupOrphanedElements();
-    this.minimap.safeInitialize();
+    // Mark minimap as pending initialization
+    this._minimapInitialized = false;
+    
     this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
@@ -388,6 +419,12 @@ export class Dashboard {
         console.log('📊 Dashboard.initialize() - Fallback hideLoading() called');
         this._initialLoading = false;
         this.hideLoading();
+      }
+      
+      // OPTIMIZATION #6: Initialize minimap AFTER initial load completes
+      // This prevents minimap initialization from blocking the main rendering
+      if (!this._minimapInitialized) {
+        this._deferredMinimapInit();
       }
     }, 0);
   }
@@ -650,7 +687,7 @@ export class Dashboard {
         .translate(-newLeft * newK - newWidth / 2, -newTop * newK - newHeight / 2)
         .scale(newK);
 
-      if (this.minimap.active) {
+      if (this._isMinimapReady()) {
         this.minimap.resize();
       }
 
@@ -660,7 +697,7 @@ export class Dashboard {
 
       this.recomputeBaselineFit();
 
-      if (this.minimap.active) {
+      if (this._isMinimapReady()) {
         this.minimap.update();
         this.minimap.updateViewport(newTransform);
         this.minimap.position();
@@ -687,7 +724,7 @@ export class Dashboard {
         this.main.height = rect.height;
         this.main.divRatio = this.main.width / this.main.height;
         this.main.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
-        if (this.minimap.active) {
+        if (this._isMinimapReady()) {
           this.minimap.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
           this.minimap.update();
           const transform = d3.zoomIdentity
@@ -741,7 +778,7 @@ export class Dashboard {
       .translate(-newLeft * newK - newWidth / 2, -newTop * newK - newHeight / 2)
       .scale(newK);
 
-    if (this.minimap.active) this.minimap.resize();
+    if (this._isMinimapReady()) this.minimap.resize();
 
     this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
     this.main.container.attr('transform', newTransform);
@@ -749,7 +786,7 @@ export class Dashboard {
 
     this.recomputeBaselineFit();
 
-    if (this.minimap.active) {
+    if (this._isMinimapReady()) {
       this.minimap.update();
       this.minimap.updateViewport(newTransform);
       this.minimap.position();
@@ -999,7 +1036,9 @@ export class Dashboard {
       }
       // Ensure DOM hierarchy is consistent with logical parent/child relationships
       try { this.enforceDomHierarchy(); } catch {}
-      if (this.minimap.svg) {
+      
+      // OPTIMIZATION #6: Only update minimap if it's initialized and ready
+      if (this._isMinimapReady()) {
         try {
           this.minimap.update();
           const transform = d3.zoomIdentity
@@ -1007,9 +1046,9 @@ export class Dashboard {
             .scale(this.main.transform.k);
           this.minimap.updateViewport(transform);
           this.minimap.updateScaleIndicator?.();
+          this.minimap.position();
         } catch {}
       }
-      this.minimap.position();
 
       // Recompute selection bounding box after layout changes (e.g., collapse/expand)
       try {
