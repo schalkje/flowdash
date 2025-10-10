@@ -365,6 +365,9 @@
                 performance.clearMarks();
                 performance.clearMeasures();
 
+                // Enable debug logging for display change suspension
+                window._debugDisplayChange = true;
+
                 // Load dashboard
                 const loadStart = performance.now();
                 await loadDashboardFromFile('#graph svg', 'dwh-6.fixed.json');

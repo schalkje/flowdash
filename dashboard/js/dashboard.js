@@ -881,9 +881,17 @@ export class Dashboard {
     // Suspend display-change reactions during bulk initialization to avoid
     // mid-cascade zoom/fit recalculations that cause drift
     this._suspendDisplayChange = true;
+    // Store dashboard reference on root so handleDisplayChange() can access suspension flag
+    root.__dashboard = this;
     root.init();
-    this._suspendDisplayChange = false;
+    // DON'T lift suspension yet - keep it active through edge creation and reparenting
     this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
+    
+    // DEBUG: Report suspension effectiveness
+    if (window._debugDisplayChange) {
+      console.log('📊 Init complete - handleDisplayChange called:', window._displayChangeCallCount || 0, 'times');
+      window._displayChangeCallCount = 0;
+    }
 
     // Phase 3: Edge Creation & Status Initialization
     const t3 = performance.now();
@@ -904,6 +912,20 @@ export class Dashboard {
     
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
     try { this.reparentNodesByParentIds(); } catch {}
+    
+    // NOW lift suspension after all initialization, edge creation, and reparenting is complete
+    this._suspendDisplayChange = false;
+    
+    // DEBUG: Report post-init display changes
+    if (window._debugDisplayChange) {
+      console.log('📊 Post-init phase complete:', {
+        handleDisplayChangeCalls: window._displayChangeCallCount || 0,
+        onMainDisplayChangeCalls: window._onMainDisplayChangeCallCount || 0
+      });
+      console.log('📊 Display changes now allowed - expecting only 1-2 more calls');
+      window._displayChangeCallCount = 0;
+      window._onMainDisplayChangeCallCount = 0;
+    }
     
     this.performanceMetrics.phases.edgeCreation = performance.now() - t3;
 
@@ -1021,10 +1043,38 @@ export class Dashboard {
   }
 
   onMainDisplayChange() {
+    // DEBUG: Count and log calls
+    if (window._debugDisplayChange) {
+      window._onMainDisplayChangeCallCount = (window._onMainDisplayChangeCallCount || 0) + 1;
+      
+      if (window._onMainDisplayChangeCallCount <= 5 || window._onMainDisplayChangeCallCount % 100 === 0) {
+        console.log(`🔍 onMainDisplayChange call #${window._onMainDisplayChangeCallCount}:`, {
+          suspended: this._suspendDisplayChange,
+          scheduled: this._displayChangeScheduled,
+          willBlock: this._suspendDisplayChange || this._displayChangeScheduled
+        });
+      }
+    }
+    
+    // Check suspension before scheduling
+    if (this._suspendDisplayChange) return;
     if (this._displayChangeScheduled) return;
     this._displayChangeScheduled = true;
 
     requestAnimationFrame(() => {
+      // Double-check suspension inside RAF callback
+      if (this._suspendDisplayChange) {
+        if (window._debugDisplayChange) {
+          console.log('🔍 RAF callback blocked by suspension');
+        }
+        this._displayChangeScheduled = false;
+        return;
+      }
+      
+      if (window._debugDisplayChange) {
+        console.log('🔍 RAF callback EXECUTING handleLayoutChange');
+      }
+      
       const isInitialStabilization = this._displayChangeCount === 0;
       const tLayout = isInitialStabilization ? performance.now() : null;
       
