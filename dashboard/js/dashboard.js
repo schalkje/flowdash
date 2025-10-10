@@ -5,7 +5,7 @@ import { createMarkers } from "./markers.js";
 import { createEdges } from "./edge.js";
 import { ConfigManager } from "./configManager.js";
 import { fetchDashboardFile } from "./data.js";
-import { LoadingOverlay, showLoading as showLoader, hideLoading as hideLoader, resolveLoadingContainer as resolveLoadingHost } from "./loadingOverlay.js";
+import { LoadingOverlay, showLoading as showLoader, hideLoading as hideLoader, resolveLoadingContainer as resolveLoadingHost, setLoadingMessage as setLoaderMessage } from "./loadingOverlay.js";
 import { Minimap } from "./minimap.js";
 import ZoomManager from "./zoomManager.js";
 import { NodeStatus } from "./nodeBase.js";
@@ -1343,6 +1343,22 @@ export class Dashboard {
     console.log('📊 Dashboard.hideLoading() called');
     LoadingOverlay.hide();
   }
+
+  /**
+   * Update the loading overlay message for this dashboard instance.
+   * Ensures the overlay is created within the dashboard's host before updating.
+   * @param {string} message
+   */
+  setLoadingMessage(message) {
+    try {
+      const container = resolveLoadingHost(this.main?.svg);
+      // Ensure the overlay exists in the correct host before setting the message
+      LoadingOverlay.ensure(container);
+      setLoaderMessage(message);
+    } catch (e) {
+      console.warn('setLoadingMessage failed:', e);
+    }
+  }
 }
 
 
@@ -1593,4 +1609,4 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
   }
 }
 
-export { showLoader as showLoading, hideLoader as hideLoading, fetchDashboardFile };
+export { showLoader as showLoading, hideLoader as hideLoading, setLoaderMessage as setLoadingMessage, fetchDashboardFile };
