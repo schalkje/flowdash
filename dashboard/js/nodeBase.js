@@ -267,17 +267,15 @@ export default class BaseNode {
         this.zoneManager.init();
       }
 
-      // Skip resize if in pre-render mode (dimensions already set from pre-render data)
-      const inPrerenderMode = this.zoneManager._prerenderMode;
-      
+      // Resize zones (in pre-render mode, this sets sizes but skips calculations)
       // Defer resize to measurement phase if batching
-      if (isBatching && this.__dashboard?._deferredOperations && !inPrerenderMode) {
+      if (isBatching && this.__dashboard?._deferredOperations) {
         this.__dashboard._deferredOperations.measurements.push(() => {
-          if (this.zoneManager && !this.zoneManager._prerenderMode) {
+          if (this.zoneManager) {
             this.zoneManager.resize(this.data.width, this.data.height);
           }
         });
-      } else if (this.zoneManager && !inPrerenderMode) {
+      } else if (this.zoneManager) {
         this.zoneManager.resize(this.data.width, this.data.height);
       }
     }

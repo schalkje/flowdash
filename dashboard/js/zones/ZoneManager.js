@@ -56,6 +56,12 @@ export class ZoneManager {
       zone._prerenderMode = true;
       zone.init();
     });
+    
+    // Set zone sizes from pre-render data so zones render correctly
+    // Zones will accept the size but skip expensive calculations
+    if (this.node.data.width && this.node.data.height) {
+      this.zones.forEach(zone => zone.resize(this.node.data.width, this.node.data.height));
+    }
   }
 
   /**
@@ -118,19 +124,15 @@ export class ZoneManager {
    * Resize all zones based on new dimensions
    */
   resize(width, height) {
-    // Skip resize in pre-render mode (dimensions already set)
-    if (this._prerenderMode) {
-      // console.log(`📊 Pre-render: Skipping zone resize for ${this.node.id}`);
-      return;
-    }
-    
     // Prevent repeated resizes with the same dimensions to avoid infinite loops
     if (this._lastResize && this._lastResize.width === width && this._lastResize.height === height) {
       return;
     }
     
-    // Resize logging removed to reduce console spam
     this._lastResize = { width, height };
+    
+    // In pre-render mode, still propagate size to zones for rendering
+    // but zones will skip expensive calculations internally
     this.zones.forEach(zone => zone.resize(width, height));
   }
 
