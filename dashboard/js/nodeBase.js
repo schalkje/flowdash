@@ -54,6 +54,17 @@ export default class BaseNode {
     this.y ??= 0;
     this.data.width ??= 60;
     this.data.height ??= 60;
+
+    // Apply pre-render position if available
+    if (nodeData.prerender) {
+      this.x = nodeData.prerender.x;
+      this.y = nodeData.prerender.y;
+      this.data.width = nodeData.prerender.width;
+      this.data.height = nodeData.prerender.height;
+      this._hasPrerenderData = true;
+    } else {
+      this._hasPrerenderData = false;
+    }
   }
 
   get visible() {
@@ -89,6 +100,14 @@ export default class BaseNode {
       this.element.classed("collapsed", this.collapsed);
       this.element.classed("expanded", !this.collapsed);
     } 
+  }
+
+  /**
+   * Check if this node has pre-render data
+   * @returns {boolean}
+   */
+  get hasPrerenderData() {
+    return this._hasPrerenderData === true;
   }
 
   get status() {

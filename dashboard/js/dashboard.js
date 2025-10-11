@@ -29,6 +29,9 @@ export class Dashboard {
 
     this.data.settings = ConfigManager.mergeWithDefaults(this.data.settings);
     
+    // Pre-render state tracking
+    this._suspendStatusChanges = false;
+    
     // Performance tracking
     this.performanceMetrics = {
       phases: {
@@ -84,6 +87,81 @@ export class Dashboard {
     this._displayChangeCount = 0;
     this._suspendDisplayChange = false;
     this.zoomManager = new ZoomManager(this);
+  }
+
+  // --- Pre-Render Methods ---
+
+  /**
+   * Check if dashboard has pre-render data available
+   * @returns {boolean} True if pre-render data exists and is enabled
+   */
+  hasPrerenderData() {
+    const settingsUsePrerender = this.data.settings?.usePrerender !== false;
+    const hasNodePrerender = this.hasNodePrerenderData(this.data.nodes);
+    return settingsUsePrerender && hasNodePrerender;
+  }
+
+  /**
+   * Recursively check if any node has pre-render data
+   * @param {Array} nodes - Array of nodes to check
+   * @returns {boolean} True if any node has prerender data
+   */
+  hasNodePrerenderData(nodes) {
+    if (!Array.isArray(nodes)) return false;
+    
+    for (const node of nodes) {
+      if (node.prerender) return true;
+      if (node.children && this.hasNodePrerenderData(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Apply status rules after pre-render initial display
+   * @param {Object} root - Root node
+   */
+  applyDeferredStatusRules(root) {
+    console.log('📊 Pre-render: Applying deferred status rules');
+    
+    // Re-enable status change handlers
+    this._suspendStatusChanges = false;
+    
+    // Re-enable display change callbacks
+    this._suspendDisplayChange = false;
+    
+    // Determine container statuses based on children
+    if (this.settings.cascadeOnStatusChange) {
+      this.initializeChildrenStatusses(root);
+    }
+    
+    // Apply collapse rules if enabled
+    if (this.settings.toggleCollapseOnStatusChange) {
+      this.applyAutoCollapse(root);
+    }
+    
+    // Final layout adjustments
+    this.onMainDisplayChange();
+    
+    console.log('📊 Pre-render: Status rules applied');
+  }
+
+  /**
+   * Apply auto-collapse based on status
+   * @param {Object} node - Node to process
+   */
+  applyAutoCollapse(node) {
+    if (!node.isContainer) return;
+    
+    // Check if this container should auto-collapse based on status
+    // This is where status-based collapse logic goes
+    // (Implementation depends on existing status rules)
+    
+    // Recursively process children
+    if (node.childNodes) {
+      node.childNodes.forEach(child => this.applyAutoCollapse(child));
+    }
   }
 
   // --- Performance Metrics Methods ---
@@ -367,10 +445,33 @@ export class Dashboard {
       this.onMainDisplayChange();
     };
     
+    // Check for pre-render data
+    const hasPrerenderData = this.hasPrerenderData();
+
+    if (hasPrerenderData) {
+      console.log('📊 Pre-render data detected - using fast-path initialization');
+      
+      // Suspend display change callbacks during initial render
+      this._suspendDisplayChange = true;
+      
+      // Suspend status change handlers
+      this._suspendStatusChanges = true;
+    }
+    
     // Phase 1: Node Creation (includes node tree, initialization, edges)
     const t1 = performance.now();
     this.main.root = this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
     // nodeCreation, nodeInitialization, and edgeCreation are tracked inside createDashboard
+
+    // If using pre-render, apply status rules in second pass
+    if (hasPrerenderData && this.main.root) {
+      console.log('📊 Pre-render: Scheduling deferred status application');
+      
+      // Schedule status application after initial render
+      requestAnimationFrame(() => {
+        this.applyDeferredStatusRules(this.main.root);
+      });
+    }
 
     // Phase 4: Zoom Setup
     const t4 = performance.now();

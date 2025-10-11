@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Render Test</title>
+    <script src="libs/d3.min.js"></script>
+    <script src="libs/d3-shape.min.js"></script>
+    <script src="libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="flowdash.css">
+    <script>window.FLOWDASH_THEME = { default: 'retro' };</script>
+    <script src="js/themeManager.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dashboard-container {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: relative;
+        }
+        #graph-container {
+            width: 100%;
+            height: 100%;
+        }
+        #graph {
+            width: 100%;
+            height: 100%;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        .log-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-prerender {
+            color: #4ec9b0;
+        }
+        .log-error {
+            color: #f48771;
+        }
+        .log-info {
+            color: #569cd6;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Pre-Render Feature Test</h1>
+
+        <div class="test-section">
+            <h2>Test Dashboard with Pre-Render Data</h2>
+            <div style="margin-bottom: 15px;">
+                <label for="fileSelector" style="font-weight: bold; margin-right: 10px;">Select Test File:</label>
+                <select id="fileSelector" style="padding: 8px; font-size: 1em; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">-- Select a file --</option>
+                </select>
+            </div>
+            <button id="loadWithPrerender">Load WITH Pre-Render</button>
+            <button id="loadWithoutPrerender">Load WITHOUT Pre-Render</button>
+            <button id="clearDashboard">Clear</button>
+
+            <div class="metrics" id="metrics" style="display: none;">
+                <div class="metric">
+                    <div class="metric-label">Load Time</div>
+                    <div class="metric-value" id="metricLoadTime">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Pre-Render Used</div>
+                    <div class="metric-value" id="metricPrerender">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Nodes</div>
+                    <div class="metric-value" id="metricNodes">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Edges</div>
+                    <div class="metric-value" id="metricEdges">-</div>
+                </div>
+            </div>
+
+            <div class="dashboard-container" id="dashboardContainer">
+                <div id="graph-container">
+                    <svg id="graph" class="canvas"></svg>
+                </div>
+            </div>
+
+            <h3>Console Log</h3>
+            <div class="log-output" id="logOutput"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import flowDashboard from './js/index.js';
+
+        let currentDashboard = null;
+        const logOutput = document.getElementById('logOutput');
+        const metrics = document.getElementById('metrics');
+        const fileSelector = document.getElementById('fileSelector');
+
+        // Available test files (base name without extension)
+        const availableFiles = [
+            'dwh-1',
+            'dwh-5',
+            'dwh-tiny',
+            'dwh-small',
+            'dwh-6.fixed'
+        ];
+
+        // Populate file selector
+        availableFiles.forEach(baseName => {
+            const option = document.createElement('option');
+            option.value = baseName;
+            option.textContent = baseName;
+            fileSelector.appendChild(option);
+        });
+
+        let currentTestData = null;
+        let currentTestDataWithPrerender = null;
+
+        // Load files when selection changes
+        fileSelector.addEventListener('change', async (e) => {
+            const baseName = e.target.value;
+            if (!baseName) {
+                currentTestData = null;
+                currentTestDataWithPrerender = null;
+                addLog('No file selected');
+                return;
+            }
+
+            try {
+                clearLog();
+                addLog(`📂 Loading ${baseName}.json...`);
+                
+                // Load base file
+                const baseResponse = await fetch(`data/${baseName}.json`);
+                if (!baseResponse.ok) throw new Error(`Failed to load ${baseName}.json`);
+                currentTestData = await baseResponse.json();
+                addLog(`✅ Loaded ${baseName}.json`);
+
+                // Try to load prerender file
+                try {
+                    const prerenderResponse = await fetch(`data/${baseName}.prerender.json`);
+                    if (prerenderResponse.ok) {
+                        currentTestDataWithPrerender = await prerenderResponse.json();
+                        addLog(`✅ Loaded ${baseName}.prerender.json`);
+                    } else {
+                        throw new Error('Not found');
+                    }
+                } catch (prerenderError) {
+                    addLog(`⚠️ No prerender file found for ${baseName}`);
+                    currentTestDataWithPrerender = null;
+                }
+
+                addLog('Files loaded successfully. Click buttons to test.');
+            } catch (error) {
+                addLog(`❌ Error loading files: ${error.message}`, 'error');
+                currentTestData = null;
+                currentTestDataWithPrerender = null;
+            }
+        });
+
+        // Sample test data (fallback)
+        const testData = {
+            nodes: [
+                {
+                    id: "root",
+                    type: "foundation",
+                    label: "Test Container",
+                    children: [
+                        { id: "node1", type: "mart", label: "Node 1", state: "Updated" },
+                        { id: "node2", type: "mart", label: "Node 2", state: "Ready" },
+                        { id: "node3", type: "mart", label: "Node 3", state: "Error" },
+                        { id: "node4", type: "mart", label: "Node 4", state: "Warning" }
+                    ]
+                }
+            ],
+            edges: [
+                { source: "node1", target: "node2" },
+                { source: "node2", target: "node3" },
+                { source: "node3", target: "node4" }
+            ],
+            settings: {
+                toggleCollapseOnStatusChange: false,
+                cascadeOnStatusChange: false
+            }
+        };
+
+        // Add pre-render data to test data
+        const testDataWithPrerender = JSON.parse(JSON.stringify(testData));
+        testDataWithPrerender.nodes[0].prerender = { x: 0, y: 0, width: 400, height: 300 };
+        testDataWithPrerender.nodes[0].children[0].prerender = { x: 20, y: 20, width: 80, height: 60 };
+        testDataWithPrerender.nodes[0].children[1].prerender = { x: 120, y: 20, width: 80, height: 60 };
+        testDataWithPrerender.nodes[0].children[2].prerender = { x: 220, y: 20, width: 80, height: 60 };
+        testDataWithPrerender.nodes[0].children[3].prerender = { x: 320, y: 20, width: 80, height: 60 };
+        testDataWithPrerender.settings.usePrerender = true;
+        testDataWithPrerender.settings.prerenderMetadata = {
+            generated: new Date().toISOString(),
+            nodeCount: 5,
+            edgeCount: 3,
+            source: "test"
+        };
+
+        // Intercept console.log
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.join(' ');
+            addLog(message);
+        };
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            if (message.includes('📊')) {
+                entry.className += ' log-prerender';
+            } else if (message.includes('Error') || message.includes('error')) {
+                entry.className += ' log-error';
+            } else {
+                entry.className += ' log-info';
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logOutput.appendChild(entry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLog() {
+            logOutput.innerHTML = '';
+        }
+
+        function updateMetrics(loadTime, hasPrerenderData, nodeCount, edgeCount) {
+            metrics.style.display = 'grid';
+            document.getElementById('metricLoadTime').textContent = loadTime.toFixed(0) + 'ms';
+            document.getElementById('metricPrerender').textContent = hasPrerenderData ? 'Yes ✅' : 'No ❌';
+            document.getElementById('metricNodes').textContent = nodeCount;
+            document.getElementById('metricEdges').textContent = edgeCount;
+        }
+
+        document.getElementById('loadWithPrerender').addEventListener('click', async () => {
+            if (!currentTestDataWithPrerender) {
+                addLog('❌ No prerender file available for selected file', 'error');
+                return;
+            }
+
+            clearLog();
+            addLog('🚀 Loading dashboard WITH pre-render data...');
+            const startTime = performance.now();
+            
+            try {
+                if (currentDashboard) {
+                    document.getElementById('graph').innerHTML = '';
+                }
+                
+                currentDashboard = flowDashboard.createAndInitDashboard(
+                    currentTestDataWithPrerender,
+                    '#graph'
+                );
+                
+                const loadTime = performance.now() - startTime;
+                addLog(`✅ Dashboard loaded in ${loadTime.toFixed(0)}ms`);
+                
+                const nodeCount = currentTestDataWithPrerender.nodes ? 
+                    currentTestDataWithPrerender.nodes.length : 0;
+                const edgeCount = currentTestDataWithPrerender.edges ? 
+                    currentTestDataWithPrerender.edges.length : 0;
+                
+                updateMetrics(
+                    loadTime,
+                    currentDashboard.hasPrerenderData(),
+                    nodeCount,
+                    edgeCount
+                );
+            } catch (error) {
+                addLog('❌ Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        document.getElementById('loadWithoutPrerender').addEventListener('click', async () => {
+            if (!currentTestData) {
+                addLog('❌ No file selected. Please select a file first.', 'error');
+                return;
+            }
+
+            clearLog();
+            addLog('🚀 Loading dashboard WITHOUT pre-render data...');
+            const startTime = performance.now();
+            
+            try {
+                if (currentDashboard) {
+                    document.getElementById('graph').innerHTML = '';
+                }
+                
+                currentDashboard = flowDashboard.createAndInitDashboard(
+                    currentTestData,
+                    '#graph'
+                );
+                
+                const loadTime = performance.now() - startTime;
+                addLog(`✅ Dashboard loaded in ${loadTime.toFixed(0)}ms`);
+                
+                const nodeCount = currentTestData.nodes ? 
+                    currentTestData.nodes.length : 0;
+                const edgeCount = currentTestData.edges ? 
+                    currentTestData.edges.length : 0;
+                
+                updateMetrics(
+                    loadTime,
+                    currentDashboard.hasPrerenderData(),
+                    nodeCount,
+                    edgeCount
+                );
+            } catch (error) {
+                addLog('❌ Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        document.getElementById('clearDashboard').addEventListener('click', () => {
+            document.getElementById('graph').innerHTML = '';
+            currentDashboard = null;
+            metrics.style.display = 'none';
+            clearLog();
+            addLog('Dashboard cleared');
+        });
+
+        addLog('Pre-Render Test Page Ready');
+        addLog('Click buttons above to test pre-render functionality');
+    </script>
+</body>
+</html>

@@ -754,6 +754,19 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   updateChildren() {
+    // If we have pre-render data, skip layout calculations
+    if (this.hasPrerenderData && this.allChildrenHavePrerender()) {
+      console.log(`📊 Pre-render: Skipping layout for ${this.id}`);
+      
+      // Apply pre-render positions to children
+      this.applyPrerenderToChildren();
+      
+      // Update container size based on pre-render data
+      this.updateContainerSize();
+      
+      return; // Skip normal layout algorithm
+    }
+
     // Use zone system for child positioning if available
     if (this.zoneManager) {
       // Ensure DOM parent is correct even when status toggles cause collapse/expand
@@ -954,6 +967,41 @@ export default class BaseContainerNode extends BaseNode {
       this.minimumSize.height = this.minimumSize.width / ratio;
     } else {
       this.minimumSize.width = this.minimumSize.height * ratio;
+    }
+  }
+
+  /**
+   * Check if all children have pre-render data
+   * @returns {boolean}
+   */
+  allChildrenHavePrerender() {
+    if (!this.childNodes || this.childNodes.length === 0) return false;
+    return this.childNodes.every(child => child.hasPrerenderData);
+  }
+
+  /**
+   * Apply pre-render positions to all children
+   */
+  applyPrerenderToChildren() {
+    this.childNodes.forEach(child => {
+      // Position is already set in constructor
+      // Just need to apply the transform
+      child.element.attr('transform', `translate(${child.x}, ${child.y})`);
+      
+      // If child is a container, recursively apply to its children
+      if (child.isContainer && typeof child.applyPrerenderToChildren === 'function') {
+        child.applyPrerenderToChildren();
+      }
+    });
+  }
+
+  /**
+   * Update container size based on pre-render data
+   */
+  updateContainerSize() {
+    if (this.data.prerender) {
+      this.data.width = this.data.prerender.width;
+      this.data.height = this.data.prerender.height;
     }
   }
 }
