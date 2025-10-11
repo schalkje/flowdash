@@ -1,0 +1,64 @@
+{
+  "settings": {
+    "showCenterMark": false,
+    "showConnectionPoints": false,
+    "showGhostlines": false,
+    "curved": true,
+    "showBoundingBox": false
+  },
+  "nodes": [
+    {
+      "label": "sources",
+      "id": 1,
+      "description": "Sources",
+      "type": "columns",
+      "children": [
+        {
+          "id": 2,
+          "label": "Bankview",
+          "code": "BNV",
+          "type": "adapter",
+          "layout": {
+            "mode": "full",
+            "displayMode": "role",
+            "arrangement": 1
+          }
+        },
+        {
+          "label": "ODS",
+          "state": "Ready",
+          "id": 3,
+          "description": "Database : ODS",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/ODS"
+        },
+        {
+          "label": "DWH",
+          "state": "Ready",
+          "id": 4,
+          "description": "Database : DWH",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/DWH"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "isActive": false,
+      "source": 2,
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": 3
+    },
+    {
+      "isActive": false,
+      "source": 3,
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": 4
+    }
+  ]
+}

@@ -1707,4 +1707,296 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
   }
 }
 
+// ============================================================================
+// PRE-RENDER UTILITIES
+// ============================================================================
+
+/**
+ * Generate pre-render data for a dashboard
+ * This creates a new dashboard instance, renders it fully expanded, and extracts positions
+ * @param {Object} dashboardData - The dashboard data to pre-render
+ * @param {string} containerSelector - CSS selector for the container element (will be hidden)
+ * @returns {Promise<Object>} Enhanced dashboard data with pre-render information
+ */
+export async function generatePrerenderData(dashboardData, containerSelector = '#prerender-temp') {
+  console.log('🎨 Starting pre-render data generation...');
+  
+  // Create temporary container if it doesn't exist
+  let container = document.querySelector(containerSelector);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = containerSelector.replace('#', '');
+    container.style.position = 'absolute';
+    container.style.left = '-10000px';
+    container.style.top = '-10000px';
+    container.style.width = '2000px';
+    container.style.height = '2000px';
+    document.body.appendChild(container);
+  }
+  
+  try {
+    // Create dashboard with pre-render settings
+    const tempSettings = {
+      ...(dashboardData.settings || {}),
+      usePrerender: false, // Don't use existing pre-render
+      toggleCollapseOnStatusChange: false, // Force expanded
+      cascadeOnStatusChange: false,
+      zoomToRoot: false,
+      minimap: {
+        ...(dashboardData.settings?.minimap || {}),
+        enabled: false // Disable minimap for generation
+      }
+    };
+
+    const tempData = {
+      ...dashboardData,
+      settings: tempSettings
+    };
+
+    // Initialize dashboard
+    const dashboard = new Dashboard(tempData);
+    dashboard.initialize(containerSelector);
+
+    // Wait for layout stabilization
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    console.log('🎨 Extracting node positions...');
+    
+    // Extract enhanced data
+    const enhancedNodes = extractNodePositionsFromTree(
+      dashboard.main.root, 
+      dashboardData.nodes
+    );
+    
+    console.log('🎨 Extracting edge paths...');
+    
+    const enhancedEdges = extractEdgePaths(dashboardData.edges || []);
+
+    // Build enhanced dashboard data
+    const enhancedData = {
+      ...dashboardData,
+      nodes: enhancedNodes,
+      edges: enhancedEdges,
+      settings: {
+        ...(dashboardData.settings || {}),
+        usePrerender: true,
+        prerenderMetadata: {
+          version: "1.0",
+          generated: new Date().toISOString(),
+          generatedBy: "flowdash-prerender-generator",
+          nodeCount: countNodesInTree(enhancedNodes),
+          edgeCount: enhancedEdges.length,
+          expandedState: true,
+          statusRulesApplied: false
+        }
+      }
+    };
+
+    console.log('✅ Pre-render data generated successfully');
+    
+    return enhancedData;
+    
+  } catch (error) {
+    console.error('❌ Error generating pre-render data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Extract node positions from the rendered tree
+ * @param {Object} rootNode - The root node from the dashboard
+ * @param {Array} originalNodes - Original node data array
+ * @returns {Array} Enhanced nodes with pre-render data
+ */
+function extractNodePositionsFromTree(rootNode, originalNodes) {
+  if (!rootNode || !originalNodes) return originalNodes || [];
+
+  function processNode(renderNode, nodeData) {
+    if (!renderNode || !nodeData) return nodeData;
+
+    // Create new object with desired property order
+    const enhanced = {};
+    
+    // 1. Copy basic properties (id, type, label, etc.) - everything except special properties
+    const excludeProps = ['width', 'height', 'expandedSize', 'layout', 'prerender', 'children'];
+    for (const key in nodeData) {
+      if (!excludeProps.includes(key)) {
+        enhanced[key] = nodeData[key];
+      }
+    }
+    
+    // 2. Add pre-render data BEFORE children
+    enhanced.prerender = {
+      x: renderNode.x || 0,
+      y: renderNode.y || 0,
+      width: renderNode.data.width || 0,
+      height: renderNode.data.height || 0
+    };
+
+    // 3. Clean up and add layout (only if it has non-default values)
+    if (nodeData.layout) {
+      const layout = { ...nodeData.layout };
+      
+      // Remove minimumSize if it's all defaults
+      if (layout.minimumSize) {
+        const isDefault = 
+          layout.minimumSize.width === 0 &&
+          layout.minimumSize.height === 0 &&
+          layout.minimumSize.useRootRatio === false;
+        
+        if (isDefault) {
+          delete layout.minimumSize;
+        }
+      }
+      
+      // Remove other default layout properties
+      if (layout.mode === 'vertical') delete layout.mode; // Default mode
+      if (layout.padding === 0) delete layout.padding; // Default padding
+      if (layout.spacing === 0) delete layout.spacing; // Default spacing
+      
+      // Only add layout if it has non-default properties
+      if (Object.keys(layout).length > 0) {
+        enhanced.layout = layout;
+      }
+    }
+
+    // 4. Recursively process children (at the end)
+    if (nodeData.children && Array.isArray(nodeData.children) && renderNode.childNodes) {
+      enhanced.children = nodeData.children.map((childData, index) => {
+        const childRenderNode = renderNode.childNodes[index];
+        return childRenderNode ? processNode(childRenderNode, childData) : childData;
+      });
+    }
+
+    return enhanced;
+  }
+
+  // Process top-level nodes
+  const enhancedNodes = [];
+  
+  if (originalNodes.length === 1 && rootNode) {
+    // Single root node case
+    enhancedNodes.push(processNode(rootNode, originalNodes[0]));
+  } else if (rootNode && rootNode.childNodes) {
+    // Multiple top-level nodes
+    originalNodes.forEach((nodeData, index) => {
+      const childNode = rootNode.childNodes[index];
+      enhancedNodes.push(childNode ? processNode(childNode, nodeData) : nodeData);
+    });
+  } else {
+    // Fallback: return original nodes
+    return originalNodes;
+  }
+
+  return enhancedNodes;
+}
+
+/**
+ * Extract edge paths from the DOM
+ * @param {Array} edges - Original edge data
+ * @returns {Array} Enhanced edges with pre-render paths
+ */
+function extractEdgePaths(edges) {
+  if (!edges || edges.length === 0) return [];
+
+  const enhancedEdges = [];
+  
+  // Query all edge groups (g elements with class 'edge')
+  const edgeGroups = document.querySelectorAll('g.edge');
+  const pathMap = new Map();
+
+  // Build map of edge paths from DOM
+  // Edge structure: <g class="edge type" id="source--type--target"><path class="path" d="..."/></g>
+  edgeGroups.forEach(group => {
+    const id = group.getAttribute('id');
+    const pathElement = group.querySelector('path.path');
+    const path = pathElement ? pathElement.getAttribute('d') : null;
+    
+    if (id && path) {
+      pathMap.set(id, path);
+    }
+  });
+
+  // Enhance edges with path data
+  edges.forEach(edge => {
+    const enhanced = {};
+    
+    // Copy all properties except prerender
+    for (const key in edge) {
+      if (key !== 'prerender') {
+        enhanced[key] = edge[key];
+      }
+    }
+    
+    // Try to find path by id or construct id from source-type-target
+    const edgeId = edge.id || `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
+    const path = pathMap.get(edgeId);
+
+    // Add prerender data if path was found
+    if (path) {
+      enhanced.prerender = {
+        path: path
+      };
+    }
+
+    enhancedEdges.push(enhanced);
+  });
+
+  console.log(`🎨 Extracted paths for ${pathMap.size} edges (${edges.length} total)`);
+  
+  return enhancedEdges;
+}
+
+/**
+ * Count total nodes in a tree structure
+ * @param {Array} nodes - Node array
+ * @returns {number} Total count of nodes
+ */
+function countNodesInTree(nodes) {
+  if (!Array.isArray(nodes)) return 0;
+  
+  let count = 0;
+  function traverse(nodeArray) {
+    if (!Array.isArray(nodeArray)) return;
+    nodeArray.forEach(node => {
+      count++;
+      if (node.children) {
+        traverse(node.children);
+      }
+    });
+  }
+  
+  traverse(nodes);
+  return count;
+}
+
+/**
+ * Check if dashboard data has pre-render information
+ * @param {Object} dashboardData - Dashboard data to check
+ * @returns {boolean} True if pre-render data exists and should be used
+ */
+export function hasPrerenderData(dashboardData) {
+  if (!dashboardData) return false;
+  
+  // Check if pre-render is disabled via settings
+  if (dashboardData.settings?.usePrerender === false) {
+    return false;
+  }
+  
+  // Check if any node has pre-render data
+  function hasNodePrerender(nodes) {
+    if (!Array.isArray(nodes)) return false;
+    
+    for (const node of nodes) {
+      if (node.prerender) return true;
+      if (node.children && hasNodePrerender(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  return hasNodePrerender(dashboardData.nodes || []);
+}
+
 export { showLoader as showLoading, hideLoader as hideLoading, setLoaderMessage as setLoadingMessage, fetchDashboardFile };

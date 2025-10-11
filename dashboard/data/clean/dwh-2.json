@@ -1,0 +1,108 @@
+{
+  "settings": {
+    "showCenterMark": false,
+    "showConnectionPoints": false,
+    "showGhostlines": false,
+    "curved": true,
+    "showBoundingBox": false,
+    "toggleCollapseOnStatusChange": true
+  },
+  "nodes": [
+    {
+      "label": "PB DWH",
+      "id": 1,
+      "description": "Main Data Warehouse",
+      "type": "columns",
+      "children": [
+        {
+          "id": 2,
+          "label": "Sources",
+          "type": "lane",
+          "children": [
+            {
+              "id": 3,
+              "label": "Bankview",
+              "code": "BNV",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            },
+            {
+              "id": 4,
+              "label": "Matrix",
+              "code": "MTX",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            },
+            {
+              "id": 5,
+              "label": "Fidor",
+              "code": "FDR",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            }
+          ]
+        },
+        {
+          "label": "ODS",
+          "state": "Ready",
+          "id": 6,
+          "description": "Database : ODS",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/ODS"
+        },
+        {
+          "label": "DWH",
+          "state": "Ready",
+          "id": 7,
+          "description": "Database : DWH",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/DWH"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "isActive": false,
+      "source": "transform_bankview",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "transform_matrix",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "transform_fidor",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_ods",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_dwh"
+    }
+  ]
+}

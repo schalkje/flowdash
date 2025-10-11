@@ -1,0 +1,200 @@
+{
+  "settings": {
+    "showCenterMark": false,
+    "showConnectionPoints": false,
+    "showGhostlines": false,
+    "curved": true,
+    "showBoundingBox": false,
+    "toggleCollapseOnStatusChange": true
+  },
+  "nodes": [
+    {
+      "label": "Main Data Warehouse",
+      "id": 1,
+      "description": "Main Data Warehouse",
+      "type": "columns",
+      "children": [
+        {
+          "id": 2,
+          "label": "Sources",
+          "type": "lane",
+          "children": [
+            {
+              "id": 3,
+              "label": "Bankview",
+              "code": "BNV",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            },
+            {
+              "id": 4,
+              "label": "Matrix",
+              "code": "MTX",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            },
+            {
+              "id": 5,
+              "label": "Fidor",
+              "code": "FDR",
+              "type": "adapter",
+              "layout": {
+                "mode": "full",
+                "displayMode": "role",
+                "arrangement": 1
+              }
+            }
+          ]
+        },
+        {
+          "label": "ODS",
+          "state": "Ready",
+          "id": 6,
+          "description": "Database : ODS",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/ODS"
+        },
+        {
+          "label": "DWH",
+          "state": "Ready",
+          "id": 7,
+          "description": "Database : DWH",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/DWH"
+        },
+        {
+          "id": 8,
+          "label": "Data marts",
+          "type": "lane",
+          "children": [
+            {
+              "id": 9,
+              "label": "Payments",
+              "code": "EMP",
+              "type": "node"
+            },
+            {
+              "id": 10,
+              "label": "VIA",
+              "code": "EMP",
+              "type": "node"
+            },
+            {
+              "id": 11,
+              "label": "DGS",
+              "code": "EMP",
+              "type": "node"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "label": "Cloud Data Foundation",
+          "type": "lane",
+          "children": [
+            {
+              "id": 13,
+              "label": "Payments",
+              "code": "EMP",
+              "type": "foundation"
+            },
+            {
+              "id": 14,
+              "label": "VIA",
+              "code": "EMP",
+              "type": "foundation"
+            },
+            {
+              "id": 15,
+              "label": "DGS",
+              "code": "EMP",
+              "type": "foundation"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "isActive": false,
+      "source": "transform_bankview",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "transform_matrix",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "transform_fidor",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_ods"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_ods",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_dwh"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "em_payments"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "dm_via"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "em_dgs"
+    },
+    {
+      "isActive": false,
+      "source": "em_payments",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_em_payments"
+    },
+    {
+      "isActive": false,
+      "source": "dm_via",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_dm_via"
+    },
+    {
+      "isActive": false,
+      "source": "em_dgs",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_em_dgs"
+    }
+  ]
+}

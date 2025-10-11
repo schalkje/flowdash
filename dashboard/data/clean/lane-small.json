@@ -1,0 +1,146 @@
+{
+  "settings": {
+    "showCenterMark": false,
+    "showConnectionPoints": false,
+    "showGhostLines": false,
+    "showEdges": true,
+    "curved": true,
+    "showBoundingBox": false,
+    "zoomToRoot": true,
+    "toggleCollapseOnStatusChange": true
+  },
+  "nodes": [
+    {
+      "id": "393",
+      "label": "Strada Foundation",
+      "description": null,
+      "type": "Lane",
+      "datasetId": null,
+      "category": "Unknown",
+      "layout": null,
+      "children": [
+
+        {
+          "id": "464",
+          "label": "vl_dwh_dfx.stg_archive_vdz_belgie (DFX)",
+          "description": "Foundation for raw and base vl_dwh_dfx.stg_archive_vdz_belgie, with DFX engine",
+          "type": "Foundation",
+          "datasetId": null,
+          "category": "DFX",
+          "layout": null,
+          "children": [
+            {
+              "id": "647",
+              "label": "raw.vl_dwh_dfx.stg_archive_vdz_belgie",
+              "description": "Loading vl_dwh_dfx.stg_archive_vdz_belgie to RAW, with DFX engine",
+              "type": "node",
+              "datasetId": 767,
+              "category": "RAW",
+              "layout": null,
+              "children": [],
+              "state": "Updated",
+              "role": "raw"
+            },
+            {
+              "id": "659",
+              "label": "base.vl_dwh_dfx.stg_archive_vdz_belgie",
+              "description": "Loading vl_dwh_dfx.stg_archive_vdz_belgie to BASE, with DFX engine",
+              "type": "node",
+              "datasetId": 676,
+              "category": "BASE",
+              "layout": null,
+              "children": [],
+              "state": "Updated",
+              "role": "base"
+            }
+          ],
+          "state": "Unknown"
+        },
+        {
+          "id": "465",
+          "label": "dwh_dfx.stg_archive (DFX)",
+          "description": "Foundation for raw and base dwh_dfx.stg_archive, with DFX engine",
+          "type": "Foundation",
+          "datasetId": null,
+          "category": "DFX",
+          "layout": null,
+          "children": [
+            {
+              "id": "648",
+              "label": "raw.vl_dwh_dfx.stg_archive_kadaster",
+              "description": "Loading vl_dwh_dfx.stg_archive_kadaster to RAW, with DFX engine",
+              "type": "node",
+              "datasetId": 770,
+              "category": "RAW",
+              "layout": null,
+              "state": "Updated",
+              "children": [],
+              "role": "raw"
+            },
+            {
+              "id": "709",
+              "label": "base.vl_dwh_dfx.stg_archive_kadaster",
+              "description": "Loading vl_dwh_dfx.stg_archive_kadaster to BASE, with DFX engine",
+              "type": "node",
+              "datasetId": 771,
+              "category": "BASE",
+              "layout": null,
+              "state": "Unknown",
+              "role": "base"
+            }
+          ],
+          "state": "Unknown"
+        },
+        {
+          "id": "foundation-role-1",
+          "label": "Foundation (Role)",
+          "code": "FND-ROLE",
+          "type": "foundation",
+          "layout": {
+              "mode": "auto",
+              "displayMode": "role",
+              "orientation": "horizontal"
+          },
+          "status": "active",
+          "state": "ready",
+          "children": []
+      },
+        {
+          "id": "399",
+          "label": "vl_dwh.dwh (rawbase)",
+          "description": null,
+          "type": "foundation",
+          "datasetId": null,
+          "category": "Unknown",
+          "layout": { "mode": "auto", "displayMode": "role", "orientation": "horizontal" },
+          "children": [
+            {
+              "id": "397",
+              "label": "raw.vl_dwh.dwh",
+              "description": null,
+              "type": "node",
+              "datasetId": 649,
+              "category": "RAW",
+              "state": "Unknown",
+              "role": "raw"
+            },
+            {
+              "id": "398",
+              "label": "base.vl_dwh.dwh",
+              "description": null,
+              "type": "node",
+              "datasetId": 648,
+              "category": "BASE",
+              "state": "Updated",
+              "role": "base"
+            }
+          ],
+          "status": "active",
+          "state": "Unknown"
+        }
+      ],
+      "state": "Unknown"
+    }
+  ],
+  "edges": []
+}

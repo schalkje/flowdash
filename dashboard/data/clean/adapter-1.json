@@ -1,0 +1,22 @@
+{
+  "settings": {
+    "showCenterMark": true,
+    "showConnectionPoints": true,
+    "showGhostlines": true,
+    "curved": true,
+    "showBoundingBox": true
+  },
+  "nodes": [
+    {
+      "id": "bankview",
+      "label": "Bankview",
+      "code": "BNV",
+      "type": "adapter",
+      "layout": {
+        "mode": "full",
+        "arrangement": 3
+      }
+    }
+  ],
+  "edges": []
+}
