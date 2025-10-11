@@ -249,6 +249,12 @@ export class InnerContainerZone extends BaseZone {
    * Update positions of all child nodes
    */
   updateChildPositions() {
+    // Skip if parent is using pre-render mode
+    if (this._prerenderMode || this.node.zoneManager?._prerenderMode) {
+      // console.log(`📊 Pre-render: Skipping child positioning for ${this.node.id}`);
+      return;
+    }
+    
     // Only update if we have initialized child nodes
     const initializedChildren = this.childNodes.filter(child => child.element);
     

@@ -241,6 +241,12 @@ export default class BaseNode {
       .attr("class", this.data.type)
       .attr("id", this.id)
       .attr("status", this.status);
+    
+    // Apply pre-render transform immediately if available
+    if (this.hasPrerenderData) {
+      this.element.attr("transform", `translate(${this.x}, ${this.y})`);
+    }
+    
     performance.mark(`${perfId}-after-dom-create`);
       
     // Attach the node instance to the DOM element for testing access
@@ -261,14 +267,17 @@ export default class BaseNode {
         this.zoneManager.init();
       }
 
+      // Skip resize if in pre-render mode (dimensions already set from pre-render data)
+      const inPrerenderMode = this.zoneManager._prerenderMode;
+      
       // Defer resize to measurement phase if batching
-      if (isBatching && this.__dashboard?._deferredOperations) {
+      if (isBatching && this.__dashboard?._deferredOperations && !inPrerenderMode) {
         this.__dashboard._deferredOperations.measurements.push(() => {
-          if (this.zoneManager) {
+          if (this.zoneManager && !this.zoneManager._prerenderMode) {
             this.zoneManager.resize(this.data.width, this.data.height);
           }
         });
-      } else if (this.zoneManager) {
+      } else if (this.zoneManager && !inPrerenderMode) {
         this.zoneManager.resize(this.data.width, this.data.height);
       }
     }
@@ -339,8 +348,12 @@ export default class BaseNode {
     
     // Performance profiling: Display change
     performance.mark(`${perfId}-before-display-change`);
-    // Trigger display change after initialization to ensure loading overlay is hidden
-    this.handleDisplayChange();
+    // Skip display change if in pre-render mode or dashboard is suspending changes
+    const shouldSkipDisplayChange = this.hasPrerenderData && this.__dashboard?._suspendDisplayChange;
+    if (!shouldSkipDisplayChange) {
+      // Trigger display change after initialization to ensure loading overlay is hidden
+      this.handleDisplayChange();
+    }
     performance.mark(`${perfId}-after-display-change`);
     
     // Performance profiling: Create measurements and log

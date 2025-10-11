@@ -756,7 +756,7 @@ export default class BaseContainerNode extends BaseNode {
   updateChildren() {
     // If we have pre-render data, skip layout calculations
     if (this.hasPrerenderData && this.allChildrenHavePrerender()) {
-      console.log(`📊 Pre-render: Skipping layout for ${this.id}`);
+      // console.log(`📊 Pre-render: Skipping layout for ${this.id}`);
       
       // Apply pre-render positions to children
       this.applyPrerenderToChildren();

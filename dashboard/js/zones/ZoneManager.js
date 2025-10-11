@@ -18,10 +18,57 @@ export class ZoneManager {
   }
 
   /**
+   * Check if we can use pre-render mode (all children have pre-render data)
+   */
+  canUsePrerenderMode() {
+    // Check if setting allows skipping zone calculations
+    const skipZoneCalcs = this.node.settings?.prerenderSkipZoneCalculations !== false;
+    if (!skipZoneCalcs) return false;
+    
+    if (!this.node.hasPrerenderData) return false;
+    if (!this.node.isContainer) return false;
+    if (!this.node.childNodes || this.node.childNodes.length === 0) return true;
+    return this.node.childNodes.every(child => child.hasPrerenderData);
+  }
+
+  /**
+   * Initialize in pre-render mode (minimal structure, no calculations)
+   */
+  initPrerenderMode() {
+    // console.log(`📊 Pre-render: Zone system using fast-path for ${this.node.id}`);
+    this._prerenderMode = true;
+    this.zones = new Map();
+    this.initialized = true;
+    
+    // Create minimal zone structure without calculations
+    // This allows collapse/expand to still work if needed
+    this.createZone('container', new ContainerZone(this.node));
+    this.createZone('header', new HeaderZone(this.node));
+    this.createZone('margin', new MarginZone(this.node));
+    
+    // Only create inner container if expanded
+    if (!this.node.collapsed) {
+      this.createZone('innerContainer', new InnerContainerZone(this.node));
+    }
+    
+    // Initialize zones but they won't do calculations in pre-render mode
+    this.zones.forEach(zone => {
+      zone._prerenderMode = true;
+      zone.init();
+    });
+  }
+
+  /**
    * Initialize all zones for the node
    */
   init() {
     if (this.initialized) return;
+
+    // Check if we can use pre-render mode
+    if (this.canUsePrerenderMode()) {
+      this.initPrerenderMode();
+      return;
+    }
 
     // Create zones in order
     this.createZone('container', new ContainerZone(this.node));
@@ -71,6 +118,12 @@ export class ZoneManager {
    * Resize all zones based on new dimensions
    */
   resize(width, height) {
+    // Skip resize in pre-render mode (dimensions already set)
+    if (this._prerenderMode) {
+      // console.log(`📊 Pre-render: Skipping zone resize for ${this.node.id}`);
+      return;
+    }
+    
     // Prevent repeated resizes with the same dimensions to avoid infinite loops
     if (this._lastResize && this._lastResize.width === width && this._lastResize.height === height) {
       return;
