@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowDash Pre-Render Generator</title>
-    <script src="libs/d3.min.js"></script>
-    <script src="libs/d3-shape.min.js"></script>
-    <script src="libs/d3-dag.iife.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
     <script>window.FLOWDASH_THEME = { default: 'light' };</script>
-    <script src="js/themeManager.js"></script>
+    <script src="../js/themeManager.js"></script>
     <style>
         * {
             margin: 0;
@@ -379,7 +379,7 @@
     </div>
 
     <script type="module">
-        import flowDashboard from './js/index.js';
+        import flowDashboard from '../js/index.js';
 
         let currentDashboard = null;
         let originalJSON = null;
@@ -618,3 +618,5 @@
     </script>
 </body>
 </html>
+
+

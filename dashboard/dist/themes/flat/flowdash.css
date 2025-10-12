@@ -367,11 +367,11 @@ text, .label, .rect.label { fill: var(--fd-text) !important; font-weight: 700; }
   Nested container depth styling for Flat theme
   Subtle opacity gradation for visual hierarchy
 */
-[data-theme="flat"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
+/* [data-theme="flat"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-container > .container-shape {
   fill-opacity: 0.95 !important;
   stroke-opacity: 0.9 !important;
-}
-[data-theme="flat"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
+} */
+/* [data-theme="flat"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
   fill-opacity: 0.95 !important;
   stroke-opacity: 0.9 !important;
 }
@@ -401,4 +401,4 @@ text, .label, .rect.label { fill: var(--fd-text) !important; font-weight: 700; }
 [data-theme="flat"] :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) :is(.lane, .columns, .group, .adapter, .mart, .foundation) > .zone-header > .header-background {
   fill-opacity: 0.8 !important;
   stroke-opacity: 0.6 !important;
-}
+} */

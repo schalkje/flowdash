@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Optimization #6 - Defer Minimap Initialization</title>
-    <script src="libs/d3.min.js"></script>
-    <script src="libs/d3-shape.min.js"></script>
-    <script src="libs/d3-dag.iife.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
+    <title>Test Optimization #4 - Cache Node Lookups for Edges</title>
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
     <script>window.FLOWDASH_THEME = { default: 'light' };</script>
-    <script src="js/themeManager.js"></script>
+    <script src="../js/themeManager.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -122,62 +122,59 @@
             color: #999;
             margin-left: 5px;
         }
+        .phase-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .phase-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .phase-table th,
+        .phase-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .phase-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+        }
+        .phase-table tr:hover {
+            background: #f8f9fa;
+        }
         .improvement {
             color: #28a745;
             font-weight: bold;
-            font-size: 0.9em;
-            margin-top: 5px;
         }
-        .console-log {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 0.9em;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 20px;
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
         }
-        .console-log pre {
-            margin: 0;
-            white-space: pre-wrap;
+        .status-pass {
+            background: #d4edda;
+            color: #155724;
         }
-        .log-info {
-            color: #4fc3f7;
-        }
-        .log-success {
-            color: #66bb6a;
-        }
-        .log-warn {
-            color: #ffa726;
-        }
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .info-box h4 {
-            margin: 0 0 10px 0;
-            color: #1976d2;
-        }
-        .info-box ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        .info-box li {
-            margin: 5px 0;
-            color: #555;
+        .status-fail {
+            background: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🗺️ Optimization #6 Test</h1>
-            <p>Defer Minimap Initialization - Performance Verification</p>
+            <h1>🚀 Optimization #4 Test</h1>
+            <p>Cache Node Lookups for Edges - Performance Verification</p>
         </div>
 
         <div class="controls">
@@ -190,111 +187,58 @@
             </select>
             <button class="btn btn-primary" onclick="loadDashboard()">📊 Load Dashboard</button>
             <button class="btn btn-primary" onclick="showMetrics()">📈 Show Metrics</button>
-            <button class="btn btn-primary" onclick="clearLogs()">🗑️ Clear Logs</button>
         </div>
 
         <div id="graph"></div>
 
         <div class="metrics" id="metricsPanel" style="display: none;">
             <h2>📊 Performance Metrics</h2>
-            
-            <div class="info-box">
-                <h4>🎯 What to Look For:</h4>
-                <ul>
-                    <li>Minimap should NOT be initialized during main load (check console)</li>
-                    <li>Look for "🗺️ Initializing minimap (deferred)..." message AFTER load completes</li>
-                    <li>Total load time should be 1-2s faster than without this optimization</li>
-                    <li>Minimap should appear shortly after dashboard loads</li>
-                    <li>Minimap should function normally once initialized</li>
-                </ul>
-            </div>
-
             <div class="metric-grid">
                 <div class="metric-card">
                     <h3>Total Load Time</h3>
                     <div class="metric-value" id="totalTime">-<span class="metric-unit">ms</span></div>
-                    <div class="improvement" id="totalImprovement"></div>
                 </div>
                 <div class="metric-card">
-                    <h3>Zoom Setup Time</h3>
-                    <div class="metric-value" id="zoomTime">-<span class="metric-unit">ms</span></div>
-                    <div class="improvement" id="zoomImprovement"></div>
+                    <h3>Edge Creation Time</h3>
+                    <div class="metric-value" id="edgeTime">-<span class="metric-unit">ms</span></div>
                 </div>
                 <div class="metric-card">
                     <h3>Total Nodes</h3>
                     <div class="metric-value" id="totalNodes">-</div>
                 </div>
                 <div class="metric-card">
-                    <h3>Minimap Status</h3>
-                    <div class="metric-value" id="minimapStatus" style="font-size: 1.5em;">-</div>
+                    <h3>Total Edges</h3>
+                    <div class="metric-value" id="totalEdges">-</div>
                 </div>
             </div>
 
-            <h3>📝 Console Output</h3>
-            <div class="console-log" id="consoleLog">
-                <pre id="consoleContent">Waiting for dashboard load...</pre>
+            <div class="phase-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Time (ms)</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="phaseTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { loadDashboardFromFile } from './js/dashboard.js';
+        import { loadDashboardFromFile } from '../js/dashboard.js';
 
         let currentDashboard = null;
-        let consoleLogs = [];
-        
-        // Capture console logs
-        const originalLog = console.log;
-        console.log = function(...args) {
-            originalLog.apply(console, args);
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-            ).join(' ');
-            consoleLogs.push({ type: 'info', message, time: new Date().toISOString() });
-            updateConsoleDisplay();
-        };
-
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-            originalWarn.apply(console, args);
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-            ).join(' ');
-            consoleLogs.push({ type: 'warn', message, time: new Date().toISOString() });
-            updateConsoleDisplay();
-        };
-
-        function updateConsoleDisplay() {
-            const consoleContent = document.getElementById('consoleContent');
-            if (!consoleContent) return;
-            
-            const html = consoleLogs.map(log => {
-                const className = log.type === 'warn' ? 'log-warn' : 
-                                 log.message.includes('✅') || log.message.includes('🗺️') ? 'log-success' : 
-                                 'log-info';
-                return `<span class="${className}">[${new Date(log.time).toLocaleTimeString()}] ${log.message}</span>`;
-            }).join('\n');
-            
-            consoleContent.innerHTML = html;
-            // Auto-scroll to bottom
-            const consoleLog = document.getElementById('consoleLog');
-            if (consoleLog) {
-                consoleLog.scrollTop = consoleLog.scrollHeight;
-            }
-        }
-
-        window.clearLogs = function() {
-            consoleLogs = [];
-            updateConsoleDisplay();
-        };
 
         window.loadDashboard = async function() {
             const selector = document.getElementById('fileSelector');
             const filename = selector.value;
             
-            consoleLogs = [];
             console.log(`📂 Loading ${filename}...`);
-            console.log(`🎯 Optimization #6: Minimap should initialize AFTER main load`);
             
             try {
                 // Clear and prepare graph container
@@ -308,17 +252,13 @@
                     .attr('height', '100%')
                     .style('display', 'block');
                 
-                const startTime = performance.now();
                 currentDashboard = await loadDashboardFromFile('#graph svg', filename);
-                const loadTime = performance.now() - startTime;
+                console.log('✅ Dashboard loaded successfully');
                 
-                console.log(`✅ Dashboard loaded in ${loadTime.toFixed(2)}ms`);
-                console.log(`⏰ Waiting for deferred minimap initialization...`);
-                
-                // Show metrics after a delay to capture minimap init
+                // Show metrics after a short delay to ensure everything is rendered
                 setTimeout(() => {
                     showMetrics();
-                }, 1000);
+                }, 500);
             } catch (error) {
                 console.error('❌ Error loading dashboard:', error);
                 alert('Failed to load dashboard: ' + error.message);
@@ -337,25 +277,43 @@
             // Update metric cards
             document.getElementById('totalTime').innerHTML = 
                 metrics.phases.total.toFixed(2) + '<span class="metric-unit">ms</span>';
-            
-            // Zoom setup should be faster without minimap initialization
-            const zoomTime = metrics.phases.zoomSetup || 0;
-            document.getElementById('zoomTime').innerHTML = 
-                zoomTime.toFixed(2) + '<span class="metric-unit">ms</span>';
-            
-            // Expected improvement note
-            if (zoomTime < 100) {
-                document.getElementById('zoomImprovement').textContent = 
-                    '✅ Fast! Minimap deferred successfully';
-            }
-            
+            document.getElementById('edgeTime').innerHTML = 
+                metrics.phases.edgeCreation.toFixed(2) + '<span class="metric-unit">ms</span>';
             document.getElementById('totalNodes').textContent = 
                 metrics.nodeStats.totalNodes;
+            document.getElementById('totalEdges').textContent = 
+                currentDashboard.data.edges?.length || 0;
+
+            // Update phase table
+            const tbody = document.getElementById('phaseTableBody');
+            tbody.innerHTML = '';
             
-            // Check minimap status
-            const minimapStatus = currentDashboard._minimapInitialized ? 
-                '✅ Initialized' : '⏳ Pending';
-            document.getElementById('minimapStatus').textContent = minimapStatus;
+            const phases = metrics.phases;
+            const total = phases.total;
+            
+            Object.entries(phases).forEach(([phase, time]) => {
+                if (phase === 'total') return;
+                
+                const percentage = ((time / total) * 100).toFixed(1);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${phase}</td>
+                    <td>${time.toFixed(2)}</td>
+                    <td>${percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Add total row
+            const totalRow = document.createElement('tr');
+            totalRow.style.fontWeight = 'bold';
+            totalRow.style.background = '#f8f9fa';
+            totalRow.innerHTML = `
+                <td>TOTAL</td>
+                <td>${total.toFixed(2)}</td>
+                <td>100%</td>
+            `;
+            tbody.appendChild(totalRow);
 
             // Show the panel
             metricsPanel.style.display = 'block';
@@ -366,10 +324,11 @@
 
         // Auto-load on page load
         window.addEventListener('load', () => {
-            console.log('🎯 Optimization #6 Test Page Loaded');
-            console.log('💡 Click "Load Dashboard" to test deferred minimap initialization');
-            console.log('📊 Expected: Minimap initializes AFTER main dashboard load');
+            console.log('🎯 Optimization #4 Test Page Loaded');
+            console.log('💡 Click "Load Dashboard" to test the cached node lookup optimization');
         });
     </script>
 </body>
 </html>
+
+

@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pre-Render Test</title>
-    <script src="libs/d3.min.js"></script>
-    <script src="libs/d3-shape.min.js"></script>
-    <script src="libs/d3-dag.iife.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
     <script>window.FLOWDASH_THEME = { default: 'retro' };</script>
-    <script src="js/themeManager.js"></script>
+    <script src="../js/themeManager.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -154,7 +154,7 @@
     </div>
 
     <script type="module">
-        import flowDashboard from './js/index.js';
+        import flowDashboard from '../js/index.js';
 
         let currentDashboard = null;
         const logOutput = document.getElementById('logOutput');
@@ -196,14 +196,14 @@
                 addLog(`📂 Loading ${baseName}.json...`);
                 
                 // Load base file
-                const baseResponse = await fetch(`data/${baseName}.json`);
+                const baseResponse = await fetch(`../data/${baseName}.json`);
                 if (!baseResponse.ok) throw new Error(`Failed to load ${baseName}.json`);
                 currentTestData = await baseResponse.json();
                 addLog(`✅ Loaded ${baseName}.json`);
 
                 // Try to load prerender file
                 try {
-                    const prerenderResponse = await fetch(`data/${baseName}.prerender.json`);
+                    const prerenderResponse = await fetch(`../data/${baseName}.prerender.json`);
                     if (prerenderResponse.ok) {
                         currentTestDataWithPrerender = await prerenderResponse.json();
                         addLog(`✅ Loaded ${baseName}.prerender.json`);
@@ -395,3 +395,5 @@
     </script>
 </body>
 </html>
+
+

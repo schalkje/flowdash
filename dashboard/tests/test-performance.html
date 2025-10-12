@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Performance Testing</title>
-    <script src="libs/d3.min.js"></script>
-    <script src="libs/d3-shape.min.js"></script>
-    <script src="libs/d3-dag.iife.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
     <style>
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
@@ -147,7 +147,7 @@
         
         await waitForD3();
         
-        import { Dashboard, fetchDashboardFile } from './js/dashboard.js';
+        import { Dashboard, fetchDashboardFile } from '../js/dashboard.js';
         
         let currentDashboard = null;
         const testResults = [];
@@ -360,3 +360,5 @@
     </script>
 </body>
 </html>
+
+
