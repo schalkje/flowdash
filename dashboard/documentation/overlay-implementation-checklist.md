@@ -5,46 +5,74 @@ This checklist covers the steps required to update the dashboard loading overlay
 ---
 
 ## 1. Overlay Instance Management
-- [ ] Refactor `LoadingOverlay` to a class or factory for per-dashboard instances
-- [ ] Remove global singleton usage and DOM element reuse
-- [ ] Ensure each dashboard manages its own overlay instance
+- [x] Refactor `LoadingOverlay` to a class or factory for per-dashboard instances
+- [x] Remove global singleton usage and DOM element reuse (kept legacy compatibility layer)
+- [x] Ensure each dashboard manages its own overlay instance
 
 ## 2. Overlay Lifecycle & Visibility
-- [ ] Update `MIN_VISIBLE_MS` to 2000ms (2 seconds)
-- [ ] Ensure overlay shows only when new dashboardData is loaded, and hides after loading completes
+- [x] Update `MIN_VISIBLE_MS` to 2000ms (2 seconds)
+- [x] Ensure overlay shows only when new dashboardData is loaded, and hides after loading completes
 
 ## 3. Progress & Stage Indication
-- [ ] Ensure `setLoadingStage(stageName)` updates overlay and records timing
-- [ ] Add `setProgress(progressMessage)` for node/edge progress display
-- [ ] Display compact stage history (name + duration)
-- [ ] Maintain animated dots/timer as activity indicators
+- [x] Ensure `setLoadingStage(stageName)` updates overlay and records timing
+- [x] Add `setProgress(progressMessage)` for node/edge progress display
+- [x] Display compact stage history (name + duration)
+- [x] Maintain animated dots/timer as activity indicators
 
 ## 4. Placement & DOM Integration
-- [ ] Overlay creates its own container within dashboard host element
-- [ ] Remove support for passing a container to `showLoading()`
-- [ ] Overlay blocks pointer events on dashboard while visible (modal mode)
-- [ ] Ensure host container has `position: relative` for correct overlay positioning
+- [x] Overlay creates its own container within dashboard host element
+- [x] Remove support for passing a container to `showLoading()` (container determined from dashboard context)
+- [x] Overlay blocks pointer events on dashboard while visible (modal mode)
+- [x] Ensure host container has `position: relative` for correct overlay positioning
 
 ## 5. Accessibility
-- [ ] Use `role="status"` and `aria-live="polite"` on overlay
-- [ ] Update ARIA attributes on stage/message changes
-- [ ] Use CSS for color contrast and font readability
+- [x] Use `role="status"` and `aria-live="polite"` on overlay
+- [x] Update ARIA attributes on stage/message changes
+- [x] Use CSS for color contrast and font readability (existing CSS maintained)
 
 ## 6. API & Integration
-- [ ] Update overlay API:
-    - [ ] `showLoading()`
-    - [ ] `hideLoading()`
-    - [ ] `setLoadingStage(stageName)`
-    - [ ] `setProgress(progressMessage)`
-    - [ ] `setLoadingMessage(message)`
-- [ ] Remove/refactor legacy global functions and window bindings
-- [ ] Integrate overlay instance into `Dashboard` class
+- [x] Update overlay API:
+    - [x] `showLoading()`
+    - [x] `hideLoading()`
+    - [x] `setLoadingStage(stageName)`
+    - [x] `setProgress(progressMessage)`
+    - [x] `setLoadingMessage(message)`
+- [x] Remove/refactor legacy global functions and window bindings (kept for backward compatibility)
+- [x] Integrate overlay instance into `Dashboard` class
 
 ## 7. Non-Functional & Testing
-- [ ] Remove inline styles from JS; use CSS classes for visuals
+- [x] Remove inline styles from JS; use CSS classes for visuals (mostly complete, modal behavior uses minimal inline)
 - [ ] Write unit tests for overlay creation, visibility timing, stage recording, and accessibility
 - [ ] Write integration tests for dashboard load flows with overlay
 - [ ] Manual checks for overlay placement, accessibility, and parallel dashboard loads
+
+---
+
+## Implementation Notes (2025-10-12)
+
+**Status:** ~70% Complete  
+**Branch:** feature/async
+
+### Completed:
+- LoadingOverlay class created with per-dashboard instance support
+- Dashboard class integration complete
+- MIN_VISIBLE_MS updated to 2000ms
+- setProgress() API added
+- Modal behavior implemented
+- ARIA accessibility attributes
+- Legacy compatibility layer
+
+### Remaining Work:
+- Clean up duplicate object-style methods in loadingOverlay.js (lines ~540-720)
+- Add comprehensive unit and integration tests
+- Manual accessibility testing
+- Cross-browser verification
+
+### Files Modified:
+- `dashboard/js/loadingOverlay.js` (needs cleanup)
+- `dashboard/js/dashboard.js` (complete)
+
+See `overlay-implementation-summary.md` for detailed status.
 
 ---
 

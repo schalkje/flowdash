@@ -78,6 +78,9 @@ export class Dashboard {
       neighborhood: null, // { nodes, edges, boundingBox }
     };
 
+    // Loading overlay instance (per-dashboard)
+    this.loadingOverlay = null; // Initialized after main.svg is available
+
     // Additional click callback that gets called after normal selection
     this.onNodeClick = null;
 
@@ -414,7 +417,7 @@ export class Dashboard {
     this.onMainDisplayChange();
   }
 
-   initialize(mainDivSelector, minimapDivSelector = null) {
+   initialize(mainDivSelector) {
     const t0 = performance.now();
     
     this.mainDivSelector = mainDivSelector;
@@ -1533,29 +1536,81 @@ export class Dashboard {
 
   zoomToBoundingBox(boundingBox) { this.zoomManager.zoomToBoundingBox(boundingBox, { animate: true, duration: 500 }); }
 
-  showLoading() {
-    console.log('📊 Dashboard.showLoading() called');
-    const container = resolveLoadingHost(this.main?.svg);
-    console.log('📊 Dashboard.showLoading() - Using container:', container);
-    LoadingOverlay.show(container);
-  }
-  hideLoading() {
-    LoadingOverlay.hide();
+  /**
+   * Ensure loading overlay instance exists for this dashboard
+   * Creates it if necessary
+   */
+  _ensureLoadingOverlay() {
+    if (!this.loadingOverlay && this.main?.svg) {
+      const container = resolveLoadingHost(this.main.svg);
+      this.loadingOverlay = new LoadingOverlay(container);
+      console.log('📊 Dashboard._ensureLoadingOverlay() - Created overlay instance');
+    }
+    return this.loadingOverlay;
   }
 
   /**
-   * Update the loading overlay message for this dashboard instance.
-   * Ensures the overlay is created within the dashboard's host before updating.
-   * @param {string} message
+   * Show loading overlay for this dashboard
+   */
+  showLoading() {
+    console.log('📊 Dashboard.showLoading() called');
+    const overlay = this._ensureLoadingOverlay();
+    if (overlay) {
+      overlay.showLoading();
+    } else {
+      console.warn('⚠️ Dashboard.showLoading() - No overlay available, falling back to global');
+      // Fallback to global overlay for backward compatibility
+      const container = resolveLoadingHost(this.main?.svg);
+      LoadingOverlay.show(container);
+    }
+  }
+
+  /**
+   * Hide loading overlay for this dashboard
+   */
+  hideLoading() {
+    console.log('📊 Dashboard.hideLoading() called');
+    if (this.loadingOverlay) {
+      this.loadingOverlay.hideLoading();
+    } else {
+      // Fallback to global overlay
+      LoadingOverlay.hide();
+    }
+  }
+
+  /**
+   * Set loading stage for this dashboard
+   * @param {string} stageName - Name of the stage
+   */
+  setLoadingStage(stageName) {
+    console.log('📊 Dashboard.setLoadingStage() called with:', stageName);
+    const overlay = this._ensureLoadingOverlay();
+    if (overlay) {
+      overlay.setLoadingStage(stageName);
+    }
+  }
+
+  /**
+   * Set progress message for this dashboard
+   * @param {string} progressMessage - Progress message (e.g., "5 / 20 nodes")
+   */
+  setProgress(progressMessage) {
+    console.log('📊 Dashboard.setProgress() called with:', progressMessage);
+    const overlay = this._ensureLoadingOverlay();
+    if (overlay) {
+      overlay.setProgress(progressMessage);
+    }
+  }
+
+  /**
+   * Set loading message for this dashboard
+   * @param {string} message - Message to display
    */
   setLoadingMessage(message) {
-    try {
-      const container = resolveLoadingHost(this.main?.svg);
-      // Ensure the overlay exists in the correct host before setting the message
-      LoadingOverlay.ensure(container);
-      setLoaderMessage(message);
-    } catch (e) {
-      console.warn('setLoadingMessage failed:', e);
+    console.log('📊 Dashboard.setLoadingMessage() called with:', message);
+    const overlay = this._ensureLoadingOverlay();
+    if (overlay) {
+      overlay.setLoadingMessage(message);
     }
   }
 }
