@@ -5,7 +5,7 @@ import { createMarkers } from "./markers.js";
 import { createEdges } from "./edge.js";
 import { ConfigManager } from "./configManager.js";
 import { fetchDashboardFile } from "./data.js";
-import { LoadingOverlay, showLoading, hideLoading, resolveLoadingContainer as resolveLoadingHost, setLoadingMessage } from "./loadingOverlay.js";
+import { LoadingOverlay, resolveLoadingContainer as resolveLoadingHost } from "./loadingOverlay.js";
 import { Minimap } from "./minimap.js";
 import ZoomManager from "./zoomManager.js";
 import { NodeStatus } from "./nodeBase.js";
@@ -1557,11 +1557,6 @@ export class Dashboard {
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.showLoading();
-    } else {
-      console.warn('⚠️ Dashboard.showLoading() - No overlay available, falling back to global');
-      // Fallback to global overlay for backward compatibility
-      const container = resolveLoadingHost(this.main?.svg);
-      LoadingOverlay.show(container);
     }
   }
 
@@ -1572,9 +1567,6 @@ export class Dashboard {
     console.log('📊 Dashboard.hideLoading() called');
     if (this.loadingOverlay) {
       this.loadingOverlay.hideLoading();
-    } else {
-      // Fallback to global overlay
-      LoadingOverlay.hide();
     }
   }
 
@@ -1748,7 +1740,6 @@ export function createAndInitDashboard(dashboardData, mainDivSelector, thirdArg 
 export async function loadDashboardFromFile(mainDivSelector, selectedFile, applySettings) {
   let dashboard = null;
   try {
-    showLoading();
     const dashboardData = await fetchDashboardFile(selectedFile);
     if (typeof applySettings === 'function') {
       try { applySettings(dashboardData); } catch {}
@@ -1757,7 +1748,6 @@ export async function loadDashboardFromFile(mainDivSelector, selectedFile, apply
     dashboard.initialize(mainDivSelector);
     return dashboard;
   } catch (e) {
-    hideLoading();
     throw e;
   }
 }

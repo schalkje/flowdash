@@ -4,30 +4,19 @@
 
 /**
  * Resolve the container element for the loading overlay
- * @param {Object} svgSelection - D3 selection or DOM element
- * @returns {HTMLElement} The container element
+ * @param {Object} svgSelection - D3 selection or DOM element (the SVG)
+ * @returns {HTMLElement} The parent element of the SVG
  */
 function resolveLoadingContainer(svgSelection) {
-  console.log('🎯 resolveLoadingContainer() called with:', svgSelection);
+  const svgNode = svgSelection && svgSelection.node ? svgSelection.node() : svgSelection;
   
-  // First check for explicit graph container
-  const explicit = document.querySelector('#graph-container');
-  if (explicit) {
-    console.log('🎯 resolveLoadingContainer() - Found explicit #graph-container:', explicit);
-    return explicit;
+  if (!svgNode || !svgNode.parentElement) {
+    console.error('❌ resolveLoadingContainer() - SVG or its parent element not found');
+    throw new Error('Loading overlay requires SVG with a parent element');
   }
   
-  // Try to use SVG parent element
-  try {
-    const node = svgSelection && svgSelection.node ? svgSelection.node() : null;
-    if (node && node.parentElement) {
-      console.log('🎯 resolveLoadingContainer() - Using SVG parent element:', node.parentElement);
-      return node.parentElement;
-    }
-  } catch {}
-  
-  console.log('🎯 resolveLoadingContainer() - Falling back to document.body');
-  return document.body;
+  console.log('🎯 resolveLoadingContainer() - Using SVG parent element:', svgNode.parentElement);
+  return svgNode.parentElement;
 }
 
 /**
@@ -431,126 +420,6 @@ export class LoadingOverlay {
   }
 
 }
-
-// =============================================================================
-// Global/Legacy Singleton Instance for backward compatibility
-// =============================================================================
-
-// Legacy global object-based LoadingOverlay for backward compatibility
-const globalOverlayForLegacy = {
-  _instance: null,
-  _getInstance() {
-    if (!this._instance) {
-      const container = resolveLoadingContainer();
-      this._instance = new LoadingOverlay(container);
-    }
-    return this._instance;
-  },
-  show(container) {
-    this._getInstance().showLoading();
-  },
-  hide() {
-    this._getInstance().hideLoading();
-  },
-  setStage(stageName) {
-    this._getInstance().setLoadingStage(stageName);
-  },
-  ensure(container) {
-    return this._getInstance().ensure();
-  },
-  get el() { return this._getInstance().el; },
-  get textEl() { return this._getInstance().textEl; },
-  get dotsEl() { return this._getInstance().dotsEl; },
-  get timerEl() { return this._getInstance().timerEl; },
-  get stageHistoryEl() { return this._getInstance().stageHistoryEl; },
-  get currentStage() { return this._getInstance().currentStage; },
-  get baseText() { return this._getInstance().baseText; },
-  set baseText(value) { this._getInstance().baseText = value; }
-};
-
-// Export both the class and the legacy object
-export { globalOverlayForLegacy as LoadingOverlay };
-
-// =============================================================================
-// Global/Legacy Export Functions  
-// =============================================================================
-
-export function showLoading(containerOrSelector = null) {
-  console.log('🟢 showLoading() called with:', containerOrSelector);
-  try {
-    const container = typeof containerOrSelector === 'string'
-      ? document.querySelector(containerOrSelector)
-      : containerOrSelector;
-    console.log('🟢 showLoading() - Resolved container:', container);
-    LoadingOverlay.show(container || resolveLoadingContainer());
-  } catch (error) {
-    console.error('❌ Error in showLoading():', error);
-  }
-}
-
-export function hideLoading() {
-  console.log('🟡 hideLoading() called');
-  try { 
-    LoadingOverlay.hide(); 
-  } catch (error) {
-    console.error('❌ Error in hideLoading():', error);
-  }
-}
-
-export function setLoadingStage(stageName) {
-  console.log('🎬 setLoadingStage() called with:', stageName);
-  try {
-    LoadingOverlay.setStage(stageName);
-  } catch (error) {
-    console.error('❌ Error in setLoadingStage():', error);
-  }
-}
-
-export function setLoadingMessage(message) {
-  console.log('📝 setLoadingMessage() called with:', message);
-  try {
-    if (LoadingOverlay.textEl) {
-      LoadingOverlay.textEl.textContent = message;
-    }
-    LoadingOverlay.baseText = message;
-  } catch (error) {
-    console.error('❌ Error in setLoadingMessage():', error);
-  }
-}
-
-/**
- * Set progress message (new function as per requirements)
- * @param {string} progressMessage - Progress message (e.g., "5 / 20 nodes")
- */
-export function setProgress(progressMessage) {
-  console.log('📊 setProgress() called with:', progressMessage);
-  try {
-    if (!progressMessage) return;
-    
-    const message = `${LoadingOverlay.currentStage} (${progressMessage})`;
-    if (LoadingOverlay.textEl) {
-      LoadingOverlay.textEl.textContent = message;
-    }
-    
-    // Update ARIA attributes for accessibility
-    if (LoadingOverlay.el) {
-      LoadingOverlay.el.setAttribute('aria-label', `Loading: ${message}`);
-    }
-  } catch (error) {
-    console.error('❌ Error in setProgress():', error);
-  }
-}
-
-// Expose simple globals for legacy pages if a bundler doesn't include module exports
-try {
-  if (typeof window !== 'undefined') {
-    window.showLoading = function(container){ try { showLoading(container); } catch {} };
-    window.hideLoading = function(){ try { hideLoading(); } catch {} };
-    window.setLoadingMessage = function(message){ try { setLoadingMessage(message); } catch {} };
-    window.setLoadingStage = function(stageName){ try { setLoadingStage(stageName); } catch {} };
-    window.setProgress = function(progressMessage){ try { setProgress(progressMessage); } catch {} };
-  }
-} catch {}
 
 export { resolveLoadingContainer };
 
