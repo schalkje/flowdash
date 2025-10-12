@@ -360,19 +360,17 @@ export class Dashboard {
 
   recomputeBaselineFit() { return this.zoomManager.recomputeBaselineFit(); }
 
-  setData(newDashboardData) {
+  async setData(newDashboardData) {
     this._initialLoading = true;
     try { this.showLoading(); } catch {}
 
-    // Use setTimeout to allow the browser to paint the loading overlay
-    // before starting heavy synchronous work. This is better than requestAnimationFrame
-    // because it allows the browser to complete the current paint cycle.
-    setTimeout(() => {
-      this._setDataContinue(newDashboardData);
-    }, 0);
+    // Yield to allow the browser to paint the loading overlay
+    await this._yieldToMain();
+    
+    await this._setDataContinue(newDashboardData);
   }
 
-  _setDataContinue(newDashboardData) {
+  async _setDataContinue(newDashboardData) {
     const userSettings = (newDashboardData && newDashboardData.settings) ? newDashboardData.settings : {};
     this._data = newDashboardData || {};
     this._data.settings = ConfigManager.mergeWithDefaults(userSettings);
@@ -388,7 +386,8 @@ export class Dashboard {
     }
 
     this.main.container = this.createContainer(this.main, "dashboard");
-    this.main.root = this.createDashboard(this.data, this.main.container);
+    await this.createDashboard(this.data, this.main.container);
+    this.main.root = this._dashboardRoot;
 
   this.main.root.onClick = (node) => this.selectNode(node);
   this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
@@ -426,7 +425,15 @@ export class Dashboard {
     this.onMainDisplayChange();
   }
 
-   initialize(mainDivSelector) {
+  /**
+   * Yield to main thread to allow browser to paint/update UI
+   * Uses setTimeout with 0 delay to create a new task
+   */
+  _yieldToMain() {
+    return new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+   async initialize(mainDivSelector) {
     const t0 = performance.now();
     
     this.mainDivSelector = mainDivSelector;
@@ -439,16 +446,15 @@ export class Dashboard {
       }
     } catch {}
     
-    // Use setTimeout to allow the browser to paint the loading overlay
-    // before starting heavy synchronous work. This is better than requestAnimationFrame
-    // because it allows the browser to complete the current paint cycle.
-    setTimeout(() => {
-      this._initializeContinue(mainDivSelector, t0);
-    }, 0);
+    // Yield to allow the browser to paint the loading overlay
+    await this._yieldToMain();
+    
+    await this._initializeContinue(mainDivSelector, t0);
   }
 
-  _initializeContinue(mainDivSelector, t0) {
+  async _initializeContinue(mainDivSelector, t0) {
     this.setLoadingStage('Initializing SVG');
+    await this._yieldToMain();
     
     const div = this.initializeSvg(mainDivSelector);
     this.main.svg = div.svg;
@@ -481,11 +487,11 @@ export class Dashboard {
       this._suspendStatusChanges = true;
     }
     
-    this.setLoadingStage('Creating nodes');
-    
     // Phase 1: Node Creation (includes node tree, initialization, edges)
+    // Note: setLoadingStage is called inside createDashboard for each sub-phase
     const t1 = performance.now();
-    this.main.root = this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    await this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    this.main.root = this._dashboardRoot; // Store result from async createDashboard
     // nodeCreation, nodeInitialization, and edgeCreation are tracked inside createDashboard
 
     // If using pre-render, apply status rules in second pass
@@ -493,6 +499,7 @@ export class Dashboard {
       console.log('📊 Pre-render: Scheduling deferred status application');
       
       this.setLoadingStage('Applying status rules');
+      await this._yieldToMain();
       
       // Schedule status application after initial render
       requestAnimationFrame(() => {
@@ -501,6 +508,7 @@ export class Dashboard {
     }
 
     this.setLoadingStage('Setting up zoom');
+    await this._yieldToMain();
     
     // Phase 4: Zoom Setup
     const t4 = performance.now();
@@ -517,6 +525,7 @@ export class Dashboard {
     this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
     this.setLoadingStage('Finalizing');
+    await this._yieldToMain();
     
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
     
@@ -977,7 +986,10 @@ export class Dashboard {
     return { svg, width, height, onDragUpdate };
   }
 
-  createDashboard(dashboard, container, displayChangeCallback = null) {
+  async createDashboard(dashboard, container, displayChangeCallback = null) {
+    
+    this.setLoadingStage('Creating nodes');
+    await this._yieldToMain();
     
     createMarkers(container);
 
@@ -998,7 +1010,8 @@ export class Dashboard {
 
     if (!root) {
       console.error("Failed to create node - root is null");
-      return null;
+      this._dashboardRoot = null;
+      return;
     }
 
     if (displayChangeCallback) {
@@ -1012,6 +1025,7 @@ export class Dashboard {
     const t2 = performance.now();
     
     this.setLoadingStage('Initializing nodes');
+    await this._yieldToMain();
     
     // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
     // Instead of measure-write-measure-write, we do: write-write-write, measure-once, write-write-write
@@ -1032,6 +1046,7 @@ export class Dashboard {
     root.init();
     
     this.setLoadingStage('Processing measurements');
+    await this._yieldToMain();
     
     // Perform all deferred measurements in a single batch (Optimization #7)
     const measurementCount = this._deferredOperations.measurements.length;
@@ -1049,6 +1064,7 @@ export class Dashboard {
     const t3 = performance.now();
     
     this.setLoadingStage('Creating edges');
+    await this._yieldToMain();
     
     this.initializeChildrenStatusses(root);
 
@@ -1080,7 +1096,7 @@ export class Dashboard {
     // Defer initial baseline fit and zoom until layout has fully settled
     // This will be handled by onMainDisplayChange via ZoomManager.handleLayoutChange
 
-    return root;
+    this._dashboardRoot = root;
   }
 
   reparentNodesByParentIds() {
