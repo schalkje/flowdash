@@ -364,6 +364,15 @@ export class Dashboard {
     this._initialLoading = true;
     try { this.showLoading(); } catch {}
 
+    // Use setTimeout to allow the browser to paint the loading overlay
+    // before starting heavy synchronous work. This is better than requestAnimationFrame
+    // because it allows the browser to complete the current paint cycle.
+    setTimeout(() => {
+      this._setDataContinue(newDashboardData);
+    }, 0);
+  }
+
+  _setDataContinue(newDashboardData) {
     const userSettings = (newDashboardData && newDashboardData.settings) ? newDashboardData.settings : {};
     this._data = newDashboardData || {};
     this._data.settings = ConfigManager.mergeWithDefaults(userSettings);
@@ -430,6 +439,17 @@ export class Dashboard {
       }
     } catch {}
     
+    // Use setTimeout to allow the browser to paint the loading overlay
+    // before starting heavy synchronous work. This is better than requestAnimationFrame
+    // because it allows the browser to complete the current paint cycle.
+    setTimeout(() => {
+      this._initializeContinue(mainDivSelector, t0);
+    }, 0);
+  }
+
+  _initializeContinue(mainDivSelector, t0) {
+    this.setLoadingStage('Initializing SVG');
+    
     const div = this.initializeSvg(mainDivSelector);
     this.main.svg = div.svg;
     this.main.width = div.width;
@@ -461,6 +481,8 @@ export class Dashboard {
       this._suspendStatusChanges = true;
     }
     
+    this.setLoadingStage('Creating nodes');
+    
     // Phase 1: Node Creation (includes node tree, initialization, edges)
     const t1 = performance.now();
     this.main.root = this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
@@ -470,12 +492,16 @@ export class Dashboard {
     if (hasPrerenderData && this.main.root) {
       console.log('📊 Pre-render: Scheduling deferred status application');
       
+      this.setLoadingStage('Applying status rules');
+      
       // Schedule status application after initial render
       requestAnimationFrame(() => {
         this.applyDeferredStatusRules(this.main.root);
       });
     }
 
+    this.setLoadingStage('Setting up zoom');
+    
     // Phase 4: Zoom Setup
     const t4 = performance.now();
     this.main.zoom = this.initializeZoom();
@@ -490,6 +516,8 @@ export class Dashboard {
     
     this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
+    this.setLoadingStage('Finalizing');
+    
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
     
     this.initializeFullscreenToggle();
@@ -983,6 +1011,8 @@ export class Dashboard {
     // Phase 2: Node Initialization
     const t2 = performance.now();
     
+    this.setLoadingStage('Initializing nodes');
+    
     // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
     // Instead of measure-write-measure-write, we do: write-write-write, measure-once, write-write-write
     this._batchDomOperations = true;
@@ -1001,6 +1031,8 @@ export class Dashboard {
     const t2a = performance.now();
     root.init();
     
+    this.setLoadingStage('Processing measurements');
+    
     // Perform all deferred measurements in a single batch (Optimization #7)
     const measurementCount = this._deferredOperations.measurements.length;
     this._deferredOperations.measurements.forEach(fn => fn());
@@ -1015,6 +1047,9 @@ export class Dashboard {
 
     // Phase 3: Edge Creation & Status Initialization
     const t3 = performance.now();
+    
+    this.setLoadingStage('Creating edges');
+    
     this.initializeChildrenStatusses(root);
 
     if (dashboard.edges.length > 0) {

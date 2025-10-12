@@ -179,12 +179,13 @@ export class LoadingOverlay {
 
   /**
    * Start display timer
+   * Updates every 500ms to show progress without excessive repaints
    */
   startDisplayTimer() {
     this.stopDisplayTimer();
     this.displayTimer = setInterval(() => {
       this.updateTimerDisplay();
-    }, 100);
+    }, 500);
   }
 
   /**
@@ -408,8 +409,8 @@ export class LoadingOverlay {
       
       console.log(`✅ ${finalMessage}`);
       
-      // Ensure final message stays visible for at least 1 second
-      finalMessageDelay = 1000;
+      // Ensure final message stays visible for at least 3 seconds
+      finalMessageDelay = 3000;
       
       this.totalStartTime = 0;
       this.stageStartTime = 0;
