@@ -132,12 +132,12 @@ export class Dashboard {
     this._suspendDisplayChange = false;
     
     // Determine container statuses based on children
-    if (this.settings.cascadeOnStatusChange) {
+    if (this.data.settings.cascadeOnStatusChange) {
       this.initializeChildrenStatusses(root);
     }
     
     // Apply collapse rules if enabled
-    if (this.settings.toggleCollapseOnStatusChange) {
+    if (this.data.settings.toggleCollapseOnStatusChange) {
       this.applyAutoCollapse(root);
     }
     
@@ -1933,6 +1933,14 @@ function extractNodePositionsFromTree(rootNode, originalNodes) {
       width: renderNode.data.width || 0,
       height: renderNode.data.height || 0
     };
+    
+    // Include calculated minimum size if available (for containers with headers)
+    if (renderNode.minimumSize) {
+      enhanced.prerender.minimumSize = {
+        width: renderNode.minimumSize.width || 0,
+        height: renderNode.minimumSize.height || 0
+      };
+    }
 
     // 3. Clean up and add layout (only if it has non-default values)
     if (nodeData.layout) {

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prerender Width Fix Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .test-panel {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-panel h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #007acc;
+      padding-bottom: 10px;
+    }
+    #svg-prerender, #svg-no-prerender {
+      border: 1px solid #ddd;
+      background: white;
+      display: block;
+      margin-top: 10px;
+    }
+    .info {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .info strong {
+      color: #1976d2;
+    }
+    .expected {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    .bug {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 Prerender Width Fix Test</h1>
+      <p>This test verifies that the archive node uses its prerendered width (126.67px) instead of being forced to 80px.</p>
+    </div>
+
+    <div class="test-grid">
+      <div class="test-panel">
+        <h2>✅ With Prerender Data</h2>
+        <div class="info">
+          <strong>Expected:</strong> Archive width = <span class="expected">126.67px</span><br>
+          <strong>File:</strong> dwh-1.prerender.json
+        </div>
+        <svg id="svg-prerender" width="600" height="200"></svg>
+      </div>
+
+      <div class="test-panel">
+        <h2>📊 Without Prerender Data</h2>
+        <div class="info">
+          <strong>Expected:</strong> Archive width = <span class="expected">80px</span> (standard)<br>
+          <strong>File:</strong> dwh-1.json
+        </div>
+        <svg id="svg-no-prerender" width="600" height="200"></svg>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import Dashboard from './js/dashboard.js';
+
+    // Load data with prerender
+    const responsePre = await fetch('./data/dwh-1.prerender.json');
+    const dataPre = await responsePre.json();
+    
+    // Load data without prerender
+    const responseNoPre = await fetch('./data/dwh-1.json');
+    const dataNoPre = await responseNoPre.json();
+
+    // Create dashboards
+    const svgPre = document.getElementById('svg-prerender');
+    const dashboardPre = new Dashboard(svgPre, dataPre);
+    await dashboardPre.init();
+
+    const svgNoPre = document.getElementById('svg-no-prerender');
+    const dashboardNoPre = new Dashboard(svgNoPre, dataNoPre);
+    await dashboardNoPre.init();
+
+    // After a short delay, check the actual widths
+    setTimeout(() => {
+      // Find the archive nodes
+      const findArchiveNode = (dashboard) => {
+        // Navigate: columns -> adapter -> archive child
+        const columnsNode = dashboard.root?.childNodes?.[0];
+        if (!columnsNode) return null;
+        
+        const adapterNode = columnsNode.childNodes?.find(n => n.data?.type === 'adapter');
+        if (!adapterNode) return null;
+        
+        return adapterNode.archiveNode;
+      };
+
+      const archivePre = findArchiveNode(dashboardPre);
+      const archiveNoPre = findArchiveNode(dashboardNoPre);
+
+      console.log('=== Width Verification ===');
+      if (archivePre) {
+        const width = archivePre.data.width;
+        const isCorrect = Math.abs(width - 126.67) < 1;
+        console.log(`✓ With Prerender: Archive width = ${width.toFixed(2)}px ${isCorrect ? '✅' : '❌ WRONG!'}`);
+        console.log(`  Expected: 126.67px, Got: ${width.toFixed(2)}px`);
+      } else {
+        console.log('❌ Could not find archive node with prerender');
+      }
+
+      if (archiveNoPre) {
+        const width = archiveNoPre.data.width;
+        const isCorrect = Math.abs(width - 80) < 1;
+        console.log(`✓ Without Prerender: Archive width = ${width.toFixed(2)}px ${isCorrect ? '✅' : '❌ WRONG!'}`);
+        console.log(`  Expected: 80px, Got: ${width.toFixed(2)}px`);
+      } else {
+        console.log('❌ Could not find archive node without prerender');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
