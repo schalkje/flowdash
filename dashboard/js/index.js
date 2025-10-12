@@ -1,13 +1,6 @@
 // Public API aggregator for flowdash
 import * as dashboard from './dashboard.js';
 import * as data from './data.js';
-import { showLoading } from './loadingOverlay.js';
-
-// Provide a function to show loading when dashboard starts loading
-// This ensures loading is shown immediately when needed, not when module loads
-if (typeof window !== 'undefined') {
-  window.showFlowDashLoading = showLoading;
-}
 
 // Default export combines commonly used namespaces
 const api = {
@@ -25,4 +18,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default api;
- 

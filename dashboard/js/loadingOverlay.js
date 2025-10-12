@@ -373,30 +373,56 @@ export class LoadingOverlay {
       return;
     }
     
+    // Calculate total duration and show final message
+    let finalMessageDelay = 0;
+    if (this.totalStartTime) {
+      const now = Date.now();
+      const totalDuration = now - this.totalStartTime;
+      const stageDuration = now - this.stageStartTime;
+      console.log(`⏱️ Final stage "${this.currentStage}" completed in ${stageDuration}ms`);
+      console.log(`⏱️ Total loading duration: ${totalDuration}ms`);
+      
+      this.stageHistory.push({
+        name: this.currentStage,
+        duration: stageDuration,
+        endTime: now
+      });
+      
+      // Show final message with duration
+      const formatTime = (ms) => {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+      };
+      
+      const finalMessage = `Initialization finished in ${formatTime(totalDuration)}`;
+      if (this.textEl) {
+        this.textEl.textContent = finalMessage;
+      }
+      if (this.el) {
+        this.el.setAttribute('aria-label', finalMessage);
+      }
+      
+      // Stop dots and timer display when showing final message
+      this.stopDots();
+      this.stopDisplayTimer();
+      
+      console.log(`✅ ${finalMessage}`);
+      
+      // Ensure final message stays visible for at least 1 second
+      finalMessageDelay = 1000;
+      
+      this.totalStartTime = 0;
+      this.stageStartTime = 0;
+      this.currentStage = 'initializing';
+    }
+    
     const elapsed = Date.now() - this.shownAt;
-    const delay = Math.max(0, this.MIN_VISIBLE_MS - elapsed);
+    const minDelay = Math.max(0, this.MIN_VISIBLE_MS - elapsed);
+    const delay = Math.max(minDelay, finalMessageDelay);
     console.log('🔴 LoadingOverlay.hideLoading() - Elapsed:', elapsed, 'ms, delay:', delay, 'ms');
     
     setTimeout(() => {
       if (!this.el) return;
-      
-      if (this.totalStartTime) {
-        const now = Date.now();
-        const totalDuration = now - this.totalStartTime;
-        const stageDuration = now - this.stageStartTime;
-        console.log(`⏱️ Final stage "${this.currentStage}" completed in ${stageDuration}ms`);
-        console.log(`⏱️ Total loading duration: ${totalDuration}ms`);
-        
-        this.stageHistory.push({
-          name: this.currentStage,
-          duration: stageDuration,
-          endTime: now
-        });
-        
-        this.totalStartTime = 0;
-        this.stageStartTime = 0;
-        this.currentStage = 'initializing';
-      }
       
       console.log('🔴 LoadingOverlay.hideLoading() timeout - Hiding overlay');
       
