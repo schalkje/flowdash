@@ -301,12 +301,36 @@ export default class BaseContainerNode extends BaseNode {
       }
       
       // Update parent container if this container's size changed
+      // Disable pre-render mode for this layout pass since user manually changed layout
       if (this.parentNode && !this.parentNode._updating) {
+        const parentZone = this.parentNode.zoneManager?.innerContainerZone;
+        const wasPrerenderMode = parentZone?._prerenderMode;
+        
+        // Invalidate parent's pre-render data since child size changed
+        if (this.parentNode.data.prerender) {
+          delete this.parentNode.data.prerender;
+        }
+        
+        // Temporarily disable pre-render mode so parent can recalculate layout
+        if (parentZone) {
+          parentZone._prerenderMode = false;
+        }
+        
+        // Also disable the ZoneManager's prerender mode
+        if (this.parentNode.zoneManager) {
+          this.parentNode.zoneManager._prerenderMode = false;
+        }
+        
         this.parentNode._updating = true;
         try {
           this.parentNode.updateChildren();
         } finally {
           this.parentNode._updating = false;
+          // Restore pre-render mode flag (but don't re-enable it, manual edits invalidate pre-render)
+          if (parentZone && wasPrerenderMode) {
+            // Keep it disabled - manual interaction invalidated the pre-render data
+            // parentZone._prerenderMode = wasPrerenderMode;
+          }
         }
       }
       
@@ -394,7 +418,33 @@ export default class BaseContainerNode extends BaseNode {
       try { this.zoneManager.resize(collapsedWidth, collapsedHeight); } catch {}
     }
 
-    if (this.parentNode) this.parentNode.update();
+    // Update parent and disable pre-render mode since user manually changed layout
+    if (this.parentNode) {
+      const parentZone = this.parentNode.zoneManager?.innerContainerZone;
+      const wasPrerenderMode = parentZone?._prerenderMode;
+      
+      // Invalidate parent's pre-render data since child size changed
+      if (this.parentNode.data.prerender) {
+        delete this.parentNode.data.prerender;
+      }
+      
+      // Temporarily disable pre-render mode so parent can recalculate layout
+      if (parentZone) {
+        parentZone._prerenderMode = false;
+      }
+      
+      // Also disable the ZoneManager's prerender mode
+      if (this.parentNode.zoneManager) {
+        this.parentNode.zoneManager._prerenderMode = false;
+      }
+      
+      this.parentNode.update();
+      
+      // Keep pre-render disabled - manual interaction invalidated the pre-render data
+      // if (parentZone && wasPrerenderMode) {
+      //   parentZone._prerenderMode = wasPrerenderMode;
+      // }
+    }
 
     // Ensure any child elements that might still exist are moved under this.element (collapsed containers do not show inner content group)
     try {
@@ -558,33 +608,43 @@ export default class BaseContainerNode extends BaseNode {
     }
 
     // Calculate minimum size using header zone metrics when available
-    const labelText = this.data.label || '';
-    const fallbackLabelWidth = labelText.length * 8 + 36; // Fallback approximation
+    // In pre-render mode, use the pre-calculated minimum size to avoid recalculation
+    if (this.hasPrerenderData && this.data.prerender?.minimumSize) {
+      // Use pre-rendered minimum size (avoids text measurement and ensures consistency)
+      this.minimumSize = {
+        width: this.data.prerender.minimumSize.width || 0,
+        height: this.data.prerender.minimumSize.height || 0
+      };
+    } else {
+      // Normal mode: calculate minimum size from header zone
+      const labelText = this.data.label || '';
+      const fallbackLabelWidth = labelText.length * 8 + 36; // Fallback approximation
 
-    let minHeaderWidth = fallbackLabelWidth;
-    let headerHeight = 20; // Default fallback
-    if (this.zoneManager?.headerZone) {
-      const headerZone = this.zoneManager.headerZone;
-      // Prefer precise header minimum width (text + indicator + button + paddings)
-      if (typeof headerZone.getMinimumWidthThrottled === 'function') {
-        try {
-          minHeaderWidth = headerZone.getMinimumWidthThrottled();
-        } catch {}
-      } else if (typeof headerZone.getMinimumWidth === 'function') {
-        try {
-          minHeaderWidth = headerZone.getMinimumWidth();
-        } catch {}
-      } else {
-        // Fallback to current header size width (may be larger than minimum)
-        const headerSize = headerZone.getSize?.();
-        if (headerSize?.width) minHeaderWidth = headerSize.width;
+      let minHeaderWidth = fallbackLabelWidth;
+      let headerHeight = 20; // Default fallback
+      if (this.zoneManager?.headerZone) {
+        const headerZone = this.zoneManager.headerZone;
+        // Prefer precise header minimum width (text + indicator + button + paddings)
+        if (typeof headerZone.getMinimumWidthThrottled === 'function') {
+          try {
+            minHeaderWidth = headerZone.getMinimumWidthThrottled();
+          } catch {}
+        } else if (typeof headerZone.getMinimumWidth === 'function') {
+          try {
+            minHeaderWidth = headerZone.getMinimumWidth();
+          } catch {}
+        } else {
+          // Fallback to current header size width (may be larger than minimum)
+          const headerSize = headerZone.getSize?.();
+          if (headerSize?.width) minHeaderWidth = headerSize.width;
+        }
+        // Use header's measured height if available
+        headerHeight = headerZone.getHeaderHeight?.() ?? headerHeight;
       }
-      // Use header's measured height if available
-      headerHeight = headerZone.getHeaderHeight?.() ?? headerHeight;
-    }
 
-    const defaultSize = { width: minHeaderWidth, height: headerHeight };
-    this.minimumSize = GeometryManager.calculateMinimumSize([], defaultSize);
+      const defaultSize = { width: minHeaderWidth, height: headerHeight };
+      this.minimumSize = GeometryManager.calculateMinimumSize([], defaultSize);
+    }
     
     if (this.data.layout.minimumSize.width > this.minimumSize.width) this.minimumSize.width = this.data.layout.minimumSize.width;
     if (this.data.layout.minimumSize.height > this.minimumSize.height) this.minimumSize.height = this.data.layout.minimumSize.height;
@@ -618,7 +678,8 @@ export default class BaseContainerNode extends BaseNode {
     this.element.attr("transform", `translate(${this.x}, ${this.y})`);
 
     // Post-initialization: defer one re-measure to stabilize header width after fonts/styles
-    if (!this._didPostInitMeasure) {
+    // Skip this in pre-render mode since we already have the correct minimum size
+    if (!this._didPostInitMeasure && !this.hasPrerenderData) {
       this._didPostInitMeasure = true;
       setTimeout(() => {
         try {
@@ -754,11 +815,68 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   updateChildren() {
+    // If we have pre-render data, skip layout calculations
+    if (this.hasPrerenderData && this.allChildrenHavePrerender()) {
+      // console.log(`📊 Pre-render: Skipping layout for ${this.id}`);
+      
+      // Apply pre-render positions to children
+      this.applyPrerenderToChildren();
+      
+      // Update container size based on pre-render data
+      this.updateContainerSize();
+      
+      return; // Skip normal layout algorithm
+    }
+
     // Use zone system for child positioning if available
     if (this.zoneManager) {
       // Ensure DOM parent is correct even when status toggles cause collapse/expand
       this.ensureChildrenDomParent();
-      // Zone system handles positioning automatically
+      
+      // If not using pre-render, recalculate container size from actual children
+      if (!this.collapsed && this.zoneManager.innerContainerZone) {
+        const innerZone = this.zoneManager.innerContainerZone;
+        const headerZone = this.zoneManager.headerZone;
+        const marginZone = this.zoneManager.marginZone;
+        
+        const headerHeight = headerZone ? headerZone.getHeaderHeight() : 20;
+        const margins = marginZone ? marginZone.getMargins() : { top: 8, right: 8, bottom: 8, left: 8 };
+        
+        // CRITICAL: First reposition children, THEN calculate size from their positions
+        innerZone.updateChildPositions();
+        
+        // Now calculate the bounding box of the repositioned children
+        const contentSize = innerZone.calculateChildContentSize();
+        const widthFromContent = contentSize.width + margins.left + margins.right;
+        const headerMinWidth = (headerZone && typeof headerZone.getMinimumWidthThrottled === 'function')
+          ? headerZone.getMinimumWidthThrottled()
+          : (headerZone && typeof headerZone.getMinimumWidth === 'function')
+            ? headerZone.getMinimumWidth()
+            : (headerZone ? (headerZone.getSize?.().width || 0) : 0);
+        
+        const newWidth = Math.max(this.minimumSize.width, widthFromContent, headerMinWidth);
+        const newHeight = Math.max(this.minimumSize.height, headerHeight + margins.top + contentSize.height + margins.bottom);
+        
+        // Only resize if size actually changed to avoid infinite loops
+        const widthDiff = Math.abs(this.data.width - newWidth);
+        const heightDiff = Math.abs(this.data.height - newHeight);
+        if (widthDiff > 1 || heightDiff > 1) {
+          this.resize({ width: newWidth, height: newHeight }, true);
+          if (this.zoneManager && !this.zoneManager._resizing) {
+            this.zoneManager._resizing = true;
+            try {
+              this.zoneManager.resize(newWidth, newHeight);
+            } finally {
+              this.zoneManager._resizing = false;
+            }
+          }
+          
+          // After resizing parent, reposition children again to adjust to new parent size
+          innerZone.updateChildPositions();
+        }
+      }
+      
+      // Zone system handles positioning
       return;
     }
 
@@ -817,11 +935,11 @@ export default class BaseContainerNode extends BaseNode {
 
     this.childNodes.forEach((childNode) => {
       try {
-        console.log(`attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`);
+        // console.log(`attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`);
         
         // If DOM does not exist, re-init the child into the current child container
         if (!childNode.element) {
-          console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
+          // console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
           childNode.init(childContainer);
         } else {
           // Ensure DOM is attached to the correct container group
@@ -839,11 +957,11 @@ export default class BaseContainerNode extends BaseNode {
         }
         // Make the child visible again (containers will manage their own collapsed children)
         childNode.visible = true;
-        console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
+        // console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
         
         // For nested containers, ensure their zones and layout are refreshed
         if (childNode.isContainer) {
-          console.log(`attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`);
+          // console.log(`attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`);
           
           // Ensure descendants are visible unless they are collapsed containers
           if (typeof childNode.propagateVisibility === 'function') {
@@ -854,7 +972,7 @@ export default class BaseContainerNode extends BaseNode {
           if (childNode.zoneManager?.innerContainerZone && (!childNode.zoneManager.innerContainerZone.element || !childNode.zoneManager.innerContainerZone.initialized)) {
             // Only initialize nested inner zones if the nested container is expanded
             if (!childNode.collapsed) {
-              console.log(`attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`);
+              // console.log(`attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`);
               childNode.zoneManager.innerContainerZone.init();
                         // Ensure nested zones have correct size from child node
           if (childNode.zoneManager && !childNode.zoneManager._resizing) {
@@ -876,7 +994,7 @@ export default class BaseContainerNode extends BaseNode {
           // CRITICAL: Update children BEFORE calling updateChildPositions
           // This ensures the nested container has proper dimensions
           if (!childNode.collapsed && typeof childNode.updateChildren === 'function' && !childNode._updating) {
-            console.log(`attachChildrenToDOM: Updating children for nested container ${childNode.id}`);
+            // console.log(`attachChildrenToDOM: Updating children for nested container ${childNode.id}`);
             childNode._updating = true;
             try {
               childNode.updateChildren();
@@ -933,7 +1051,7 @@ export default class BaseContainerNode extends BaseNode {
       }
     }, 0);
 
-    console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
+    // console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
   }
 
   applyMinimumSize() {
@@ -954,6 +1072,41 @@ export default class BaseContainerNode extends BaseNode {
       this.minimumSize.height = this.minimumSize.width / ratio;
     } else {
       this.minimumSize.width = this.minimumSize.height * ratio;
+    }
+  }
+
+  /**
+   * Check if all children have pre-render data
+   * @returns {boolean}
+   */
+  allChildrenHavePrerender() {
+    if (!this.childNodes || this.childNodes.length === 0) return false;
+    return this.childNodes.every(child => child.hasPrerenderData);
+  }
+
+  /**
+   * Apply pre-render positions to all children
+   */
+  applyPrerenderToChildren() {
+    this.childNodes.forEach(child => {
+      // Position is already set in constructor
+      // Just need to apply the transform
+      child.element.attr('transform', `translate(${child.x}, ${child.y})`);
+      
+      // If child is a container, recursively apply to its children
+      if (child.isContainer && typeof child.applyPrerenderToChildren === 'function') {
+        child.applyPrerenderToChildren();
+      }
+    });
+  }
+
+  /**
+   * Update container size based on pre-render data
+   */
+  updateContainerSize() {
+    if (this.data.prerender) {
+      this.data.width = this.data.prerender.width;
+      this.data.height = this.data.prerender.height;
     }
   }
 }

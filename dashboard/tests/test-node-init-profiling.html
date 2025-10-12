@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Init Performance Profiling</title>
+    <link rel="stylesheet" href="../flowdash.css">
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="../js/themeManager.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        #status {
+            margin-top: 10px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        #results {
+            display: none;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .summary-card .subtitle-small {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .bottleneck-alert {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .insight-box {
+            background: #4ecdc4;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .recommendation-box {
+            background: #ffe66d;
+            color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .operation-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .time-value {
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .percentage {
+            font-weight: bold;
+        }
+
+        .percentage.high {
+            color: #ff6b6b;
+        }
+
+        .percentage.medium {
+            color: #ffa502;
+        }
+
+        .percentage.low {
+            color: #26de81;
+        }
+
+        #graph {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        #console-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-entry {
+            margin: 2px 0;
+        }
+
+        .log-time {
+            color: #4fc3f7;
+        }
+
+        .log-label {
+            color: #81c784;
+        }
+
+        .log-value {
+            color: #ffb74d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Node Init Performance Profiling</h1>
+        <p class="subtitle">Detailed analysis of node.init() method performance</p>
+
+        <div class="card">
+            <div class="controls">
+                <button id="start-btn" onclick="startProfiling()">Start Profiling</button>
+                <button id="export-btn" onclick="exportResults()" style="display: none;">Export Results</button>
+            </div>
+
+            <div id="progress-container">
+                <div id="progress-bar">
+                    <div id="progress-fill">0%</div>
+                </div>
+                <div id="status">Initializing...</div>
+            </div>
+        </div>
+
+        <div id="results">
+            <div class="card">
+                <h2 class="section-title">📊 Summary</h2>
+                <div class="summary-grid" id="summary-grid"></div>
+                <div id="bottleneck-alerts"></div>
+                <div id="insights"></div>
+                <div id="recommendations"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title">📈 Per-Node Breakdown (Average)</h2>
+                <table id="breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Average Time</th>
+                            <th>% of Node Init</th>
+                            <th>Total Across All Nodes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="breakdown-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title">📋 Detailed Console Log</h2>
+                <div id="console-log"></div>
+            </div>
+        </div>
+
+        <div id="graph"></div>
+    </div>
+
+    <script type="module">
+        import { loadDashboardFromFile } from '../js/dashboard.js';
+        import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
+
+        window.d3 = d3;
+        let logs = [];
+        let startTime = 0;
+
+        function logTiming(label, value = null) {
+            const elapsed = performance.now() - startTime;
+            const entry = `[${elapsed.toFixed(0).padStart(6)}ms] ${label}${value !== null ? ': ' + value : ''}`;
+            logs.push(entry);
+            console.log(entry);
+        }
+
+        window.startProfiling = async function() {
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            logs = [];
+            startTime = performance.now();
+
+            const updateProgress = (percent, status) => {
+                document.getElementById('progress-fill').style.width = percent + '%';
+                document.getElementById('progress-fill').textContent = Math.round(percent) + '%';
+                document.getElementById('status').textContent = status;
+            };
+
+            try {
+                logTiming('START', 'Beginning node-level profiling for dwh-6.fixed.json');
+                updateProgress(10, 'Clearing graph...');
+
+                // Clear and prepare
+                const container = d3.select('#graph');
+                container.selectAll('*').remove();
+                logTiming('GRAPH_CLEARED', 'Container prepared');
+                updateProgress(20, 'Creating SVG...');
+
+                // Create SVG
+                const svg = container.append('svg')
+                    .attr('width', '100%')
+                    .attr('height', '100%');
+                logTiming('SVG_CREATED', 'SVG element added to DOM');
+                updateProgress(30, 'Loading dashboard data...');
+
+                // Clear performance marks
+                performance.clearMarks();
+                performance.clearMeasures();
+
+                // Enable debug logging for display change suspension
+                window._debugDisplayChange = true;
+
+                // Load dashboard
+                const loadStart = performance.now();
+                await loadDashboardFromFile('#graph svg', 'dwh-6.fixed.json');
+                const loadEnd = performance.now();
+                logTiming('DASHBOARD_LOADED', `${(loadEnd - loadStart).toFixed(2)}ms`);
+                updateProgress(90, 'Analyzing performance data...');
+
+                // Collect all node init measurements
+                const allMeasures = performance.getEntriesByType('measure');
+                const nodeInitMeasures = allMeasures.filter(m => m.name.includes('node-init-'));
+                
+                logTiming('MEASURES_COLLECTED', `${nodeInitMeasures.length} performance measures found`);
+
+                // Group by operation type
+                const operationStats = {
+                    total: [],
+                    domCreate: [],
+                    zoneManager: [],
+                    domParenting: [],
+                    eventSetup: [],
+                    cssClasses: [],
+                    centerMark: [],
+                    connectionPoints: [],
+                    displayChange: []
+                };
+
+                nodeInitMeasures.forEach(measure => {
+                    if (measure.name.endsWith('-total')) {
+                        operationStats.total.push(measure.duration);
+                    } else if (measure.name.includes('-dom-create')) {
+                        operationStats.domCreate.push(measure.duration);
+                    } else if (measure.name.includes('-zone-manager')) {
+                        operationStats.zoneManager.push(measure.duration);
+                    } else if (measure.name.includes('-dom-parenting')) {
+                        operationStats.domParenting.push(measure.duration);
+                    } else if (measure.name.includes('-event-setup')) {
+                        operationStats.eventSetup.push(measure.duration);
+                    } else if (measure.name.includes('-css-classes')) {
+                        operationStats.cssClasses.push(measure.duration);
+                    } else if (measure.name.includes('-center-mark')) {
+                        operationStats.centerMark.push(measure.duration);
+                    } else if (measure.name.includes('-connection-points')) {
+                        operationStats.connectionPoints.push(measure.duration);
+                    } else if (measure.name.includes('-display-change')) {
+                        operationStats.displayChange.push(measure.duration);
+                    }
+                });
+
+                // Calculate averages
+                const avg = (arr) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+                const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+                const nodeCount = operationStats.total.length;
+
+                const avgStats = {
+                    total: avg(operationStats.total),
+                    domCreate: avg(operationStats.domCreate),
+                    zoneManager: avg(operationStats.zoneManager),
+                    domParenting: avg(operationStats.domParenting),
+                    eventSetup: avg(operationStats.eventSetup),
+                    cssClasses: avg(operationStats.cssClasses),
+                    centerMark: avg(operationStats.centerMark),
+                    connectionPoints: avg(operationStats.connectionPoints),
+                    displayChange: avg(operationStats.displayChange)
+                };
+
+                const totalStats = {
+                    total: sum(operationStats.total),
+                    domCreate: sum(operationStats.domCreate),
+                    zoneManager: sum(operationStats.zoneManager),
+                    domParenting: sum(operationStats.domParenting),
+                    eventSetup: sum(operationStats.eventSetup),
+                    cssClasses: sum(operationStats.cssClasses),
+                    centerMark: sum(operationStats.centerMark),
+                    connectionPoints: sum(operationStats.connectionPoints),
+                    displayChange: sum(operationStats.displayChange)
+                };
+
+                logTiming('ANALYSIS_COMPLETE', `Analyzed ${nodeCount} nodes`);
+                logTiming('AVG_TOTAL_INIT', `${avgStats.total.toFixed(2)}ms per node`);
+                logTiming('AVG_DOM_CREATE', `${avgStats.domCreate.toFixed(2)}ms per node`);
+                logTiming('AVG_ZONE_MANAGER', `${avgStats.zoneManager.toFixed(2)}ms per node`);
+                logTiming('AVG_DOM_PARENTING', `${avgStats.domParenting.toFixed(2)}ms per node`);
+                logTiming('AVG_EVENT_SETUP', `${avgStats.eventSetup.toFixed(2)}ms per node`);
+                logTiming('AVG_CSS_CLASSES', `${avgStats.cssClasses.toFixed(2)}ms per node`);
+                logTiming('AVG_CENTER_MARK', `${avgStats.centerMark.toFixed(2)}ms per node`);
+                logTiming('AVG_CONNECTION_POINTS', `${avgStats.connectionPoints.toFixed(2)}ms per node`);
+                logTiming('AVG_DISPLAY_CHANGE', `${avgStats.displayChange.toFixed(2)}ms per node`);
+
+                // Find bottlenecks (operations > 15% of total init time)
+                const bottlenecks = [];
+                Object.entries(avgStats).forEach(([key, value]) => {
+                    if (key !== 'total' && value > 0) {
+                        const percentage = (value / avgStats.total) * 100;
+                        if (percentage > 15) {
+                            bottlenecks.push({ operation: key, time: value, percentage });
+                            logTiming('BOTTLENECK', `${key}: ${value.toFixed(2)}ms (${percentage.toFixed(1)}%)`);
+                        }
+                    }
+                });
+
+                updateProgress(100, 'Complete!');
+                displayResults(nodeCount, avgStats, totalStats, bottlenecks);
+                logTiming('DONE', `Total profiling time: ${(performance.now() - startTime).toFixed(2)}ms`);
+
+            } catch (error) {
+                logTiming('ERROR', error.message);
+                console.error('Profiling error:', error);
+                updateProgress(100, 'Error occurred - check console');
+            }
+
+            document.getElementById('export-btn').style.display = 'inline-block';
+        };
+
+        function displayResults(nodeCount, avgStats, totalStats, bottlenecks) {
+            document.getElementById('results').style.display = 'block';
+
+            // Summary cards
+            const summaryHtml = `
+                <div class="summary-card">
+                    <h3>Total Nodes</h3>
+                    <div class="value">${nodeCount}</div>
+                    <div class="subtitle-small">Analyzed</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Avg Init Time</h3>
+                    <div class="value">${avgStats.total.toFixed(2)}ms</div>
+                    <div class="subtitle-small">Per node</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Init Time</h3>
+                    <div class="value">${totalStats.total.toFixed(0)}ms</div>
+                    <div class="subtitle-small">All nodes</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Bottlenecks Found</h3>
+                    <div class="value">${bottlenecks.length}</div>
+                    <div class="subtitle-small">Operations >15%</div>
+                </div>
+            `;
+            document.getElementById('summary-grid').innerHTML = summaryHtml;
+
+            // Bottleneck alerts
+            if (bottlenecks.length > 0) {
+                const alertsHtml = bottlenecks.map(b => 
+                    `<div class="bottleneck-alert">⚠️ BOTTLENECK: ${formatOperationName(b.operation)} - ${b.time.toFixed(2)}ms (${b.percentage.toFixed(1)}%)</div>`
+                ).join('');
+                document.getElementById('bottleneck-alerts').innerHTML = alertsHtml;
+
+                // Insights
+                const topBottleneck = bottlenecks[0];
+                const insightsHtml = `
+                    <div class="insight-box">💡 ${formatOperationName(topBottleneck.operation)} is ${topBottleneck.percentage.toFixed(1)}% of node init time!</div>
+                    <div class="insight-box">💡 This operation consumes ${topBottleneck.time.toFixed(2)}ms per node</div>
+                    <div class="insight-box">💡 Total cost across all nodes: ${(topBottleneck.time * nodeCount).toFixed(0)}ms</div>
+                `;
+                document.getElementById('insights').innerHTML = insightsHtml;
+
+                // Recommendations
+                const recommendations = getRecommendations(topBottleneck.operation);
+                const recHtml = recommendations.map(r => 
+                    `<div class="recommendation-box">🎯 ${r}</div>`
+                ).join('');
+                document.getElementById('recommendations').innerHTML = recHtml;
+            }
+
+            // Breakdown table
+            const operations = [
+                { name: 'DOM Creation', key: 'domCreate' },
+                { name: 'Zone Manager', key: 'zoneManager' },
+                { name: 'DOM Parenting', key: 'domParenting' },
+                { name: 'Event Setup', key: 'eventSetup' },
+                { name: 'CSS Classes', key: 'cssClasses' },
+                { name: 'Center Mark', key: 'centerMark' },
+                { name: 'Connection Points', key: 'connectionPoints' },
+                { name: 'Display Change', key: 'displayChange' }
+            ];
+
+            const tableRows = operations.map(op => {
+                const avgTime = avgStats[op.key];
+                const totalTime = totalStats[op.key];
+                const percentage = (avgTime / avgStats.total) * 100;
+                const percentClass = percentage > 15 ? 'high' : percentage > 5 ? 'medium' : 'low';
+                
+                return `
+                    <tr>
+                        <td class="operation-name">${op.name}</td>
+                        <td class="time-value">${avgTime.toFixed(2)}ms</td>
+                        <td><span class="percentage ${percentClass}">${percentage.toFixed(1)}%</span></td>
+                        <td class="time-value">${totalTime.toFixed(0)}ms</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('breakdown-tbody').innerHTML = tableRows;
+
+            // Console log
+            document.getElementById('console-log').innerHTML = logs.map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+
+        function formatOperationName(key) {
+            const names = {
+                domCreate: 'DOM Creation',
+                zoneManager: 'Zone Manager',
+                domParenting: 'DOM Parenting',
+                eventSetup: 'Event Setup',
+                cssClasses: 'CSS Classes',
+                centerMark: 'Center Mark',
+                connectionPoints: 'Connection Points',
+                displayChange: 'Display Change'
+            };
+            return names[key] || key;
+        }
+
+        function getRecommendations(operation) {
+            const recs = {
+                domCreate: [
+                    'DOM creation is fast - this is normal',
+                    'Focus on other operations that are slower'
+                ],
+                zoneManager: [
+                    'Zone manager initialization may include style calculations',
+                    'Consider deferring zone resize operations',
+                    'Profile ZoneManager.init() and resize() methods separately'
+                ],
+                domParenting: [
+                    'DOM parenting involves node.appendChild which triggers reflows',
+                    'Consider batching appendChild operations',
+                    'Use DocumentFragment for multiple appends'
+                ],
+                eventSetup: [
+                    'Event setup should be fast - investigate EventManager',
+                    'Check if event handlers are doing expensive operations',
+                    'Consider using event delegation instead of per-node handlers'
+                ],
+                cssClasses: [
+                    'CSS class operations trigger style recalculation',
+                    'Batch class changes using single className assignment',
+                    'Consider using CSS variables instead of multiple classes'
+                ],
+                centerMark: [
+                    'Center mark creation is usually fast',
+                    'If slow, check if SVG operations are causing layout'
+                ],
+                connectionPoints: [
+                    'Connection points involve multiple SVG appends',
+                    'Consider creating connection points in a DocumentFragment',
+                    'Or defer connection points until after initial render'
+                ],
+                displayChange: [
+                    'handleDisplayChange may be triggering style recalc or layout',
+                    'Profile handleDisplayChange() method separately',
+                    'Check if it reads layout properties (offsetWidth, getBoundingClientRect)'
+                ]
+            };
+            return recs[operation] || ['Investigate this operation further'];
+        }
+
+        window.exportResults = function() {
+            const results = {
+                timestamp: new Date().toISOString(),
+                logs: logs,
+                measures: performance.getEntriesByType('measure').map(m => ({
+                    name: m.name,
+                    duration: m.duration,
+                    startTime: m.startTime
+                }))
+            };
+            
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'node-init-profiling-results.json';
+            a.click();
+        };
+    </script>
+</body>
+</html>
+
+

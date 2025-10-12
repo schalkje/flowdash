@@ -60,6 +60,12 @@
             if (!dataset) return;
             flowdash = new flowDashboard.Dashboard(dataset);
             flowdash.initialize('#graph');
+            
+            // Close loading popup after initialization
+            if (flowdash.hideLoading && typeof flowdash.hideLoading === 'function') {
+                flowdash.hideLoading();
+            }
+            
             window.flowdash = flowdash;
             
             // Attach dashboard instance to the graph element for settings to find

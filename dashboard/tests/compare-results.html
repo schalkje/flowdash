@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Results Comparison</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        .upload-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .file-input {
+            margin: 10px 0;
+        }
+        .file-input label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .improvement {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .regression {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .neutral {
+            color: #6c757d;
+        }
+        .summary-box {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Performance Results Comparison Tool</h1>
+        
+        <div class="upload-section">
+            <h2>Load Results Files</h2>
+            <div class="file-input">
+                <label for="baselineFile">Baseline:</label>
+                <input type="file" id="baselineFile" accept=".json">
+            </div>
+            <div class="file-input">
+                <label for="comparisonFile">Comparison:</label>
+                <input type="file" id="comparisonFile" accept=".json">
+            </div>
+            <button onclick="compareResults()">Compare Results</button>
+            <button onclick="clearComparison()">Clear</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        let baselineData = null;
+        let comparisonData = null;
+        
+        document.getElementById('baselineFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const text = await file.text();
+                baselineData = JSON.parse(text);
+                console.log('Baseline loaded:', baselineData);
+            }
+        });
+        
+        document.getElementById('comparisonFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const text = await file.text();
+                comparisonData = JSON.parse(text);
+                console.log('Comparison loaded:', comparisonData);
+            }
+        });
+        
+        function compareResults() {
+            if (!baselineData || !comparisonData) {
+                alert('Please load both baseline and comparison files first.');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('results');
+            let html = '';
+            
+            // Metadata comparison
+            html += `
+                <div class="summary-box">
+                    <h2>Test Information</h2>
+                    <table>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Baseline</th>
+                            <th>Comparison</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Test Date</strong></td>
+                            <td>${new Date(baselineData.metadata.testDate).toLocaleString()}</td>
+                            <td>${new Date(comparisonData.metadata.testDate).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Phase</strong></td>
+                            <td>${baselineData.metadata.phase}</td>
+                            <td>${comparisonData.metadata.phase}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Optimizations</strong></td>
+                            <td>${baselineData.metadata.optimizationsApplied.length > 0 ? baselineData.metadata.optimizationsApplied.join(', ') : 'None'}</td>
+                            <td>${comparisonData.metadata.optimizationsApplied.length > 0 ? comparisonData.metadata.optimizationsApplied.join(', ') : 'None'}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            // Overall summary
+            const overallStats = calculateOverallStats(baselineData.results, comparisonData.results);
+            html += `
+                <div class="summary-box">
+                    <h2>Overall Performance Improvement</h2>
+                    <table>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Baseline Avg</th>
+                            <th>Comparison Avg</th>
+                            <th>Improvement</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Time</strong></td>
+                            <td>${overallStats.baseline.avgTotal.toFixed(0)} ms</td>
+                            <td>${overallStats.comparison.avgTotal.toFixed(0)} ms</td>
+                            <td class="${overallStats.totalImprovement > 0 ? 'improvement' : 'regression'}">
+                                ${formatImprovement(overallStats.totalImprovement)}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tests Passed</strong></td>
+                            <td>${overallStats.baseline.passed}/${overallStats.baseline.total}</td>
+                            <td>${overallStats.comparison.passed}/${overallStats.comparison.total}</td>
+                            <td class="${overallStats.comparison.passed > overallStats.baseline.passed ? 'improvement' : overallStats.comparison.passed < overallStats.baseline.passed ? 'regression' : 'neutral'}">
+                                ${overallStats.comparison.passed > overallStats.baseline.passed ? '📈 More tests passing' : overallStats.comparison.passed < overallStats.baseline.passed ? '📉 Fewer tests passing' : '➡️ Same'}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            // File-by-file comparison
+            html += '<h2>Detailed File Comparison</h2>';
+            
+            baselineData.results.forEach((baselineResult, index) => {
+                const comparisonResult = comparisonData.results.find(r => r.file === baselineResult.file);
+                if (!comparisonResult) return;
+                
+                const baselineTotal = baselineResult.metrics.phases.total;
+                const comparisonTotal = comparisonResult.metrics.phases.total;
+                const improvement = ((baselineTotal - comparisonTotal) / baselineTotal * 100);
+                
+                html += `
+                    <h3>${baselineResult.file} - ${baselineResult.description}</h3>
+                    <p><strong>Total Time:</strong> 
+                       ${Math.round(baselineTotal)} ms → ${Math.round(comparisonTotal)} ms 
+                       <span class="${improvement > 0 ? 'improvement' : 'regression'}">(${formatImprovement(improvement)})</span>
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Phase</th>
+                                <th>Baseline (ms)</th>
+                                <th>Comparison (ms)</th>
+                                <th>Change (ms)</th>
+                                <th>Improvement %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${comparePhases(baselineResult.metrics.phases, comparisonResult.metrics.phases)}
+                        </tbody>
+                    </table>
+                    
+                    <p><strong>Bottlenecks:</strong></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>Count</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Baseline</td>
+                                <td>${baselineResult.bottlenecks.length}</td>
+                                <td>${baselineResult.bottlenecks.map(b => `${b.phase} (${b.percentage}%)`).join(', ') || 'None'}</td>
+                            </tr>
+                            <tr>
+                                <td>Comparison</td>
+                                <td>${comparisonResult.bottlenecks.length}</td>
+                                <td>${comparisonResult.bottlenecks.map(b => `${b.phase} (${b.percentage}%)`).join(', ') || 'None'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function comparePhases(baseline, comparison) {
+            const phases = ['dataLoad', 'nodeCreation', 'nodeInitialization', 'edgeCreation', 'layoutStabilization', 'zoomSetup', 'total'];
+            return phases.map(phase => {
+                const baselineTime = baseline[phase] || 0;
+                const comparisonTime = comparison[phase] || 0;
+                const change = comparisonTime - baselineTime;
+                const improvement = baselineTime > 0 ? ((baselineTime - comparisonTime) / baselineTime * 100) : 0;
+                
+                return `
+                    <tr>
+                        <td><strong>${phase}</strong></td>
+                        <td>${Math.round(baselineTime)}</td>
+                        <td>${Math.round(comparisonTime)}</td>
+                        <td class="${change < 0 ? 'improvement' : change > 0 ? 'regression' : 'neutral'}">
+                            ${change > 0 ? '+' : ''}${Math.round(change)}
+                        </td>
+                        <td class="${improvement > 0 ? 'improvement' : improvement < 0 ? 'regression' : 'neutral'}">
+                            ${formatImprovement(improvement)}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function calculateOverallStats(baselineResults, comparisonResults) {
+            let baselineTotal = 0;
+            let comparisonTotal = 0;
+            let baselinePassed = 0;
+            let comparisonPassed = 0;
+            
+            baselineResults.forEach((result, index) => {
+                baselineTotal += result.metrics.phases.total;
+                if (result.summary.overallPass) baselinePassed++;
+                
+                const compResult = comparisonResults.find(r => r.file === result.file);
+                if (compResult) {
+                    comparisonTotal += compResult.metrics.phases.total;
+                    if (compResult.summary.overallPass) comparisonPassed++;
+                }
+            });
+            
+            const count = baselineResults.length;
+            const totalImprovement = ((baselineTotal - comparisonTotal) / baselineTotal * 100);
+            
+            return {
+                baseline: {
+                    avgTotal: baselineTotal / count,
+                    passed: baselinePassed,
+                    total: count
+                },
+                comparison: {
+                    avgTotal: comparisonTotal / count,
+                    passed: comparisonPassed,
+                    total: count
+                },
+                totalImprovement
+            };
+        }
+        
+        function formatImprovement(percentage) {
+            if (percentage > 0) {
+                return `▼ ${percentage.toFixed(1)}% faster`;
+            } else if (percentage < 0) {
+                return `▲ ${Math.abs(percentage).toFixed(1)}% slower`;
+            } else {
+                return '➡️ No change';
+            }
+        }
+        
+        function clearComparison() {
+            baselineData = null;
+            comparisonData = null;
+            document.getElementById('baselineFile').value = '';
+            document.getElementById('comparisonFile').value = '';
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

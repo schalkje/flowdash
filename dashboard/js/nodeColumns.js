@@ -5,6 +5,10 @@ import { LayoutManager } from "./layoutManager.js";
 export default class ColumnsNode extends BaseContainerNode {
   constructor(nodeData, parentElement, createNode, settings, parentNode = null) {
     // Set up default layout configuration for columns node
+    // Ensure layout is an object, not a string
+    if (typeof nodeData.layout === 'string') {
+      nodeData.layout = { type: nodeData.layout };
+    }
     nodeData.layout ??= {};
     nodeData.layout.minimumColumnWidth ??= 0;
     const minHeight = 10; // header + top margin + min child + bottom margin

@@ -110,9 +110,49 @@ export function createEdge(rootNode, edgeData, settings)
 }
 
 
-export  function createEdges(rootNode, edges, settings) {
-  edges.forEach((edgeData) => {
-    createEdge(rootNode, edgeData, settings);
+export  function createEdges(rootNode, edges, settings, nodeMap = null) {
+  // Normalize edges to ensure they use numeric source/target IDs only
+  const normalizedEdges = edges.map(edgeData => {
+    // Create a clean edge object with only the properties we need
+    const normalized = {
+      source: edgeData.source,  // Use numeric ID
+      target: edgeData.target,  // Use numeric ID
+      label: edgeData.label || '',
+      description: edgeData.description || '',
+      type: edgeData.type || 'unknown',
+      isActive: edgeData.isActive !== false
+    };
+    
+    // Explicitly ignore sourceName and targetName
+    // Only use the numeric source and target properties
+    if (typeof normalized.source !== 'number') {
+      console.error('Edge has invalid source (not a number):', edgeData);
+      return null;
+    }
+    if (typeof normalized.target !== 'number') {
+      console.error('Edge has invalid target (not a number):', edgeData);
+      return null;
+    }
+    
+    return normalized;
+  }).filter(edge => edge !== null);
+
+  // Continue with existing edge creation logic using normalizedEdges
+  // Use nodeMap if provided (Optimization #4), otherwise fall back to getNode
+  normalizedEdges.forEach(edgeData => {
+    const sourceNode = nodeMap ? nodeMap.get(edgeData.source) : rootNode.getNode(edgeData.source);
+    const targetNode = nodeMap ? nodeMap.get(edgeData.target) : rootNode.getNode(edgeData.target);
+    
+    if (!sourceNode) {
+      console.error('Creating Edge - Source node', edgeData.source, 'not found', edgeData);
+      return;
+    }
+    if (!targetNode) {
+      console.error('Creating Edge - Target node', edgeData.target, 'not found', edgeData);
+      return;
+    }
+    
+    createInternalEdge(edgeData, sourceNode, targetNode, settings);
   });
 
    rootNode.initEdges(true);

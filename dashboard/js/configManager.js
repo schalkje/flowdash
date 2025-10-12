@@ -10,6 +10,9 @@ export const DEFAULT_SETTINGS = {
   showInnerZoneRect: false,
   containerMargin: { top: 8, right: 8, bottom: 8, left: 8 },
   nodeSpacing: { horizontal: 20, vertical: 10 },
+  usePrerender: true, // Enable pre-render if data available (default: true)
+  prerenderSkipZoneCalculations: true, // Skip zone calculations for pre-rendered nodes (default: true)
+  prerenderMetadata: null, // Optional metadata about pre-render generation
   minimap: {
     enabled: true,
     // If omitted in API: desktop → hover, small screens → hidden

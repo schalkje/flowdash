@@ -5,7 +5,7 @@ import { createMarkers } from "./markers.js";
 import { createEdges } from "./edge.js";
 import { ConfigManager } from "./configManager.js";
 import { fetchDashboardFile } from "./data.js";
-import { LoadingOverlay, showLoading as showLoader, hideLoading as hideLoader, resolveLoadingContainer as resolveLoadingHost } from "./loadingOverlay.js";
+import { LoadingOverlay, showLoading as showLoader, hideLoading as hideLoader, resolveLoadingContainer as resolveLoadingHost, setLoadingMessage as setLoaderMessage } from "./loadingOverlay.js";
 import { Minimap } from "./minimap.js";
 import ZoomManager from "./zoomManager.js";
 import { NodeStatus } from "./nodeBase.js";
@@ -28,6 +28,33 @@ export class Dashboard {
     this.data = dashboardData;
 
     this.data.settings = ConfigManager.mergeWithDefaults(this.data.settings);
+    
+    // Pre-render state tracking
+    this._suspendStatusChanges = false;
+    
+    // Performance tracking
+    this.performanceMetrics = {
+      phases: {
+        dataLoad: 0,
+        nodeCreation: 0,
+        nodeInitialization: 0,
+        edgeCreation: 0,
+        layoutStabilization: 0,
+        zoomSetup: 0,
+        total: 0
+      },
+      nodeStats: {
+        totalNodes: 0,
+        containerNodes: 0,
+        leafNodes: 0,
+        maxDepth: 0
+      },
+      domStats: {
+        appendOperations: 0,
+        layoutRecalculations: 0,
+        boundingBoxQueries: 0
+      }
+    };
     
     this.main = {
       svg: null,
@@ -60,6 +87,177 @@ export class Dashboard {
     this._displayChangeCount = 0;
     this._suspendDisplayChange = false;
     this.zoomManager = new ZoomManager(this);
+  }
+
+  // --- Pre-Render Methods ---
+
+  /**
+   * Check if dashboard has pre-render data available
+   * @returns {boolean} True if pre-render data exists and is enabled
+   */
+  hasPrerenderData() {
+    const settingsUsePrerender = this.data.settings?.usePrerender !== false;
+    const hasNodePrerender = this.hasNodePrerenderData(this.data.nodes);
+    return settingsUsePrerender && hasNodePrerender;
+  }
+
+  /**
+   * Recursively check if any node has pre-render data
+   * @param {Array} nodes - Array of nodes to check
+   * @returns {boolean} True if any node has prerender data
+   */
+  hasNodePrerenderData(nodes) {
+    if (!Array.isArray(nodes)) return false;
+    
+    for (const node of nodes) {
+      if (node.prerender) return true;
+      if (node.children && this.hasNodePrerenderData(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Apply status rules after pre-render initial display
+   * @param {Object} root - Root node
+   */
+  applyDeferredStatusRules(root) {
+    console.log('📊 Pre-render: Applying deferred status rules');
+    
+    // Re-enable status change handlers
+    this._suspendStatusChanges = false;
+    
+    // Re-enable display change callbacks
+    this._suspendDisplayChange = false;
+    
+    // Determine container statuses based on children
+    if (this.data.settings.cascadeOnStatusChange) {
+      this.initializeChildrenStatusses(root);
+    }
+    
+    // Apply collapse rules if enabled
+    if (this.data.settings.toggleCollapseOnStatusChange) {
+      this.applyAutoCollapse(root);
+    }
+    
+    // Final layout adjustments
+    this.onMainDisplayChange();
+    
+    console.log('📊 Pre-render: Status rules applied');
+  }
+
+  /**
+   * Apply auto-collapse based on status
+   * @param {Object} node - Node to process
+   */
+  applyAutoCollapse(node) {
+    if (!node.isContainer) return;
+    
+    // Check if this container should auto-collapse based on status
+    // This is where status-based collapse logic goes
+    // (Implementation depends on existing status rules)
+    
+    // Recursively process children
+    if (node.childNodes) {
+      node.childNodes.forEach(child => this.applyAutoCollapse(child));
+    }
+  }
+
+  // --- Performance Metrics Methods ---
+  
+  reportPerformanceMetrics() {
+    console.group('🚀 Dashboard Performance Metrics');
+    console.table(this.performanceMetrics.phases);
+    console.group('Node Statistics');
+    console.table(this.performanceMetrics.nodeStats);
+    console.groupEnd();
+    console.group('DOM Statistics');
+    console.table(this.performanceMetrics.domStats);
+    console.groupEnd();
+    console.groupEnd();
+    
+    // Identify bottlenecks (phases taking > 20% of total time)
+    const totalTime = this.performanceMetrics.phases.total;
+    const bottlenecks = Object.entries(this.performanceMetrics.phases)
+      .filter(([phase, time]) => phase !== 'total' && (time / totalTime) > 0.2)
+      .map(([phase, time]) => ({ phase, time, percentage: ((time / totalTime) * 100).toFixed(1) + '%' }));
+    
+    if (bottlenecks.length > 0) {
+      console.warn('⚠️ Performance Bottlenecks (>20% of load time):', bottlenecks);
+    }
+    
+    return this.performanceMetrics;
+  }
+  
+  /**
+   * Build a node lookup map for efficient edge creation (Optimization #4)
+   * @param {Node} rootNode - The root node to traverse
+   * @returns {Map<number, Node>} Map of node IDs to node objects
+   */
+  buildNodeMap(rootNode) {
+    const map = new Map();
+    
+    const addNode = (node) => {
+      map.set(node.id, node);
+      if (node.childNodes && node.childNodes.length > 0) {
+        node.childNodes.forEach(addNode);
+      }
+    };
+    
+    if (rootNode) {
+      addNode(rootNode);
+    }
+    
+    return map;
+  }
+  
+  /**
+   * Deferred minimap initialization (Optimization #6)
+   * Initialize minimap after initial dashboard load completes
+   */
+  _deferredMinimapInit() {
+    if (this._minimapInitialized) return;
+    
+    console.log('🗺️ Initializing minimap (deferred)...');
+    const t0 = performance.now();
+    
+    try {
+      this.minimap.safeInitialize();
+      this._minimapInitialized = true;
+      console.log(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
+    } catch (e) {
+      console.error('❌ Failed to initialize minimap:', e);
+    }
+  }
+  
+  /**
+   * Check if minimap is ready for operations (Optimization #6 helper)
+   * @returns {boolean} True if minimap is initialized and ready
+   */
+  _isMinimapReady() {
+    return this._minimapInitialized && this.minimap && this.minimap.active && this.minimap.svg;
+  }
+  
+  collectNodeStatistics() {
+    const countNodes = (node, depth = 0) => {
+      this.performanceMetrics.nodeStats.totalNodes++;
+      this.performanceMetrics.nodeStats.maxDepth = Math.max(
+        this.performanceMetrics.nodeStats.maxDepth, 
+        depth
+      );
+      
+      if (node.childNodes && node.childNodes.length > 0) {
+        this.performanceMetrics.nodeStats.containerNodes++;
+        node.childNodes.forEach(child => countNodes(child, depth + 1));
+      } else {
+        this.performanceMetrics.nodeStats.leafNodes++;
+      }
+    };
+    
+    if (this.main.root) {
+      countNodes(this.main.root);
+    }
   }
 
   // --- Selection bounding box helpers ---
@@ -190,24 +388,25 @@ export class Dashboard {
       this.main.zoom = this.initializeZoom();
     }
 
-    // CRITICAL FIX: Instead of destroying and recreating the minimap, 
-    // just reinitialize the existing one to prevent zoom-cockpit duplication
+    // OPTIMIZATION #6: Defer minimap initialization during setData
+    // Clean up any orphaned elements first, but keep minimap working for data updates
+    this.cleanupOrphanedElements();
+    
+    // For setData (data updates), we should reinitialize the minimap
+    // but do it deferred to avoid blocking
     if (this.minimap) {
       try { 
-        // Clean up any orphaned elements first
-        this.cleanupOrphanedElements();
-        // Use safe initialization to prevent duplicates
-        this.minimap.safeInitialize();
+        // Mark as needing reinitialization
+        this._minimapInitialized = false;
+        // Defer minimap reinitialization slightly
+        setTimeout(() => {
+          if (!this._minimapInitialized) {
+            this._deferredMinimapInit();
+          }
+        }, 50);
       } catch (e) {
-        // If reinitialization fails, fall back to creating a new instance
-        console.warn('Failed to reinitialize minimap, creating new instance:', e);
-        this.minimap = new Minimap(this);
-        this.minimap.initializeEmbedded();
+        console.warn('Failed to schedule minimap reinit:', e);
       }
-    } else {
-      // Only create new instance if one doesn't exist
-      this.minimap = new Minimap(this);
-      this.minimap.initializeEmbedded();
     }
 
     this.hasPerformedInitialZoomToRoot = false;
@@ -216,6 +415,8 @@ export class Dashboard {
   }
 
    initialize(mainDivSelector, minimapDivSelector = null) {
+    const t0 = performance.now();
+    
     this.mainDivSelector = mainDivSelector;
     
     try { 
@@ -244,19 +445,50 @@ export class Dashboard {
       this.onMainDisplayChange();
     };
     
-  this.main.root =  this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    // Check for pre-render data
+    const hasPrerenderData = this.hasPrerenderData();
 
-  this.main.zoom = this.initializeZoom();
-  this.main.root.onClick = (node) => this.selectNode(node);
-  this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+    if (hasPrerenderData) {
+      console.log('📊 Pre-render data detected - using fast-path initialization');
+      
+      // Suspend display change callbacks during initial render
+      this._suspendDisplayChange = true;
+      
+      // Suspend status change handlers
+      this._suspendStatusChanges = true;
+    }
+    
+    // Phase 1: Node Creation (includes node tree, initialization, edges)
+    const t1 = performance.now();
+    this.main.root = this.createDashboard(this.data, this.main.container, tempDisplayChangeCallback);
+    // nodeCreation, nodeInitialization, and edgeCreation are tracked inside createDashboard
 
-    // CRITICAL FIX: Clean up any orphaned elements and use safe initialization to prevent duplicates
+    // If using pre-render, apply status rules in second pass
+    if (hasPrerenderData && this.main.root) {
+      console.log('📊 Pre-render: Scheduling deferred status application');
+      
+      // Schedule status application after initial render
+      requestAnimationFrame(() => {
+        this.applyDeferredStatusRules(this.main.root);
+      });
+    }
+
+    // Phase 4: Zoom Setup
+    const t4 = performance.now();
+    this.main.zoom = this.initializeZoom();
+    this.main.root.onClick = (node) => this.selectNode(node);
+    this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+
+    // OPTIMIZATION #6: Defer minimap initialization to improve initial load time
+    // Clean up any orphaned elements but DON'T initialize minimap yet
     this.cleanupOrphanedElements();
-    this.minimap.safeInitialize();
+    // Mark minimap as pending initialization
+    this._minimapInitialized = false;
+    
+    this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
     
-
     this.initializeFullscreenToggle();
 
     if (typeof window !== 'undefined') {
@@ -268,7 +500,34 @@ export class Dashboard {
       };
       window.addEventListener('resize', this._onWindowResize);
     }
+    
+    // Total time
+    this.performanceMetrics.phases.total = performance.now() - t0;
+    
+    // Collect node statistics
+    this.collectNodeStatistics();
+    
+    // Report metrics
+    this.reportPerformanceMetrics();
+    
     this._isInitialized = true;
+    
+    // Ensure loading popup is hidden after initialization completes
+    // This serves as a fallback if onMainDisplayChange doesn't trigger
+    // Use setTimeout to ensure all synchronous operations complete first
+    setTimeout(() => {
+      if (this._initialLoading) {
+        console.log('📊 Dashboard.initialize() - Fallback hideLoading() called');
+        this._initialLoading = false;
+        this.hideLoading();
+      }
+      
+      // OPTIMIZATION #6: Initialize minimap AFTER initial load completes
+      // This prevents minimap initialization from blocking the main rendering
+      if (!this._minimapInitialized) {
+        this._deferredMinimapInit();
+      }
+    }, 0);
   }
 
 
@@ -529,7 +788,7 @@ export class Dashboard {
         .translate(-newLeft * newK - newWidth / 2, -newTop * newK - newHeight / 2)
         .scale(newK);
 
-      if (this.minimap.active) {
+      if (this._isMinimapReady()) {
         this.minimap.resize();
       }
 
@@ -539,7 +798,7 @@ export class Dashboard {
 
       this.recomputeBaselineFit();
 
-      if (this.minimap.active) {
+      if (this._isMinimapReady()) {
         this.minimap.update();
         this.minimap.updateViewport(newTransform);
         this.minimap.position();
@@ -566,7 +825,7 @@ export class Dashboard {
         this.main.height = rect.height;
         this.main.divRatio = this.main.width / this.main.height;
         this.main.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
-        if (this.minimap.active) {
+        if (this._isMinimapReady()) {
           this.minimap.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
           this.minimap.update();
           const transform = d3.zoomIdentity
@@ -620,7 +879,7 @@ export class Dashboard {
       .translate(-newLeft * newK - newWidth / 2, -newTop * newK - newHeight / 2)
       .scale(newK);
 
-    if (this.minimap.active) this.minimap.resize();
+    if (this._isMinimapReady()) this.minimap.resize();
 
     this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
     this.main.container.attr('transform', newTransform);
@@ -628,7 +887,7 @@ export class Dashboard {
 
     this.recomputeBaselineFit();
 
-    if (this.minimap.active) {
+    if (this._isMinimapReady()) {
       this.minimap.update();
       this.minimap.updateViewport(newTransform);
       this.minimap.position();
@@ -718,15 +977,56 @@ export class Dashboard {
       };
     }
 
+    // Phase 2: Node Initialization
+    const t2 = performance.now();
+    
+    // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
+    // Instead of measure-write-measure-write, we do: write-write-write, measure-once, write-write-write
+    this._batchDomOperations = true;
+    this._deferredOperations = {
+      measurements: [],
+      updates: []
+    };
+    
     // Suspend display-change reactions during bulk initialization to avoid
     // mid-cascade zoom/fit recalculations that cause drift
     this._suspendDisplayChange = true;
+    // Store dashboard reference on root so handleDisplayChange() can access suspension flag
+    root.__dashboard = this;
+    
+    // Initialize all nodes (DOM creation)
+    const t2a = performance.now();
     root.init();
-    this._suspendDisplayChange = false;
+    
+    // Perform all deferred measurements in a single batch (Optimization #7)
+    const measurementCount = this._deferredOperations.measurements.length;
+    this._deferredOperations.measurements.forEach(fn => fn());
+    this._deferredOperations.measurements = [];
+    
+    // Apply any updates that depend on measurements
+    const updateCount = this._deferredOperations.updates.length;
+    this._deferredOperations.updates.forEach(fn => fn());
+    this._deferredOperations.updates = [];
+    this._batchDomOperations = false;
+    this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
 
+    // Phase 3: Edge Creation & Status Initialization
+    const t3 = performance.now();
     this.initializeChildrenStatusses(root);
 
-    if (dashboard.edges.length > 0) createEdges(root, dashboard.edges, dashboard.settings);
+    if (dashboard.edges.length > 0) {
+      // Build node lookup map ONCE for edge creation (Optimization #4)
+      const nodeMap = this.buildNodeMap(root);
+      createEdges(root, dashboard.edges, dashboard.settings, nodeMap);
+    }
+    
+    // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
+    try { this.reparentNodesByParentIds(); } catch {}
+    
+    // Lift suspension after all initialization, edge creation, and reparenting is complete
+    this._suspendDisplayChange = false;
+    
+    this.performanceMetrics.phases.edgeCreation = performance.now() - t3;
 
     if (this.data.settings.isDebug) {
       container.append("circle")
@@ -738,10 +1038,6 @@ export class Dashboard {
         .attr("stroke", "darkred")
         .attr("stroke-width", 2);
     }
-
-    
-    // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
-    try { this.reparentNodesByParentIds(); } catch {}
 
     // Defer initial baseline fit and zoom until layout has fully settled
     // This will be handled by onMainDisplayChange via ZoomManager.handleLayoutChange
@@ -846,15 +1142,32 @@ export class Dashboard {
   }
 
   onMainDisplayChange() {
+    // Check suspension before scheduling
+    if (this._suspendDisplayChange) return;
     if (this._displayChangeScheduled) return;
     this._displayChangeScheduled = true;
 
     requestAnimationFrame(() => {
+      // Double-check suspension inside RAF callback
+      if (this._suspendDisplayChange) {
+        this._displayChangeScheduled = false;
+        return;
+      }
+      
+      const isInitialStabilization = this._displayChangeCount === 0;
+      const tLayout = isInitialStabilization ? performance.now() : null;
+      
       this._displayChangeCount = (this._displayChangeCount || 0) + 1;
       try { this.zoomManager.handleLayoutChange(); } catch {}
+      
+      if (isInitialStabilization && tLayout) {
+        this.performanceMetrics.phases.layoutStabilization = performance.now() - tLayout;
+      }
       // Ensure DOM hierarchy is consistent with logical parent/child relationships
       try { this.enforceDomHierarchy(); } catch {}
-      if (this.minimap.svg) {
+      
+      // OPTIMIZATION #6: Only update minimap if it's initialized and ready
+      if (this._isMinimapReady()) {
         try {
           this.minimap.update();
           const transform = d3.zoomIdentity
@@ -862,9 +1175,9 @@ export class Dashboard {
             .scale(this.main.transform.k);
           this.minimap.updateViewport(transform);
           this.minimap.updateScaleIndicator?.();
+          this.minimap.position();
         } catch {}
       }
-      this.minimap.position();
 
       // Recompute selection bounding box after layout changes (e.g., collapse/expand)
       try {
@@ -899,7 +1212,6 @@ export class Dashboard {
       } catch {}
 
       if (this._initialLoading) {
-        console.log('📊 Dashboard onMainDisplayChange - Initial loading complete, calling hideLoading()');
         this._initialLoading = false;
         this.hideLoading();
       }
@@ -1228,8 +1540,23 @@ export class Dashboard {
     LoadingOverlay.show(container);
   }
   hideLoading() {
-    console.log('📊 Dashboard.hideLoading() called');
     LoadingOverlay.hide();
+  }
+
+  /**
+   * Update the loading overlay message for this dashboard instance.
+   * Ensures the overlay is created within the dashboard's host before updating.
+   * @param {string} message
+   */
+  setLoadingMessage(message) {
+    try {
+      const container = resolveLoadingHost(this.main?.svg);
+      // Ensure the overlay exists in the correct host before setting the message
+      LoadingOverlay.ensure(container);
+      setLoaderMessage(message);
+    } catch (e) {
+      console.warn('setLoadingMessage failed:', e);
+    }
   }
 }
 
@@ -1481,4 +1808,304 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
   }
 }
 
-export { showLoader as showLoading, hideLoader as hideLoading };
+// ============================================================================
+// PRE-RENDER UTILITIES
+// ============================================================================
+
+/**
+ * Generate pre-render data for a dashboard
+ * This creates a new dashboard instance, renders it fully expanded, and extracts positions
+ * @param {Object} dashboardData - The dashboard data to pre-render
+ * @param {string} containerSelector - CSS selector for the container element (will be hidden)
+ * @returns {Promise<Object>} Enhanced dashboard data with pre-render information
+ */
+export async function generatePrerenderData(dashboardData, containerSelector = '#prerender-temp') {
+  console.log('🎨 Starting pre-render data generation...');
+  
+  // Create temporary container if it doesn't exist
+  let container = document.querySelector(containerSelector);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = containerSelector.replace('#', '');
+    container.style.position = 'absolute';
+    container.style.left = '-10000px';
+    container.style.top = '-10000px';
+    container.style.width = '2000px';
+    container.style.height = '2000px';
+    document.body.appendChild(container);
+  }
+  
+  try {
+    // Create dashboard with pre-render settings
+    const tempSettings = {
+      ...(dashboardData.settings || {}),
+      usePrerender: false, // Don't use existing pre-render
+      toggleCollapseOnStatusChange: false, // Force expanded
+      cascadeOnStatusChange: false,
+      zoomToRoot: false,
+      minimap: {
+        ...(dashboardData.settings?.minimap || {}),
+        enabled: false // Disable minimap for generation
+      }
+    };
+
+    const tempData = {
+      ...dashboardData,
+      settings: tempSettings
+    };
+
+    // Initialize dashboard
+    const dashboard = new Dashboard(tempData);
+    dashboard.initialize(containerSelector);
+
+    // Wait for layout stabilization
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    console.log('🎨 Extracting node positions...');
+    
+    // Extract enhanced data
+    const enhancedNodes = extractNodePositionsFromTree(
+      dashboard.main.root, 
+      dashboardData.nodes
+    );
+    
+    console.log('🎨 Extracting edge paths...');
+    
+    const enhancedEdges = extractEdgePaths(dashboardData.edges || []);
+
+    // Build enhanced dashboard data
+    const enhancedData = {
+      ...dashboardData,
+      nodes: enhancedNodes,
+      edges: enhancedEdges,
+      settings: {
+        ...(dashboardData.settings || {}),
+        usePrerender: true,
+        prerenderMetadata: {
+          version: "1.0",
+          generated: new Date().toISOString(),
+          generatedBy: "flowdash-prerender-generator",
+          nodeCount: countNodesInTree(enhancedNodes),
+          edgeCount: enhancedEdges.length,
+          expandedState: true,
+          statusRulesApplied: false
+        }
+      }
+    };
+
+    console.log('✅ Pre-render data generated successfully');
+    
+    return enhancedData;
+    
+  } catch (error) {
+    console.error('❌ Error generating pre-render data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Extract node positions from the rendered tree
+ * @param {Object} rootNode - The root node from the dashboard
+ * @param {Array} originalNodes - Original node data array
+ * @returns {Array} Enhanced nodes with pre-render data
+ */
+function extractNodePositionsFromTree(rootNode, originalNodes) {
+  if (!rootNode || !originalNodes) return originalNodes || [];
+
+  function processNode(renderNode, nodeData) {
+    if (!renderNode || !nodeData) return nodeData;
+
+    // Create new object with desired property order
+    const enhanced = {};
+    
+    // 1. Copy basic properties (id, type, label, etc.) - everything except special properties
+    const excludeProps = ['width', 'height', 'expandedSize', 'layout', 'prerender', 'children'];
+    for (const key in nodeData) {
+      if (!excludeProps.includes(key)) {
+        enhanced[key] = nodeData[key];
+      }
+    }
+    
+    // 2. Add pre-render data BEFORE children
+    enhanced.prerender = {
+      x: renderNode.x || 0,
+      y: renderNode.y || 0,
+      width: renderNode.data.width || 0,
+      height: renderNode.data.height || 0
+    };
+    
+    // Include calculated minimum size if available (for containers with headers)
+    if (renderNode.minimumSize) {
+      enhanced.prerender.minimumSize = {
+        width: renderNode.minimumSize.width || 0,
+        height: renderNode.minimumSize.height || 0
+      };
+    }
+
+    // 3. Clean up and add layout (only if it has non-default values)
+    if (nodeData.layout) {
+      const layout = { ...nodeData.layout };
+      
+      // Remove minimumSize if it's all defaults
+      if (layout.minimumSize) {
+        const isDefault = 
+          layout.minimumSize.width === 0 &&
+          layout.minimumSize.height === 0 &&
+          layout.minimumSize.useRootRatio === false;
+        
+        if (isDefault) {
+          delete layout.minimumSize;
+        }
+      }
+      
+      // Remove other default layout properties
+      if (layout.mode === 'vertical') delete layout.mode; // Default mode
+      if (layout.padding === 0) delete layout.padding; // Default padding
+      if (layout.spacing === 0) delete layout.spacing; // Default spacing
+      
+      // Only add layout if it has non-default properties
+      if (Object.keys(layout).length > 0) {
+        enhanced.layout = layout;
+      }
+    }
+
+    // 4. Recursively process children (at the end)
+    if (nodeData.children && Array.isArray(nodeData.children) && renderNode.childNodes) {
+      enhanced.children = nodeData.children.map((childData, index) => {
+        const childRenderNode = renderNode.childNodes[index];
+        return childRenderNode ? processNode(childRenderNode, childData) : childData;
+      });
+    }
+
+    return enhanced;
+  }
+
+  // Process top-level nodes
+  const enhancedNodes = [];
+  
+  if (originalNodes.length === 1 && rootNode) {
+    // Single root node case
+    enhancedNodes.push(processNode(rootNode, originalNodes[0]));
+  } else if (rootNode && rootNode.childNodes) {
+    // Multiple top-level nodes
+    originalNodes.forEach((nodeData, index) => {
+      const childNode = rootNode.childNodes[index];
+      enhancedNodes.push(childNode ? processNode(childNode, nodeData) : nodeData);
+    });
+  } else {
+    // Fallback: return original nodes
+    return originalNodes;
+  }
+
+  return enhancedNodes;
+}
+
+/**
+ * Extract edge paths from the DOM
+ * @param {Array} edges - Original edge data
+ * @returns {Array} Enhanced edges with pre-render paths
+ */
+function extractEdgePaths(edges) {
+  if (!edges || edges.length === 0) return [];
+
+  const enhancedEdges = [];
+  
+  // Query all edge groups (g elements with class 'edge')
+  const edgeGroups = document.querySelectorAll('g.edge');
+  const pathMap = new Map();
+
+  // Build map of edge paths from DOM
+  // Edge structure: <g class="edge type" id="source--type--target"><path class="path" d="..."/></g>
+  edgeGroups.forEach(group => {
+    const id = group.getAttribute('id');
+    const pathElement = group.querySelector('path.path');
+    const path = pathElement ? pathElement.getAttribute('d') : null;
+    
+    if (id && path) {
+      pathMap.set(id, path);
+    }
+  });
+
+  // Enhance edges with path data
+  edges.forEach(edge => {
+    const enhanced = {};
+    
+    // Copy all properties except prerender
+    for (const key in edge) {
+      if (key !== 'prerender') {
+        enhanced[key] = edge[key];
+      }
+    }
+    
+    // Try to find path by id or construct id from source-type-target
+    const edgeId = edge.id || `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
+    const path = pathMap.get(edgeId);
+
+    // Add prerender data if path was found
+    if (path) {
+      enhanced.prerender = {
+        path: path
+      };
+    }
+
+    enhancedEdges.push(enhanced);
+  });
+
+  console.log(`🎨 Extracted paths for ${pathMap.size} edges (${edges.length} total)`);
+  
+  return enhancedEdges;
+}
+
+/**
+ * Count total nodes in a tree structure
+ * @param {Array} nodes - Node array
+ * @returns {number} Total count of nodes
+ */
+function countNodesInTree(nodes) {
+  if (!Array.isArray(nodes)) return 0;
+  
+  let count = 0;
+  function traverse(nodeArray) {
+    if (!Array.isArray(nodeArray)) return;
+    nodeArray.forEach(node => {
+      count++;
+      if (node.children) {
+        traverse(node.children);
+      }
+    });
+  }
+  
+  traverse(nodes);
+  return count;
+}
+
+/**
+ * Check if dashboard data has pre-render information
+ * @param {Object} dashboardData - Dashboard data to check
+ * @returns {boolean} True if pre-render data exists and should be used
+ */
+export function hasPrerenderData(dashboardData) {
+  if (!dashboardData) return false;
+  
+  // Check if pre-render is disabled via settings
+  if (dashboardData.settings?.usePrerender === false) {
+    return false;
+  }
+  
+  // Check if any node has pre-render data
+  function hasNodePrerender(nodes) {
+    if (!Array.isArray(nodes)) return false;
+    
+    for (const node of nodes) {
+      if (node.prerender) return true;
+      if (node.children && hasNodePrerender(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  return hasNodePrerender(dashboardData.nodes || []);
+}
+
+export { showLoader as showLoading, hideLoader as hideLoading, setLoaderMessage as setLoadingMessage, fetchDashboardFile };

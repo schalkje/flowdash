@@ -1,0 +1,445 @@
+{
+  "metadata": {
+    "testDate": "2025-10-08T18:25:49.522Z",
+    "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0",
+    "phase": "Pre-Optimization (Baseline)",
+    "optimizationsApplied": []
+  },
+  "results": [
+    {
+      "file": "dwh-1.json",
+      "description": "Baseline - 4 nodes",
+      "nodeCount": 4,
+      "timestamp": "2025-10-08T18:25:55.738Z",
+      "metrics": {
+        "phases": {
+          "dataLoad": 0,
+          "nodeCreation": 0,
+          "nodeInitialization": 17.200000002980232,
+          "edgeCreation": 0.4000000059604645,
+          "layoutStabilization": 0.5999999940395355,
+          "zoomSetup": 3.2000000029802322,
+          "total": 24.799999997019768
+        },
+        "nodeStats": {
+          "totalNodes": 7,
+          "containerNodes": 2,
+          "leafNodes": 5,
+          "maxDepth": 2
+        }
+      },
+      "targets": {
+        "total": 1000,
+        "nodeCreation": 300,
+        "nodeInitialization": 300,
+        "edgeCreation": 100,
+        "layoutStabilization": 200,
+        "zoomSetup": 100
+      },
+      "results": {
+        "total": {
+          "actual": 25,
+          "target": 1000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "2.5"
+        },
+        "nodeCreation": {
+          "actual": 0,
+          "target": 300,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.0"
+        },
+        "nodeInitialization": {
+          "actual": 17,
+          "target": 300,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "5.7"
+        },
+        "edgeCreation": {
+          "actual": 0,
+          "target": 100,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.4"
+        },
+        "layoutStabilization": {
+          "actual": 1,
+          "target": 200,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.3"
+        },
+        "zoomSetup": {
+          "actual": 3,
+          "target": 100,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "3.2"
+        }
+      },
+      "summary": {
+        "passed": 6,
+        "failed": 0,
+        "overallPass": true
+      },
+      "bottlenecks": [
+        {
+          "phase": "nodeInitialization",
+          "time": 17.200000002980232,
+          "percentage": "69.4"
+        }
+      ]
+    },
+    {
+      "file": "dwh-5.json",
+      "description": "Medium - 21 nodes",
+      "nodeCount": 21,
+      "timestamp": "2025-10-08T18:25:58.975Z",
+      "metrics": {
+        "phases": {
+          "dataLoad": 0,
+          "nodeCreation": 0,
+          "nodeInitialization": 84.09999999403954,
+          "edgeCreation": 1.4000000059604645,
+          "layoutStabilization": 0.7999999970197678,
+          "zoomSetup": 2,
+          "total": 88.40000000596046
+        },
+        "nodeStats": {
+          "totalNodes": 48,
+          "containerNodes": 16,
+          "leafNodes": 32,
+          "maxDepth": 4
+        }
+      },
+      "targets": {
+        "total": 2000,
+        "nodeCreation": 600,
+        "nodeInitialization": 500,
+        "edgeCreation": 200,
+        "layoutStabilization": 500,
+        "zoomSetup": 200
+      },
+      "results": {
+        "total": {
+          "actual": 88,
+          "target": 2000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "4.4"
+        },
+        "nodeCreation": {
+          "actual": 0,
+          "target": 600,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.0"
+        },
+        "nodeInitialization": {
+          "actual": 84,
+          "target": 500,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "16.8"
+        },
+        "edgeCreation": {
+          "actual": 1,
+          "target": 200,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.7"
+        },
+        "layoutStabilization": {
+          "actual": 1,
+          "target": 500,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.2"
+        },
+        "zoomSetup": {
+          "actual": 2,
+          "target": 200,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "1.0"
+        }
+      },
+      "summary": {
+        "passed": 6,
+        "failed": 0,
+        "overallPass": true
+      },
+      "bottlenecks": [
+        {
+          "phase": "nodeInitialization",
+          "time": 84.09999999403954,
+          "percentage": "95.1"
+        }
+      ]
+    },
+    {
+      "file": "theme_1.json",
+      "description": "Medium with states - 52 nodes",
+      "nodeCount": 52,
+      "timestamp": "2025-10-08T18:26:02.258Z",
+      "metrics": {
+        "phases": {
+          "dataLoad": 0,
+          "nodeCreation": 0,
+          "nodeInitialization": 148,
+          "edgeCreation": 3.4000000059604645,
+          "layoutStabilization": 0.9000000059604645,
+          "zoomSetup": 1.9000000059604645,
+          "total": 154.30000001192093
+        },
+        "nodeStats": {
+          "totalNodes": 61,
+          "containerNodes": 23,
+          "leafNodes": 38,
+          "maxDepth": 4
+        }
+      },
+      "targets": {
+        "total": 3000,
+        "nodeCreation": 900,
+        "nodeInitialization": 800,
+        "edgeCreation": 300,
+        "layoutStabilization": 800,
+        "zoomSetup": 200
+      },
+      "results": {
+        "total": {
+          "actual": 154,
+          "target": 3000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "5.1"
+        },
+        "nodeCreation": {
+          "actual": 0,
+          "target": 900,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.0"
+        },
+        "nodeInitialization": {
+          "actual": 148,
+          "target": 800,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "18.5"
+        },
+        "edgeCreation": {
+          "actual": 3,
+          "target": 300,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "1.1"
+        },
+        "layoutStabilization": {
+          "actual": 1,
+          "target": 800,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.1"
+        },
+        "zoomSetup": {
+          "actual": 2,
+          "target": 200,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "1.0"
+        }
+      },
+      "summary": {
+        "passed": 6,
+        "failed": 0,
+        "overallPass": true
+      },
+      "bottlenecks": [
+        {
+          "phase": "nodeInitialization",
+          "time": 148,
+          "percentage": "95.9"
+        }
+      ]
+    },
+    {
+      "file": "theme_2.json",
+      "description": "Large with states - 875 nodes",
+      "nodeCount": 875,
+      "timestamp": "2025-10-08T18:26:10.561Z",
+      "metrics": {
+        "phases": {
+          "dataLoad": 0,
+          "nodeCreation": 0,
+          "nodeInitialization": 2882.5999999940395,
+          "edgeCreation": 268.30000001192093,
+          "layoutStabilization": 3.3999999910593033,
+          "zoomSetup": 5.899999991059303,
+          "total": 3157.7999999970198
+        },
+        "nodeStats": {
+          "totalNodes": 846,
+          "containerNodes": 282,
+          "leafNodes": 564,
+          "maxDepth": 8
+        }
+      },
+      "targets": {
+        "total": 18000,
+        "nodeCreation": 6000,
+        "nodeInitialization": 4000,
+        "edgeCreation": 2500,
+        "layoutStabilization": 4500,
+        "zoomSetup": 1000
+      },
+      "results": {
+        "total": {
+          "actual": 3158,
+          "target": 18000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "17.5"
+        },
+        "nodeCreation": {
+          "actual": 0,
+          "target": 6000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.0"
+        },
+        "nodeInitialization": {
+          "actual": 2883,
+          "target": 4000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "72.1"
+        },
+        "edgeCreation": {
+          "actual": 268,
+          "target": 2500,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "10.7"
+        },
+        "layoutStabilization": {
+          "actual": 3,
+          "target": 4500,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.1"
+        },
+        "zoomSetup": {
+          "actual": 6,
+          "target": 1000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.6"
+        }
+      },
+      "summary": {
+        "passed": 6,
+        "failed": 0,
+        "overallPass": true
+      },
+      "bottlenecks": [
+        {
+          "phase": "nodeInitialization",
+          "time": 2882.5999999940395,
+          "percentage": "91.3"
+        }
+      ]
+    },
+    {
+      "file": "dwh-6.fixed.json",
+      "description": "Target - 885 nodes",
+      "nodeCount": 885,
+      "timestamp": "2025-10-08T18:26:19.964Z",
+      "metrics": {
+        "phases": {
+          "dataLoad": 0,
+          "nodeCreation": 0,
+          "nodeInitialization": 4179.600000008941,
+          "edgeCreation": 42.099999994039536,
+          "layoutStabilization": 7,
+          "zoomSetup": 10,
+          "total": 4234
+        },
+        "nodeStats": {
+          "totalNodes": 942,
+          "containerNodes": 297,
+          "leafNodes": 645,
+          "maxDepth": 8
+        }
+      },
+      "targets": {
+        "total": 15000,
+        "nodeCreation": 5000,
+        "nodeInitialization": 3000,
+        "edgeCreation": 2000,
+        "layoutStabilization": 4000,
+        "zoomSetup": 1000
+      },
+      "results": {
+        "total": {
+          "actual": 4234,
+          "target": 15000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "28.2"
+        },
+        "nodeCreation": {
+          "actual": 0,
+          "target": 5000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.0"
+        },
+        "nodeInitialization": {
+          "actual": 4180,
+          "target": 3000,
+          "pass": false,
+          "overBy": 1180,
+          "percentage": "139.3"
+        },
+        "edgeCreation": {
+          "actual": 42,
+          "target": 2000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "2.1"
+        },
+        "layoutStabilization": {
+          "actual": 7,
+          "target": 4000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "0.2"
+        },
+        "zoomSetup": {
+          "actual": 10,
+          "target": 1000,
+          "pass": true,
+          "overBy": 0,
+          "percentage": "1.0"
+        }
+      },
+      "summary": {
+        "passed": 5,
+        "failed": 1,
+        "overallPass": false
+      },
+      "bottlenecks": [
+        {
+          "phase": "nodeInitialization",
+          "time": 4179.600000008941,
+          "percentage": "98.7"
+        }
+      ]
+    }
+  ]
+}

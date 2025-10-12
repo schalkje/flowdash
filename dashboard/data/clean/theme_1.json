@@ -1,0 +1,643 @@
+{
+  "settings": {
+    "showCenterMark": false,
+    "showConnectionPoints": false,
+    "showGhostlines": false,
+    "curved": true,
+    "showBoundingBox": false,
+    "toggleCollapseOnStatusChange": true
+  },
+  "nodes": [
+    {
+      "label": "Main Data Warehouse",
+      "id": "pbdwh",
+      "description": "DWH",
+      "type": "columns",
+      "layout": {
+        "minimumSize": {
+          "width": 200,
+          "height": 100,
+          "useRootRatio": true
+        }
+      },
+      "children": [
+        {
+          "id": "sources",
+          "label": "Sources",
+          "type": "columns",
+          "children": [
+            {
+              "id": "lane1",
+              "label": "Lane 1",
+              "type": "lane",
+              "children": [
+                {
+                  "id": "exm_ren",
+                  "label": "Eximius",
+                  "code": "EXM_REN",
+                  "type": "adapter",
+                  "layout": {
+                    "displayMode": "role",
+                    "arrangement": 1
+                  }
+                },
+                {
+                  "id": "82",
+                  "label": "Updated-Updating",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "83",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "84",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "182",
+                  "label": "Updating-Unknown",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "183",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    },
+                    {
+                      "id": "184",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Unknown"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "682",
+                  "label": "Updating-Ready",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "683",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    },
+                    {
+                      "id": "684",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Ready"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "382",
+                  "label": "All updating",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "383",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    },
+                    {
+                      "id": "384",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    }
+                  ],
+                  "state": "Unknown"
+                }
+
+
+    
+              ]
+            },
+
+            {
+              "id": "lane2",
+              "label": "Lane",
+              "type": "lane",
+              "children": [
+                {
+                  "id": "282",
+                  "label": "Stg archive",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "283",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "284",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "304",
+                  "label": "Updated-Updated-Updating",
+                  "description": "Adapter for KRS.KRS",
+                  "type": "Adapter",
+                  "datasetId": 517,
+                  "category": null,
+                  "layout": null,
+                  "children": [
+                    {
+                      "id": "305",
+                      "label": "STAGING_KRS.KRS",
+                      "description": "node for dataset LOAD STAGING_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 376,
+                      "category": "staging",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "306",
+                      "label": "STG_ARCHIVE_KRS.KRS",
+                      "description": "node for dataset LOAD STG_ARCHIVE_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 665,
+                      "category": "archive",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "307",
+                      "label": "TRANSFORM_KRS.KRS",
+                      "description": "node for dataset LOAD TRANSFORM_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 517,
+                      "category": "transform",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    }
+                  ]
+                },
+                {
+                  "id": "1304",
+                  "label": "Updating-Updated-Updated",
+                  "description": "Adapter for ",
+                  "type": "Adapter",
+                  "datasetId": 517,
+                  "category": null,
+                  "layout": null,
+                  "children": [
+                    {
+                      "id": "1305",
+                      "label": "STAGING_KRS.KRS",
+                      "description": "node for dataset LOAD STAGING_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 376,
+                      "category": "staging",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    },
+                    {
+                      "id": "1306",
+                      "label": "STG_ARCHIVE_KRS.KRS",
+                      "description": "node for dataset LOAD STG_ARCHIVE_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 665,
+                      "category": "archive",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "1307",
+                      "label": "TRANSFORM_KRS.KRS",
+                      "description": "node for dataset LOAD TRANSFORM_KRS.KRS Day",
+                      "type": "node",
+                      "datasetId": 517,
+                      "category": "transform",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    }
+                  ]
+                }
+
+
+              ]
+            },
+            {
+              "id": "lane3",
+              "label": "Error lane",
+              "type": "lane",
+              "children": [
+                {
+                  "id": "282",
+                  "label": "Stg archive",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "283",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Error"
+                    },
+                    {
+                      "id": "284",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    }
+                  ],
+                  "state": "Unknown"
+                }
+
+              ]
+            },
+            {
+              "id": "lane4",
+              "label": "Warning lane",
+              "type": "lane",
+              "children": [
+                {
+                  "id": "1282",
+                  "label": "Stg archive",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "1283",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Warning"
+                    },
+                    {
+                      "id": "1284",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "2282",
+                  "label": "Stg archive",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "2283",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Warning"
+                    },
+                    {
+                      "id": "2284",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Warning"
+                    }
+                  ],
+                  "state": "Unknown"
+                },
+                {
+                  "id": "3282",
+                  "label": "Stg archive",
+                  "description": "Container created for dataset",
+                  "type": "Adapter",
+                  "datasetId": null,
+                  "category": "Unknown",
+                  "layout": {
+                    "mode": "staging-archive",
+                    "displayMode": "role",
+                    "arrangement": null,
+                    "minimumSize": null
+                  },
+                  "children": [
+                    {
+                      "id": "3283",
+                      "label": "DWH.STG_LOAD",
+                      "description": "node created for dataset STG_LOAD_EXM_EXI_DAG",
+                      "type": "node",
+                      "datasetId": 358,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updated"
+                    },
+                    {
+                      "id": "3284",
+                      "label": "DWH.ARC_LOAD",
+                      "description": "node created for dataset ARC_LOAD",
+                      "type": "node",
+                      "datasetId": 647,
+                      "category": "Unknown",
+                      "layout": null,
+                      "children": [],
+                      "state": "Updating"
+                    }
+                  ],
+                  "state": "Unknown"
+                }
+
+
+
+              ]
+            }
+
+          ]
+        },
+        {
+          "label": "ODS",
+          "state": "Ready",
+          "id": "pbdwh_ods",
+          "description": "Database : ODS",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/ODS"
+        },
+        {
+          "label": "DWH",
+          "state": "Ready",
+          "id": "pbdwh_dwh",
+          "description": "Database : DWH",
+          "type": "node",
+          "category": "Database",
+          "link": "https://example.com/DWH"
+        },
+        {
+          "id": "dms",
+          "label": "Data marts",
+          "type": "lane",
+          "children": [
+            {
+              "id": "em_payments",
+              "label": "Payments",
+              "code": "EMP",
+              "type": "node"
+            },
+            {
+              "id": "dm_via",
+              "label": "VIA",
+              "code": "EMP",
+              "type": "node"
+            },
+            {
+              "id": "em_dgs",
+              "label": "DGS",
+              "code": "EMP",
+              "type": "node"
+            }
+          ]
+        },
+        {
+          "id": "foundation",
+          "label": "Cloud Data Foundation",
+          "type": "lane",
+          "children": [
+            {
+              "id": "foundation_em_payments",
+              "label": "Payments",
+              "code": "EMP",
+              "type": "foundation"
+            },
+            {
+              "id": "foundation_dm_via",
+              "label": "VIA",
+              "code": "EMP",
+              "type": "foundation"
+            },
+            {
+              "id": "foundation_em_dgs",
+              "label": "DGS",
+              "code": "EMP",
+              "type": "foundation"
+            }
+          ]
+        }
+
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "isActive": false,
+      "source": "pbdwh_ods",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "pbdwh_dwh"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "em_payments"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "dm_via"
+    },
+    {
+      "isActive": false,
+      "source": "pbdwh_dwh",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "em_dgs"
+    },
+    {
+      "isActive": false,
+      "source": "em_payments",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_em_payments"
+    },
+    {
+      "isActive": false,
+      "source": "dm_via",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_dm_via"
+    },
+    {
+      "isActive": false,
+      "source": "em_dgs",
+      "type": "SSIS",
+      "state": "Unknown",
+      "target": "raw_foundation_em_dgs"
+    }
+
+  ]
+}

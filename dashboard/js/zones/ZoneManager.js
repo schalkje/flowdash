@@ -18,10 +18,63 @@ export class ZoneManager {
   }
 
   /**
+   * Check if we can use pre-render mode (all children have pre-render data)
+   */
+  canUsePrerenderMode() {
+    // Check if setting allows skipping zone calculations
+    const skipZoneCalcs = this.node.settings?.prerenderSkipZoneCalculations !== false;
+    if (!skipZoneCalcs) return false;
+    
+    if (!this.node.hasPrerenderData) return false;
+    if (!this.node.isContainer) return false;
+    if (!this.node.childNodes || this.node.childNodes.length === 0) return true;
+    return this.node.childNodes.every(child => child.hasPrerenderData);
+  }
+
+  /**
+   * Initialize in pre-render mode (minimal structure, no calculations)
+   */
+  initPrerenderMode() {
+    // console.log(`📊 Pre-render: Zone system using fast-path for ${this.node.id}`);
+    this._prerenderMode = true;
+    this.zones = new Map();
+    this.initialized = true;
+    
+    // Create minimal zone structure without calculations
+    // This allows collapse/expand to still work if needed
+    this.createZone('container', new ContainerZone(this.node));
+    this.createZone('header', new HeaderZone(this.node));
+    this.createZone('margin', new MarginZone(this.node));
+    
+    // Only create inner container if expanded
+    if (!this.node.collapsed) {
+      this.createZone('innerContainer', new InnerContainerZone(this.node));
+    }
+    
+    // Initialize zones but they won't do calculations in pre-render mode
+    this.zones.forEach(zone => {
+      zone._prerenderMode = true;
+      zone.init();
+    });
+    
+    // Set zone sizes from pre-render data so zones render correctly
+    // Zones will accept the size but skip expensive calculations
+    if (this.node.data.width && this.node.data.height) {
+      this.zones.forEach(zone => zone.resize(this.node.data.width, this.node.data.height));
+    }
+  }
+
+  /**
    * Initialize all zones for the node
    */
   init() {
     if (this.initialized) return;
+
+    // Check if we can use pre-render mode
+    if (this.canUsePrerenderMode()) {
+      this.initPrerenderMode();
+      return;
+    }
 
     // Create zones in order
     this.createZone('container', new ContainerZone(this.node));
@@ -76,8 +129,10 @@ export class ZoneManager {
       return;
     }
     
-    // Resize logging removed to reduce console spam
     this._lastResize = { width, height };
+    
+    // In pre-render mode, still propagate size to zones for rendering
+    // but zones will skip expensive calculations internally
     this.zones.forEach(zone => zone.resize(width, height));
   }
 

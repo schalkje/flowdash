@@ -146,16 +146,22 @@
         const jsonFiles = [
             "adapter-1.json",
             "dwh-1.json",
+            "dwh-1.prerender.json",
+            "dwh-small.json",
             "dwh-2.json",
             "dwh-3.json",
             "dwh-4.json",
             "dwh-5.json",
+            "dwh-5.prerender.json",
+            "dwh-6.json",
+            "dwh-6.fixed.json",
+            "dwh-6.fixed.prerender.json",
             "lane-small.json",
             "lane-big.json",
             "theme_1.json",
             "theme_2.json"
         ];
-        let currentFileIndex = 8;
+        let currentFileIndex = 1;
 
         document.addEventListener('DOMContentLoaded', () => {
             setPageTitle();
@@ -403,6 +409,8 @@
             // loading handled by dashboard.initialize()/setData()
             flowDashboard.fetchDashboardFile(selectedFile).then(dashboardData => {
                 // Reuse existing dashboard instance when present; dashboard handles its own cleanup
+                // Ensure settings object exists
+                dashboardData.settings = dashboardData.settings || {};
                 dashboardData.settings.zoomToRoot = zoomToRoot;
 
                 // Optional: Performance monitoring (disabled by default to avoid log spam)

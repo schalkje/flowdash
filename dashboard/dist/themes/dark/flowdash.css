@@ -1,0 +1,190 @@
+:root, [data-theme="dark"] {
+  --fd-bg: #0b0e14;      /* deep neutral background */
+  --fd-surface: #121821; /* low-glare surface */
+  --fd-text: #e6ebf2;    /* high-contrast text */
+  --fd-muted: #8b92a3;   /* subdued copy */
+  --fd-accent: #6bb6ff;  /* cool accent for focus */
+  --fd-border: #2a3342;  /* structural lines */
+  --fd-edge: #5c6a82;    /* edges/links */
+}
+
+body { background: var(--fd-bg); color: var(--fd-text); }
+
+/* canvases */
+#graph { background-color: var(--fd-bg); border-color: var(--fd-border); }
+.minimap-svg { background-color: rgba(20, 24, 33, 0.7); border-color: var(--fd-border); }
+/* Ensure uncovered minimap background matches graph surface */
+.minimap-svg rect.background { fill: var(--fd-bg) !important; stroke: var(--fd-border) !important; }
+svg.canvas { border-color: var(--fd-border); box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+
+.shape { fill: var(--fd-surface); stroke: var(--fd-border); stroke-width: 1.25px; }
+text, .label, .rect.label { fill: var(--fd-text); }
+.edge .path { stroke: var(--fd-edge); }
+
+/* dashboard containers */
+.container-shape, .adapter.shape, .rect.shape, .SSIS.shape { fill: var(--fd-surface); stroke: var(--fd-border); }
+.header-background { fill: transparent; stroke: none; }
+.header-text { fill: var(--fd-text); }
+.zoom-button:hover circle { fill: #1f2632; stroke: #394252; }
+.zoom-icon { fill: var(--fd-text); }
+
+.minimap-svg .eye { fill: var(--fd-bg) !important; fill-opacity: 0.60; filter: blur(8px); -webkit-filter: blur(8px); }
+.minimap-svg .iris { fill: none !important; stroke: rgba(107, 182, 255, 0.35) !important; stroke-width: 6px !important; }
+
+/* Minimap size button */
+.minimap-size-button .btn-bg { fill: #1a2230 !important; stroke: var(--fd-border) !important; }
+.minimap-size-button .btn-label { fill: var(--fd-text) !important; }
+
+
+/* status styles: restrained fills, luminous strokes for clarity on dark */
+@keyframes dark-dash {
+  to { stroke-dashoffset: -80; }
+}
+
+/* Unknown — stronger violet to stand out on dark */
+.shape[status="Unknown"], .node.shape[status="Unknown"], .container-shape[status="Unknown"], .rect.shape[status="Unknown"] {
+  fill: #bda7ff;   /* vivid lavender */
+  stroke: #d9ccff; /* lighter outline */
+}
+
+/* Ready — bright cyan/blue */
+.shape[status="Ready"], .node.shape[status="Ready"], .container-shape[status="Ready"], .rect.shape[status="Ready"] {
+  fill: #4db4ff;   /* vivid */
+  stroke: #1a8cff; /* stronger edge */
+}
+
+/* Updating — vivid green with animated stroke */
+.shape[status="Updating"], .node.shape[status="Updating"], .container-shape[status="Updating"], .rect.shape[status="Updating"] {
+  fill: #39d98a;
+  stroke: #00c853;
+  stroke-width: 2.5px;
+  stroke-dasharray: 12 8;
+  animation: dark-dash 1s linear infinite;
+}
+
+/* Updated — bright success green */
+.shape[status="Updated"], .node.shape[status="Updated"], .container-shape[status="Updated"], .rect.shape[status="Updated"] {
+  fill: #18c418;
+  stroke: #22e28a;
+}
+
+/* Skipped — saturated yellow */
+.shape[status="Skipped"], .node.shape[status="Skipped"], .container-shape[status="Skipped"], .rect.shape[status="Skipped"] {
+  fill: #fff176;
+  stroke: #d4b100;
+}
+
+.rect[status="Skipped"] text {
+  fill: #292929d6 !important;
+}
+
+
+/* Delayed — vivid orange */
+.shape[status="Delayed"], .node.shape[status="Delayed"], .container-shape[status="Delayed"], .rect.shape[status="Delayed"] {
+  fill: #ff9c3a;
+  stroke: #ff7f11;
+}
+
+/* Warning — strong red-orange */
+.shape[status="Warning"], .node.shape[status="Warning"], .container-shape[status="Warning"], .rect.shape[status="Warning"] {
+  fill: #ff6b4d;
+  stroke: #ffb454;
+}
+/* Error — vivid danger red */
+.shape[status="Error"], .node.shape[status="Error"], .container-shape[status="Error"], .rect.shape[status="Error"] {
+  fill: #ff3b4e;
+  stroke: #ff5c70;
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 0 8px rgba(255,92,112,0.25));
+}
+
+/* selection emphasis */
+.selected .shape { stroke: var(--fd-accent); stroke-width: 2.5px; }
+
+/* Container node state theming
+   - Expanded: toned down for adapters/marts/foundations only (no animations)
+   - Collapsed: clear, full-opacity
+   Note: container status is applied on parent <g> */
+/* Expanded adapters/marts/foundations — toned down */
+.adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.foundation.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Unknown"] > .zone-container > .container-shape { fill: #a794ff; fill-opacity: 0.18; stroke: var(--fd-border); }
+.adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.Mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.foundation.expanded[status="Ready"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Ready"] > .zone-container > .container-shape { fill: #369cff; fill-opacity: 0.20; stroke: var(--fd-border); }
+.adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updating"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updating"] > .zone-container > .container-shape { fill: #2fd182; fill-opacity: 0.20; stroke: var(--fd-border); stroke-width: 1.75px; stroke-dasharray: none !important; animation: none !important; }
+.adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updated"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updated"] > .zone-container > .container-shape { fill: #18c418; fill-opacity: 0.16; stroke: none; }
+.adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.foundation.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Skipped"] > .zone-container > .container-shape { fill: #ffe066; fill-opacity: 0.18; stroke: var(--fd-border); }
+.adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.foundation.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Delayed"] > .zone-container > .container-shape { fill: #ff8a2a; fill-opacity: 0.18; stroke: var(--fd-border); }
+.adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.Mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.foundation.expanded[status="Warning"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Warning"] > .zone-container > .container-shape { fill: #ff5d40; fill-opacity: 0.18; stroke: var(--fd-border); }
+.adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.mart.expanded[status="Error"] > .zone-container > .container-shape,
+.Mart.expanded[status="Error"] > .zone-container > .container-shape,
+.foundation.expanded[status="Error"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Error"] > .zone-container > .container-shape { fill: #ff3347; fill-opacity: 0.18; stroke: var(--fd-border); stroke-width: 1.75px; filter: none; }
+
+/* Collapsed containers — clear */
+.collapsed .container-shape { filter: none; }
+.collapsed[status="Unknown"] > .zone-container > .container-shape { fill: #bda7ff; stroke: #d9ccff; }
+.collapsed[status="Ready"] > .zone-container > .container-shape { fill: #4db4ff; stroke: #1a8cff; }
+.collapsed[status="Updating"] > .zone-container > .container-shape { fill: #39d98a; stroke: #00c853; stroke-width: 2.5px; stroke-dasharray: none; animation: none; }
+.collapsed[status="Updated"] > .zone-container > .container-shape { fill: #18c418; stroke: #22e28a; }
+.collapsed[status="Skipped"] > .zone-container > .container-shape { fill: #fff176; stroke: #d4b100; }
+.collapsed[status="Delayed"] > .zone-container > .container-shape { fill: #ff9c3a; stroke: #ff7f11; }
+.collapsed[status="Warning"] > .zone-container > .container-shape { fill: #ff6b4d; stroke: #ffb454; }
+.collapsed[status="Error"] > .zone-container > .container-shape { fill: #ff3b4e; stroke: #ff5c70; stroke-width: 2.5px; }
+
+/* Expanded lane/columns containers: ignore state (no fill/animation) */
+.lane.expanded > .zone-container > .container-shape,
+.Lane.expanded > .zone-container > .container-shape,
+.columns.expanded > .zone-container > .container-shape,
+.Columns.expanded > .zone-container > .container-shape {
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  animation: none !important;
+  stroke-dasharray: none !important;
+  stroke: var(--fd-border) !important;
+}
+
+/* Improve text contrast on light backgrounds (collapsed, vivid fills) */
+.collapsed[status="Unknown"] .header-text, .collapsed[status="Unknown"] .label,
+.collapsed[status="Ready"] .header-text, .collapsed[status="Ready"] .label,
+.collapsed[status="Updating"] .header-text, .collapsed[status="Updating"] .label,
+.collapsed[status="Updated"] .header-text, .collapsed[status="Updated"] .label,
+.collapsed[status="Skipped"] .header-text, .collapsed[status="Skipped"] .label,
+.collapsed[status="Delayed"] .header-text, .collapsed[status="Delayed"] .label,
+.collapsed[status="Warning"] .header-text, .collapsed[status="Warning"] .label,
+.collapsed[status="Error"] .header-text, .collapsed[status="Error"] .label { fill: #000 !important; }
+

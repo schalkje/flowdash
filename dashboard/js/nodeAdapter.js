@@ -58,7 +58,7 @@ export default class AdapterNode extends BaseContainerNode {
     
     if (!nodeData.width) nodeData.width = 334;
     if (!nodeData.height) nodeData.height = 74;
-    if (!nodeData.layout) nodeData.layout = {};
+    if (!nodeData.layout || typeof nodeData.layout !== 'object') nodeData.layout = {};
     if (!nodeData.layout.displayMode) nodeData.layout.displayMode = DisplayMode.FULL; // Changed from ROLE to FULL for better visibility
     
     if (nodeData.layout.displayMode === DisplayMode.ROLE) {
@@ -130,8 +130,11 @@ export default class AdapterNode extends BaseContainerNode {
           child.category = role;
           if (nodeData.layout.displayMode === DisplayMode.ROLE) {
             child.label = role;
-            child.width = 80;
-            if (!child.height) child.height = 44;
+            // Only set width if there's no prerender data
+            if (!child.prerender?.width) {
+              child.width = 80;
+            }
+            if (!child.height && !child.prerender?.height) child.height = 44;
           }
         }
       });
@@ -216,12 +219,25 @@ export default class AdapterNode extends BaseContainerNode {
     this.initEdges();
     
     // Normalize labels and sizes for role display mode even when children were pre-created by super
-    if (this.data.layout.displayMode === DisplayMode.ROLE) {
+    // Skip width override if using prerender data
+    if (this.data.layout.displayMode === DisplayMode.ROLE && !this._hasPrerenderData) {
       [this.stagingNode, this.archiveNode, this.transformNode].forEach((child) => {
         if (!child) return;
         child.data.width = 80;
         const roleText = child.data.role || child.data.category || child.data.label;
         if (typeof child.redrawText === 'function') {
+          child.redrawText(roleText, child.data.width);
+        } else {
+          child.data.label = roleText;
+        }
+      });
+    } else if (this.data.layout.displayMode === DisplayMode.ROLE && this._hasPrerenderData) {
+      // In prerender mode with role display, only update the labels, not the widths
+      [this.stagingNode, this.archiveNode, this.transformNode].forEach((child) => {
+        if (!child) return;
+        const roleText = child.data.role || child.data.category || child.data.label;
+        if (typeof child.redrawText === 'function') {
+          // Pass the prerendered width instead of forcing 80
           child.redrawText(roleText, child.data.width);
         } else {
           child.data.label = roleText;
@@ -254,6 +270,11 @@ export default class AdapterNode extends BaseContainerNode {
    * This ensures explicit children have the same dimensions as auto-generated ones
    */
   standardizeChildDimensions() {
+    // Skip standardization if using prerender data - preserve the prerendered dimensions
+    if (this._hasPrerenderData) {
+      return;
+    }
+
     const isRoleMode = this.data.layout.displayMode === DisplayMode.ROLE;
     const standardWidth = isRoleMode ? 80 : 150;
     const standardHeight = 44;
@@ -353,7 +374,10 @@ export default class AdapterNode extends BaseContainerNode {
       
       if (this.data.layout.displayMode === DisplayMode.ROLE) {
         node.data.role = role;
-        node.data.width = 80;
+        // Only set width if not using prerender data
+        if (!this._hasPrerenderData && !node.data.prerender) {
+          node.data.width = 80;
+        }
         if (node.redrawText) {
           node.redrawText(node.data.role, node.data.width);
         }
@@ -392,7 +416,10 @@ export default class AdapterNode extends BaseContainerNode {
         const copyChild = JSON.parse(JSON.stringify(childData));
         if (this.data.layout.displayMode === DisplayMode.ROLE) {
           copyChild.label = copyChild.role;
-          copyChild.width = 80;
+          // Only set width if there's no prerender data
+          if (!copyChild.prerender?.width) {
+            copyChild.width = 80;
+          }
         }
         childNode = new RectangularNode(copyChild, parentElement, this.settings, this);
         this.childNodes.push(childNode);

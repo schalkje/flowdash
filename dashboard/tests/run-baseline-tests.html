@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baseline Performance Tests</title>
+    <script src="libs/d3.min.js"></script>
+    <script src="libs/d3-shape.min.js"></script>
+    <script src="libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="flowdash.css">
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="js/themeManager.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        .status {
+            font-size: 18px;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        .status.complete {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        .progress {
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0066cc, #0099ff);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .results-summary {
+            margin: 30px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .pass {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .fail {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .bottleneck {
+            background: #fff3cd;
+            color: #856404;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .json-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .test-dashboard {
+            width: 100%;
+            height: 400px;
+            background: #ffffff;
+            border: 2px solid #0066cc;
+            border-radius: 8px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .test-dashboard.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        /* Hide interactive controls in result dashboards (they're snapshots, not live) */
+        .test-dashboard .minimap-container,
+        .test-dashboard .button-container,
+        .test-dashboard .collapse-all-btn,
+        .test-dashboard .expand-all-btn {
+            display: none !important;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        #currentTestDashboard {
+            width: 100%;
+            height: 500px;
+            background: #ffffff;
+            border: 3px solid #28a745;
+            border-radius: 8px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Baseline Performance Test Suite</h1>
+        
+        <p><strong>Purpose:</strong> Establish baseline performance metrics before implementing Phase 2 optimizations.</p>
+        <p><strong>Date:</strong> <span id="testDate"></span></p>
+        
+        <div class="status running" id="status">Ready to start</div>
+        
+        <button id="startBtn" onclick="startTests()">▶️ Start Baseline Tests</button>
+        <button id="downloadBtn" onclick="downloadResults()" disabled>💾 Download Results (JSON)</button>
+        <button id="copyBtn" onclick="copyResults()" disabled>📋 Copy to Clipboard</button>
+        
+        <div class="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+        </div>
+        
+        <div id="currentTestContainer" style="display: none;">
+            <h2>🔍 Currently Testing: <span id="currentTestName"></span></h2>
+            <div id="currentTestDashboard"></div>
+        </div>
+        
+        <div class="results-summary" id="resultsSummary"></div>
+    </div>
+    
+    <script type="module">
+        // Wait for D3 to be available
+        function waitForD3() {
+            return new Promise((resolve) => {
+                if (typeof d3 !== 'undefined') {
+                    resolve();
+                } else {
+                    const checkD3 = setInterval(() => {
+                        if (typeof d3 !== 'undefined') {
+                            clearInterval(checkD3);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
+        await waitForD3();
+        
+        import { Dashboard, fetchDashboardFile } from './js/dashboard.js';
+        
+        // Set test date
+        document.getElementById('testDate').textContent = new Date().toLocaleString();
+        
+        const testFiles = [
+            { name: 'dwh-1.json', description: 'Baseline - 4 nodes', nodeCount: 4 },
+            { name: 'dwh-5.json', description: 'Medium - 21 nodes', nodeCount: 21 },
+            { name: 'theme_1.json', description: 'Medium with states - 52 nodes', nodeCount: 52 },
+            { name: 'theme_2.json', description: 'Large with states - 875 nodes', nodeCount: 875 },
+            { name: 'dwh-6.fixed.json', description: 'Target - 885 nodes', nodeCount: 885 }
+        ];
+        
+        const performanceTargets = {
+            'dwh-1.json': {
+                total: 1000,
+                nodeCreation: 300,
+                nodeInitialization: 300,
+                edgeCreation: 100,
+                layoutStabilization: 200,
+                zoomSetup: 100
+            },
+            'dwh-5.json': {
+                total: 2000,
+                nodeCreation: 600,
+                nodeInitialization: 500,
+                edgeCreation: 200,
+                layoutStabilization: 500,
+                zoomSetup: 200
+            },
+            'theme_1.json': {
+                total: 3000,
+                nodeCreation: 900,
+                nodeInitialization: 800,
+                edgeCreation: 300,
+                layoutStabilization: 800,
+                zoomSetup: 200
+            },
+            'theme_2.json': {
+                total: 18000,
+                nodeCreation: 6000,
+                nodeInitialization: 4000,
+                edgeCreation: 2500,
+                layoutStabilization: 4500,
+                zoomSetup: 1000
+            },
+            'dwh-6.fixed.json': {
+                total: 15000,
+                nodeCreation: 5000,
+                nodeInitialization: 3000,
+                edgeCreation: 2000,
+                layoutStabilization: 4000,
+                zoomSetup: 1000
+            }
+        };
+        
+        let baselineResults = {
+            metadata: {
+                testDate: new Date().toISOString(),
+                browser: navigator.userAgent,
+                phase: 'Pre-Optimization (Baseline)',
+                optimizationsApplied: []
+            },
+            results: []
+        };
+        
+        // Store dashboard HTML separately (not in JSON) to avoid escaping issues
+        let dashboardHTMLs = [];
+        
+        window.startTests = async function() {
+            document.getElementById('startBtn').disabled = true;
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status running';
+            
+            // Show current test container
+            document.getElementById('currentTestContainer').style.display = 'block';
+            
+            for (let i = 0; i < testFiles.length; i++) {
+                const file = testFiles[i];
+                const progress = ((i / testFiles.length) * 100).toFixed(0);
+                
+                statusDiv.textContent = `🧪 Testing ${file.name} (${i + 1}/${testFiles.length})...`;
+                document.getElementById('currentTestName').textContent = file.name;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressFill').textContent = progress + '%';
+                
+                const result = await runTest(file, i);
+                baselineResults.results.push(result);
+                
+                updateResultsDisplay();
+                
+                // Wait 2 seconds between tests
+                if (i < testFiles.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+            
+            // Complete
+            statusDiv.className = 'status complete';
+            statusDiv.textContent = '✅ Baseline tests complete! Results saved below.';
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressFill').textContent = '100%';
+            document.getElementById('downloadBtn').disabled = false;
+            document.getElementById('copyBtn').disabled = false;
+            
+            // Hide current test, show message
+            document.getElementById('currentTestContainer').style.display = 'none';
+            
+            console.log('📊 Baseline Results:', baselineResults);
+        };
+        
+        async function runTest(file, testIndex) {
+            console.log(`\n=== Testing ${file.name} ===`);
+            
+            try {
+                // Clear and prepare current test dashboard
+                const currentContainer = document.getElementById('currentTestDashboard');
+                currentContainer.innerHTML = '';
+                
+                // Create SVG element for dashboard
+                d3.select('#currentTestDashboard')
+                    .append('svg')
+                    .attr('width', '100%')
+                    .attr('height', '100%')
+                    .style('display', 'block');
+                
+                // Ensure container is ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Load data
+                const data = await fetchDashboardFile(file.name);
+                
+                // Create and initialize dashboard in current test view
+                const dashboard = new Dashboard(data);
+                dashboard.initialize('#currentTestDashboard svg');
+                
+                // Wait for layout to stabilize (longer wait for large files)
+                const waitTime = file.nodeCount > 100 ? 3000 : 1000;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                
+                // Get metrics
+                const metrics = dashboard.performanceMetrics;
+                console.log('📊 Metrics captured:', metrics);
+                
+                // Capture the dashboard HTML for results display (store separately to avoid JSON escaping)
+                const dashboardHTML = currentContainer.innerHTML;
+                dashboardHTMLs[testIndex] = dashboardHTML;
+                
+            const targets = performanceTargets[file.name];
+            
+            // Check pass/fail
+            const phases = metrics.phases;
+            const results = {
+                total: checkPhase('total', phases.total, targets.total),
+                nodeCreation: checkPhase('nodeCreation', phases.nodeCreation, targets.nodeCreation),
+                nodeInitialization: checkPhase('nodeInitialization', phases.nodeInitialization, targets.nodeInitialization),
+                edgeCreation: checkPhase('edgeCreation', phases.edgeCreation, targets.edgeCreation),
+                layoutStabilization: checkPhase('layoutStabilization', phases.layoutStabilization, targets.layoutStabilization),
+                zoomSetup: checkPhase('zoomSetup', phases.zoomSetup, targets.zoomSetup)
+            };
+            
+            const passCount = Object.values(results).filter(r => r.pass).length;
+            const failCount = Object.values(results).filter(r => !r.pass).length;
+            
+            // Identify bottlenecks
+            const bottlenecks = [];
+            const totalPhaseTime = phases.total;
+            Object.entries(phases).forEach(([phase, time]) => {
+                if (phase !== 'total' && phase !== 'dataLoad') {
+                    const percentage = (time / totalPhaseTime) * 100;
+                    if (percentage > 20) {
+                        bottlenecks.push({
+                            phase,
+                            time,
+                            percentage: percentage.toFixed(1)
+                        });
+                    }
+                }
+            });
+            
+            return {
+                file: file.name,
+                description: file.description,
+                nodeCount: file.nodeCount,
+                timestamp: new Date().toISOString(),
+                metrics: {
+                    phases: phases,
+                    nodeStats: metrics.nodeStats
+                },
+                targets: targets,
+                results: results,
+                summary: {
+                    passed: passCount,
+                    failed: failCount,
+                    overallPass: failCount === 0
+                },
+                bottlenecks: bottlenecks
+            };
+            
+            } catch (error) {
+                console.error(`❌ Error testing ${file.name}:`, error);
+                // Capture error state
+                const currentContainer = document.getElementById('currentTestDashboard');
+                const dashboardHTML = currentContainer.innerHTML || '<p style="color: red; padding: 20px;">Error rendering dashboard</p>';
+                dashboardHTMLs[testIndex] = dashboardHTML;
+                
+                // Return error result
+                const targets = performanceTargets[file.name];
+                return {
+                    file: file.name,
+                    description: file.description,
+                    nodeCount: file.nodeCount,
+                    timestamp: new Date().toISOString(),
+                    error: error.message,
+                    metrics: {
+                        phases: {
+                            dataLoad: 0,
+                            nodeCreation: 0,
+                            nodeInitialization: 0,
+                            edgeCreation: 0,
+                            layoutStabilization: 0,
+                            zoomSetup: 0,
+                            total: 0
+                        },
+                        nodeStats: {
+                            totalNodes: 0,
+                            containerNodes: 0,
+                            leafNodes: 0,
+                            maxDepth: 0
+                        }
+                    },
+                    targets: targets,
+                    results: {
+                        total: { actual: 0, target: targets.total, pass: false, overBy: targets.total, percentage: 0 },
+                        nodeCreation: { actual: 0, target: targets.nodeCreation, pass: false, overBy: targets.nodeCreation, percentage: 0 },
+                        nodeInitialization: { actual: 0, target: targets.nodeInitialization, pass: false, overBy: targets.nodeInitialization, percentage: 0 },
+                        edgeCreation: { actual: 0, target: targets.edgeCreation, pass: false, overBy: targets.edgeCreation, percentage: 0 },
+                        layoutStabilization: { actual: 0, target: targets.layoutStabilization, pass: false, overBy: targets.layoutStabilization, percentage: 0 },
+                        zoomSetup: { actual: 0, target: targets.zoomSetup, pass: false, overBy: targets.zoomSetup, percentage: 0 }
+                    },
+                    summary: {
+                        passed: 0,
+                        failed: 6,
+                        overallPass: false
+                    },
+                    bottlenecks: []
+                };
+            }
+        }
+        
+        function checkPhase(name, actual, target) {
+            return {
+                actual: Math.round(actual),
+                target: target,
+                pass: actual <= target,
+                overBy: actual > target ? Math.round(actual - target) : 0,
+                percentage: target > 0 ? ((actual / target) * 100).toFixed(1) : 0
+            };
+        }
+        
+        function updateResultsDisplay() {
+            const summaryDiv = document.getElementById('resultsSummary');
+            
+            let html = '<h2>Test Results Summary</h2>';
+            
+            baselineResults.results.forEach((result, index) => {
+                const overallClass = result.summary.overallPass ? 'pass' : 'fail';
+                const overallStatus = result.summary.overallPass ? '✅ PASS' : '❌ FAIL';
+                const dashboardClass = result.error ? 'test-dashboard error' : 'test-dashboard';
+                
+                html += `
+                    <div class="test-section">
+                        <h3>${result.file} - ${result.description} <span class="${overallClass}">${overallStatus}</span></h3>
+                        <p><strong>Node Count:</strong> ${result.nodeCount} | 
+                           <strong>Passed:</strong> ${result.summary.passed}/6 | 
+                           <strong>Failed:</strong> ${result.summary.failed}/6</p>
+                        
+                        ${result.error ? `<p style="color: #dc3545; font-weight: bold;">⚠️ Error: ${result.error}</p>` : ''}
+                        
+                        <h4>📊 Dashboard Visualization <span style="font-size: 0.8em; color: #6c757d; font-weight: normal;">(Static snapshot)</span></h4>
+                        <div class="${dashboardClass}" id="result-dashboard-${index}" data-dashboard-index="${index}">
+                        </div>
+                        
+                        <h4>⏱️ Performance Metrics</h4>
+                        <table>
+                        <thead>
+                            <tr>
+                                <th>Phase</th>
+                                <th>Actual (ms)</th>
+                                <th>Target (ms)</th>
+                                <th>Over By</th>
+                                <th>% of Target</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(result.results).map(([phase, data]) => {
+                                const rowClass = data.pass ? '' : 'fail';
+                                const status = data.pass ? '✅ PASS' : '❌ FAIL';
+                                return `
+                                    <tr class="${rowClass}">
+                                        <td><strong>${phase}</strong></td>
+                                        <td>${data.actual}</td>
+                                        <td>${data.target}</td>
+                                        <td>${data.overBy > 0 ? '+' + data.overBy : '-'}</td>
+                                        <td>${data.percentage}%</td>
+                                        <td class="${data.pass ? 'pass' : 'fail'}">${status}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    
+                    ${result.bottlenecks.length > 0 ? `
+                        <p><strong>⚠️ Bottlenecks Detected:</strong></p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Phase</th>
+                                    <th>Time (ms)</th>
+                                    <th>% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.bottlenecks.map(b => `
+                                    <tr class="bottleneck">
+                                        <td><strong>${b.phase}</strong></td>
+                                        <td>${Math.round(b.time)}</td>
+                                        <td>${b.percentage}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : ''}
+                    </div>
+                `;
+            });
+            
+            // Add JSON output
+            html += `
+                <h2>📄 JSON Results (for storage)</h2>
+                <div class="json-output" id="jsonOutput">${JSON.stringify(baselineResults, null, 2)}</div>
+            `;
+            
+            summaryDiv.innerHTML = html;
+            
+            // Now inject the dashboard HTML using DOM manipulation (not string concatenation)
+            // This prevents HTML escaping issues with SVG attributes
+            baselineResults.results.forEach((result, index) => {
+                const dashboardContainer = document.getElementById(`result-dashboard-${index}`);
+                if (dashboardContainer && dashboardHTMLs[index]) {
+                    dashboardContainer.innerHTML = dashboardHTMLs[index];
+                } else if (dashboardContainer) {
+                    dashboardContainer.innerHTML = '<p style="padding: 20px;">No dashboard available</p>';
+                }
+            });
+        }
+        
+        window.downloadResults = function() {
+            const dataStr = JSON.stringify(baselineResults, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            link.download = `baseline-results-${timestamp}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        };
+        
+        window.copyResults = function() {
+            const jsonText = JSON.stringify(baselineResults, null, 2);
+            navigator.clipboard.writeText(jsonText).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        };
+    </script>
+</body>
+</html>

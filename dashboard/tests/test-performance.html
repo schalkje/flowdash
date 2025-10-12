@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Performance Testing</title>
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-controls { 
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls label {
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        .test-controls select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .test-controls button {
+            padding: 8px 16px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .test-controls button:first-of-type {
+            background-color: #007bff;
+            color: white;
+        }
+        .test-controls button:first-of-type:hover {
+            background-color: #0056b3;
+        }
+        .test-controls button:last-of-type {
+            background-color: #28a745;
+            color: white;
+        }
+        .test-controls button:last-of-type:hover {
+            background-color: #218838;
+        }
+        .metrics-display { 
+            margin-top: 20px;
+        }
+        #graph { 
+            border: 1px solid #ccc;
+            background: white;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-top: 10px;
+            background: white;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            text-align: left;
+        }
+        th { 
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .pass { 
+            color: #28a745; 
+            font-weight: bold;
+        }
+        .fail { 
+            color: #dc3545; 
+            font-weight: bold;
+        }
+        .result-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .result-card h4 {
+            color: #666;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard Performance Test Suite</h1>
+    
+    <div class="test-controls">
+        <label>Select Test File:</label>
+        <select id="testFileSelect">
+            <option value="dwh-1.json">dwh-1.json (Baseline - 4 nodes)</option>
+            <option value="dwh-5.json">dwh-5.json (Medium - 21 nodes)</option>
+            <option value="theme_1.json">theme_1.json (Medium with states - 52 nodes)</option>
+            <option value="theme_2.json">theme_2.json (Large with states - 875 nodes)</option>
+            <option value="dwh-6.fixed.json">dwh-6.fixed.json (Target - 885 nodes)</option>
+        </select>
+        <button id="runTestBtn">Run Performance Test</button>
+        <button id="compareBtn">Run Comparison Test</button>
+    </div>
+    
+    <div class="metrics-display">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+    
+    <div id="graph"></div>
+    
+    <script type="module">
+        // Wait for D3 to be available
+        function waitForD3() {
+            return new Promise((resolve) => {
+                if (typeof d3 !== 'undefined') {
+                    resolve();
+                } else {
+                    const checkD3 = setInterval(() => {
+                        if (typeof d3 !== 'undefined') {
+                            clearInterval(checkD3);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
+        await waitForD3();
+        
+        import { Dashboard, fetchDashboardFile } from '../js/dashboard.js';
+        
+        let currentDashboard = null;
+        const testResults = [];
+        
+        // Performance targets
+        const performanceTargets = {
+            'dwh-1.json': {
+                total: 1000,  // 1 second (baseline - small)
+                nodeCreation: 300,
+                nodeInitialization: 300,
+                edgeCreation: 100,
+                layoutStabilization: 200,
+                zoomSetup: 100
+            },
+            'dwh-5.json': {
+                total: 2000,  // 2 seconds (medium - ~19 nodes)
+                nodeCreation: 600,
+                nodeInitialization: 500,
+                edgeCreation: 200,
+                layoutStabilization: 500,
+                zoomSetup: 200
+            },
+            'theme_1.json': {
+                total: 3000,  // 3 seconds (medium with states - ~30 nodes)
+                nodeCreation: 900,
+                nodeInitialization: 800,
+                edgeCreation: 300,
+                layoutStabilization: 800,
+                zoomSetup: 200
+            },
+            'theme_2.json': {
+                total: 18000,  // 18 seconds (large with states - ~900 nodes)
+                nodeCreation: 6000,
+                nodeInitialization: 4000,
+                edgeCreation: 2500,
+                layoutStabilization: 4500,
+                zoomSetup: 1000
+            },
+            'dwh-6.fixed.json': {
+                total: 15000,  // 15 seconds (target after optimization - 885 nodes)
+                nodeCreation: 5000,
+                nodeInitialization: 3000,
+                edgeCreation: 2000,
+                layoutStabilization: 4000,
+                zoomSetup: 1000
+            }
+        };
+        
+        async function runPerformanceTest(filename) {
+            console.clear();
+            console.log(`🧪 Running performance test for: ${filename}`);
+            
+            // Clear previous dashboard
+            const graphContainer = document.getElementById('graph');
+            graphContainer.innerHTML = '';
+            
+            // Create new SVG for this test
+            const svg = d3.select('#graph')
+                .append('svg')
+                .attr('width', '100%')
+                .attr('height', '600px')
+                .style('display', 'block');
+            
+            // Load and render
+            const tStart = performance.now();
+            const data = await fetchDashboardFile(filename);
+            const tDataLoad = performance.now() - tStart;
+            
+            currentDashboard = new Dashboard(data);
+            currentDashboard.performanceMetrics.phases.dataLoad = tDataLoad;
+            
+            currentDashboard.initialize('#graph svg');
+            
+            // Collect all metrics
+            const metrics = currentDashboard.performanceMetrics;
+            
+            // Determine pass/fail
+            const fileKey = filename.split('/').pop();
+            const targets = performanceTargets[fileKey] || performanceTargets['dwh-6.fixed.json'];
+            
+            const testResult = {
+                filename: fileKey,
+                timestamp: new Date().toISOString(),
+                metrics: metrics,
+                passedTests: [],
+                failedTests: []
+            };
+            
+            // Check against targets
+            Object.entries(targets).forEach(([phase, target]) => {
+                const actual = metrics.phases[phase];
+                if (actual <= target) {
+                    testResult.passedTests.push({ phase, actual, target });
+                } else {
+                    testResult.failedTests.push({ phase, actual, target, overage: actual - target });
+                }
+            });
+            
+            testResults.push(testResult);
+            displayResults(testResult);
+            
+            return testResult;
+        }
+        
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            
+            const totalPassed = result.metrics.phases.total <= performanceTargets[result.filename]?.total;
+            
+            const html = `
+                <div class="result-card">
+                    <h3>Test: ${result.filename}</h3>
+                    <p><strong>Timestamp:</strong> ${new Date(result.timestamp).toLocaleString()}</p>
+                    <p><strong>Overall Status:</strong> <span class="${totalPassed ? 'pass' : 'fail'}">${totalPassed ? 'PASS ✓' : 'FAIL ✗'}</span></p>
+                    
+                    <h4>Performance Phases</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Phase</th>
+                                <th>Actual Time (ms)</th>
+                                <th>Target (ms)</th>
+                                <th>Δ (ms)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(result.metrics.phases).map(([phase, time]) => {
+                                if (phase === 'total') return '';
+                                const target = performanceTargets[result.filename]?.[phase] || 'N/A';
+                                const delta = typeof target === 'number' ? (time - target).toFixed(0) : 'N/A';
+                                const status = time <= target ? 'PASS' : 'FAIL';
+                                const statusClass = time <= target ? 'pass' : 'fail';
+                                return `
+                                    <tr>
+                                        <td><strong>${phase}</strong></td>
+                                        <td>${time.toFixed(2)}</td>
+                                        <td>${target}</td>
+                                        <td>${delta !== 'N/A' ? (delta > 0 ? '+' + delta : delta) : delta}</td>
+                                        <td class="${statusClass}">${status}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                            <tr style="font-weight: bold; background-color: #f9f9f9;">
+                                <td>TOTAL</td>
+                                <td>${result.metrics.phases.total.toFixed(2)}</td>
+                                <td>${performanceTargets[result.filename]?.total || 'N/A'}</td>
+                                <td>${((result.metrics.phases.total - performanceTargets[result.filename]?.total) > 0 ? '+' : '') + (result.metrics.phases.total - performanceTargets[result.filename]?.total).toFixed(0)}</td>
+                                <td class="${totalPassed ? 'pass' : 'fail'}">
+                                    ${totalPassed ? 'PASS' : 'FAIL'}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>Node Statistics</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(result.metrics.nodeStats).map(([key, value]) => `
+                                <tr>
+                                    <td>${key}</td>
+                                    <td><strong>${value}</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html + resultsDiv.innerHTML;
+        }
+        
+        async function runComparisonTest() {
+            console.log('🔬 Running comprehensive comparison test...');
+            
+            const testFiles = [
+                'dwh-1.json',
+                'dwh-5.json',
+                'theme_1.json',
+                'theme_2.json',
+                'dwh-6.fixed.json'
+            ];
+            
+            for (const file of testFiles) {
+                console.log(`\n--- Testing ${file} ---`);
+                await runPerformanceTest(file);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between tests
+            }
+            
+            console.log('✅ Comprehensive comparison test complete');
+            console.log('📊 Test Results Summary:', testResults);
+        }
+        
+        // Event listeners
+        document.getElementById('runTestBtn').addEventListener('click', () => {
+            const filename = document.getElementById('testFileSelect').value;
+            runPerformanceTest(filename);
+        });
+        
+        document.getElementById('compareBtn').addEventListener('click', runComparisonTest);
+        
+        console.log('✨ Performance test harness ready');
+        console.log('💡 Tip: Open browser DevTools Console to see detailed performance metrics');
+    </script>
+</body>
+</html>
+
+

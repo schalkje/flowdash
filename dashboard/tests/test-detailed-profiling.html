@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Profiling - Manual Instrumentation</title>
+    <script src="../libs/d3.min.js"></script>
+    <script src="../libs/d3-shape.min.js"></script>
+    <script src="../libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="../flowdash.css">
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="../js/themeManager.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+        }
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        select {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        #graph {
+            width: 100%;
+            height: 400px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px 30px;
+        }
+        .panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .timing-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .timing-entry:last-child {
+            border-bottom: none;
+        }
+        .timing-label {
+            color: #555;
+        }
+        .timing-value {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .timing-value.slow {
+            color: #dc3545;
+        }
+        .progress-container {
+            margin: 20px 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .log-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-output pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .log-timestamp {
+            color: #888;
+        }
+        .log-phase {
+            color: #4fc3f7;
+        }
+        .log-time {
+            color: #66bb6a;
+        }
+        .bottleneck-alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 30px;
+        }
+        .bottleneck-alert h3 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 30px;
+        }
+        .summary-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+        .summary-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .summary-card.bottleneck {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        .summary-card.bottleneck .summary-value {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Detailed Manual Profiling</h1>
+            <p>Find bottlenecks without DevTools hanging</p>
+        </div>
+
+        <div class="controls">
+            <select id="fileSelector">
+                <option value="dwh-1.json">dwh-1.json (4 nodes) - Baseline</option>
+                <option value="dwh-6.fixed.json" selected>dwh-6.fixed.json (885 nodes) - Target</option>
+            </select>
+            <button class="btn" onclick="startProfiling()">🔍 Start Profiling</button>
+            <button class="btn" onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <h3 id="progressLabel">Loading...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+            <p id="progressDetail"></p>
+        </div>
+
+        <div id="graph"></div>
+
+        <div class="summary-grid" id="summaryGrid" style="display: none;"></div>
+
+        <div class="bottleneck-alert" id="bottleneckAlert" style="display: none;">
+            <h3>⚠️ Bottlenecks Detected</h3>
+            <div id="bottleneckList"></div>
+        </div>
+
+        <div class="split-view" id="resultsView" style="display: none;">
+            <div class="panel">
+                <h3>⏱️ Phase Timing</h3>
+                <div id="timingResults"></div>
+            </div>
+            <div class="panel">
+                <h3>📝 Detailed Log</h3>
+                <div class="log-output" id="logOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Dashboard, fetchDashboardFile } from '../js/dashboard.js';
+
+        let timingData = [];
+        let logEntries = [];
+        let startTime = 0;
+
+        function logTiming(phase, detail = '') {
+            const now = performance.now();
+            const elapsed = now - startTime;
+            const entry = {
+                phase,
+                detail,
+                timestamp: now,
+                elapsed: elapsed,
+                relative: timingData.length > 0 ? elapsed - timingData[timingData.length - 1].elapsed : 0
+            };
+            timingData.push(entry);
+            
+            const logMsg = `[${elapsed.toFixed(0).padStart(6)}ms] ${phase}${detail ? ': ' + detail : ''}`;
+            logEntries.push(logMsg);
+            console.log(logMsg);
+            
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logOutput = document.getElementById('logOutput');
+            if (logOutput) {
+                logOutput.innerHTML = '<pre>' + logEntries.join('\n') + '</pre>';
+                logOutput.scrollTop = logOutput.scrollHeight;
+            }
+        }
+
+        function updateProgress(percent, label, detail) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressLabel = document.getElementById('progressLabel');
+            const progressDetail = document.getElementById('progressDetail');
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = Math.round(percent) + '%';
+            progressLabel.textContent = label;
+            progressDetail.textContent = detail || '';
+        }
+
+        window.startProfiling = async function() {
+            const selector = document.getElementById('fileSelector');
+            const filename = selector.value;
+            
+            // Reset
+            timingData = [];
+            logEntries = [];
+            startTime = performance.now();
+            
+            document.getElementById('resultsView').style.display = 'none';
+            document.getElementById('summaryGrid').style.display = 'none';
+            document.getElementById('bottleneckAlert').style.display = 'none';
+            
+            logTiming('START', 'Beginning profiling for ' + filename);
+            updateProgress(0, 'Starting...', 'Initializing profiler');
+            
+            try {
+                // Clear graph
+                document.getElementById('graph').innerHTML = '';
+                logTiming('GRAPH_CLEARED', 'Container prepared');
+                updateProgress(5, 'Preparing...', 'Graph container ready');
+                
+                // Create SVG
+                d3.select('#graph')
+                    .append('svg')
+                    .attr('width', '100%')
+                    .attr('height', '100%')
+                    .style('display', 'block');
+                logTiming('SVG_CREATED', 'SVG element added to DOM');
+                updateProgress(10, 'Loading data...', 'Fetching JSON file');
+                
+                // Fetch data
+                const dataStart = performance.now();
+                const data = await fetchDashboardFile(filename);
+                const dataTime = performance.now() - dataStart;
+                logTiming('DATA_LOADED', `${dataTime.toFixed(2)}ms - ${data.nodes.length} nodes, ${data.edges?.length || 0} edges`);
+                updateProgress(20, 'Creating dashboard...', 'Initializing Dashboard object');
+                
+                // Create dashboard
+                const dashStart = performance.now();
+                const dashboard = new Dashboard(data);
+                const dashTime = performance.now() - dashStart;
+                logTiming('DASHBOARD_CREATED', `${dashTime.toFixed(2)}ms`);
+                updateProgress(30, 'Initializing...', 'Starting node creation');
+                
+                // Initialize (this is where the magic happens)
+                const initStart = performance.now();
+                
+                // Hook into dashboard to track progress
+                let nodeCount = 0;
+                const originalLog = console.log;
+                
+                dashboard.initialize('#graph svg');
+                
+                const initTime = performance.now() - initStart;
+                logTiming('INITIALIZE_COMPLETE', `${initTime.toFixed(2)}ms`);
+                updateProgress(90, 'Finalizing...', 'Dashboard initialized');
+                
+                // Get metrics
+                const metrics = dashboard.performanceMetrics;
+                logTiming('METRICS_COLLECTED', 'Performance metrics retrieved');
+                updateProgress(100, 'Complete!', 'Analyzing results...');
+                
+                // Display results
+                displayResults(metrics, data);
+                
+                logTiming('DONE', `Total time: ${(performance.now() - startTime).toFixed(2)}ms`);
+                
+            } catch (error) {
+                logTiming('ERROR', error.message);
+                console.error('Profiling error:', error);
+                alert('Profiling failed: ' + error.message);
+            }
+        };
+
+        function displayResults(metrics, data) {
+            // Show results view
+            document.getElementById('resultsView').style.display = 'grid';
+            document.getElementById('summaryGrid').style.display = 'grid';
+            
+            // Summary cards
+            const summaryGrid = document.getElementById('summaryGrid');
+            const total = metrics.phases.total;
+            
+            const summaryData = [
+                { label: 'Total Time', value: total.toFixed(0) + 'ms', percent: 100 },
+                { label: 'Node Init', value: metrics.phases.nodeInitialization.toFixed(0) + 'ms', 
+                  percent: (metrics.phases.nodeInitialization / total * 100).toFixed(1) },
+                { label: 'Node Creation', value: metrics.phases.nodeCreation.toFixed(0) + 'ms',
+                  percent: (metrics.phases.nodeCreation / total * 100).toFixed(1) },
+                { label: 'Edge Creation', value: metrics.phases.edgeCreation.toFixed(0) + 'ms',
+                  percent: (metrics.phases.edgeCreation / total * 100).toFixed(1) },
+                { label: 'Layout Stab', value: metrics.phases.layoutStabilization.toFixed(0) + 'ms',
+                  percent: (metrics.phases.layoutStabilization / total * 100).toFixed(1) },
+                { label: 'Total Nodes', value: metrics.nodeStats.totalNodes, percent: null }
+            ];
+            
+            summaryGrid.innerHTML = summaryData.map(item => {
+                const isBottleneck = item.percent && item.percent > 20;
+                return `
+                    <div class="summary-card${isBottleneck ? ' bottleneck' : ''}">
+                        <h4>${item.label}</h4>
+                        <div class="summary-value">${item.value}</div>
+                        ${item.percent ? `<div style="color: #666; font-size: 0.9em;">${item.percent}%</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Phase timing
+            const timingResults = document.getElementById('timingResults');
+            timingResults.innerHTML = Object.entries(metrics.phases).map(([phase, time]) => {
+                const percent = (time / total * 100).toFixed(1);
+                const isSlow = percent > 20 && phase !== 'total';
+                return `
+                    <div class="timing-entry">
+                        <span class="timing-label">${phase}</span>
+                        <span class="timing-value${isSlow ? ' slow' : ''}">${time.toFixed(2)}ms (${percent}%)</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Identify bottlenecks
+            const bottlenecks = Object.entries(metrics.phases)
+                .filter(([phase, time]) => phase !== 'total' && (time / total * 100) > 20)
+                .sort((a, b) => b[1] - a[1]);
+            
+            if (bottlenecks.length > 0) {
+                document.getElementById('bottleneckAlert').style.display = 'block';
+                document.getElementById('bottleneckList').innerHTML = bottlenecks.map(([phase, time]) => {
+                    const percent = (time / total * 100).toFixed(1);
+                    return `<p><strong>${phase}</strong>: ${time.toFixed(2)}ms (${percent}% of total) ⚠️</p>`;
+                }).join('');
+                
+                // Log analysis
+                logTiming('ANALYSIS', `Found ${bottlenecks.length} bottleneck(s)`);
+                bottlenecks.forEach(([phase, time]) => {
+                    logTiming('BOTTLENECK', `${phase}: ${time.toFixed(2)}ms (${(time/total*100).toFixed(1)}%)`);
+                });
+            }
+            
+            // Provide insights
+            const nodeInitPercent = (metrics.phases.nodeInitialization / total * 100);
+            if (nodeInitPercent > 80) {
+                logTiming('INSIGHT', `Node initialization is ${nodeInitPercent.toFixed(1)}% of total time!`);
+                logTiming('INSIGHT', 'This is likely NOT a DOM batching issue');
+                logTiming('INSIGHT', 'Possible causes: style recalc, layout, or JS execution');
+                logTiming('RECOMMENDATION', 'Next: Check browser Task Manager during load');
+                logTiming('RECOMMENDATION', 'Or: Try profiling with shorter duration (5 seconds)');
+            }
+        }
+
+        window.clearResults = function() {
+            timingData = [];
+            logEntries = [];
+            document.getElementById('resultsView').style.display = 'none';
+            document.getElementById('summaryGrid').style.display = 'none';
+            document.getElementById('bottleneckAlert').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('logOutput').innerHTML = '';
+            console.clear();
+        };
+
+        // Initialize
+        console.log('🔬 Manual Profiling Tool Ready');
+        console.log('This tool provides detailed timing WITHOUT DevTools recording');
+        console.log('Click "Start Profiling" to begin');
+    </script>
+</body>
+</html>
+
+

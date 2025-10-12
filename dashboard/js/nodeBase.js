@@ -54,6 +54,17 @@ export default class BaseNode {
     this.y ??= 0;
     this.data.width ??= 60;
     this.data.height ??= 60;
+
+    // Apply pre-render position if available
+    if (nodeData.prerender) {
+      this.x = nodeData.prerender.x;
+      this.y = nodeData.prerender.y;
+      this.data.width = nodeData.prerender.width;
+      this.data.height = nodeData.prerender.height;
+      this._hasPrerenderData = true;
+    } else {
+      this._hasPrerenderData = false;
+    }
   }
 
   get visible() {
@@ -89,6 +100,14 @@ export default class BaseNode {
       this.element.classed("collapsed", this.collapsed);
       this.element.classed("expanded", !this.collapsed);
     } 
+  }
+
+  /**
+   * Check if this node has pre-render data
+   * @returns {boolean}
+   */
+  get hasPrerenderData() {
+    return this._hasPrerenderData === true;
   }
 
   get status() {
@@ -169,12 +188,12 @@ export default class BaseNode {
     if (this.suspenseDisplayChange) {
       return;
     }
-    // If dashboard is temporarily suspending display changes during bulk init,
-    // skip bubbling to avoid mid-cascade zoom recalculation. We detect via the
-    // closest available dashboard reference on the root node if present.
+    
     try {
-      const root = this.parentNode?.parentNode ? this.parentNode.parentNode : this.parentNode || this;
-      const dashboard = root?.dashboard || root?.__dashboard;
+      // Check this node's dashboard reference (inherited during init)
+      const dashboard = this.__dashboard;
+      
+      // Check suspension - early exit during initialization
       if (dashboard && dashboard._suspendDisplayChange) {
         return;
       }
@@ -204,28 +223,66 @@ export default class BaseNode {
   }
 
    init(parentElement = null) {
+    // Performance profiling: Mark start of init
+    const perfId = `node-init-${this.id}`;
+    performance.mark(`${perfId}-start`);
+    
     if (parentElement) this.parentElement = parentElement;
+    
+    // Inherit dashboard reference from parent for suspension checks
+    if (this.parentNode?.__dashboard) {
+      this.__dashboard = this.parentNode.__dashboard;
+    }
 
+    // Performance profiling: DOM element creation
+    performance.mark(`${perfId}-before-dom-create`);
     this.element = this.parentElement
       .append("g")
       .attr("class", this.data.type)
       .attr("id", this.id)
       .attr("status", this.status);
+    
+    // Apply pre-render transform immediately if available
+    if (this.hasPrerenderData) {
+      this.element.attr("transform", `translate(${this.x}, ${this.y})`);
+    }
+    
+    performance.mark(`${perfId}-after-dom-create`);
       
     // Attach the node instance to the DOM element for testing access
     this.element.node().__node = this;
 
+    // Performance profiling: Zone manager initialization
+    performance.mark(`${perfId}-before-zone-manager`);
     // Initialize zone manager only for container nodes
     if (this.isContainer) {
       this.zoneManager = new ZoneManager(this);
-      this.zoneManager.init();
+      
+      // OPTIMIZATION #7: If batching DOM operations, defer complex zone initialization
+      const isBatching = this.__dashboard?._batchDomOperations;
+      if (isBatching) {
+        // Just create structure, defer measurements and complex operations
+        this.zoneManager.initStructureOnly?.() || this.zoneManager.init();
+      } else {
+        this.zoneManager.init();
+      }
 
-      // Resize zones with actual node dimensions
-      if (this.zoneManager) {
+      // Resize zones (in pre-render mode, this sets sizes but skips calculations)
+      // Defer resize to measurement phase if batching
+      if (isBatching && this.__dashboard?._deferredOperations) {
+        this.__dashboard._deferredOperations.measurements.push(() => {
+          if (this.zoneManager) {
+            this.zoneManager.resize(this.data.width, this.data.height);
+          }
+        });
+      } else if (this.zoneManager) {
         this.zoneManager.resize(this.data.width, this.data.height);
       }
     }
+    performance.mark(`${perfId}-after-zone-manager`);
 
+    // Performance profiling: DOM parenting operations
+    performance.mark(`${perfId}-before-dom-parenting`);
     // Ensure DOM parenting matches logical parenting for all nodes
     try {
       const parent = this.parentNode;
@@ -242,18 +299,30 @@ export default class BaseNode {
         }
       }
     } catch {}
+    performance.mark(`${perfId}-after-dom-parenting`);
 
+    // Performance profiling: Event setup
+    performance.mark(`${perfId}-before-event-setup`);
     // Set up default events using EventManager
     EventManager.setupDefaultNodeEvents(this);
+    performance.mark(`${perfId}-after-event-setup`);
       
+    // Performance profiling: CSS class operations
+    performance.mark(`${perfId}-before-css-classes`);
     // Set expanded or collapsed state
     this.element.classed("collapsed", this.collapsed);
     this.element.classed("expanded", !this.collapsed);
+    performance.mark(`${perfId}-after-css-classes`);
 
+    // Performance profiling: Visual elements (center mark)
+    performance.mark(`${perfId}-before-center-mark`);
     // show the center stip
     if (this.settings.showCenterMark)
       this.element.append("circle").attr("class", "centermark").attr("r", 3).attr("cx", 0).attr("cy", 0);
+    performance.mark(`${perfId}-after-center-mark`);
 
+    // Performance profiling: Connection points
+    performance.mark(`${perfId}-before-connection-points`);
     // show the connection points
     if (this.settings.showConnectionPoints) {
       // Create a dedicated group to isolate this node's connection points from descendants
@@ -273,9 +342,29 @@ export default class BaseNode {
         }
       } catch {}
     }
+    performance.mark(`${perfId}-after-connection-points`);
     
-    // Trigger display change after initialization to ensure loading overlay is hidden
-    this.handleDisplayChange();
+    // Performance profiling: Display change
+    performance.mark(`${perfId}-before-display-change`);
+    // Skip display change if in pre-render mode or dashboard is suspending changes
+    const shouldSkipDisplayChange = this.hasPrerenderData && this.__dashboard?._suspendDisplayChange;
+    if (!shouldSkipDisplayChange) {
+      // Trigger display change after initialization to ensure loading overlay is hidden
+      this.handleDisplayChange();
+    }
+    performance.mark(`${perfId}-after-display-change`);
+    
+    // Performance profiling: Create measurements and log
+    performance.mark(`${perfId}-end`);
+    performance.measure(`${perfId}-total`, `${perfId}-start`, `${perfId}-end`);
+    performance.measure(`${perfId}-dom-create`, `${perfId}-before-dom-create`, `${perfId}-after-dom-create`);
+    performance.measure(`${perfId}-zone-manager`, `${perfId}-before-zone-manager`, `${perfId}-after-zone-manager`);
+    performance.measure(`${perfId}-dom-parenting`, `${perfId}-before-dom-parenting`, `${perfId}-after-dom-parenting`);
+    performance.measure(`${perfId}-event-setup`, `${perfId}-before-event-setup`, `${perfId}-after-event-setup`);
+    performance.measure(`${perfId}-css-classes`, `${perfId}-before-css-classes`, `${perfId}-after-css-classes`);
+    performance.measure(`${perfId}-center-mark`, `${perfId}-before-center-mark`, `${perfId}-after-center-mark`);
+    performance.measure(`${perfId}-connection-points`, `${perfId}-before-connection-points`, `${perfId}-after-connection-points`);
+    performance.measure(`${perfId}-display-change`, `${perfId}-before-display-change`, `${perfId}-after-display-change`);
   }
 
   // function to put all the elements in the correct place

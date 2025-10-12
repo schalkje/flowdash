@@ -1,0 +1,846 @@
+.flowdash-fullscreen,
+#graph.fullscreen {
+  position: fixed; /* Position the element relative to the viewport */
+  top: 0; /* Align the top edge to the top of the viewport */
+  left: 0; /* Align the left edge to the left of the viewport */
+  width: 100vw; /* Set the width to 100% of the viewport width */
+  height: 100vh; /* Set the height to 100% of the viewport height */
+  z-index: 9999; /* Ensure the element is on top of other elements */
+  background: var(--fd-bg, white); /* Respect theme background */
+}
+#graph {
+  border: 1px solid black;
+  width: 100%;
+  height: 800px;
+  background-color: var(--fd-bg, white);
+   /* rgba(200, 200, 200, 0.2); */
+}
+
+#graph-container {
+  position: relative;
+}
+
+/* Loading overlay (themed) */
+.flowdash-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 33%;
+  min-width: 220px;
+  max-width: 520px;
+  display: none; /* toggled by JS */
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--fd-surface, rgba(255,255,255,0.92));
+  color: var(--fd-text, #111);
+  border: 1px solid var(--fd-border, rgba(0,0,0,0.2));
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  z-index: 20001;
+  text-align: center;
+}
+
+.flowdash-loading__text {
+  font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.flowdash-loading__dots {
+  font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing: 2px;
+  color: var(--fd-accent, #2f6feb);
+  display: inline-block;
+  min-width: 24px;
+}
+
+.flowdash-loading__timer {
+  font: 500 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--fd-text-muted, #656d76);
+  margin-top: 4px;
+}
+
+.flowdash-loading__history {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 8px;
+  width: 100%;
+  border-top: 1px solid var(--fd-border, rgba(0,0,0,0.1));
+  padding-top: 8px;
+}
+
+.flowdash-loading__history .stage-entry {
+  font: 400 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--fd-text-muted, #656d76);
+  padding: 2px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--fd-border-light, rgba(0,0,0,0.05));
+}
+
+.flowdash-loading__history .stage-entry:last-child {
+  border-bottom: none;
+}
+  .fullscreen-toggle {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,0.15);
+      color: #fff;
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      z-index: 10000; /* Ensure the button is above the SVG */
+      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+      opacity: 0.7;
+  }
+
+  /* While the dashboard is in fullscreen, float button to viewport corner */
+  .fullscreen-toggle.fullscreen-active {
+      position: fixed;
+  }
+
+  .fullscreen-toggle:hover {
+      background: rgba(255,255,255,0.9);
+      color: #111;
+      border-color: rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      opacity: 1;
+  }
+
+#graph rect.boundingBox {
+  fill: none;
+  stroke: rgba(0, 160, 0, 0.5);
+}
+
+.zoom-cockpit {
+  position: absolute !important;
+  pointer-events: none;
+  z-index: 10000;
+  right: 12px !important;
+  bottom: 12px !important;
+  top: auto !important;
+  left: auto !important;
+  /* Themes can override positioning by targeting .zoom-cockpit */
+}
+
+/* Fixed positioning when dashboard is maximized */
+.flowdash-fullscreen ~ .zoom-cockpit,
+.fullscreen ~ .zoom-cockpit {
+  position: fixed !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  top: auto !important;
+  left: auto !important;
+  z-index: 10000;
+}
+
+/* Ensure correct positioning inside demo containers in normal mode */
+.demo-container { position: relative; }
+.demo-container > .zoom-cockpit {
+  right: 12px !important;
+  bottom: 12px !important;
+}
+
+.minimap-svg {
+  border: 1px solid var(--fd-border, #2b4b7c);
+  background-color: var(--fd-surface, rgba(255,255,255, 0.7));
+}
+.minimap { }
+/* No visible header/footer backgrounds; logical rows only */
+.minimap-scale {
+  fill: var(--minimap-scale-fg, #333);
+  pointer-events: none; /* footer hit-rect takes events; text shouldn’t block hover */
+}
+.minimap-collapsed-icon .collapsed-icon-bg {
+  fill: var(--fd-surface, rgba(255,255,255, 0.85));
+  stroke: var(--fd-border, rgba(0,0,0,0.25));
+}
+.minimap-collapsed-icon .collapsed-icon-mini {
+  fill: var(--fd-border, rgba(0,0,0,0.35));
+}
+
+.minimap-collapse-button .collapse-btn-bg {
+  fill: var(--fd-surface, rgba(255,255,255, 0.9));
+  stroke: var(--fd-border, rgba(0,0,0,0.25));
+}
+.minimap-collapse-button .collapse-btn-icon {
+  fill: var(--fd-border, rgba(0,0,0,0.6));
+}
+
+.minimap-pin-button .pin-btn-bg {
+  fill: var(--fd-surface, rgba(255,255,255, 0.9));
+  stroke: var(--fd-border, rgba(0,0,0,0.25));
+}
+.minimap-pin-button .pin-btn-head,
+.minimap-pin-button .pin-btn-stem {
+  fill: var(--fd-border, rgba(0,0,0,0.6));
+}
+.minimap-pin-button.active .pin-btn-bg {
+  stroke: none;
+}
+
+.minimap-svg rect.background {
+  fill: var(--fd-bg, white);
+  stroke: var(--fd-border, #2b4b7c);
+}
+
+.minimap-svg rect.boundingbox {
+  fill: none;
+  stroke: rgba(255, 0, 0, 0.5);
+  stroke-width: 4px;
+}
+
+
+/* Minimap overlays (base defaults; themes override) */
+.minimap-svg .eye {
+  fill: var(--fd-bg, #ffffff);
+  fill-opacity: 0.5;
+  filter: blur(8px);
+  -webkit-filter: blur(8px);
+}
+
+.minimap-svg .iris {
+  fill: none;
+  stroke: var(--fd-border, rgba(0,0,0,0.35));
+  stroke-width: 6px;
+}
+
+/* Minimap control buttons */
+.minimap-controls .btn-bg {
+  fill: var(--fd-surface, rgba(255,255,255, 0.9));
+  stroke: var(--fd-border, rgba(0,0,0,0.25));
+}
+.minimap-size-button .btn-bg {
+  fill: var(--fd-surface, rgba(255,255,255, 0.9));
+  stroke: var(--fd-border, rgba(0,0,0,0.25));
+}
+.minimap-header-hit,
+.minimap-footer-hit {
+  pointer-events: all; /* make entire rows hover sensitive */
+}
+.minimap-controls .icon {
+  fill: var(--fd-border, rgba(0,0,0,0.75));
+}
+.minimap-size-button .btn-label {
+  fill: var(--fd-border, rgba(0,0,0,0.75));
+}
+.minimap-controls .minimap-btn:hover .btn-bg,
+.minimap-collapse-button:hover .collapse-btn-bg,
+.minimap-pin-button:hover .pin-btn-bg {
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+}
+
+/* Minimap Element Styles */
+.minimap-eyeball {
+  fill: white;
+}
+
+.minimap-pupil {
+  fill: black;
+}
+
+
+body {
+  background-color: var(--fd-bg, white);
+  color: var(--fd-text, #000);
+  font-family: Arial;
+}
+
+svg.container {
+  border: 1px solid #000;
+  background-color: red;
+}
+
+svg.canvas {
+  /* background-color: #e6e3e3; */
+  /* background-color: white; */
+  border-color: #d3d3d3;
+  border-width: 2px;
+  border-style: solid;
+  box-shadow: 4px 3px 8px 1px #969696;
+  -webkit-box-shadow: 4px 3px 8px 1px #969696;
+}
+
+
+/*
+------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+
+.collapsed .shape{
+  opacity: 1;
+  /* fill-opacity: 0.7 !important; */
+}
+.collapsed .label{
+  /* fill: white; */
+  font-weight: bold  !important;
+  opacity: 1;
+  fill-opacity: 1 !important;
+}
+
+.shape {
+  fill: rgb(65, 65, 151);
+  fill-opacity: 1;
+  stroke: rgb(65, 65, 151);
+  stroke-width: 2;
+  cursor: default;
+  stroke-opacity: 0.3;
+}
+
+.shape[status="Unknown"] {
+  fill: #ddc7ff;
+  fill-opacity: 0.1;
+}
+
+.shape[status="Ready"] {
+  fill: lightblue;
+  fill-opacity: 0.3;  
+}
+
+.shape[status="Updating"] {
+  stroke: green;
+  fill: lightgreen;
+  fill-opacity: 0.3;
+}
+
+.shape[status="Updated"] {
+  stroke: none;
+  fill: rgb(24, 196, 24);
+  fill-opacity: 0.1;
+}
+.collapsed[status="Updated"] .shape{
+  stroke: none;
+  fill: rgb(24, 196, 24);
+  fill-opacity: 1;
+}
+
+.shape[status="Skipped"] {
+  stroke: yellowgreen;
+  fill: rgb(255, 252, 208);
+  fill-opacity: 1;
+}
+
+
+.shape[status="Delayed"] {
+  stroke: orange;
+}
+
+.shape[status="Warning"] {
+  stroke: orangered;
+  fill: orangered;
+  fill-opacity: 0.3;
+}
+
+.shape[status="Error"] {
+  stroke: red;
+  fill: red;
+  fill-opacity: 0.3;
+}
+
+/*
+    Node shape statusses
+*/
+
+.rect.shape[status="Unknown"] {
+  fill: rgb(132, 139, 146);
+  fill-opacity: 1;
+}
+
+.rect.shape[status="Ready"] {
+  fill: lightblue;
+  fill-opacity: 1;
+}
+
+@keyframes running-process {
+  0% {
+      background: lightgreen;
+      box-shadow: 0px 0px 5px 5px lightgreen;
+  }
+
+  15% {
+      background: lightgreen;
+      box-shadow: none;
+  }
+
+  50% {
+      background: transparent;
+      box-shadow: none;
+  }
+
+  85% {
+      background: lightgreen;
+      box-shadow: none;
+  }
+
+  100% {
+      background: lightgreen;
+      box-shadow: 0px 0px 5px 5px lightgreen;
+  }
+}
+
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+.rect.shape[status="Updating"] {
+  fill: lightgreen;
+  fill-opacity: 1;
+  stroke: green;
+  stroke-opacity: 100%;
+  opacity: 100%;
+  stroke-dasharray: 10;
+  animation: dash 10s forwards linear infinite;
+}
+
+.rect.shape[status="Updated"] {
+  fill: rgb(24, 196, 24);
+  fill-opacity: 1;
+}
+
+.rect.shape[status="Skipped"] {
+  fill: rgb(255, 252, 208);
+  fill-opacity: 1;
+}
+
+
+.rect.shape[status="Delayed"] {
+  fill: orange;
+  fill-opacity: 1;
+}
+
+.rect.shape[status="Warning"] {
+  fill: orangered;
+  fill-opacity: 1;
+}
+
+.rect.shape[status="Error"] {
+  fill: red;
+  fill-opacity: 1;
+}
+
+
+/*
+    Labels
+*/
+
+text {
+  fill: black;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: normal;
+  /* fill: rgb(216, 216, 241); */
+  fill: rgb(65, 65, 151);
+  fill-opacity: 0.8;
+  text-anchor: start;
+  dominant-baseline: hanging;
+}
+
+.rect.label,
+.node.label {
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Ensure all node labels are centered */
+.rect.label,
+.adapter.label,
+.foundation.label,
+.mart.label,
+.group.label,
+.lane.label,
+.columns.label,
+.circle.label {
+  stroke: none;
+  font-size: 14px;
+  font-weight: bold;
+  /* fill: rgb(216, 216, 241); */
+  fill: black;
+  fill-opacity: 0.8;
+}
+
+.placeholder {
+  stroke: red;
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+
+/*
+------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+.centermark {
+  fill: red;
+  stroke: white;
+  stroke-width: 1;
+}
+
+.connection-point {
+  fill: rgb(155, 155, 226);
+  stroke: none;
+}
+
+/* default styles */
+
+
+
+.selected .shape {
+  stroke: rgb(53, 53, 175);
+  /* stroke-opacity: 0.95; */
+  stroke-opacity: 1;
+  stroke-width: 3;
+  opacity: 0.8;
+}
+
+.rect_grabbing {
+  fill: #9b9bfa;
+  fill-opacity: 0.95;
+  stroke: rgb(65, 65, 151);
+  stroke-opacity: 0.8;
+  stroke-width: 4;
+  cursor: grabbing;
+}
+
+
+.edge .path {
+  stroke-width: 2px;
+  stroke: #7795D1;
+  /* stroke: green; */
+  fill: none;
+  marker-end: url(#arrow);
+  /* marker-mid: url(#mid-arrow);  */
+  /* marker-start: url(#arrow); */
+}
+
+.edge.selected .path {
+  stroke: rgb(53, 53, 175);
+  /* stroke-opacity: 0.5; */
+  stroke-opacity: 1;
+  opacity: 0.8;
+}
+
+
+.edge.ghostline {
+  stroke-width: 1px;
+  /* stroke: #4679BD; */
+  stroke: white;
+  stroke-opacity: 0.6;
+}
+
+.edge.ghostline .path {
+  stroke-width: 1px;
+  /* stroke: #4679BD; */
+  /* stroke: white; */
+  stroke: red;
+  stroke-opacity: 0.5;
+  stroke-linecap: round;
+  /* 0.6; */
+  marker-end: url(#debugcircle);
+  marker-start: url(#debugcircle);
+}
+
+
+
+
+
+.collapsed {
+  opacity: 1;
+}
+
+.expanded {
+
+}
+
+
+
+.zoom-button circle {
+  display: none;
+  transition: all 0.2s;
+}
+
+.zoom-button:hover circle {
+  display: block;
+  fill: #f0f0f0;
+  stroke: #bbb;
+  stroke-width: 1px;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  /* Add shadow for depth */
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.zoom-button rect.icon {
+  fill: #acace7;
+  transition: fill 0.2s, transform 0.2s;
+}
+
+.editbox {
+  border: 1px grey solid;
+  background: lightblue;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 2px 0px 2px;
+}
+
+/* Zone System Styles */
+
+/* Container Zone Styles */
+.container-shape {
+  fill: #f8f9fa;
+  stroke: #dee2e6;
+  stroke-width: 1;
+  rx: 4;
+  ry: 4;
+}
+
+.container-border {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 2;
+  rx: 4;
+  ry: 4;
+}
+
+.container-border.selected {
+  stroke: #007bff;
+  stroke-width: 2;
+}
+
+.container-shape.hover {
+  stroke-width: 2;
+}
+
+/* Collapsed Container Styles */
+.collapsed .container-shape {
+  fill: #f8f9fa;
+  stroke: #adb5bd;
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.collapsed .container-border {
+  stroke: transparent;
+}
+
+/* Header Zone Styles */
+.header-background {
+  fill: #ffffff;
+  stroke: #dee2e6;
+  stroke-width: 1;
+  rx: 4;
+  ry: 4;
+}
+
+/* Inner Container Zone Styles */
+rect.zone-innerContainer {
+  fill: none;
+  stroke: rgba(135, 206, 250, 0.2); /* Light blue semi-transparent */
+  stroke-width: 1;
+  stroke-dasharray: 5,5; /* Dashed border for visual distinction */
+  pointer-events: none; /* Don't interfere with interactions */
+}
+
+.header-text {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  fill: #333333;
+  text-anchor: start;
+}
+
+.header-text.hover {
+  fill: #007bff;
+}
+
+.status-indicator {
+  fill: transparent;
+}
+
+.status-indicator.unknown {
+  fill: #666666;
+}
+
+.status-indicator.ready {
+  fill: #28a745;
+}
+
+.status-indicator.updating {
+  fill: #ffc107;
+}
+
+.status-indicator.updated {
+  fill: #17a2b8;
+}
+
+.status-indicator.error {
+  fill: #dc3545;
+}
+
+.status-indicator.warning {
+  fill: #fd7e14;
+}
+
+/* Zoom Button Styles */
+.zoom-button {
+  cursor: pointer;
+}
+
+.zoom-button-bg {
+  fill: #ffffff;
+  stroke: #dee2e6;
+  stroke-width: 1;
+}
+
+.zoom-button-bg.hover {
+  fill: #f8f9fa;
+}
+
+.zoom-icon {
+  font-size: 12px;
+  font-weight: bold;
+  text-anchor: middle;
+  fill: #333333;
+}
+
+/* Node Styles (for type="node") */
+.rect.shape {
+  fill: #f8f9fa;
+  stroke: #dee2e6;
+  stroke-width: 1;
+  rx: 5;
+  ry: 5;
+}
+
+/* Circle Node Styles */
+.circle.shape {
+  stroke: #000;
+  stroke-width: 1.5;
+}
+
+/* SSIS Node Styles */
+.SSIS.shape {
+  fill: #f8f9fa;
+  stroke: #dee2e6;
+  stroke-width: 1;
+  rx: 5;
+  ry: 5;
+}
+
+.SSIS.label {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  fill: #333333;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Adapter Node Styles */
+.adapter.shape {
+  fill: #f8f9fa;
+  stroke: #dee2e6;
+  stroke-width: 1;
+  rx: 5;
+  ry: 5;
+}
+
+.adapter.label {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  fill: #333333;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Placeholder Styles */
+.placeholder {
+  fill: red;
+  stroke: red;
+  stroke-width: 2;
+}
+
+/* Marker Styles */
+.marker-arrow {
+  stroke: context-stroke;
+  fill: context-stroke;
+  stroke-width: 2;
+}
+
+.marker-arrowhead {
+  stroke: context-stroke;
+  fill: none;
+  stroke-width: 2;
+}
+
+.marker-circle {
+  stroke: context-stroke;
+  stroke-width: 2;
+  fill: none;
+}
+
+.marker-diamond {
+  stroke: context-stroke;
+  fill: context-stroke;
+}
+
+.marker-square {
+  stroke: context-stroke;
+  fill: context-stroke;
+}
+
+/* Status-based styling for container shapes */
+.container-shape[status="Unknown"] {
+  fill: #ddc7ff;
+  fill-opacity: 0.1;
+}
+
+.container-shape[status="Ready"] {
+  fill: lightblue;
+  fill-opacity: 0.3;
+}
+
+.container-shape[status="Updating"] {
+  stroke: green;
+  fill: lightgreen;
+  fill-opacity: 0.3;
+}
+
+.container-shape[status="Updated"] {
+  stroke: none;
+  fill: rgb(24, 196, 24);
+  fill-opacity: 0.1;
+}
+
+.container-shape[status="Skipped"] {
+  stroke: yellowgreen;
+  fill: rgb(255, 252, 208);
+  fill-opacity: 1;
+}
+
+.container-shape[status="Delayed"] {
+  stroke: orange;
+}
+
+.container-shape[status="Warning"] {
+  stroke: orangered;
+  fill: orangered;
+  fill-opacity: 0.3;
+}
+
+.container-shape[status="Error"] {
+  stroke: red;
+  fill: red;
+  fill-opacity: 0.3;
+}
