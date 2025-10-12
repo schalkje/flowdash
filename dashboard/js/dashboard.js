@@ -5,7 +5,7 @@ import { createMarkers } from "./markers.js";
 import { createEdges } from "./edge.js";
 import { ConfigManager } from "./configManager.js";
 import { fetchDashboardFile } from "./data.js";
-import { LoadingOverlay, showLoading as showLoader, hideLoading as hideLoader, resolveLoadingContainer as resolveLoadingHost, setLoadingMessage as setLoaderMessage } from "./loadingOverlay.js";
+import { LoadingOverlay, showLoading, hideLoading, resolveLoadingContainer as resolveLoadingHost, setLoadingMessage } from "./loadingOverlay.js";
 import { Minimap } from "./minimap.js";
 import ZoomManager from "./zoomManager.js";
 import { NodeStatus } from "./nodeBase.js";
@@ -2163,4 +2163,4 @@ export function hasPrerenderData(dashboardData) {
   return hasNodePrerender(dashboardData.nodes || []);
 }
 
-export { showLoader as showLoading, hideLoader as hideLoading, setLoaderMessage as setLoadingMessage, fetchDashboardFile };
+export { fetchDashboardFile };
