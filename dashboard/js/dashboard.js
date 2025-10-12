@@ -433,6 +433,42 @@ export class Dashboard {
     return new Promise(resolve => setTimeout(resolve, 0));
   }
 
+  /**
+   * Initialize nodes with progress updates
+   * Shows node count in the stage message
+   */
+  async _initializeNodesWithProgress(rootNode) {
+    // Get total node count BEFORE calling init
+    const allNodesData = this._collectNodeDataRecursive(this.data.nodes);
+    const totalNodes = allNodesData.length;
+    
+    // Update stage message to include node count
+    this.setLoadingStage(`Initializing ${totalNodes} nodes`);
+    await this._yieldToMain();
+    
+    // Store dashboard reference for any internal tracking
+    rootNode.__dashboard = this;
+    
+    // Call init - this runs synchronously
+    rootNode.init();
+  }
+  
+  /**
+   * Recursively collect all node data to count total nodes
+   */
+  _collectNodeDataRecursive(nodes) {
+    let result = [];
+    if (!Array.isArray(nodes)) return result;
+    
+    for (const node of nodes) {
+      result.push(node);
+      if (node.children) {
+        result = result.concat(this._collectNodeDataRecursive(node.children));
+      }
+    }
+    return result;
+  }
+
    async initialize(mainDivSelector) {
     const t0 = performance.now();
     
@@ -1041,9 +1077,9 @@ export class Dashboard {
     // Store dashboard reference on root so handleDisplayChange() can access suspension flag
     root.__dashboard = this;
     
-    // Initialize all nodes (DOM creation)
+    // Initialize all nodes (DOM creation) with progress updates
     const t2a = performance.now();
-    root.init();
+    await this._initializeNodesWithProgress(root);
     
     this.setLoadingStage('Processing measurements');
     await this._yieldToMain();
@@ -1063,7 +1099,8 @@ export class Dashboard {
     // Phase 3: Edge Creation & Status Initialization
     const t3 = performance.now();
     
-    this.setLoadingStage('Creating edges');
+    const edgeCount = dashboard.edges?.length || 0;
+    this.setLoadingStage(`Creating ${edgeCount} edge${edgeCount !== 1 ? 's' : ''}`);
     await this._yieldToMain();
     
     this.initializeChildrenStatusses(root);
