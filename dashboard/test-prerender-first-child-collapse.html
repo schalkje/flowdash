@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: Prerender First Child Collapse Fix</title>
+  <link rel="stylesheet" href="themes/flat/flowdash.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    #test-info {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #test-info h2 {
+      margin-top: 0;
+      color: #0066cc;
+    }
+    #test-info code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+    .test-result {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-result h3 {
+      margin-top: 0;
+    }
+    .test-result.pass {
+      border-left: 5px solid #28a745;
+    }
+    .test-result.fail {
+      border-left: 5px solid #dc3545;
+    }
+    .test-result pre {
+      background: #f8f8f8;
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0052a3;
+    }
+    #graph-container {
+      min-height: 400px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test: Prerender First Child Collapse Fix</h1>
+  
+  <div id="test-info">
+    <h2>What This Tests</h2>
+    <p>This test verifies that when using <strong>prerendered data</strong>, collapsing the <strong>first child</strong> in a columns container correctly repositions the sibling nodes.</p>
+    
+    <h3>The Bug</h3>
+    <ul>
+      <li>When the first child adapter collapses, its siblings don't reposition</li>
+      <li>The parent columns container resizes correctly</li>
+      <li>But the remaining nodes stay at their old positions</li>
+    </ul>
+    
+    <h3>Expected Behavior</h3>
+    <ul>
+      <li>First child (adapter) collapses from ~110px wide to ~55px wide</li>
+      <li>Node 3 (ODS) should move LEFT to position ~-22 (was at 23)</li>
+      <li>Node 4 (DWH) should move LEFT to position ~148 (was at 193)</li>
+    </ul>
+    
+    <h3>Root Cause</h3>
+    <p>The <code>ZoneManager._prerenderMode</code> flag was not being disabled when a child collapsed, so <code>updateChildPositions()</code> returned early without repositioning siblings.</p>
+    
+    <h3>The Fix</h3>
+    <p>In <code>nodeBaseContainer.js</code>, both <code>collapse()</code> and <code>expand()</code> methods now disable both:</p>
+    <ul>
+      <li><code>parentZone._prerenderMode = false</code></li>
+      <li><code>this.parentNode.zoneManager._prerenderMode = false</code> <strong>(NEW)</strong></li>
+    </ul>
+  </div>
+  
+  <div>
+    <button onclick="testCollapse()">1. Collapse First Child (Adapter)</button>
+    <button onclick="testExpand()">2. Expand First Child (Adapter)</button>
+    <button onclick="reload()">3. Reload Dashboard</button>
+    <button onclick="compareSVG()">4. Compare SVG Output</button>
+  </div>
+  
+  <div id="results"></div>
+  
+  <div id="graph-container"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script type="module">
+    import { Dashboard } from './js/dashboard.js';
+
+    let dashboard = null;
+    
+    // Test data with prerender information
+    const testData = {
+      "settings": {
+        "usePrerender": true,
+        "prerenderMetadata": {
+          "version": "1.0.0",
+          "generatedAt": "2025-10-12T10:00:00.000Z",
+          "generatedBy": "test-case"
+        }
+      },
+      "nodes": [
+        {
+          "id": "1",
+          "label": "sources",
+          "type": "columns",
+          "x": 0,
+          "y": 0,
+          "width": 462,
+          "height": 46,
+          "state": "Unknown",
+          "collapsed": false,
+          "prerender": {
+            "width": 462,
+            "height": 46,
+            "x": 0,
+            "y": 0,
+            "minimumSize": { "width": 100, "height": 20 }
+          },
+          "children": [
+            {
+              "id": "2",
+              "label": "Bankview",
+              "type": "adapter",
+              "x": -170,
+              "y": 0,
+              "width": 106,
+              "height": 10,
+              "state": "Unknown",
+              "collapsed": false,
+              "layout": {
+                "displayMode": "role",
+                "mode": "staging-archive",
+                "arrangement": 4
+              },
+              "prerender": {
+                "width": 106,
+                "height": 10,
+                "x": -170,
+                "y": 0,
+                "minimumSize": { "width": 106, "height": 10 }
+              },
+              "children": [
+                {
+                  "id": "2_staging",
+                  "label": "staging",
+                  "role": "staging",
+                  "type": "node",
+                  "width": 80,
+                  "height": 20,
+                  "x": -48,
+                  "y": 5,
+                  "state": "Ready",
+                  "prerender": {
+                    "width": 80,
+                    "height": 20,
+                    "x": -48,
+                    "y": 5
+                  }
+                },
+                {
+                  "id": "2_archive",
+                  "label": "archive",
+                  "role": "archive",
+                  "type": "node",
+                  "width": 80,
+                  "height": 20,
+                  "x": 33,
+                  "y": 5,
+                  "state": "Ready",
+                  "prerender": {
+                    "width": 80,
+                    "height": 20,
+                    "x": 33,
+                    "y": 5
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3",
+              "label": "ODS",
+              "type": "node",
+              "width": 150,
+              "height": 20,
+              "x": 23,
+              "y": 0,
+              "state": "Ready",
+              "prerender": {
+                "width": 150,
+                "height": 20,
+                "x": 23,
+                "y": 0
+              }
+            },
+            {
+              "id": "4",
+              "label": "DWH",
+              "type": "node",
+              "width": 150,
+              "height": 20,
+              "x": 193,
+              "y": 0,
+              "state": "Ready",
+              "prerender": {
+                "width": 150,
+                "height": 20,
+                "x": 193,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "source": "2",
+          "target": "3",
+          "type": "SSIS",
+          "state": "Ready"
+        },
+        {
+          "source": "3",
+          "target": "4",
+          "type": "SSIS",
+          "state": "Ready"
+        }
+      ]
+    };
+
+    async function init() {
+      dashboard = new Dashboard(testData, '#graph-container');
+      await dashboard.render();
+      showResult('Dashboard loaded with prerender data', 'pass', null);
+    }
+
+    window.testCollapse = function() {
+      const adapter = dashboard.main.root.getNode('2');
+      if (!adapter) {
+        showResult('Test Failed', 'fail', 'Could not find adapter node with id "2"');
+        return;
+      }
+      
+      // Collapse the first child (adapter)
+      adapter.collapsed = true;
+      
+      // Wait for DOM to update, then check positions
+      setTimeout(() => {
+        const node3 = dashboard.main.root.getNode('3');
+        const node4 = dashboard.main.root.getNode('4');
+        
+        const node3X = node3.x;
+        const node4X = node4.x;
+        
+        // Expected positions (approximately):
+        // Node 3 should be at ~-22 (collapsed adapter is ~55px wide, so nodes shift left by ~45px)
+        // Node 4 should be at ~148
+        
+        const node3Expected = -22;
+        const node4Expected = 148;
+        const tolerance = 5;
+        
+        const node3OK = Math.abs(node3X - node3Expected) < tolerance;
+        const node4OK = Math.abs(node4X - node4Expected) < tolerance;
+        
+        const message = `
+Node Positions After Collapse:
+  - Node 3 (ODS): x=${node3X.toFixed(1)} (expected ~${node3Expected}) ${node3OK ? '✅' : '❌'}
+  - Node 4 (DWH): x=${node4X.toFixed(1)} (expected ~${node4Expected}) ${node4OK ? '✅' : '❌'}
+  
+Adapter (first child) collapsed successfully from ~110px to ~55px wide.
+${node3OK && node4OK ? 'Siblings repositioned correctly! ✅' : 'Siblings did NOT reposition correctly ❌'}
+        `;
+        
+        showResult(
+          node3OK && node4OK ? 'Test Passed ✅' : 'Test Failed ❌',
+          node3OK && node4OK ? 'pass' : 'fail',
+          message
+        );
+      }, 100);
+    };
+
+    window.testExpand = function() {
+      const adapter = dashboard.main.root.getNode('2');
+      if (!adapter) {
+        showResult('Test Failed', 'fail', 'Could not find adapter node with id "2"');
+        return;
+      }
+      
+      // Expand the first child (adapter)
+      adapter.collapsed = false;
+      
+      // Wait for DOM to update, then check positions
+      setTimeout(() => {
+        const node3 = dashboard.main.root.getNode('3');
+        const node4 = dashboard.main.root.getNode('4');
+        
+        const node3X = node3.x;
+        const node4X = node4.x;
+        
+        // Expected positions (approximately):
+        // Node 3 should be back at ~23
+        // Node 4 should be back at ~193
+        
+        const node3Expected = 23;
+        const node4Expected = 193;
+        const tolerance = 5;
+        
+        const node3OK = Math.abs(node3X - node3Expected) < tolerance;
+        const node4OK = Math.abs(node4X - node4Expected) < tolerance;
+        
+        const message = `
+Node Positions After Expand:
+  - Node 3 (ODS): x=${node3X.toFixed(1)} (expected ~${node3Expected}) ${node3OK ? '✅' : '❌'}
+  - Node 4 (DWH): x=${node4X.toFixed(1)} (expected ~${node4Expected}) ${node4OK ? '✅' : '❌'}
+  
+Adapter (first child) expanded successfully back to ~110px wide.
+${node3OK && node4OK ? 'Siblings repositioned correctly! ✅' : 'Siblings did NOT reposition correctly ❌'}
+        `;
+        
+        showResult(
+          node3OK && node4OK ? 'Test Passed ✅' : 'Test Failed ❌',
+          node3OK && node4OK ? 'pass' : 'fail',
+          message
+        );
+      }, 100);
+    };
+
+    window.reload = async function() {
+      document.getElementById('results').innerHTML = '';
+      dashboard = null;
+      document.getElementById('graph-container').innerHTML = '';
+      await init();
+    };
+
+    window.compareSVG = function() {
+      const svg = document.querySelector('#graph-container svg');
+      if (!svg) {
+        showResult('No SVG found', 'fail', 'Dashboard not rendered yet');
+        return;
+      }
+      
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      
+      // Extract just the dashboard group for comparison
+      const dashboardMatch = svgString.match(/<g class="dashboard"[^>]*>[\s\S]*?<\/g>/);
+      const dashboardSVG = dashboardMatch ? dashboardMatch[0] : 'Not found';
+      
+      showResult('Current SVG Output', 'pass', dashboardSVG);
+    };
+
+    function showResult(title, type, content) {
+      const resultsDiv = document.getElementById('results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `test-result ${type}`;
+      resultDiv.innerHTML = `
+        <h3>${title}</h3>
+        ${content ? `<pre>${content}</pre>` : ''}
+      `;
+      resultsDiv.appendChild(resultDiv);
+    }
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

@@ -316,6 +316,11 @@ export default class BaseContainerNode extends BaseNode {
           parentZone._prerenderMode = false;
         }
         
+        // Also disable the ZoneManager's prerender mode
+        if (this.parentNode.zoneManager) {
+          this.parentNode.zoneManager._prerenderMode = false;
+        }
+        
         this.parentNode._updating = true;
         try {
           this.parentNode.updateChildren();
@@ -426,6 +431,11 @@ export default class BaseContainerNode extends BaseNode {
       // Temporarily disable pre-render mode so parent can recalculate layout
       if (parentZone) {
         parentZone._prerenderMode = false;
+      }
+      
+      // Also disable the ZoneManager's prerender mode
+      if (this.parentNode.zoneManager) {
+        this.parentNode.zoneManager._prerenderMode = false;
       }
       
       this.parentNode.update();
