@@ -31,7 +31,15 @@ export default class BaseEdge {
     this.settings.curved ??= false;
     this.settings.curveMargin ??= this.settings.curved ? 0.1 : 0;
 
-    this.id ??= `${this.source.id}--${this.data.type}--${this.target.id}`;
+    // Use provided id from edgeData if available
+    // Generate fallback id only if no id was provided
+    // Note: this.source and this.target are available via getters
+    if (this.data.id) {
+      this.id = this.data.id;
+    } else {
+      // Fallback: generate ID from source--type--target
+      this.id = `${this.source.id}--${this.data.type}--${this.target.id}`;
+    }
   }
 
   get label() {

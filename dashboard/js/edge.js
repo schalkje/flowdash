@@ -122,6 +122,11 @@ export  function createEdges(rootNode, edges, settings, nodeMap = null) {
       type: edgeData.type || 'unknown',
       isActive: edgeData.isActive !== false
     };
+    
+    // Preserve the id field if it exists
+    if (edgeData.id) {
+      normalized.id = edgeData.id;
+    }
         
     return normalized;
   }).filter(edge => edge !== null);

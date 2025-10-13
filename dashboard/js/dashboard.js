@@ -2148,7 +2148,7 @@ function extractEdgePaths(edges) {
   const pathMap = new Map();
 
   // Build map of edge paths from DOM
-  // Edge structure: <g class="edge type" id="source--type--target"><path class="path" d="..."/></g>
+  // Edge structure: <g class="edge type" id="edge-id"><path class="path" d="..."/></g>
   edgeGroups.forEach(group => {
     const id = group.getAttribute('id');
     const pathElement = group.querySelector('path.path');
@@ -2158,6 +2158,9 @@ function extractEdgePaths(edges) {
       pathMap.set(id, path);
     }
   });
+
+  console.log(`🎨 Found ${pathMap.size} edge paths in DOM`);
+  console.log(`🎨 Edge IDs in DOM:`, Array.from(pathMap.keys()));
 
   // Enhance edges with path data
   edges.forEach(edge => {
@@ -2170,9 +2173,27 @@ function extractEdgePaths(edges) {
       }
     }
     
-    // Try to find path by id or construct id from source-type-target
-    const edgeId = edge.id || `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
-    const path = pathMap.get(edgeId);
+    // Try to find path using the edge's ID
+    // If edge has an explicit id field, use that
+    // Otherwise, try the fallback generated format: source--type--target
+    let path = null;
+    
+    if (edge.id) {
+      // Try explicit ID first
+      path = pathMap.get(edge.id);
+      if (!path) {
+        console.warn(`🎨 No path found for edge ID: ${edge.id}`);
+      }
+    }
+    
+    if (!path) {
+      // Try fallback format
+      const fallbackId = `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
+      path = pathMap.get(fallbackId);
+      if (!path) {
+        console.warn(`🎨 No path found for edge fallback ID: ${fallbackId}`);
+      }
+    }
 
     // Add prerender data if path was found
     if (path) {
@@ -2184,7 +2205,8 @@ function extractEdgePaths(edges) {
     enhancedEdges.push(enhanced);
   });
 
-  console.log(`🎨 Extracted paths for ${pathMap.size} edges (${edges.length} total)`);
+  const foundPaths = enhancedEdges.filter(e => e.prerender).length;
+  console.log(`🎨 Extracted paths for ${foundPaths} of ${edges.length} edges`);
   
   return enhancedEdges;
 }
