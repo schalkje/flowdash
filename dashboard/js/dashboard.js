@@ -1429,9 +1429,13 @@ export class Dashboard {
   }
   this.renderSelectionBoundingBox(bbox);
   
-  // Call additional click callback if registered
+  // Call additional click callback if registered - PASS NODE AS PARAMETER
   if (this.onNodeClick && typeof this.onNodeClick === 'function') {
-    this.onNodeClick(node);
+    try {
+      this.onNodeClick(node);
+    } catch (e) {
+      console.error('Error in node click callback:', e);
+    }
   }
   }
 
@@ -1441,7 +1445,7 @@ export class Dashboard {
 
   /**
    * Register a callback function to be called after normal node selection
-   * @param {Function} callback - Function to call with the selected node as parameter
+   * @param {Function} callback - Function to call with the selected node as parameter: callback(node)
    */
   setNodeClickCallback(callback) {
     if (typeof callback === 'function') {
@@ -1987,20 +1991,31 @@ export async function generatePrerenderData(dashboardData, containerSelector = '
       settings: tempSettings
     };
 
-    // Initialize dashboard
+    // Initialize dashboard - MUST AWAIT THIS!
+    console.log('🎨 Initializing dashboard...');
     const dashboard = new Dashboard(tempData);
-    dashboard.initialize(containerSelector);
-
-    // Wait for layout stabilization
+    await dashboard.initialize(containerSelector);
+    
+    console.log('🎨 Dashboard initialized, waiting for layout stabilization...');
+    
+    // Wait for layout stabilization (simulation to settle)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    console.log('🎨 Extracting node positions...');
+    // Verify root node exists
+    if (!dashboard.main?.root) {
+      throw new Error('Dashboard root node not initialized. Dashboard initialization may have failed.');
+    }
+    
+    console.log('🎨 Root node ready, extracting node positions...');
+    console.log('🎨 Root node:', {
+      id: dashboard.main.root.data?.id,
+      label: dashboard.main.root.data?.label,
+      hasChildren: !!dashboard.main.root.childNodes,
+      childCount: dashboard.main.root.childNodes?.length || 0
+    });
     
     // Extract enhanced data
-    const enhancedNodes = extractNodePositionsFromTree(
-      dashboard.main.root, 
-      dashboardData.nodes
-    );
+    const enhancedNodes = extractNodePositionsFromTree(dashboard.main.root);
     
     console.log('🎨 Extracting edge paths...');
     
@@ -2039,14 +2054,37 @@ export async function generatePrerenderData(dashboardData, containerSelector = '
 /**
  * Extract node positions from the rendered tree
  * @param {Object} rootNode - The root node from the dashboard
- * @param {Array} originalNodes - Original node data array
  * @returns {Array} Enhanced nodes with pre-render data
  */
-function extractNodePositionsFromTree(rootNode, originalNodes) {
-  if (!rootNode || !originalNodes) return originalNodes || [];
+function extractNodePositionsFromTree(rootNode) {
+  if (!rootNode) {
+    console.warn('🎨 Missing rootNode');
+    return [];
+  }
 
-  function processNode(renderNode, nodeData) {
-    if (!renderNode || !nodeData) return nodeData;
+  console.log('🎨 Starting node position extraction...');
+  
+  // Get all rendered nodes in a flat list
+  const allRenderedNodes = rootNode.getAllNodes(true, true); // includeRoot=true, includeCollapsed=true
+  console.log(`🎨 Found ${allRenderedNodes.length} rendered nodes`);
+  
+  // Build a map of node ID to rendered node for O(1) lookup
+  const renderedNodeMap = new Map();
+  allRenderedNodes.forEach(renderNode => {
+    if (renderNode.data && renderNode.data.id) {
+      renderedNodeMap.set(renderNode.data.id, renderNode);
+    }
+  });
+  
+  console.log(`🎨 Built map with ${renderedNodeMap.size} nodes`);
+
+  let processedCount = 0;
+  let missingCount = 0;
+
+  function processNode(renderNode) {
+    if (!renderNode || !renderNode.data) return null;
+    
+    const nodeData = renderNode.data;
 
     // Create new object with desired property order
     const enhanced = {};
@@ -2060,19 +2098,36 @@ function extractNodePositionsFromTree(rootNode, originalNodes) {
     }
     
     // 2. Add pre-render data BEFORE children
-    enhanced.prerender = {
-      x: renderNode.x || 0,
-      y: renderNode.y || 0,
-      width: renderNode.data.width || 0,
-      height: renderNode.data.height || 0
-    };
-    
-    // Include calculated minimum size if available (for containers with headers)
-    if (renderNode.minimumSize) {
-      enhanced.prerender.minimumSize = {
-        width: renderNode.minimumSize.width || 0,
-        height: renderNode.minimumSize.height || 0
+    if (typeof renderNode.x === 'number' && typeof renderNode.y === 'number') {
+      enhanced.prerender = {
+        x: renderNode.x || 0,
+        y: renderNode.y || 0,
+        width: renderNode.data?.width || nodeData.width || 0,
+        height: renderNode.data?.height || nodeData.height || 0
       };
+      
+      // Include calculated minimum size if available (for containers with headers)
+      if (renderNode.minimumSize) {
+        enhanced.prerender.minimumSize = {
+          width: renderNode.minimumSize.width || 0,
+          height: renderNode.minimumSize.height || 0
+        };
+      }
+      
+      processedCount++;
+      if (processedCount % 50 === 0) {
+        console.log(`🎨 Processed ${processedCount} nodes...`);
+      }
+    } else {
+      missingCount++;
+      if (missingCount <= 5) {
+        console.warn('🎨 Node missing position data:', {
+          id: nodeData.id,
+          label: nodeData.label,
+          type: nodeData.type
+        });
+      }
+      enhanced.prerender = null;
     }
 
     // 3. Clean up and add layout (only if it has non-default values)
@@ -2103,33 +2158,21 @@ function extractNodePositionsFromTree(rootNode, originalNodes) {
     }
 
     // 4. Recursively process children (at the end)
-    if (nodeData.children && Array.isArray(nodeData.children) && renderNode.childNodes) {
-      enhanced.children = nodeData.children.map((childData, index) => {
-        const childRenderNode = renderNode.childNodes[index];
-        return childRenderNode ? processNode(childRenderNode, childData) : childData;
-      });
+    if (renderNode.childNodes && renderNode.childNodes.length > 0) {
+      enhanced.children = renderNode.childNodes.map(childRenderNode => processNode(childRenderNode));
     }
 
     return enhanced;
   }
 
-  // Process top-level nodes
-  const enhancedNodes = [];
-  
-  if (originalNodes.length === 1 && rootNode) {
-    // Single root node case
-    enhancedNodes.push(processNode(rootNode, originalNodes[0]));
-  } else if (rootNode && rootNode.childNodes) {
-    // Multiple top-level nodes
-    originalNodes.forEach((nodeData, index) => {
-      const childNode = rootNode.childNodes[index];
-      enhancedNodes.push(childNode ? processNode(childNode, nodeData) : nodeData);
-    });
-  } else {
-    // Fallback: return original nodes
-    return originalNodes;
-  }
+  // Process from root node
+  const enhancedNodes = [processNode(rootNode)];
 
+  console.log(`✅ Position extraction complete. Processed ${processedCount} nodes with position data.`);
+  if (missingCount > 0) {
+    console.warn(`⚠️ ${missingCount} nodes were missing render data`);
+  }
+  
   return enhancedNodes;
 }
 
