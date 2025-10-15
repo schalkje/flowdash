@@ -14,7 +14,7 @@ export class Dashboard {
   constructor(dashboardData) {
     this._isInitialized = false;
     this._data = null;
-    Object.defineProperty(this, 'data', {
+    Object.defineProperty(this, "data", {
       get: () => this._data,
       set: (value) => {
         if (!this._isInitialized) {
@@ -23,15 +23,15 @@ export class Dashboard {
         }
         this.setData(value);
       },
-      configurable: true
+      configurable: true,
     });
     this.data = dashboardData;
 
     this.data.settings = ConfigManager.mergeWithDefaults(this.data.settings);
-    
+
     // Pre-render state tracking
     this._suspendStatusChanges = false;
-    
+
     // Performance tracking
     this.performanceMetrics = {
       phases: {
@@ -41,21 +41,21 @@ export class Dashboard {
         edgeCreation: 0,
         layoutStabilization: 0,
         zoomSetup: 0,
-        total: 0
+        total: 0,
       },
       nodeStats: {
         totalNodes: 0,
         containerNodes: 0,
         leafNodes: 0,
-        maxDepth: 0
+        maxDepth: 0,
       },
       domStats: {
         appendOperations: 0,
         layoutRecalculations: 0,
-        boundingBoxQueries: 0
-      }
+        boundingBoxQueries: 0,
+      },
     };
-    
+
     this.main = {
       svg: null,
       width: 0,
@@ -90,6 +90,10 @@ export class Dashboard {
     this._displayChangeCount = 0;
     this._suspendDisplayChange = false;
     this.zoomManager = new ZoomManager(this);
+
+    // Click delay timer to differentiate single click from double click
+    this._clickDelayTimer = null;
+    this._clickDelayMs = 250; // Delay before executing single click handler
   }
 
   // --- Pre-Render Methods ---
@@ -111,7 +115,7 @@ export class Dashboard {
    */
   hasNodePrerenderData(nodes) {
     if (!Array.isArray(nodes)) return false;
-    
+
     for (const node of nodes) {
       if (node.prerender) return true;
       if (node.children && this.hasNodePrerenderData(node.children)) {
@@ -126,28 +130,28 @@ export class Dashboard {
    * @param {Object} root - Root node
    */
   applyDeferredStatusRules(root) {
-    console.log('📊 Pre-render: Applying deferred status rules');
-    
+    console.log("📊 Pre-render: Applying deferred status rules");
+
     // Re-enable status change handlers
     this._suspendStatusChanges = false;
-    
+
     // Re-enable display change callbacks
     this._suspendDisplayChange = false;
-    
+
     // Determine container statuses based on children
     if (this.data.settings.cascadeOnStatusChange) {
       this.initializeChildrenStatusses(root);
     }
-    
+
     // Apply collapse rules if enabled
     if (this.data.settings.toggleCollapseOnStatusChange) {
       this.applyAutoCollapse(root);
     }
-    
+
     // Final layout adjustments
     this.onMainDisplayChange();
-    
-    console.log('📊 Pre-render: Status rules applied');
+
+    console.log("📊 Pre-render: Status rules applied");
   }
 
   /**
@@ -156,43 +160,43 @@ export class Dashboard {
    */
   applyAutoCollapse(node) {
     if (!node.isContainer) return;
-    
+
     // Check if this container should auto-collapse based on status
     // This is where status-based collapse logic goes
     // (Implementation depends on existing status rules)
-    
+
     // Recursively process children
     if (node.childNodes) {
-      node.childNodes.forEach(child => this.applyAutoCollapse(child));
+      node.childNodes.forEach((child) => this.applyAutoCollapse(child));
     }
   }
 
   // --- Performance Metrics Methods ---
-  
+
   reportPerformanceMetrics() {
-    console.group('🚀 Dashboard Performance Metrics');
+    console.group("🚀 Dashboard Performance Metrics");
     console.table(this.performanceMetrics.phases);
-    console.group('Node Statistics');
+    console.group("Node Statistics");
     console.table(this.performanceMetrics.nodeStats);
     console.groupEnd();
-    console.group('DOM Statistics');
+    console.group("DOM Statistics");
     console.table(this.performanceMetrics.domStats);
     console.groupEnd();
     console.groupEnd();
-    
+
     // Identify bottlenecks (phases taking > 20% of total time)
     const totalTime = this.performanceMetrics.phases.total;
     const bottlenecks = Object.entries(this.performanceMetrics.phases)
-      .filter(([phase, time]) => phase !== 'total' && (time / totalTime) > 0.2)
-      .map(([phase, time]) => ({ phase, time, percentage: ((time / totalTime) * 100).toFixed(1) + '%' }));
-    
+      .filter(([phase, time]) => phase !== "total" && time / totalTime > 0.2)
+      .map(([phase, time]) => ({ phase, time, percentage: ((time / totalTime) * 100).toFixed(1) + "%" }));
+
     if (bottlenecks.length > 0) {
-      console.warn('⚠️ Performance Bottlenecks (>20% of load time):', bottlenecks);
+      console.warn("⚠️ Performance Bottlenecks (>20% of load time):", bottlenecks);
     }
-    
+
     return this.performanceMetrics;
   }
-  
+
   /**
    * Build a node lookup map for efficient edge creation (Optimization #4)
    * @param {Node} rootNode - The root node to traverse
@@ -200,40 +204,40 @@ export class Dashboard {
    */
   buildNodeMap(rootNode) {
     const map = new Map();
-    
+
     const addNode = (node) => {
       map.set(node.id, node);
       if (node.childNodes && node.childNodes.length > 0) {
         node.childNodes.forEach(addNode);
       }
     };
-    
+
     if (rootNode) {
       addNode(rootNode);
     }
-    
+
     return map;
   }
-  
+
   /**
    * Deferred minimap initialization (Optimization #6)
    * Initialize minimap after initial dashboard load completes
    */
   _deferredMinimapInit() {
     if (this._minimapInitialized) return;
-    
-    console.log('🗺️ Initializing minimap (deferred)...');
+
+    console.log("🗺️ Initializing minimap (deferred)...");
     const t0 = performance.now();
-    
+
     try {
       this.minimap.safeInitialize();
       this._minimapInitialized = true;
       console.log(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
     } catch (e) {
-      console.error('❌ Failed to initialize minimap:', e);
+      console.error("❌ Failed to initialize minimap:", e);
     }
   }
-  
+
   /**
    * Check if minimap is ready for operations (Optimization #6 helper)
    * @returns {boolean} True if minimap is initialized and ready
@@ -241,81 +245,83 @@ export class Dashboard {
   _isMinimapReady() {
     return this._minimapInitialized && this.minimap && this.minimap.active && this.minimap.svg;
   }
-  
+
   collectNodeStatistics() {
     const countNodes = (node, depth = 0) => {
       this.performanceMetrics.nodeStats.totalNodes++;
-      this.performanceMetrics.nodeStats.maxDepth = Math.max(
-        this.performanceMetrics.nodeStats.maxDepth, 
-        depth
-      );
-      
+      this.performanceMetrics.nodeStats.maxDepth = Math.max(this.performanceMetrics.nodeStats.maxDepth, depth);
+
       if (node.childNodes && node.childNodes.length > 0) {
         this.performanceMetrics.nodeStats.containerNodes++;
-        node.childNodes.forEach(child => countNodes(child, depth + 1));
+        node.childNodes.forEach((child) => countNodes(child, depth + 1));
       } else {
         this.performanceMetrics.nodeStats.leafNodes++;
       }
     };
-    
+
     if (this.main.root) {
       countNodes(this.main.root);
     }
   }
 
   // --- Selection bounding box helpers ---
-  
+
   /**
    * Global cleanup method to remove any orphaned zoom-cockpit elements
    * This prevents the duplication issue that can occur after expand/collapse operations
    */
   cleanupOrphanedElements() {
     try {
-      if (typeof document !== 'undefined') {
+      if (typeof document !== "undefined") {
         // Remove any orphaned zoom-cockpit elements that might exist outside the current minimap instance
-        const allCockpits = document.querySelectorAll('.zoom-cockpit');
-        allCockpits.forEach(cockpit => {
+        const allCockpits = document.querySelectorAll(".zoom-cockpit");
+        allCockpits.forEach((cockpit) => {
           // Only remove if it's not the current minimap's cockpit
           if (cockpit !== this.minimap?.cockpit?.node()) {
-            console.warn('Removing orphaned zoom-cockpit element');
+            console.warn("Removing orphaned zoom-cockpit element");
             cockpit.remove();
           }
         });
-        
+
         // Remove empty overlay hosts
-        const emptyOverlayHosts = document.querySelectorAll('.zoom-overlay-host');
-        emptyOverlayHosts.forEach(host => {
+        const emptyOverlayHosts = document.querySelectorAll(".zoom-overlay-host");
+        emptyOverlayHosts.forEach((host) => {
           if (host.children.length === 0) {
             host.remove();
           }
         });
       }
     } catch (e) {
-      console.warn('Error during cleanup of orphaned elements:', e);
+      console.warn("Error during cleanup of orphaned elements:", e);
     }
   }
-  
+
   renderSelectionBoundingBox(bbox) {
     try {
       // Respect settings: if disabled, just clear and return
-      if (!this.data?.settings?.showBoundingBox) { this.clearSelectionBoundingBox(); return; }
-      this.main.container.selectAll('.boundingBox').remove();
+      if (!this.data?.settings?.showBoundingBox) {
+        this.clearSelectionBoundingBox();
+        return;
+      }
+      this.main.container.selectAll(".boundingBox").remove();
       this.main.container
-        .append('rect')
-        .attr('class', 'boundingBox')
-        .attr('x', bbox.x)
-        .attr('y', bbox.y)
-        .attr('width', bbox.width)
-        .attr('height', bbox.height)
-        .attr('fill', 'none')
-        .attr('stroke', 'var(--fd-border, rgba(0,0,0,0.85))')
-        .attr('stroke-width', 2)
-        .attr('pointer-events', 'none');
+        .append("rect")
+        .attr("class", "boundingBox")
+        .attr("x", bbox.x)
+        .attr("y", bbox.y)
+        .attr("width", bbox.width)
+        .attr("height", bbox.height)
+        .attr("fill", "none")
+        .attr("stroke", "var(--fd-border, rgba(0,0,0,0.85))")
+        .attr("stroke-width", 2)
+        .attr("pointer-events", "none");
     } catch {}
   }
 
   clearSelectionBoundingBox() {
-    try { this.main.container.selectAll('.boundingBox').remove(); } catch {}
+    try {
+      this.main.container.selectAll(".boundingBox").remove();
+    } catch {}
   }
 
   // Compute a DOM-accurate bounding box for a single node and enforce a minimum
@@ -356,42 +362,46 @@ export class Dashboard {
     return { x: -this.main.width / 2, y: -this.main.height / 2, width: this.main.width, height: this.main.height };
   }
 
-  
-
-  recomputeBaselineFit() { return this.zoomManager.recomputeBaselineFit(); }
+  recomputeBaselineFit() {
+    return this.zoomManager.recomputeBaselineFit();
+  }
 
   async setData(newDashboardData) {
     this._initialLoading = true;
-    try { this.showLoading(); } catch {}
+    try {
+      this.showLoading();
+    } catch {}
 
     // Yield to allow the browser to paint the loading overlay
     await this._yieldToMain();
-    
+
     await this._setDataContinue(newDashboardData);
   }
 
   async _setDataContinue(newDashboardData) {
-    const userSettings = (newDashboardData && newDashboardData.settings) ? newDashboardData.settings : {};
+    const userSettings = newDashboardData && newDashboardData.settings ? newDashboardData.settings : {};
     this._data = newDashboardData || {};
     this._data.settings = ConfigManager.mergeWithDefaults(userSettings);
     try {
-      const fallbackRatio = (this.main && this.main.divRatio) ? this.main.divRatio : (16 / 9);
+      const fallbackRatio = this.main && this.main.divRatio ? this.main.divRatio : 16 / 9;
       if (!this._data.settings.divRatio || !(this._data.settings.divRatio > 0)) {
         this._data.settings.divRatio = fallbackRatio;
       }
     } catch {}
 
     if (this.main?.svg) {
-      this.main.svg.selectAll('*').remove();
+      this.main.svg.selectAll("*").remove();
     }
 
     this.main.container = this.createContainer(this.main, "dashboard");
     await this.createDashboard(this.data, this.main.container);
     this.main.root = this._dashboardRoot;
 
-  this.main.root.onClick = (node) => this.selectNode(node);
-  this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
-    this.main.root.onDisplayChange = () => { this.onMainDisplayChange(); };
+    this.main.root.onClick = (node) => this.selectNode(node);
+    this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+    this.main.root.onDisplayChange = () => {
+      this.onMainDisplayChange();
+    };
 
     if (this.main.zoom) {
       this.main.svg.call(this.main.zoom);
@@ -402,11 +412,11 @@ export class Dashboard {
     // OPTIMIZATION #6: Defer minimap initialization during setData
     // Clean up any orphaned elements first, but keep minimap working for data updates
     this.cleanupOrphanedElements();
-    
+
     // For setData (data updates), we should reinitialize the minimap
     // but do it deferred to avoid blocking
     if (this.minimap) {
-      try { 
+      try {
         // Mark as needing reinitialization
         this._minimapInitialized = false;
         // Defer minimap reinitialization slightly
@@ -416,7 +426,7 @@ export class Dashboard {
           }
         }, 50);
       } catch (e) {
-        console.warn('Failed to schedule minimap reinit:', e);
+        console.warn("Failed to schedule minimap reinit:", e);
       }
     }
 
@@ -430,7 +440,7 @@ export class Dashboard {
    * Uses setTimeout with 0 delay to create a new task
    */
   _yieldToMain() {
-    return new Promise(resolve => setTimeout(resolve, 0));
+    return new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   /**
@@ -441,25 +451,25 @@ export class Dashboard {
     // Get total node count BEFORE calling init
     const allNodesData = this._collectNodeDataRecursive(this.data.nodes);
     const totalNodes = allNodesData.length;
-    
+
     // Update stage message to include node count
     this.setLoadingStage(`Initializing ${totalNodes} nodes`);
     await this._yieldToMain();
-    
+
     // Store dashboard reference for any internal tracking
     rootNode.__dashboard = this;
-    
+
     // Call init - this runs synchronously
     rootNode.init();
   }
-  
+
   /**
    * Recursively collect all node data to count total nodes
    */
   _collectNodeDataRecursive(nodes) {
     let result = [];
     if (!Array.isArray(nodes)) return result;
-    
+
     for (const node of nodes) {
       result.push(node);
       if (node.children) {
@@ -469,29 +479,29 @@ export class Dashboard {
     return result;
   }
 
-   async initialize(mainDivSelector) {
+  async initialize(mainDivSelector) {
     const t0 = performance.now();
-    
+
     this.mainDivSelector = mainDivSelector;
-    
-    try { 
-      if (typeof window !== 'undefined' && window.showFlowDashLoading) {
+
+    try {
+      if (typeof window !== "undefined" && window.showFlowDashLoading) {
         window.showFlowDashLoading();
       } else {
         this.showLoading();
       }
     } catch {}
-    
+
     // Yield to allow the browser to paint the loading overlay
     await this._yieldToMain();
-    
+
     await this._initializeContinue(mainDivSelector, t0);
   }
 
   async _initializeContinue(mainDivSelector, t0) {
-    this.setLoadingStage('Initializing SVG');
+    this.setLoadingStage("Initializing SVG");
     await this._yieldToMain();
-    
+
     const div = this.initializeSvg(mainDivSelector);
     this.main.svg = div.svg;
     this.main.width = div.width;
@@ -505,24 +515,24 @@ export class Dashboard {
     this._initialLoading = true;
 
     this.main.container = this.createContainer(this.main, "dashboard");
-    
+
     const tempDisplayChangeCallback = () => {
       this.onMainDisplayChange();
     };
-    
+
     // Check for pre-render data
     const hasPrerenderData = this.hasPrerenderData();
 
     if (hasPrerenderData) {
-      console.log('📊 Pre-render data detected - using fast-path initialization');
-      
+      console.log("📊 Pre-render data detected - using fast-path initialization");
+
       // Suspend display change callbacks during initial render
       this._suspendDisplayChange = true;
-      
+
       // Suspend status change handlers
       this._suspendStatusChanges = true;
     }
-    
+
     // Phase 1: Node Creation (includes node tree, initialization, edges)
     // Note: setLoadingStage is called inside createDashboard for each sub-phase
     const t1 = performance.now();
@@ -532,20 +542,20 @@ export class Dashboard {
 
     // If using pre-render, apply status rules in second pass
     if (hasPrerenderData && this.main.root) {
-      console.log('📊 Pre-render: Scheduling deferred status application');
-      
-      this.setLoadingStage('Applying status rules');
+      console.log("📊 Pre-render: Scheduling deferred status application");
+
+      this.setLoadingStage("Applying status rules");
       await this._yieldToMain();
-      
+
       // Schedule status application after initial render
       requestAnimationFrame(() => {
         this.applyDeferredStatusRules(this.main.root);
       });
     }
 
-    this.setLoadingStage('Setting up zoom');
+    this.setLoadingStage("Setting up zoom");
     await this._yieldToMain();
-    
+
     // Phase 4: Zoom Setup
     const t4 = performance.now();
     this.main.zoom = this.initializeZoom();
@@ -557,47 +567,47 @@ export class Dashboard {
     this.cleanupOrphanedElements();
     // Mark minimap as pending initialization
     this._minimapInitialized = false;
-    
+
     this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
-    this.setLoadingStage('Finalizing');
+    this.setLoadingStage("Finalizing");
     await this._yieldToMain();
-    
+
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
-    
+
     this.initializeFullscreenToggle();
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       this._onWindowResize = () => {
-        if (this.main.svg.classed('flowdash-fullscreen')) return;
+        if (this.main.svg.classed("flowdash-fullscreen")) return;
         // Avoid early resizes during initial layout stabilization which can shift the view
         if ((this._displayChangeCount || 0) < 2) return;
         this.applyResizePreserveZoom();
       };
-      window.addEventListener('resize', this._onWindowResize);
+      window.addEventListener("resize", this._onWindowResize);
     }
-    
+
     // Total time
     this.performanceMetrics.phases.total = performance.now() - t0;
-    
+
     // Collect node statistics
     this.collectNodeStatistics();
-    
+
     // Report metrics
     this.reportPerformanceMetrics();
-    
+
     this._isInitialized = true;
-    
+
     // Ensure loading popup is hidden after initialization completes
     // This serves as a fallback if onMainDisplayChange doesn't trigger
     // Use setTimeout to ensure all synchronous operations complete first
     setTimeout(() => {
       if (this._initialLoading) {
-        console.log('📊 Dashboard.initialize() - Fallback hideLoading() called');
+        console.log("📊 Dashboard.initialize() - Fallback hideLoading() called");
         this._initialLoading = false;
         this.hideLoading();
       }
-      
+
       // OPTIMIZATION #6: Initialize minimap AFTER initial load completes
       // This prevents minimap initialization from blocking the main rendering
       if (!this._minimapInitialized) {
@@ -606,8 +616,6 @@ export class Dashboard {
     }, 0);
   }
 
-
-
   initializeEmbeddedMinimap() {
     const mm = this.data.settings.minimap;
     if (!mm || mm.enabled === false) {
@@ -615,168 +623,259 @@ export class Dashboard {
       return;
     }
 
-    const isSmallScreen = typeof window !== 'undefined' && (window.innerWidth || 0) < 600;
-    let mode = this.data.settings.minimap.mode || (isSmallScreen ? 'disabled' : 'hover');
-    if (mode === 'hidden') mode = 'disabled';
+    const isSmallScreen = typeof window !== "undefined" && (window.innerWidth || 0) < 600;
+    let mode = this.data.settings.minimap.mode || (isSmallScreen ? "disabled" : "hover");
+    if (mode === "hidden") mode = "disabled";
     this.data.settings.minimap.mode = mode;
 
-    if (mode === 'disabled') {
+    if (mode === "disabled") {
       this.data.settings.minimap.enabled = false;
       return;
     }
 
-    if (mm.persistence && mm.persistence.persistCollapsedState && typeof window !== 'undefined') {
+    if (mm.persistence && mm.persistence.persistCollapsedState && typeof window !== "undefined") {
       try {
         const persisted = window.localStorage.getItem(mm.persistence.storageKey);
         if (persisted !== null) {
-          this.data.settings.minimap.collapsed = persisted === 'true';
+          this.data.settings.minimap.collapsed = persisted === "true";
         }
       } catch {}
     }
-    if (mode === 'always') {
+    if (mode === "always") {
       this.data.settings.minimap.enabled = true;
       this.data.settings.minimap.collapsed = false;
       this.data.settings.minimap.pinned = true;
     }
-    if (mode === 'hover' && typeof this.data.settings.minimap.collapsed === 'undefined') {
+    if (mode === "hover" && typeof this.data.settings.minimap.collapsed === "undefined") {
       this.data.settings.minimap.collapsed = true;
     }
 
     const graphContainer = this.main.svg.node().parentElement;
     try {
-      graphContainer.style.position = graphContainer.style.position || 'relative';
-      graphContainer.style.overflow = 'hidden';
+      graphContainer.style.position = graphContainer.style.position || "relative";
+      graphContainer.style.overflow = "hidden";
     } catch {}
-    const cockpitDiv = d3.select(graphContainer)
-      .append('div')
-      .attr('class', 'zoom-cockpit');
+    const cockpitDiv = d3.select(graphContainer).append("div").attr("class", "zoom-cockpit");
     this.minimap.cockpit = cockpitDiv;
     this.minimap.overlay = cockpitDiv;
-    const cockpitSvg = cockpitDiv.append('svg')
-      .attr('class', 'minimap-chrome')
-      .style('position', 'absolute')
-      .style('top', '0')
-      .style('left', '0')
-      .style('width', '100%')
-      .style('height', '100%')
-      .style('pointer-events', 'all');
+    const cockpitSvg = cockpitDiv
+      .append("svg")
+      .attr("class", "minimap-chrome")
+      .style("position", "absolute")
+      .style("top", "0")
+      .style("left", "0")
+      .style("width", "100%")
+      .style("height", "100%")
+      .style("pointer-events", "all");
     this.minimap.chromeSvg = cockpitSvg;
-    this.minimap.content = cockpitSvg.append('g').attr('class', 'minimap-content');
+    this.minimap.content = cockpitSvg.append("g").attr("class", "minimap-content");
     this.minimap.active = true;
     this.minimap.state = { showTimer: null, hideTimer: null, interacting: false, wheelTimer: null };
 
-    this.minimap.collapsedIcon = this.minimap.content.append('g')
-      .attr('class', 'minimap-collapsed-icon')
-      .style('cursor', 'pointer')
-      .style('pointer-events', 'all');
-    this.minimap.collapsedIcon.append('rect').attr('class', 'collapsed-icon-bg').attr('width', 20).attr('height', 14).attr('rx', 2).attr('ry', 2);
-    this.minimap.collapsedIcon.append('rect').attr('class', 'collapsed-icon-mini').attr('x', 4).attr('y', 3).attr('width', 12).attr('height', 8);
-    this.minimap.collapsedIcon.on('click', () => {
+    this.minimap.collapsedIcon = this.minimap.content
+      .append("g")
+      .attr("class", "minimap-collapsed-icon")
+      .style("cursor", "pointer")
+      .style("pointer-events", "all");
+    this.minimap.collapsedIcon
+      .append("rect")
+      .attr("class", "collapsed-icon-bg")
+      .attr("width", 20)
+      .attr("height", 14)
+      .attr("rx", 2)
+      .attr("ry", 2);
+    this.minimap.collapsedIcon
+      .append("rect")
+      .attr("class", "collapsed-icon-mini")
+      .attr("x", 4)
+      .attr("y", 3)
+      .attr("width", 12)
+      .attr("height", 8);
+    this.minimap.collapsedIcon.on("click", () => {
       this.setMinimapCollapsed(false, true);
     });
 
-    this.minimap.header = this.minimap.content.append('g').attr('class', 'minimap-header');
+    this.minimap.header = this.minimap.content.append("g").attr("class", "minimap-header");
     this.minimap.headerHeight = 20;
 
-    this.minimap.collapseButton = this.minimap.header.append('g').attr('class', 'minimap-collapse-button').style('cursor', 'pointer');
-    this.minimap.collapseButton.append('rect').attr('class', 'collapse-btn-bg').attr('width', 16).attr('height', 16).attr('rx', 3).attr('ry', 3);
-    this.minimap.collapseButton.append('path').attr('class', 'collapse-btn-icon').attr('d', 'M2,6 L14,6 L8,12 Z');
-    this.minimap.collapseButton.on('click', () => {
+    this.minimap.collapseButton = this.minimap.header
+      .append("g")
+      .attr("class", "minimap-collapse-button")
+      .style("cursor", "pointer");
+    this.minimap.collapseButton
+      .append("rect")
+      .attr("class", "collapse-btn-bg")
+      .attr("width", 16)
+      .attr("height", 16)
+      .attr("rx", 3)
+      .attr("ry", 3);
+    this.minimap.collapseButton.append("path").attr("class", "collapse-btn-icon").attr("d", "M2,6 L14,6 L8,12 Z");
+    this.minimap.collapseButton.on("click", () => {
       this.setMinimapCollapsed(true, true);
     });
 
-    this.minimap.pinButton = this.minimap.header.append('g').attr('class', 'minimap-pin-button').style('cursor', 'pointer')
-      .attr('role', 'button')
-      .attr('aria-label', 'Pin')
-      .attr('aria-pressed', String(!!mm.pinned));
-    this.minimap.sizeButton = this.minimap.header.append('g').attr('class', 'minimap-size-button').style('cursor', 'pointer');
-    this.minimap.sizeButton.append('rect').attr('class', 'btn-bg').attr('width', 20).attr('height', 16).attr('rx', 3).attr('ry', 3);
-    this.minimap.sizeLabel = this.minimap.sizeButton.append('text').attr('class', 'btn-label').attr('x', 10).attr('y', 10).attr('text-anchor', 'middle').style('dominant-baseline', 'middle').style('font-size', '10px');
+    this.minimap.pinButton = this.minimap.header
+      .append("g")
+      .attr("class", "minimap-pin-button")
+      .style("cursor", "pointer")
+      .attr("role", "button")
+      .attr("aria-label", "Pin")
+      .attr("aria-pressed", String(!!mm.pinned));
+    this.minimap.sizeButton = this.minimap.header
+      .append("g")
+      .attr("class", "minimap-size-button")
+      .style("cursor", "pointer");
+    this.minimap.sizeButton
+      .append("rect")
+      .attr("class", "btn-bg")
+      .attr("width", 20)
+      .attr("height", 16)
+      .attr("rx", 3)
+      .attr("ry", 3);
+    this.minimap.sizeLabel = this.minimap.sizeButton
+      .append("text")
+      .attr("class", "btn-label")
+      .attr("x", 10)
+      .attr("y", 10)
+      .attr("text-anchor", "middle")
+      .style("dominant-baseline", "middle")
+      .style("font-size", "10px");
     const updateSizeLabel = () => {
       const token = this.data.settings.minimap.size;
-      const label = (typeof token === 'object' ? (token.label || 'M') : String(token || 'm').toUpperCase());
+      const label = typeof token === "object" ? token.label || "M" : String(token || "m").toUpperCase();
       this.minimap.sizeLabel.text(label);
     };
     updateSizeLabel();
-    this.minimap.sizeButton.on('click', () => {
-      const order = (this.data.settings.minimap.sizeSwitcher && this.data.settings.minimap.sizeSwitcher.order) || ['s','m','l'];
+    this.minimap.sizeButton.on("click", () => {
+      const order = (this.data.settings.minimap.sizeSwitcher && this.data.settings.minimap.sizeSwitcher.order) || [
+        "s",
+        "m",
+        "l",
+      ];
       const current = this.data.settings.minimap.size;
-      const idx = order.indexOf(typeof current === 'object' ? current.token : current) >= 0 ? order.indexOf(typeof current === 'object' ? current.token : current) : order.indexOf('m');
+      const idx =
+        order.indexOf(typeof current === "object" ? current.token : current) >= 0
+          ? order.indexOf(typeof current === "object" ? current.token : current)
+          : order.indexOf("m");
       const nextToken = order[(idx + 1) % order.length];
       this.data.settings.minimap.size = nextToken;
       this.resizeMinimap();
       this.minimap.position();
       updateSizeLabel();
-      if (typeof this.data.settings.minimap.onSizeChange === 'function') {
-        try { 
-          this.data.settings.minimap.onSizeChange({ 
-            size: nextToken, 
-            width: this.minimap.targetWidthPx, 
-            height: this.minimap.targetHeightPx 
-          }); 
+      if (typeof this.data.settings.minimap.onSizeChange === "function") {
+        try {
+          this.data.settings.minimap.onSizeChange({
+            size: nextToken,
+            width: this.minimap.targetWidthPx,
+            height: this.minimap.targetHeightPx,
+          });
         } catch {}
       }
     });
-    this.minimap.pinButton.selectAll('*').remove();
-    const iconGroup = this.minimap.pinButton.append('g').attr('class', 'pin-icon');
-    const pinBasePath = 'M8 2 C9.2 2 10 2.8 10 4 L10 6 L12.5 8 L9 8 L9 12 L7 12 L7 8 L3.5 8 L6 6 L6 4 C6 2.8 6.8 2 8 2 Z';
-    const pinSlashPath = 'M3 13 L13 3';
-    this.minimap.pinBase = iconGroup.append('path')
-      .attr('class', 'pin-base')
-      .attr('d', pinBasePath)
-      .attr('fill', 'var(--fd-border, rgba(0,0,0,0.85))');
-    this.minimap.pinSlash = iconGroup.append('path')
-      .attr('class', 'pin-slash')
-      .attr('d', pinSlashPath)
-      .attr('stroke', 'var(--fd-border, rgba(0,0,0,0.85))')
-      .attr('stroke-width', 2)
-      .attr('stroke-linecap', 'round')
-      .style('display', mm.pinned ? 'none' : 'block');
-    iconGroup.attr('transform', mm.pinned ? 'rotate(0,8,8)' : 'rotate(-20,8,8)');
-    this.minimap.pinButton.append('title').text('Pin (toggle pinned / hover)');
-    this.minimap.pinButton.on('click', () => {
+    this.minimap.pinButton.selectAll("*").remove();
+    const iconGroup = this.minimap.pinButton.append("g").attr("class", "pin-icon");
+    const pinBasePath =
+      "M8 2 C9.2 2 10 2.8 10 4 L10 6 L12.5 8 L9 8 L9 12 L7 12 L7 8 L3.5 8 L6 6 L6 4 C6 2.8 6.8 2 8 2 Z";
+    const pinSlashPath = "M3 13 L13 3";
+    this.minimap.pinBase = iconGroup
+      .append("path")
+      .attr("class", "pin-base")
+      .attr("d", pinBasePath)
+      .attr("fill", "var(--fd-border, rgba(0,0,0,0.85))");
+    this.minimap.pinSlash = iconGroup
+      .append("path")
+      .attr("class", "pin-slash")
+      .attr("d", pinSlashPath)
+      .attr("stroke", "var(--fd-border, rgba(0,0,0,0.85))")
+      .attr("stroke-width", 2)
+      .attr("stroke-linecap", "round")
+      .style("display", mm.pinned ? "none" : "block");
+    iconGroup.attr("transform", mm.pinned ? "rotate(0,8,8)" : "rotate(-20,8,8)");
+    this.minimap.pinButton.append("title").text("Pin (toggle pinned / hover)");
+    this.minimap.pinButton.on("click", () => {
       mm.pinned = !mm.pinned;
-      this.data.settings.minimap.mode = mm.pinned ? 'always' : 'hover';
-      if (this.minimap.state.showTimer) { clearTimeout(this.minimap.state.showTimer); this.minimap.state.showTimer = null; }
-      if (this.minimap.state.hideTimer) { clearTimeout(this.minimap.state.hideTimer); this.minimap.state.hideTimer = null; }
+      this.data.settings.minimap.mode = mm.pinned ? "always" : "hover";
+      if (this.minimap.state.showTimer) {
+        clearTimeout(this.minimap.state.showTimer);
+        this.minimap.state.showTimer = null;
+      }
+      if (this.minimap.state.hideTimer) {
+        clearTimeout(this.minimap.state.hideTimer);
+        this.minimap.state.hideTimer = null;
+      }
       this.minimap.state.interacting = false;
       this.updatePinVisualState();
       this.minimap.updateHoverBindings();
     });
 
-    this.minimap.svg = this.minimap.content.append('svg').attr('class', 'minimap-svg');
-    this.minimap.container = this.minimap.svg.append('g').attr('class', 'minimap');
+    this.minimap.svg = this.minimap.content.append("svg").attr("class", "minimap-svg");
+    this.minimap.container = this.minimap.svg.append("g").attr("class", "minimap");
 
     this.resizeMinimap();
 
     this.initializeMinimap();
 
-    this.minimap.footer = this.minimap.content.append('g').attr('class', 'minimap-footer');
+    this.minimap.footer = this.minimap.content.append("g").attr("class", "minimap-footer");
     this.minimap.footerHeight = 20;
     if (mm.scaleIndicator?.visible !== false) {
-      this.minimap.scaleText = this.minimap.footer.append('text').attr('class', 'minimap-scale').attr('text-anchor', 'end');
+      this.minimap.scaleText = this.minimap.footer
+        .append("text")
+        .attr("class", "minimap-scale")
+        .attr("text-anchor", "end");
     }
 
     const makeButton = (group, className, onClick) => {
-      const g = group.append('g').attr('class', `minimap-btn ${className}`).style('cursor', 'pointer');
-      g.append('rect').attr('class', 'btn-bg').attr('width', 16).attr('height', 16).attr('rx', 3).attr('ry', 3);
-      g.on('click', (ev) => { ev.stopPropagation(); onClick(); });
+      const g = group.append("g").attr("class", `minimap-btn ${className}`).style("cursor", "pointer");
+      g.append("rect").attr("class", "btn-bg").attr("width", 16).attr("height", 16).attr("rx", 3).attr("ry", 3);
+      g.on("click", (ev) => {
+        ev.stopPropagation();
+        onClick();
+      });
       return g;
     };
-    this.minimap.controls = this.minimap.footer.append('g').attr('class', 'minimap-controls');
-    this.minimap.btnZoomIn = makeButton(this.minimap.controls, 'zoom-in', () => this.zoomIn());
-    this.minimap.btnZoomIn.append('rect').attr('class', 'icon plus-h').attr('x', 3).attr('y', 7).attr('width', 10).attr('height', 2);
-    this.minimap.btnZoomIn.append('rect').attr('class', 'icon plus-v').attr('x', 7).attr('y', 3).attr('width', 2).attr('height', 10);
+    this.minimap.controls = this.minimap.footer.append("g").attr("class", "minimap-controls");
+    this.minimap.btnZoomIn = makeButton(this.minimap.controls, "zoom-in", () => this.zoomIn());
+    this.minimap.btnZoomIn
+      .append("rect")
+      .attr("class", "icon plus-h")
+      .attr("x", 3)
+      .attr("y", 7)
+      .attr("width", 10)
+      .attr("height", 2);
+    this.minimap.btnZoomIn
+      .append("rect")
+      .attr("class", "icon plus-v")
+      .attr("x", 7)
+      .attr("y", 3)
+      .attr("width", 2)
+      .attr("height", 10);
 
-    this.minimap.btnZoomOut = makeButton(this.minimap.controls, 'zoom-out', () => this.zoomOut());
-    this.minimap.btnZoomOut.append('rect').attr('class', 'icon minus').attr('x', 3).attr('y', 7).attr('width', 10).attr('height', 2);
+    this.minimap.btnZoomOut = makeButton(this.minimap.controls, "zoom-out", () => this.zoomOut());
+    this.minimap.btnZoomOut
+      .append("rect")
+      .attr("class", "icon minus")
+      .attr("x", 3)
+      .attr("y", 7)
+      .attr("width", 10)
+      .attr("height", 2);
 
-    this.minimap.btnReset = makeButton(this.minimap.controls, 'reset', () => this.zoomReset());
-    this.minimap.btnReset.append('circle').attr('class', 'icon target-outer').attr('cx', 8).attr('cy', 8).attr('r', 5);
-    this.minimap.btnReset.append('circle').attr('class', 'icon target-inner').attr('cx', 8).attr('cy', 8).attr('r', 1.5);
+    this.minimap.btnReset = makeButton(this.minimap.controls, "reset", () => this.zoomReset());
+    this.minimap.btnReset.append("circle").attr("class", "icon target-outer").attr("cx", 8).attr("cy", 8).attr("r", 5);
+    this.minimap.btnReset
+      .append("circle")
+      .attr("class", "icon target-inner")
+      .attr("cx", 8)
+      .attr("cy", 8)
+      .attr("r", 1.5);
 
-    this.minimap.headerHitRect = this.minimap.header.append('rect').attr('class', 'minimap-header-hit').attr('fill', 'transparent');
-    this.minimap.footerHitRect = this.minimap.footer.append('rect').attr('class', 'minimap-footer-hit').attr('fill', 'transparent');
+    this.minimap.headerHitRect = this.minimap.header
+      .append("rect")
+      .attr("class", "minimap-header-hit")
+      .attr("fill", "transparent");
+    this.minimap.footerHitRect = this.minimap.footer
+      .append("rect")
+      .attr("class", "minimap-footer-hit")
+      .attr("fill", "transparent");
     if (this.minimap.headerHitRect) this.minimap.headerHitRect.lower();
     if (this.minimap.footerHitRect) this.minimap.footerHitRect.lower();
 
@@ -792,44 +891,30 @@ export class Dashboard {
     this.minimap.updatePinVisualState();
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   initializeFullscreenToggle() {
     const graphContainer = this.main.svg.node().parentElement;
-    let host = graphContainer.querySelector('.fullscreen-overlay');
+    let host = graphContainer.querySelector(".fullscreen-overlay");
     if (!host) {
-      host = document.createElement('div');
-      host.className = 'fullscreen-overlay';
-      host.style.position = 'absolute';
-      host.style.right = '12px';
-      host.style.top = '12px';
-      host.style.pointerEvents = 'auto';
+      host = document.createElement("div");
+      host.className = "fullscreen-overlay";
+      host.style.position = "absolute";
+      host.style.right = "12px";
+      host.style.top = "12px";
+      host.style.pointerEvents = "auto";
       graphContainer.appendChild(host);
     }
-    let button = host.querySelector('.fullscreen-toggle');
+    let button = host.querySelector(".fullscreen-toggle");
     if (!button) {
-      button = document.createElement('button');
-      button.className = 'fullscreen-toggle';
-      button.setAttribute('aria-label', 'Toggle fullscreen');
-      button.title = 'Maximize / Restore';
+      button = document.createElement("button");
+      button.className = "fullscreen-toggle";
+      button.setAttribute("aria-label", "Toggle fullscreen");
+      button.title = "Maximize / Restore";
       host.appendChild(button);
     }
 
     const updateIcon = () => {
-      const isFullscreen = this.main.svg.classed('flowdash-fullscreen');
-      button.textContent = isFullscreen ? '⤡' : '⤢';
+      const isFullscreen = this.main.svg.classed("flowdash-fullscreen");
+      button.textContent = isFullscreen ? "⤡" : "⤢";
     };
 
     const applySize = () => {
@@ -853,7 +938,7 @@ export class Dashboard {
       this.main.width = newWidth;
       this.main.height = newHeight;
       this.main.divRatio = newWidth / newHeight;
-      this.main.svg.attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+      this.main.svg.attr("viewBox", [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
 
       const newK = prevK;
       const newWorldWidth = newWidth / newK;
@@ -869,7 +954,7 @@ export class Dashboard {
       }
 
       this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
-      this.main.container.attr('transform', newTransform);
+      this.main.container.attr("transform", newTransform);
       this.main.svg.call(this.main.zoom.transform, newTransform);
 
       this.recomputeBaselineFit();
@@ -882,27 +967,32 @@ export class Dashboard {
     };
 
     const onResize = () => {
-      if (!this.main.svg.classed('flowdash-fullscreen')) return;
+      if (!this.main.svg.classed("flowdash-fullscreen")) return;
       applySize();
     };
 
     const toggle = () => {
-      const isFullscreen = this.main.svg.classed('flowdash-fullscreen');
+      const isFullscreen = this.main.svg.classed("flowdash-fullscreen");
       if (!isFullscreen) {
-        this.main.svg.classed('flowdash-fullscreen', true).classed('fullscreen', true);
-        window.addEventListener('resize', onResize);
+        this.main.svg.classed("flowdash-fullscreen", true).classed("fullscreen", true);
+        window.addEventListener("resize", onResize);
         applySize();
-        button.classList.add('fullscreen-active');
+        button.classList.add("fullscreen-active");
       } else {
-        this.main.svg.classed('flowdash-fullscreen', false).classed('fullscreen', false);
-        window.removeEventListener('resize', onResize);
+        this.main.svg.classed("flowdash-fullscreen", false).classed("fullscreen", false);
+        window.removeEventListener("resize", onResize);
         const rect = this.main.svg.node().getBoundingClientRect();
         this.main.width = rect.width;
         this.main.height = rect.height;
         this.main.divRatio = this.main.width / this.main.height;
-        this.main.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
+        this.main.svg.attr("viewBox", [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
         if (this._isMinimapReady()) {
-          this.minimap.svg.attr('viewBox', [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
+          this.minimap.svg.attr("viewBox", [
+            -this.main.width / 2,
+            -this.main.height / 2,
+            this.main.width,
+            this.main.height,
+          ]);
           this.minimap.update();
           const transform = d3.zoomIdentity
             .translate(this.main.transform.x, this.main.transform.y)
@@ -910,7 +1000,7 @@ export class Dashboard {
           this.minimap.updateViewport(transform);
           this.minimap.position();
         }
-        button.classList.remove('fullscreen-active');
+        button.classList.remove("fullscreen-active");
       }
       updateIcon();
     };
@@ -944,7 +1034,7 @@ export class Dashboard {
     this.main.height = newHeight;
     this.main.divRatio = newWidth / newHeight;
     this.main.aspectRatio = this.main.divRatio;
-    this.main.svg.attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+    this.main.svg.attr("viewBox", [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
 
     const newK = prevK;
     const newWorldWidth = newWidth / newK;
@@ -958,7 +1048,7 @@ export class Dashboard {
     if (this._isMinimapReady()) this.minimap.resize();
 
     this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
-    this.main.container.attr('transform', newTransform);
+    this.main.container.attr("transform", newTransform);
     this.main.svg.call(this.main.zoom.transform, newTransform);
 
     this.recomputeBaselineFit();
@@ -972,13 +1062,12 @@ export class Dashboard {
   }
 
   updateNodeStatus(nodeId, status) {
-    
     const node = this.main.root.getNode(nodeId);
     if (node) {
       try {
         node.status = status;
       } catch (e) {
-        console.warn('updateNodeStatus: Failed to update status for node:', nodeId, e);
+        console.warn("updateNodeStatus: Failed to update status for node:", nodeId, e);
       }
     } else {
       console.error("updateNodeStatus: Node not found:", nodeId);
@@ -994,17 +1083,17 @@ export class Dashboard {
           node.status = status;
           stateUpdated = true;
         } catch (e) {
-          console.warn('updateDatasetStatus: Failed to update status for node:', node.id, e);
+          console.warn("updateDatasetStatus: Failed to update status for node:", node.id, e);
         }
       }
     }
-    return stateUpdated; 
+    return stateUpdated;
   }
 
   createContainer(parentContainer, className) {
     parentContainer.svg.selectAll("*").remove();
 
-    const container = parentContainer.svg.append("g").attr("class", `${className}`);    
+    const container = parentContainer.svg.append("g").attr("class", `${className}`);
 
     return container;
   }
@@ -1012,7 +1101,7 @@ export class Dashboard {
   initializeSvg(divSelector) {
     const svg = d3.select(`${divSelector}`);
     svg.selectAll("*").remove();
-    
+
     const { width, height } = svg.node().getBoundingClientRect();
 
     svg.attr("viewBox", [-width / 2, -height / 2, width, height]);
@@ -1023,22 +1112,21 @@ export class Dashboard {
   }
 
   async createDashboard(dashboard, container, displayChangeCallback = null) {
-    
-    this.setLoadingStage('Creating nodes');
+    this.setLoadingStage("Creating nodes");
     await this._yieldToMain();
-    
+
     createMarkers(container);
 
     var root;
     if (dashboard.nodes.length == 1) {
       root = createNode(dashboard.nodes[0], container, dashboard.settings);
-      
+
       if (root) {
         root.move(0, 0);
       }
     } else {
       root = createNodes(dashboard.nodes, container, dashboard.settings);
-      
+
       if (root && root.isContainer) {
         root.move(0, 0);
       }
@@ -1059,50 +1147,50 @@ export class Dashboard {
 
     // Phase 2: Node Initialization
     const t2 = performance.now();
-    
-    this.setLoadingStage('Initializing nodes');
+
+    this.setLoadingStage("Initializing nodes");
     await this._yieldToMain();
-    
+
     // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
     // Instead of measure-write-measure-write, we do: write-write-write, measure-once, write-write-write
     this._batchDomOperations = true;
     this._deferredOperations = {
       measurements: [],
-      updates: []
+      updates: [],
     };
-    
+
     // Suspend display-change reactions during bulk initialization to avoid
     // mid-cascade zoom/fit recalculations that cause drift
     this._suspendDisplayChange = true;
     // Store dashboard reference on root so handleDisplayChange() can access suspension flag
     root.__dashboard = this;
-    
+
     // Initialize all nodes (DOM creation) with progress updates
     const t2a = performance.now();
     await this._initializeNodesWithProgress(root);
-    
-    this.setLoadingStage('Processing measurements');
+
+    this.setLoadingStage("Processing measurements");
     await this._yieldToMain();
-    
+
     // Perform all deferred measurements in a single batch (Optimization #7)
     const measurementCount = this._deferredOperations.measurements.length;
-    this._deferredOperations.measurements.forEach(fn => fn());
+    this._deferredOperations.measurements.forEach((fn) => fn());
     this._deferredOperations.measurements = [];
-    
+
     // Apply any updates that depend on measurements
     const updateCount = this._deferredOperations.updates.length;
-    this._deferredOperations.updates.forEach(fn => fn());
+    this._deferredOperations.updates.forEach((fn) => fn());
     this._deferredOperations.updates = [];
     this._batchDomOperations = false;
     this.performanceMetrics.phases.nodeInitialization = performance.now() - t2;
 
     // Phase 3: Edge Creation & Status Initialization
     const t3 = performance.now();
-    
+
     const edgeCount = dashboard.edges?.length || 0;
-    this.setLoadingStage(`Creating ${edgeCount} edge${edgeCount !== 1 ? 's' : ''}`);
+    this.setLoadingStage(`Creating ${edgeCount} edge${edgeCount !== 1 ? "s" : ""}`);
     await this._yieldToMain();
-    
+
     this.initializeChildrenStatusses(root);
 
     if (dashboard.edges.length > 0) {
@@ -1110,17 +1198,20 @@ export class Dashboard {
       const nodeMap = this.buildNodeMap(root);
       createEdges(root, dashboard.edges, dashboard.settings, nodeMap);
     }
-    
+
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
-    try { this.reparentNodesByParentIds(); } catch {}
-    
+    try {
+      this.reparentNodesByParentIds();
+    } catch {}
+
     // Lift suspension after all initialization, edge creation, and reparenting is complete
     this._suspendDisplayChange = false;
-    
+
     this.performanceMetrics.phases.edgeCreation = performance.now() - t3;
 
     if (this.data.settings.isDebug) {
-      container.append("circle")
+      container
+        .append("circle")
         .attr("class", "debug-center")
         .attr("cx", 0)
         .attr("cy", 0)
@@ -1139,7 +1230,7 @@ export class Dashboard {
   reparentNodesByParentIds() {
     if (!this.main?.root) return;
     const all = this.main.root.getAllNodes(false, false);
-    const idMap = new Map(all.map(n => [n.id, n]));
+    const idMap = new Map(all.map((n) => [n.id, n]));
     const ensureChildAttached = (parent, child) => {
       try {
         // Adjust logical tree
@@ -1148,13 +1239,17 @@ export class Dashboard {
           const idx = prev.childNodes ? prev.childNodes.indexOf(child) : -1;
           if (idx >= 0) prev.childNodes.splice(idx, 1);
           // Remove from previous zone listing
-          try { prev.zoneManager?.innerContainerZone?.removeChild?.(child); } catch {}
+          try {
+            prev.zoneManager?.innerContainerZone?.removeChild?.(child);
+          } catch {}
         }
         child.parentNode = parent;
         parent.childNodes = parent.childNodes || [];
         if (parent.childNodes.indexOf(child) === -1) parent.childNodes.push(child);
         // Register with zone system and move DOM
-        const innerZone = parent.zoneManager?.innerContainerZone || (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
+        const innerZone =
+          parent.zoneManager?.innerContainerZone ||
+          (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
         if (innerZone) {
           innerZone.addChild(child);
           const target = innerZone.getChildContainer?.();
@@ -1162,9 +1257,15 @@ export class Dashboard {
           const tgt = target?.node?.();
           if (el && tgt && el.parentNode !== tgt) tgt.appendChild(el);
           // Update layout for new parent
-          try { parent.updateChildren?.(); } catch {}
-          try { parent.zoneManager?.update?.(); } catch {}
-          try { innerZone.updateChildPositions(); } catch {}
+          try {
+            parent.updateChildren?.();
+          } catch {}
+          try {
+            parent.zoneManager?.update?.();
+          } catch {}
+          try {
+            innerZone.updateChildPositions();
+          } catch {}
         } else if (parent.element && child.element) {
           const tgt = parent.element.node();
           const el = child.element.node();
@@ -1173,10 +1274,14 @@ export class Dashboard {
       } catch {}
     };
     for (const node of all) {
-      const pids = Array.isArray(node?.data?.parentIds) ? node.data.parentIds : (node?.data?.parentId ? [node.data.parentId] : []);
+      const pids = Array.isArray(node?.data?.parentIds)
+        ? node.data.parentIds
+        : node?.data?.parentId
+        ? [node.data.parentId]
+        : [];
       if (!pids.length) continue;
       // Prefer first existing container parent
-      const target = pids.map(id => idMap.get(id)).find(n => n && n.isContainer);
+      const target = pids.map((id) => idMap.get(id)).find((n) => n && n.isContainer);
       if (target && node.parentNode !== target) {
         ensureChildAttached(target, node);
       }
@@ -1192,22 +1297,24 @@ export class Dashboard {
       const currentNode = allNodes[i];
       // Safety check: only process nodes with valid elements
       if (!currentNode.element) {
-        console.warn('initializeChildrenStatusses: Node has null element, skipping:', currentNode.id);
+        console.warn("initializeChildrenStatusses: Node has null element, skipping:", currentNode.id);
         continue;
       }
-      
-      if (currentNode.isContainer && (currentNode.status == null || currentNode.status == "" || currentNode.status == "Unknown")) {
+
+      if (
+        currentNode.isContainer &&
+        (currentNode.status == null || currentNode.status == "" || currentNode.status == "Unknown")
+      ) {
         try {
           currentNode.determineStatusBasedOnChildren();
         } catch (e) {
-          console.warn('initializeChildrenStatusses: Failed to determine status for node:', currentNode.id, e);
+          console.warn("initializeChildrenStatusses: Failed to determine status for node:", currentNode.id, e);
         }
-      } 
+      }
     }
   }
 
   initializeZoom() {
-
     const dag = null;
 
     const dashboard = this;
@@ -1228,9 +1335,7 @@ export class Dashboard {
     return zoom;
   }
 
-  onDragUpdate() {
-    
-  }
+  onDragUpdate() {}
 
   onMainDisplayChange() {
     // Check suspension before scheduling
@@ -1244,19 +1349,23 @@ export class Dashboard {
         this._displayChangeScheduled = false;
         return;
       }
-      
+
       const isInitialStabilization = this._displayChangeCount === 0;
       const tLayout = isInitialStabilization ? performance.now() : null;
-      
+
       this._displayChangeCount = (this._displayChangeCount || 0) + 1;
-      try { this.zoomManager.handleLayoutChange(); } catch {}
-      
+      try {
+        this.zoomManager.handleLayoutChange();
+      } catch {}
+
       if (isInitialStabilization && tLayout) {
         this.performanceMetrics.phases.layoutStabilization = performance.now() - tLayout;
       }
       // Ensure DOM hierarchy is consistent with logical parent/child relationships
-      try { this.enforceDomHierarchy(); } catch {}
-      
+      try {
+        this.enforceDomHierarchy();
+      } catch {}
+
       // OPTIMIZATION #6: Only update minimap if it's initialized and ready
       if (this._isMinimapReady()) {
         try {
@@ -1277,7 +1386,7 @@ export class Dashboard {
           let nodesToBox = null;
           if (nb && Array.isArray(nb.nodes) && nb.nodes.length > 0) {
             nodesToBox = nb.nodes;
-          } else if (typeof this.getSelectedNodes === 'function') {
+          } else if (typeof this.getSelectedNodes === "function") {
             const sel = this.getSelectedNodes();
             if (sel && sel.length) nodesToBox = sel;
           }
@@ -1323,7 +1432,9 @@ export class Dashboard {
         let parentGroup = parent.element;
         try {
           if (parent.isContainer && !parent.collapsed) {
-            const innerZone = parent.zoneManager?.innerContainerZone || (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
+            const innerZone =
+              parent.zoneManager?.innerContainerZone ||
+              (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
             parentGroup = innerZone?.getChildContainer?.() || parent.element;
           }
         } catch {}
@@ -1331,21 +1442,29 @@ export class Dashboard {
         const el = node.element?.node?.();
         if (!targetDom || !el) return;
         if (el.parentNode !== targetDom) {
-          try { targetDom.appendChild(el); } catch {}
+          try {
+            targetDom.appendChild(el);
+          } catch {}
         }
       });
     } catch {}
   }
 
+  zoomMain(zoomEvent) {
+    this.zoomManager.onMainZoom(zoomEvent);
+  }
 
+  zoomMinimap(zoomEvent) {
+    this.zoomManager.onMinimapZoom(zoomEvent);
+  }
 
-  zoomMain(zoomEvent) { this.zoomManager.onMainZoom(zoomEvent); }
+  zoomIn() {
+    this.zoomManager.zoomIn();
+  }
 
-  zoomMinimap(zoomEvent) { this.zoomManager.onMinimapZoom(zoomEvent); }
-
-  zoomIn() { this.zoomManager.zoomIn(); }
-
-  zoomOut() { this.zoomManager.zoomOut(); }
+  zoomOut() {
+    this.zoomManager.zoomOut();
+  }
 
   zoomToRoot() {
     if (!this.main.root) return;
@@ -1359,11 +1478,17 @@ export class Dashboard {
     this.zoomToBoundingBox(bbox);
   }
 
-  zoomReset() { this.zoomManager.zoomReset(); this.deselectAll(); }
+  zoomReset() {
+    this.zoomManager.zoomReset();
+    this.deselectAll();
+  }
 
   zoomClicked(event, [x, y]) {
     event.stopPropagation();
-    this.main.svg.transition().duration(750).call(
+    this.main.svg
+      .transition()
+      .duration(750)
+      .call(
         this.main.zoom.transform,
         d3.zoomIdentity
           .translate(this.main.width / 2, this.main.height / 2)
@@ -1374,7 +1499,6 @@ export class Dashboard {
   }
 
   zoomToNodeById(nodeId) {
-    
     const node = this.main.root.getNode(nodeId);
     if (node) {
       return this.zoomToNode(node);
@@ -1385,16 +1509,14 @@ export class Dashboard {
   }
 
   setStatusToNodeById(nodeId, status) {
-    
     const node = this.main.root.getNode(nodeId);
     if (node) {
       try {
         node.status = status;
       } catch (e) {
-        console.warn('setStatusToNodeById: Failed to update status for node:', nodeId, e);
+        console.warn("setStatusToNodeById: Failed to update status for node:", nodeId, e);
       }
-    }
-    else {
+    } else {
       console.error("setStatusToNodeById: Node not found:", nodeId);
     }
 
@@ -1408,35 +1530,54 @@ export class Dashboard {
   }
 
   selectNode(node) {
-  // Exclusive single selection: clear previous and select only this node
-  this.deselectAll();
-  node.selected = true;
-  // Clear any previous neighborhood when manually selecting
-  this.selection.neighborhood = null;
-  // Draw bounding box for the single selected node
-  let bbox = computeBoundingBox(this, [node]);
-  // If node has no incoming or outgoing edges, also zoom to a sane bbox
-  const hasNoEdges = (!node.edges || ((node.edges.incoming?.length || 0) === 0 && (node.edges.outgoing?.length || 0) === 0));
-  if (hasNoEdges) {
-    const k = this.main.transform.k || 1;
-    const minPx = 80; // minimum size on screen to avoid over-zooming
-    const minWorld = minPx / k;
-    const cx = bbox.x + bbox.width / 2;
-    const cy = bbox.y + bbox.height / 2;
-    const w = Math.max(bbox.width, minWorld);
-    const h = Math.max(bbox.height, minWorld);
-    bbox = { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
-  }
-  this.renderSelectionBoundingBox(bbox);
-  
-  // Call additional click callback if registered - PASS NODE AS PARAMETER
-  if (this.onNodeClick && typeof this.onNodeClick === 'function') {
-    try {
-      this.onNodeClick(node);
-    } catch (e) {
-      console.error('Error in node click callback:', e);
+    // Clear any pending single click timer
+    if (this._clickDelayTimer) {
+      clearTimeout(this._clickDelayTimer);
+      this._clickDelayTimer = null;
     }
+
+    // Schedule single click handler execution after delay
+    this._clickDelayTimer = setTimeout(() => {
+      this._clickDelayTimer = null;
+      this._executeSingleClick(node);
+    }, this._clickDelayMs);
   }
+
+  /**
+   * Execute single click selection and callback
+   * @param {Object} node - The clicked node
+   */
+  _executeSingleClick(node) {
+    // Exclusive single selection: clear previous and select only this node
+    this.deselectAll();
+    node.selected = true;
+    // Clear any previous neighborhood when manually selecting
+    this.selection.neighborhood = null;
+    // Draw bounding box for the single selected node
+    let bbox = computeBoundingBox(this, [node]);
+    // If node has no incoming or outgoing edges, also zoom to a sane bbox
+    const hasNoEdges =
+      !node.edges || ((node.edges.incoming?.length || 0) === 0 && (node.edges.outgoing?.length || 0) === 0);
+    if (hasNoEdges) {
+      const k = this.main.transform.k || 1;
+      const minPx = 80; // minimum size on screen to avoid over-zooming
+      const minWorld = minPx / k;
+      const cx = bbox.x + bbox.width / 2;
+      const cy = bbox.y + bbox.height / 2;
+      const w = Math.max(bbox.width, minWorld);
+      const h = Math.max(bbox.height, minWorld);
+      bbox = { x: cx - w / 2, y: cy - h / 2, width: w, height: h };
+    }
+    this.renderSelectionBoundingBox(bbox);
+
+    // Call additional click callback if registered - PASS NODE AS PARAMETER
+    if (this.onNodeClick && typeof this.onNodeClick === "function") {
+      try {
+        this.onNodeClick(node);
+      } catch (e) {
+        console.error("Error in node click callback:", e);
+      }
+    }
   }
 
   getSelectedNodes() {
@@ -1448,19 +1589,19 @@ export class Dashboard {
    * @param {Function} callback - Function to call with the selected node as parameter: callback(node)
    */
   setNodeClickCallback(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       this.onNodeClick = callback;
     } else {
-      console.warn('setNodeClickCallback: callback must be a function');
+      console.warn("setNodeClickCallback: callback must be a function");
     }
   }
 
   getStructure() {
     if (!this.main.root) return null;
-    
+
     var nodes = this.main.root.getAllNodes(false, true);
     const edges = [];
-    this.main.root.getAllEdges(false,edges);
+    this.main.root.getAllEdges(false, edges);
 
     const structureNodes = nodes.map((node) => {
       return {
@@ -1485,34 +1626,35 @@ export class Dashboard {
    */
   updateStatusBasedCollapse() {
     if (!this.main.root) return;
-    
+
     const nodes = this.main.root.getAllNodes(false, true);
     if (!nodes || nodes.length === 0) return;
 
     let hasChanges = false;
 
     // Re-evaluate collapse state for each node based on current status and new setting
-    nodes.forEach(node => {
-      if (node && typeof node.status !== 'undefined') {
+    nodes.forEach((node) => {
+      if (node && typeof node.status !== "undefined") {
         // Safety check: only process nodes with valid elements
         if (!node.element) {
-          console.warn('Skipping node with null element in updateStatusBasedCollapse:', node.id);
+          console.warn("Skipping node with null element in updateStatusBasedCollapse:", node.id);
           return;
         }
-        
+
         // Determine if this node should be collapsed based on current status
-        const shouldCollapse = this.data.settings.toggleCollapseOnStatusChange && 
+        const shouldCollapse =
+          this.data.settings.toggleCollapseOnStatusChange &&
           [NodeStatus.READY, NodeStatus.DISABLED, NodeStatus.UPDATED, NodeStatus.SKIPPED].includes(node.status);
-        
+
         // Only change state if it's different from current
         if (shouldCollapse !== node.collapsed) {
           hasChanges = true;
-         
+
           // Use the collapsed setter to ensure proper state management and trigger expand/collapse methods
           try {
             node.collapsed = shouldCollapse;
           } catch (e) {
-            console.warn('Failed to change collapse state for node:', node.id, e);
+            console.warn("Failed to change collapse state for node:", node.id, e);
           }
         }
       }
@@ -1520,10 +1662,9 @@ export class Dashboard {
 
     // If there were changes, restart the simulation to recalculate the layout
     if (hasChanges && this.main.root) {
-     
       // Restart simulation to recalculate layout with new collapsed/expanded states
       this.main.root.cascadeRestartSimulation();
-      
+
       // Update the display to show the new layout
       this.main.root.update();
     }
@@ -1534,31 +1675,29 @@ export class Dashboard {
 
   deselectAll() {
     const nodes = this.getSelectedNodes();
-    nodes.forEach((node) => node.selected = false);
+    nodes.forEach((node) => (node.selected = false));
 
     const edges = [];
     this.main.root.getAllEdges(true, edges);
-    edges.forEach((edge) => edge.selected = false);
+    edges.forEach((edge) => (edge.selected = false));
 
     // Clear neighborhood selection context
     this.selection.neighborhood = null;
-  // Remove any selection bounding box
-  this.clearSelectionBoundingBox();
+    // Remove any selection bounding box
+    this.clearSelectionBoundingBox();
   }
 
-  
   zoomToNode(node) {
     const neighbors = node.getNeighbors(this.data.settings.selector);
 
     this.deselectAll();
-    neighbors.nodes.forEach((node) => node.selected = true);
-    neighbors.edges.forEach((edge) => edge.selected = true);
+    neighbors.nodes.forEach((node) => (node.selected = true));
+    neighbors.edges.forEach((edge) => (edge.selected = true));
 
     // If the node has no neighbors beyond itself, compute a sane bbox to avoid over-zoom
     let boundingBox = computeBoundingBox(this, neighbors.nodes);
-    const onlySelf = neighbors && neighbors.nodes && neighbors.nodes.length > 0
-      ? neighbors.nodes.every(n => n === node)
-      : true;
+    const onlySelf =
+      neighbors && neighbors.nodes && neighbors.nodes.length > 0 ? neighbors.nodes.every((n) => n === node) : true;
     if (onlySelf) {
       boundingBox = this.computeSaneNodeBoundingBox(node);
     }
@@ -1567,11 +1706,11 @@ export class Dashboard {
     this.selection.neighborhood = {
       nodes: neighbors.nodes,
       edges: neighbors.edges,
-      boundingBox
+      boundingBox,
     };
 
-  // Always draw selection bounding box for neighborhood selection
-  this.renderSelectionBoundingBox(boundingBox);
+    // Always draw selection bounding box for neighborhood selection
+    this.renderSelectionBoundingBox(boundingBox);
 
     this.main.boundingbox = {
       boundingBox: boundingBox,
@@ -1591,6 +1730,12 @@ export class Dashboard {
   // - If a neighborhood bbox is active and the dblclick is inside it, zoom to bbox
   // - Otherwise zoom to node
   handleNodeDblClick(node, event) {
+    // Cancel any pending single click
+    if (this._clickDelayTimer) {
+      clearTimeout(this._clickDelayTimer);
+      this._clickDelayTimer = null;
+    }
+
     const nb = this.selection.neighborhood;
     if (nb && nb.boundingBox) {
       // If an event is available, determine pointer in SVG coordinates
@@ -1611,22 +1756,23 @@ export class Dashboard {
     }
     // Default: zoom to the specific node; if node has no neighbors, ensure a sane bbox
     const neighbors = node.getNeighbors(this.data.settings.selector);
-    const onlySelf = neighbors && neighbors.nodes && neighbors.nodes.length > 0
-      ? neighbors.nodes.every(n => n === node)
-      : true;
+    const onlySelf =
+      neighbors && neighbors.nodes && neighbors.nodes.length > 0 ? neighbors.nodes.every((n) => n === node) : true;
     if (onlySelf) {
       const bbox = this.computeSaneNodeBoundingBox(node);
       this.deselectAll();
       node.selected = true;
       this.selection.neighborhood = { nodes: [node], edges: [], boundingBox: bbox };
-  this.renderSelectionBoundingBox(bbox);
+      this.renderSelectionBoundingBox(bbox);
       this.zoomToBoundingBox(bbox);
     } else {
       this.zoomToNode(node);
     }
   }
 
-  zoomToBoundingBox(boundingBox) { this.zoomManager.zoomToBoundingBox(boundingBox, { animate: true, duration: 500 }); }
+  zoomToBoundingBox(boundingBox) {
+    this.zoomManager.zoomToBoundingBox(boundingBox, { animate: true, duration: 500 });
+  }
 
   /**
    * Ensure loading overlay instance exists for this dashboard
@@ -1636,7 +1782,7 @@ export class Dashboard {
     if (!this.loadingOverlay && this.main?.svg) {
       const container = resolveLoadingHost(this.main.svg);
       this.loadingOverlay = new LoadingOverlay(container);
-      console.log('📊 Dashboard._ensureLoadingOverlay() - Created overlay instance');
+      console.log("📊 Dashboard._ensureLoadingOverlay() - Created overlay instance");
     }
     return this.loadingOverlay;
   }
@@ -1645,7 +1791,7 @@ export class Dashboard {
    * Show loading overlay for this dashboard
    */
   showLoading() {
-    console.log('📊 Dashboard.showLoading() called');
+    console.log("📊 Dashboard.showLoading() called");
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.showLoading();
@@ -1656,7 +1802,7 @@ export class Dashboard {
    * Hide loading overlay for this dashboard
    */
   hideLoading() {
-    console.log('📊 Dashboard.hideLoading() called');
+    console.log("📊 Dashboard.hideLoading() called");
     if (this.loadingOverlay) {
       this.loadingOverlay.hideLoading();
     }
@@ -1667,7 +1813,7 @@ export class Dashboard {
    * @param {string} stageName - Name of the stage
    */
   setLoadingStage(stageName) {
-    console.log('📊 Dashboard.setLoadingStage() called with:', stageName);
+    console.log("📊 Dashboard.setLoadingStage() called with:", stageName);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setLoadingStage(stageName);
@@ -1679,7 +1825,7 @@ export class Dashboard {
    * @param {string} progressMessage - Progress message (e.g., "5 / 20 nodes")
    */
   setProgress(progressMessage) {
-    console.log('📊 Dashboard.setProgress() called with:', progressMessage);
+    console.log("📊 Dashboard.setProgress() called with:", progressMessage);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setProgress(progressMessage);
@@ -1691,14 +1837,13 @@ export class Dashboard {
    * @param {string} message - Message to display
    */
   setLoadingMessage(message) {
-    console.log('📊 Dashboard.setLoadingMessage() called with:', message);
+    console.log("📊 Dashboard.setLoadingMessage() called with:", message);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setLoadingMessage(message);
     }
   }
 }
-
 
 export function getImmediateNeighbors(baseNode, graphData) {
   const neighbors = [baseNode];
@@ -1718,7 +1863,7 @@ export function computeBoundingBox(dashboard, nodes) {
   let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity];
 
   const updateBounds = (x, y, width, height) => {
-    minX = Math.min(minX, x - (width / 2));
+    minX = Math.min(minX, x - width / 2);
     minY = Math.min(minY, y - height / 2);
     maxX = Math.max(maxX, x + width / 2);
     maxY = Math.max(maxY, y + height / 2);
@@ -1733,20 +1878,30 @@ export function computeBoundingBox(dashboard, nodes) {
     }
     if (!dimensions || !isFinite(dimensions.width) || !isFinite(dimensions.height)) {
       // Skip nodes that are not rendered/visible (e.g., collapsed descendants removed from DOM)
-      const hasDom = !!(node?.element && typeof node.element.node === 'function' && node.element.node());
-      const isVisible = (node?.visible !== false);
+      const hasDom = !!(node?.element && typeof node.element.node === "function" && node.element.node());
+      const isVisible = node?.visible !== false;
       if (!hasDom || !isVisible) {
         return;
       }
       // Fallback to effective size when DOM bbox is unavailable but node is visible
-      const nx = (typeof node.x === 'number') ? node.x : 0;
-      const ny = (typeof node.y === 'number') ? node.y : 0;
-      const nw = (typeof node.getEffectiveWidth === 'function')
-        ? node.getEffectiveWidth()
-        : ((node.data && typeof node.data.width === 'number') ? node.data.width : (typeof node.width === 'number' ? node.width : 0));
-      const nh = (typeof node.getEffectiveHeight === 'function')
-        ? node.getEffectiveHeight()
-        : ((node.data && typeof node.data.height === 'number') ? node.data.height : (typeof node.height === 'number' ? node.height : 0));
+      const nx = typeof node.x === "number" ? node.x : 0;
+      const ny = typeof node.y === "number" ? node.y : 0;
+      const nw =
+        typeof node.getEffectiveWidth === "function"
+          ? node.getEffectiveWidth()
+          : node.data && typeof node.data.width === "number"
+          ? node.data.width
+          : typeof node.width === "number"
+          ? node.width
+          : 0;
+      const nh =
+        typeof node.getEffectiveHeight === "function"
+          ? node.getEffectiveHeight()
+          : node.data && typeof node.data.height === "number"
+          ? node.data.height
+          : typeof node.height === "number"
+          ? node.height
+          : 0;
       minX = Math.min(minX, nx - nw / 2);
       minY = Math.min(minY, ny - nh / 2);
       maxX = Math.max(maxX, nx + nw / 2);
@@ -1757,9 +1912,7 @@ export function computeBoundingBox(dashboard, nodes) {
     minY = Math.min(minY, dimensions.y);
     maxX = Math.max(maxX, dimensions.x + dimensions.width);
     maxY = Math.max(maxY, dimensions.y + dimensions.height);
-
   });
-
 
   return {
     x: minX - padding,
@@ -1813,15 +1966,12 @@ function calculateScaleAndTranslate(boundingBox, dashboard) {
   };
 }
 
-
-
-
-export function createAndInitDashboard(dashboardData, mainDivSelector, thirdArg = null) {  
+export function createAndInitDashboard(dashboardData, mainDivSelector, thirdArg = null) {
   let minimapDivSelector = null;
-  if (thirdArg && typeof thirdArg === 'string') {
+  if (thirdArg && typeof thirdArg === "string") {
     minimapDivSelector = thirdArg;
-  } else if (thirdArg && typeof thirdArg === 'object') {
-    const userSettings = (dashboardData && dashboardData.settings) ? dashboardData.settings : {};
+  } else if (thirdArg && typeof thirdArg === "object") {
+    const userSettings = dashboardData && dashboardData.settings ? dashboardData.settings : {};
     dashboardData.settings = ConfigManager.mergeWithDefaults({ ...userSettings, ...thirdArg });
   }
   const dashboard = new Dashboard(dashboardData);
@@ -1833,8 +1983,10 @@ export async function loadDashboardFromFile(mainDivSelector, selectedFile, apply
   let dashboard = null;
   try {
     const dashboardData = await fetchDashboardFile(selectedFile);
-    if (typeof applySettings === 'function') {
-      try { applySettings(dashboardData); } catch {}
+    if (typeof applySettings === "function") {
+      try {
+        applySettings(dashboardData);
+      } catch {}
     }
     dashboard = new Dashboard(dashboardData);
     dashboard.initialize(mainDivSelector);
@@ -1845,7 +1997,7 @@ export async function loadDashboardFromFile(mainDivSelector, selectedFile, apply
 }
 
 export function setDashboardProperty(dashboardObject, propertyPath, value) {
-  const properties = propertyPath.split('.');
+  const properties = propertyPath.split(".");
   let obj = dashboardObject;
   for (let i = 0; i < properties.length - 1; i++) {
     obj = obj[properties[i]];
@@ -1854,7 +2006,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
 
   try {
     // Handle immediate visual updates for non-minimap properties
-    if (propertyPath.endsWith('showBoundingBox') || propertyPath.includes('.showBoundingBox')) {
+    if (propertyPath.endsWith("showBoundingBox") || propertyPath.includes(".showBoundingBox")) {
       const dash = dashboardObject;
       const show = !!value;
       if (!show) {
@@ -1864,7 +2016,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
         const nb = dash.selection?.neighborhood;
         if (nb?.boundingBox) {
           dash.renderSelectionBoundingBox(nb.boundingBox);
-        } else if (typeof dash.getSelectedNodes === 'function') {
+        } else if (typeof dash.getSelectedNodes === "function") {
           const sel = dash.getSelectedNodes();
           if (sel && sel.length) {
             const bbox = computeBoundingBox(dash, sel);
@@ -1874,7 +2026,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
       }
     }
 
-    const isMinimapChange = propertyPath.includes('minimap');
+    const isMinimapChange = propertyPath.includes("minimap");
     if (!isMinimapChange) return;
 
     const dash = dashboardObject;
@@ -1887,61 +2039,67 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
       }
     };
 
-    if (propertyPath.endsWith('minimap.size') || propertyPath.includes('.minimap.size')) {
+    if (propertyPath.endsWith("minimap.size") || propertyPath.includes(".minimap.size")) {
       recalcSize();
       dash.minimap.update();
       dash.minimap.scale = Math.min(dash.minimap.width / dash.main.width, dash.minimap.height / dash.main.height);
       dash.minimap.position();
     }
 
-    if (propertyPath.endsWith('minimap.position') || propertyPath.includes('.minimap.position')) {
+    if (propertyPath.endsWith("minimap.position") || propertyPath.includes(".minimap.position")) {
       dash.minimap.position();
     }
 
-    if (propertyPath.endsWith('minimap.collapsedIcon.position') || propertyPath.includes('.minimap.collapsedIcon.position')) {
+    if (
+      propertyPath.endsWith("minimap.collapsedIcon.position") ||
+      propertyPath.includes(".minimap.collapsedIcon.position")
+    ) {
       dash.minimap.position();
     }
 
-    if (propertyPath.endsWith('minimap.collapsed') || propertyPath.includes('.minimap.collapsed')) {
+    if (propertyPath.endsWith("minimap.collapsed") || propertyPath.includes(".minimap.collapsed")) {
       dash.minimap.setCollapsed(!!value, true);
     }
 
-    if (propertyPath.endsWith('minimap.mode') || propertyPath.includes('.minimap.mode')) {
-      const newMode = (value === 'hidden') ? 'disabled' : value;
+    if (propertyPath.endsWith("minimap.mode") || propertyPath.includes(".minimap.mode")) {
+      const newMode = value === "hidden" ? "disabled" : value;
       mm.mode = newMode;
-      if (newMode === 'always') {
+      if (newMode === "always") {
         mm.enabled = true;
         mm.pinned = true;
-      } else if (newMode === 'hover') {
+      } else if (newMode === "hover") {
         mm.pinned = false;
-      } else if (newMode === 'disabled') {
+      } else if (newMode === "disabled") {
         dash.minimap.setCollapsed(true);
       }
       dash.minimap.position();
       dash.minimap.updateHoverBindings();
     }
 
-    if (propertyPath.endsWith('minimap.pinned') || propertyPath.includes('.minimap.pinned')) {
+    if (propertyPath.endsWith("minimap.pinned") || propertyPath.includes(".minimap.pinned")) {
       dash.minimap.updatePinVisualState();
       dash.minimap.updateVisibilityByZoom();
       dash.minimap.updateHoverBindings();
     }
 
-    if (propertyPath.endsWith('scaleIndicator.visible') || propertyPath.includes('.minimap.scaleIndicator.visible')) {
+    if (propertyPath.endsWith("scaleIndicator.visible") || propertyPath.includes(".minimap.scaleIndicator.visible")) {
       const visible = !!value;
       if (visible) {
         if (!dash.minimap.scaleText && dash.minimap.footer) {
-          dash.minimap.scaleText = dash.minimap.footer.append('text').attr('class', 'minimap-scale').attr('text-anchor', 'end');
+          dash.minimap.scaleText = dash.minimap.footer
+            .append("text")
+            .attr("class", "minimap-scale")
+            .attr("text-anchor", "end");
         }
-        dash.minimap.scaleText.style('display', 'block');
+        dash.minimap.scaleText.style("display", "block");
       } else if (dash.minimap.scaleText) {
-        dash.minimap.scaleText.style('display', 'none');
+        dash.minimap.scaleText.style("display", "none");
       }
       dash.minimap.position();
       dash.minimap.updateScaleIndicator();
     }
   } catch (e) {
-    console.warn('setDashboardProperty post-update failed', e);
+    console.warn("setDashboardProperty post-update failed", e);
   }
 }
 
@@ -1956,22 +2114,22 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
  * @param {string} containerSelector - CSS selector for the container element (will be hidden)
  * @returns {Promise<Object>} Enhanced dashboard data with pre-render information
  */
-export async function generatePrerenderData(dashboardData, containerSelector = '#prerender-temp') {
-  console.log('🎨 Starting pre-render data generation...');
-  
+export async function generatePrerenderData(dashboardData, containerSelector = "#prerender-temp") {
+  console.log("🎨 Starting pre-render data generation...");
+
   // Create temporary container if it doesn't exist
   let container = document.querySelector(containerSelector);
   if (!container) {
-    container = document.createElement('div');
-    container.id = containerSelector.replace('#', '');
-    container.style.position = 'absolute';
-    container.style.left = '-10000px';
-    container.style.top = '-10000px';
-    container.style.width = '2000px';
-    container.style.height = '2000px';
+    container = document.createElement("div");
+    container.id = containerSelector.replace("#", "");
+    container.style.position = "absolute";
+    container.style.left = "-10000px";
+    container.style.top = "-10000px";
+    container.style.width = "2000px";
+    container.style.height = "2000px";
     document.body.appendChild(container);
   }
-  
+
   try {
     // Create dashboard with pre-render settings
     const tempSettings = {
@@ -1982,43 +2140,43 @@ export async function generatePrerenderData(dashboardData, containerSelector = '
       zoomToRoot: false,
       minimap: {
         ...(dashboardData.settings?.minimap || {}),
-        enabled: false // Disable minimap for generation
-      }
+        enabled: false, // Disable minimap for generation
+      },
     };
 
     const tempData = {
       ...dashboardData,
-      settings: tempSettings
+      settings: tempSettings,
     };
 
     // Initialize dashboard - MUST AWAIT THIS!
-    console.log('🎨 Initializing dashboard...');
+    console.log("🎨 Initializing dashboard...");
     const dashboard = new Dashboard(tempData);
     await dashboard.initialize(containerSelector);
-    
-    console.log('🎨 Dashboard initialized, waiting for layout stabilization...');
-    
+
+    console.log("🎨 Dashboard initialized, waiting for layout stabilization...");
+
     // Wait for layout stabilization (simulation to settle)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Verify root node exists
     if (!dashboard.main?.root) {
-      throw new Error('Dashboard root node not initialized. Dashboard initialization may have failed.');
+      throw new Error("Dashboard root node not initialized. Dashboard initialization may have failed.");
     }
-    
-    console.log('🎨 Root node ready, extracting node positions...');
-    console.log('🎨 Root node:', {
+
+    console.log("🎨 Root node ready, extracting node positions...");
+    console.log("🎨 Root node:", {
       id: dashboard.main.root.data?.id,
       label: dashboard.main.root.data?.label,
       hasChildren: !!dashboard.main.root.childNodes,
-      childCount: dashboard.main.root.childNodes?.length || 0
+      childCount: dashboard.main.root.childNodes?.length || 0,
     });
-    
+
     // Extract enhanced data
     const enhancedNodes = extractNodePositionsFromTree(dashboard.main.root);
-    
-    console.log('🎨 Extracting edge paths...');
-    
+
+    console.log("🎨 Extracting edge paths...");
+
     const enhancedEdges = extractEdgePaths(dashboardData.edges || []);
 
     // Build enhanced dashboard data
@@ -2036,17 +2194,16 @@ export async function generatePrerenderData(dashboardData, containerSelector = '
           nodeCount: countNodesInTree(enhancedNodes),
           edgeCount: enhancedEdges.length,
           expandedState: true,
-          statusRulesApplied: false
-        }
-      }
+          statusRulesApplied: false,
+        },
+      },
     };
 
-    console.log('✅ Pre-render data generated successfully');
-    
+    console.log("✅ Pre-render data generated successfully");
+
     return enhancedData;
-    
   } catch (error) {
-    console.error('❌ Error generating pre-render data:', error);
+    console.error("❌ Error generating pre-render data:", error);
     throw error;
   }
 }
@@ -2058,24 +2215,24 @@ export async function generatePrerenderData(dashboardData, containerSelector = '
  */
 function extractNodePositionsFromTree(rootNode) {
   if (!rootNode) {
-    console.warn('🎨 Missing rootNode');
+    console.warn("🎨 Missing rootNode");
     return [];
   }
 
-  console.log('🎨 Starting node position extraction...');
-  
+  console.log("🎨 Starting node position extraction...");
+
   // Get all rendered nodes in a flat list
   const allRenderedNodes = rootNode.getAllNodes(true, true); // includeRoot=true, includeCollapsed=true
   console.log(`🎨 Found ${allRenderedNodes.length} rendered nodes`);
-  
+
   // Build a map of node ID to rendered node for O(1) lookup
   const renderedNodeMap = new Map();
-  allRenderedNodes.forEach(renderNode => {
+  allRenderedNodes.forEach((renderNode) => {
     if (renderNode.data && renderNode.data.id) {
       renderedNodeMap.set(renderNode.data.id, renderNode);
     }
   });
-  
+
   console.log(`🎨 Built map with ${renderedNodeMap.size} nodes`);
 
   let processedCount = 0;
@@ -2083,37 +2240,37 @@ function extractNodePositionsFromTree(rootNode) {
 
   function processNode(renderNode) {
     if (!renderNode || !renderNode.data) return null;
-    
+
     const nodeData = renderNode.data;
 
     // Create new object with desired property order
     const enhanced = {};
-    
+
     // 1. Copy basic properties (id, type, label, etc.) - everything except special properties
-    const excludeProps = ['width', 'height', 'expandedSize', 'layout', 'prerender', 'children'];
+    const excludeProps = ["width", "height", "expandedSize", "layout", "prerender", "children"];
     for (const key in nodeData) {
       if (!excludeProps.includes(key)) {
         enhanced[key] = nodeData[key];
       }
     }
-    
+
     // 2. Add pre-render data BEFORE children
-    if (typeof renderNode.x === 'number' && typeof renderNode.y === 'number') {
+    if (typeof renderNode.x === "number" && typeof renderNode.y === "number") {
       enhanced.prerender = {
         x: renderNode.x || 0,
         y: renderNode.y || 0,
         width: renderNode.data?.width || nodeData.width || 0,
-        height: renderNode.data?.height || nodeData.height || 0
+        height: renderNode.data?.height || nodeData.height || 0,
       };
-      
+
       // Include calculated minimum size if available (for containers with headers)
       if (renderNode.minimumSize) {
         enhanced.prerender.minimumSize = {
           width: renderNode.minimumSize.width || 0,
-          height: renderNode.minimumSize.height || 0
+          height: renderNode.minimumSize.height || 0,
         };
       }
-      
+
       processedCount++;
       if (processedCount % 50 === 0) {
         console.log(`🎨 Processed ${processedCount} nodes...`);
@@ -2121,10 +2278,10 @@ function extractNodePositionsFromTree(rootNode) {
     } else {
       missingCount++;
       if (missingCount <= 5) {
-        console.warn('🎨 Node missing position data:', {
+        console.warn("🎨 Node missing position data:", {
           id: nodeData.id,
           label: nodeData.label,
-          type: nodeData.type
+          type: nodeData.type,
         });
       }
       enhanced.prerender = null;
@@ -2133,24 +2290,24 @@ function extractNodePositionsFromTree(rootNode) {
     // 3. Clean up and add layout (only if it has non-default values)
     if (nodeData.layout) {
       const layout = { ...nodeData.layout };
-      
+
       // Remove minimumSize if it's all defaults
       if (layout.minimumSize) {
-        const isDefault = 
+        const isDefault =
           layout.minimumSize.width === 0 &&
           layout.minimumSize.height === 0 &&
           layout.minimumSize.useRootRatio === false;
-        
+
         if (isDefault) {
           delete layout.minimumSize;
         }
       }
-      
+
       // Remove other default layout properties
-      if (layout.mode === 'vertical') delete layout.mode; // Default mode
+      if (layout.mode === "vertical") delete layout.mode; // Default mode
       if (layout.padding === 0) delete layout.padding; // Default padding
       if (layout.spacing === 0) delete layout.spacing; // Default spacing
-      
+
       // Only add layout if it has non-default properties
       if (Object.keys(layout).length > 0) {
         enhanced.layout = layout;
@@ -2159,7 +2316,7 @@ function extractNodePositionsFromTree(rootNode) {
 
     // 4. Recursively process children (at the end)
     if (renderNode.childNodes && renderNode.childNodes.length > 0) {
-      enhanced.children = renderNode.childNodes.map(childRenderNode => processNode(childRenderNode));
+      enhanced.children = renderNode.childNodes.map((childRenderNode) => processNode(childRenderNode));
     }
 
     return enhanced;
@@ -2172,7 +2329,7 @@ function extractNodePositionsFromTree(rootNode) {
   if (missingCount > 0) {
     console.warn(`⚠️ ${missingCount} nodes were missing render data`);
   }
-  
+
   return enhancedNodes;
 }
 
@@ -2185,18 +2342,18 @@ function extractEdgePaths(edges) {
   if (!edges || edges.length === 0) return [];
 
   const enhancedEdges = [];
-  
+
   // Query all edge groups (g elements with class 'edge')
-  const edgeGroups = document.querySelectorAll('g.edge');
+  const edgeGroups = document.querySelectorAll("g.edge");
   const pathMap = new Map();
 
   // Build map of edge paths from DOM
   // Edge structure: <g class="edge type" id="edge-id"><path class="path" d="..."/></g>
-  edgeGroups.forEach(group => {
-    const id = group.getAttribute('id');
-    const pathElement = group.querySelector('path.path');
-    const path = pathElement ? pathElement.getAttribute('d') : null;
-    
+  edgeGroups.forEach((group) => {
+    const id = group.getAttribute("id");
+    const pathElement = group.querySelector("path.path");
+    const path = pathElement ? pathElement.getAttribute("d") : null;
+
     if (id && path) {
       pathMap.set(id, path);
     }
@@ -2206,21 +2363,21 @@ function extractEdgePaths(edges) {
   console.log(`🎨 Edge IDs in DOM:`, Array.from(pathMap.keys()));
 
   // Enhance edges with path data
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     const enhanced = {};
-    
+
     // Copy all properties except prerender
     for (const key in edge) {
-      if (key !== 'prerender') {
+      if (key !== "prerender") {
         enhanced[key] = edge[key];
       }
     }
-    
+
     // Try to find path using the edge's ID
     // If edge has an explicit id field, use that
     // Otherwise, try the fallback generated format: source--type--target
     let path = null;
-    
+
     if (edge.id) {
       // Try explicit ID first
       path = pathMap.get(edge.id);
@@ -2228,10 +2385,10 @@ function extractEdgePaths(edges) {
         console.warn(`🎨 No path found for edge ID: ${edge.id}`);
       }
     }
-    
+
     if (!path) {
       // Try fallback format
-      const fallbackId = `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
+      const fallbackId = `${edge.source}--${edge.type || "unknown"}--${edge.target}`;
       path = pathMap.get(fallbackId);
       if (!path) {
         console.warn(`🎨 No path found for edge fallback ID: ${fallbackId}`);
@@ -2241,16 +2398,16 @@ function extractEdgePaths(edges) {
     // Add prerender data if path was found
     if (path) {
       enhanced.prerender = {
-        path: path
+        path: path,
       };
     }
 
     enhancedEdges.push(enhanced);
   });
 
-  const foundPaths = enhancedEdges.filter(e => e.prerender).length;
+  const foundPaths = enhancedEdges.filter((e) => e.prerender).length;
   console.log(`🎨 Extracted paths for ${foundPaths} of ${edges.length} edges`);
-  
+
   return enhancedEdges;
 }
 
@@ -2261,18 +2418,18 @@ function extractEdgePaths(edges) {
  */
 function countNodesInTree(nodes) {
   if (!Array.isArray(nodes)) return 0;
-  
+
   let count = 0;
   function traverse(nodeArray) {
     if (!Array.isArray(nodeArray)) return;
-    nodeArray.forEach(node => {
+    nodeArray.forEach((node) => {
       count++;
       if (node.children) {
         traverse(node.children);
       }
     });
   }
-  
+
   traverse(nodes);
   return count;
 }
@@ -2284,16 +2441,16 @@ function countNodesInTree(nodes) {
  */
 export function hasPrerenderData(dashboardData) {
   if (!dashboardData) return false;
-  
+
   // Check if pre-render is disabled via settings
   if (dashboardData.settings?.usePrerender === false) {
     return false;
   }
-  
+
   // Check if any node has pre-render data
   function hasNodePrerender(nodes) {
     if (!Array.isArray(nodes)) return false;
-    
+
     for (const node of nodes) {
       if (node.prerender) return true;
       if (node.children && hasNodePrerender(node.children)) {
@@ -2302,7 +2459,7 @@ export function hasPrerenderData(dashboardData) {
     }
     return false;
   }
-  
+
   return hasNodePrerender(dashboardData.nodes || []);
 }
 
