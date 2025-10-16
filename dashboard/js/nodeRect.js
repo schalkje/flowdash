@@ -50,11 +50,13 @@ export default class RectangularNode extends BaseNode {
       .attr("y", -this.data.height / 2);
 
     // Create label text element with proper truncation
+    // Set pointer-events to 'none' so clicks pass through to the rectangle
     this.label = this.element
       .append("text")
       .attr("class", `${this.data.type} label`)
       .attr("x", 0)
       .attr("y", 0)
+      .attr("pointer-events", "none")
       .text(this.data.label);
 
     // Apply custom styling if provided
