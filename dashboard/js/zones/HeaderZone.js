@@ -658,6 +658,7 @@ export class HeaderZone extends BaseZone {
       return;
     }
     
+    event.stopPropagation();
     // Propagate to node click handler
     if (this.node.handleClicked) {
       this.node.handleClicked(event, this.node);
@@ -713,6 +714,7 @@ export class HeaderZone extends BaseZone {
       return;
     }
     
+    event.stopPropagation();
     // Propagate to node click handler
     if (this.node.handleClicked) {
       this.node.handleClicked(event, this.node);
