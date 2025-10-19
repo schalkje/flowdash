@@ -1870,12 +1870,16 @@ export function computeBoundingBox(dashboard, nodes) {
   };
 
   nodes.forEach((node) => {
+    // For collapsed containers, prefer effective size over DOM bbox to avoid stale dimensions
+    const useEffectiveSize = node?.isContainer && node?.collapsed;
+    
     let dimensions;
     try {
       dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
     } catch {
       dimensions = null;
     }
+    
     if (!dimensions || !isFinite(dimensions.width) || !isFinite(dimensions.height)) {
       // Skip nodes that are not rendered/visible (e.g., collapsed descendants removed from DOM)
       const hasDom = !!(node?.element && typeof node.element.node === "function" && node.element.node());
@@ -1883,7 +1887,7 @@ export function computeBoundingBox(dashboard, nodes) {
       if (!hasDom || !isVisible) {
         return;
       }
-      // Fallback to effective size when DOM bbox is unavailable but node is visible
+      // Use effective size when DOM bbox is unavailable
       const nx = typeof node.x === "number" ? node.x : 0;
       const ny = typeof node.y === "number" ? node.y : 0;
       const nw =
@@ -1908,6 +1912,21 @@ export function computeBoundingBox(dashboard, nodes) {
       maxY = Math.max(maxY, ny + nh / 2);
       return;
     }
+    
+    // For collapsed containers, use DOM position but effective size to avoid stale height
+    if (useEffectiveSize) {
+      const effectiveWidth = node.getEffectiveWidth();
+      const effectiveHeight = node.getEffectiveHeight();
+      // Convert from top-left corner (DOM bbox) to center-based bounds
+      const centerX = dimensions.x + dimensions.width / 2;
+      const centerY = dimensions.y + dimensions.height / 2;
+      minX = Math.min(minX, centerX - effectiveWidth / 2);
+      minY = Math.min(minY, centerY - effectiveHeight / 2);
+      maxX = Math.max(maxX, centerX + effectiveWidth / 2);
+      maxY = Math.max(maxY, centerY + effectiveHeight / 2);
+      return;
+    }
+    
     minX = Math.min(minX, dimensions.x);
     minY = Math.min(minY, dimensions.y);
     maxX = Math.max(maxX, dimensions.x + dimensions.width);
