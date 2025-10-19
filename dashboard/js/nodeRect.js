@@ -5,25 +5,53 @@ export default class RectangularNode extends BaseNode {
   constructor(nodeData, parentElement, settings, parentNode = null) {
     if (!nodeData.height) nodeData.height = 20;
     
+    // Ensure layout is an object, not a string
+    if (typeof nodeData.layout === 'string') {
+      nodeData.layout = { mode: nodeData.layout };
+    }
+    
     // Check layout mode
     const layoutMode = nodeData.layout?.layoutMode || 'default';
     
     if (layoutMode === 'auto-size') {
-      // For auto-size, calculate width based on text
+      // For auto-size, calculate width based on text with user-specified or default minimum
+      const minimumWidth = nodeData.layout?.minimumWidth ?? 60;
+      const minimumHeight = nodeData.layout?.minimumHeight ?? nodeData.height;
+      
       const textWidth = getTextWidth(nodeData.label);
-      nodeData.width = Math.max(textWidth + 20, 60); // Minimum width of 60
+      nodeData.width = Math.max(textWidth + 20, minimumWidth);
+      nodeData.height = Math.max(nodeData.height, minimumHeight);
+      
+      // Store the minimums for later reference
+      if (!nodeData.layout) nodeData.layout = {};
+      nodeData.layout.minimumWidth = minimumWidth;
+      nodeData.layout.minimumHeight = minimumHeight;
     } else if (layoutMode === 'fixed-size') {
-      // For fixed-size, use exact dimensions without expansion
-      if (!nodeData.width) nodeData.width = 150;
-      // Don't modify width based on text content
+      // For fixed-size, use exact dimensions from layout or node data
+      // Priority: layout.width > nodeData.width > default (150)
+      const fixedWidth = nodeData.layout?.width ?? nodeData.width ?? 150;
+      const fixedHeight = nodeData.layout?.height ?? nodeData.height ?? 20;
+      
+      nodeData.width = fixedWidth;
+      nodeData.height = fixedHeight;
+      
+      // Store the fixed dimensions in layout for consistency
+      if (!nodeData.layout) nodeData.layout = {};
+      nodeData.layout.width = fixedWidth;
+      nodeData.layout.height = fixedHeight;
     } else {
-      // For default mode, use provided width or default
-      if (!nodeData.width) nodeData.width = 150;
+      // For default mode, use provided width as minimum (will expand for text)
+      // Priority: nodeData.width > default (150)
+      const initialWidth = nodeData.width ?? 150;
       
       // Calculate text width and ensure minimum width
       const textWidth = getTextWidth(nodeData.label);
-      const minWidth = Math.max(nodeData.width, textWidth + 20); // Add padding
+      const minWidth = Math.max(initialWidth, textWidth + 20); // Add padding
       nodeData.width = minWidth;
+      
+      // Store initial width as the minimum for default mode
+      if (!nodeData.layout) nodeData.layout = {};
+      nodeData.layout.initialWidth = initialWidth;
     }
 
     super(nodeData, parentElement, settings, parentNode);
@@ -181,9 +209,10 @@ export default class RectangularNode extends BaseNode {
       this.label.text(this.data.label);
       this.removeTooltip();
     } else if (layoutMode === 'auto-size' && label !== undefined) {
-      // For auto-size, recalculate width based on text
+      // For auto-size, recalculate width based on text with minimum
+      const minimumWidth = this.data.layout?.minimumWidth ?? 60;
       const textWidth = getTextWidth(label);
-      const newWidth = Math.max(textWidth + 20, 60); // Minimum width of 60
+      const newWidth = Math.max(textWidth + 20, minimumWidth);
       this.data.width = newWidth;
       
       // Update visual elements directly without triggering simulation
@@ -199,6 +228,10 @@ export default class RectangularNode extends BaseNode {
       this.handleDisplayChange();
     } else if (layoutMode === 'fixed-size') {
       // For fixed-size, don't change width based on text
+      // Use the fixed width from layout
+      const fixedWidth = this.data.layout?.width ?? this.data.width;
+      this.data.width = fixedWidth;
+      
       this.element
         .select("rect")
         .attr("width", this.data.width)
@@ -207,10 +240,11 @@ export default class RectangularNode extends BaseNode {
       // Apply text truncation with tooltip
       this.truncateTextIfNeeded();
     } else {
-      // For default mode, expand width if needed
+      // For default mode, expand width if needed but respect initial minimum
       if (label !== undefined) {
+        const initialWidth = this.data.layout?.initialWidth ?? 150;
         const textWidth = getTextWidth(label);
-        this.data.width = Math.max(this.data.width, textWidth + 20);
+        this.data.width = Math.max(initialWidth, textWidth + 20);
       }
       
       this.element
@@ -305,9 +339,10 @@ export default class RectangularNode extends BaseNode {
       this.label.text(this.data.label);
       this.removeTooltip();
     } else if (layoutMode === 'auto-size') {
-      // For auto-size, recalculate width based on text
+      // For auto-size, recalculate width based on text with minimum
+      const minimumWidth = this.data.layout?.minimumWidth ?? 60;
       const textWidth = getTextWidth(this.data.label);
-      const newWidth = Math.max(textWidth + 20, 60); // Minimum width of 60
+      const newWidth = Math.max(textWidth + 20, minimumWidth);
       
       if (newWidth !== this.data.width) {
         // Update data width
@@ -323,14 +358,35 @@ export default class RectangularNode extends BaseNode {
         
         // Update text without truncation
         this.label.text(this.data.label);
+        this.removeTooltip();
         // Notify parent that size changed to trigger relayout
         this.handleDisplayChange();
       } else {
         // Just update the text without truncation
         this.label.text(this.data.label);
+        this.removeTooltip();
       }
+    } else if (layoutMode === 'fixed-size') {
+      // For fixed-size, use exact width from layout and truncate text
+      const fixedWidth = this.data.layout?.width ?? this.data.width;
+      this.data.width = fixedWidth;
+      this.truncateTextIfNeeded();
     } else {
-      // For default and fixed-size, use truncation
+      // For default mode, expand if needed but respect initial minimum
+      const initialWidth = this.data.layout?.initialWidth ?? 150;
+      const textWidth = getTextWidth(this.data.label);
+      const newWidth = Math.max(initialWidth, textWidth + 20);
+      
+      if (newWidth !== this.data.width) {
+        this.data.width = newWidth;
+        if (this.element) {
+          this.element
+            .select("rect")
+            .attr("width", this.data.width)
+            .attr("x", -this.data.width / 2);
+        }
+        this.handleDisplayChange();
+      }
       this.truncateTextIfNeeded();
     }
   }
@@ -395,55 +451,4 @@ export default class RectangularNode extends BaseNode {
         const connectionPoints = this.computeConnectionPoints(0, 0, width, height);
         Object.values(connectionPoints).forEach((point) => {
           const scope = this.connectionPointsGroup || this.element;
-          if (scope) {
-            scope
-              .select(`.connection-point.side-${point.side}`)
-              .attr("cx", point.x)
-              .attr("cy", point.y);
-          }
-        });
-        try {
-          if (this.settings.isDebug && this.element) {
-            const read = (side) => ({
-              side,
-              cx: parseFloat(this.element.select(`.connection-point.side-${side}`).attr('cx')),
-              cy: parseFloat(this.element.select(`.connection-point.side-${side}`).attr('cy')),
-            });
-          }
-        } catch {}
-      }
-    }
-  }
-
-  /**
-   * Add tooltip to show full text when truncated
-   * @param {string} fullText - The complete text to show in tooltip
-   */
-  addTooltip(fullText) {
-    if (!this.label || !fullText) return;
-    
-    // Remove any existing tooltip
-    this.removeTooltip();
-    
-    // Add SVG title element for tooltip
-    this.tooltipElement = this.label.append("title").text(fullText);
-    
-    // Add visual indication that tooltip is available (optional)
-    this.label.style("cursor", "help");
-  }
-
-  /**
-   * Remove tooltip from the text element
-   */
-  removeTooltip() {
-    if (this.tooltipElement) {
-      this.tooltipElement.remove();
-      this.tooltipElement = null;
-    }
-    
-    // Reset cursor style
-    if (this.label) {
-      this.label.style("cursor", "default");
-    }
-  }
-}
+          if

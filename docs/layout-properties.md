@@ -4,17 +4,37 @@ This document provides a comprehensive overview of all `layout` properties avail
 
 ## Table of Contents
 
-- [Common Layout Properties](#common-layout-properties)
-- [Node Type Specific Properties](#node-type-specific-properties)
-  - [BaseNode / RectangularNode](#basenode--rectangularnode)
-  - [CircleNode](#circlenode)
-  - [BaseContainerNode](#basecontainernode)
-  - [AdapterNode](#adapternode)
-  - [MartNode](#martnode)
-  - [FoundationNode](#foundationnode)
-  - [ColumnsNode](#columnsnode)
-  - [LaneNode](#lanenode)
-  - [GroupNode](#groupnode)
+- [FlowDash Layout Properties Reference](#flowdash-layout-properties-reference)
+  - [Table of Contents](#table-of-contents)
+  - [Common Layout Properties](#common-layout-properties)
+    - [`minimumSize`](#minimumsize)
+  - [Node Type Specific Properties](#node-type-specific-properties)
+    - [BaseNode / RectangularNode](#basenode--rectangularnode)
+      - [`layoutMode`](#layoutmode)
+    - [CircleNode](#circlenode)
+    - [BaseContainerNode](#basecontainernode)
+      - [`minimumSize`](#minimumsize-1)
+      - [`minimumColumnWidth`](#minimumcolumnwidth)
+    - [AdapterNode](#adapternode)
+      - [`displayMode`](#displaymode)
+      - [`mode`](#mode)
+      - [`arrangement`](#arrangement)
+    - [MartNode](#martnode)
+      - [`displayMode`](#displaymode-1)
+      - [`orientation`](#orientation)
+      - [`mode`](#mode-1)
+    - [FoundationNode](#foundationnode)
+      - [`displayMode`](#displaymode-2)
+      - [`orientation`](#orientation-1)
+      - [`mode`](#mode-2)
+    - [ColumnsNode](#columnsnode)
+      - [`minimumColumnWidth`](#minimumcolumnwidth-1)
+    - [LaneNode](#lanenode)
+    - [GroupNode](#groupnode)
+  - [Pre-render Layout Data](#pre-render-layout-data)
+    - [`prerender`](#prerender)
+  - [Summary Table](#summary-table)
+  - [Related Documentation](#related-documentation)
 
 ---
 
@@ -61,20 +81,56 @@ Controls how the node's width is calculated based on its text content.
 **Type:** `string`
 
 **Possible Values:**
-- `'default'` - Uses provided width or default (150px), expands to fit text with padding
-- `'auto-size'` - Calculates width based on text, minimum 60px
-- `'fixed-size'` - Uses exact dimensions without expansion based on text
+- `'default'` - Uses provided width or default (150px) as the **initial** width, then expands to fit text with padding. The node will never be smaller than the specified width, but will grow to accommodate longer text.
+- `'auto-size'` - Calculates width dynamically based on text content. Uses `layout.minimumWidth` (default: 60px) as the minimum width. The node size adjusts automatically as the text changes.
+- `'fixed-size'` - Uses exact dimensions specified in `layout.width` and `layout.height` without any expansion based on text. Text will be truncated with ellipsis and tooltip if it doesn't fit.
 
 **Default:** `'default'`
 
-**Example:**
+**Related Properties:**
+- `layout.minimumWidth` (number): For `auto-size` mode, sets the minimum width in pixels. Default: `60`
+- `layout.minimumHeight` (number): For `auto-size` mode, sets the minimum height in pixels. Default: node's `height` property
+- `layout.width` (number): For `fixed-size` mode, sets the exact width in pixels. Default: `150`
+- `layout.height` (number): For `fixed-size` mode, sets the exact height in pixels. Default: `20`
+
+**Example - Auto-size with custom minimum:**
 ```javascript
 {
   layout: {
-    layoutMode: 'auto-size'  // Node will resize to fit text
+    layoutMode: 'auto-size',
+    minimumWidth: 80,      // Won't shrink below 80px
+    minimumHeight: 30      // Won't shrink below 30px
   }
 }
 ```
+
+**Example - Fixed size:**
+```javascript
+{
+  layout: {
+    layoutMode: 'fixed-size',
+    width: 200,           // Exactly 200px wide
+    height: 50            // Exactly 50px tall
+  }
+}
+```
+
+**Example - Default mode with initial width:**
+```javascript
+{
+  width: 180,            // Initial width (will expand if text is longer)
+  layout: {
+    layoutMode: 'default'  // Will grow to fit text, but never below 180px
+  }
+}
+```
+
+**Behavior Summary:**
+| Mode | Width Calculation | Respects User Width | Text Truncation |
+|------|------------------|-------------------|----------------|
+| `default` | Initial width or 150px, expands for text | Yes (minimum) | No - expands instead |
+| `auto-size` | Text width + padding, min from `layout.minimumWidth` | Yes (minimum) | No - resizes instead |
+| `fixed-size` | Exact width from `layout.width` | Yes (exact) | Yes - shows tooltip |
 
 ---
 
