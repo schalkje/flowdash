@@ -451,4 +451,55 @@ export default class RectangularNode extends BaseNode {
         const connectionPoints = this.computeConnectionPoints(0, 0, width, height);
         Object.values(connectionPoints).forEach((point) => {
           const scope = this.connectionPointsGroup || this.element;
-          if
+          if (scope) {
+            scope
+              .select(`.connection-point.side-${point.side}`)
+              .attr("cx", point.x)
+              .attr("cy", point.y);
+          }
+        });
+        try {
+          if (this.settings.isDebug && this.element) {
+            const read = (side) => ({
+              side,
+              cx: parseFloat(this.element.select(`.connection-point.side-${side}`).attr('cx')),
+              cy: parseFloat(this.element.select(`.connection-point.side-${side}`).attr('cy')),
+            });
+          }
+        } catch {}
+      }
+    }
+  }
+
+  /**
+   * Add tooltip to show full text when truncated
+   * @param {string} fullText - The complete text to show in tooltip
+   */
+  addTooltip(fullText) {
+    if (!this.label || !fullText) return;
+    
+    // Remove any existing tooltip
+    this.removeTooltip();
+    
+    // Add SVG title element for tooltip
+    this.tooltipElement = this.label.append("title").text(fullText);
+    
+    // Add visual indication that tooltip is available (optional)
+    this.label.style("cursor", "help");
+  }
+
+  /**
+   * Remove tooltip from the text element
+   */
+  removeTooltip() {
+    if (this.tooltipElement) {
+      this.tooltipElement.remove();
+      this.tooltipElement = null;
+    }
+    
+    // Reset cursor style
+    if (this.label) {
+      this.label.style("cursor", "default");
+    }
+  }
+}
