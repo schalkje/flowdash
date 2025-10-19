@@ -626,6 +626,7 @@ export class HeaderZone extends BaseZone {
    */
   handleZoomClick(event) {
     event.stopPropagation();
+    event.preventDefault();
     
     if (this.node.isContainer) {
       this.node.collapsed = !this.node.collapsed;
@@ -652,6 +653,11 @@ export class HeaderZone extends BaseZone {
    * Handle text click
    */
   handleTextClick(event) {
+    // Don't propagate if click originated from zoom button
+    if (event.target.closest('.zoom-button')) {
+      return;
+    }
+    
     // Propagate to node click handler
     if (this.node.handleClicked) {
       this.node.handleClicked(event, this.node);
@@ -662,6 +668,11 @@ export class HeaderZone extends BaseZone {
    * Handle text double click
    */
   handleTextDblClick(event) {
+    // Don't propagate if click originated from zoom button
+    if (event.target.closest('.zoom-button')) {
+      return;
+    }
+    
     event.stopPropagation();
     // Propagate to node double click handler
     if (this.node.handleDblClicked) {
@@ -697,6 +708,11 @@ export class HeaderZone extends BaseZone {
    * Handle background click
    */
   handleBackgroundClick(event) {
+    // Don't propagate if click originated from zoom button
+    if (event.target.closest('.zoom-button')) {
+      return;
+    }
+    
     // Propagate to node click handler
     if (this.node.handleClicked) {
       this.node.handleClicked(event, this.node);
@@ -707,6 +723,11 @@ export class HeaderZone extends BaseZone {
    * Handle background double click
    */
   handleBackgroundDblClick(event) {
+    // Don't propagate if click originated from zoom button
+    if (event.target.closest('.zoom-button')) {
+      return;
+    }
+    
     event.stopPropagation();
     // Propagate to node double click handler
     if (this.node.handleDblClicked) {
