@@ -160,9 +160,6 @@ export class HeaderZone extends BaseZone {
         }
         
         if (isZoomButton) {
-          // IMMEDIATELY mark the event to prevent other handlers
-          event.__zoomButtonHandled = true;
-          
           event.stopPropagation();
           event.stopImmediatePropagation();
           event.preventDefault();
@@ -697,7 +694,7 @@ export class HeaderZone extends BaseZone {
    */
   handleTextClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
+    if (event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -713,7 +710,7 @@ export class HeaderZone extends BaseZone {
    */
   handleTextDblClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
+    if (event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -753,7 +750,7 @@ export class HeaderZone extends BaseZone {
    */
   handleBackgroundClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
+    if (event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -769,7 +766,7 @@ export class HeaderZone extends BaseZone {
    */
   handleBackgroundDblClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
+    if (event.target.closest('.zoom-button')) {
       return;
     }
     

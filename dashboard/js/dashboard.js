@@ -1530,11 +1530,6 @@ export class Dashboard {
   }
 
   selectNode(node, event = null) {
-    // Don't select if this was triggered by a zoom button click
-    if (event && event.__zoomButtonHandled) {
-      return;
-    }
-    
     // Clear any pending single click timer
     if (this._clickDelayTimer) {
       clearTimeout(this._clickDelayTimer);
