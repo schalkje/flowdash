@@ -397,7 +397,7 @@ export class Dashboard {
     await this.createDashboard(this.data, this.main.container);
     this.main.root = this._dashboardRoot;
 
-    this.main.root.onClick = (node) => this.selectNode(node);
+    this.main.root.onClick = (node, event) => this.selectNode(node, event);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
     this.main.root.onDisplayChange = () => {
       this.onMainDisplayChange();
@@ -559,7 +559,7 @@ export class Dashboard {
     // Phase 4: Zoom Setup
     const t4 = performance.now();
     this.main.zoom = this.initializeZoom();
-    this.main.root.onClick = (node) => this.selectNode(node);
+    this.main.root.onClick = (node, event) => this.selectNode(node, event);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
 
     // OPTIMIZATION #6: Defer minimap initialization to improve initial load time
@@ -1529,7 +1529,12 @@ export class Dashboard {
     return this.zoomToNode(node);
   }
 
-  selectNode(node) {
+  selectNode(node, event = null) {
+    // Don't select if this was triggered by a zoom button click
+    if (event && event.__zoomButtonHandled) {
+      return;
+    }
+    
     // Clear any pending single click timer
     if (this._clickDelayTimer) {
       clearTimeout(this._clickDelayTimer);

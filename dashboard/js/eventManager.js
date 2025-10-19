@@ -32,12 +32,20 @@ export class EventManager {
     const element = node.element;
     
     element.on("click", (event) => {
+      // Don't handle clicks that originated from zoom button
+      if (event.__zoomButtonHandled) {
+        return;
+      }
       event.stopPropagation();
   // Pass the original node through so bubbling preserves the clicked target
   node.handleClicked(event, node);
     });
     
     element.on("dblclick", (event) => {
+      // Don't handle double-clicks that originated from zoom button
+      if (event.__zoomButtonHandled) {
+        return;
+      }
       event.stopPropagation();
       try { event.preventDefault?.(); } catch {}
       // Pass the original node through so bubbling preserves the clicked target
@@ -65,7 +73,7 @@ export class EventManager {
   static handleNodeClick(node, event, originalNode = node) {
     // Always invoke handlers with the originally clicked node
     if (node.onClick) {
-      node.onClick(originalNode);
+      node.onClick(originalNode, event);
     } else if (node.parentNode) {
       this.handleNodeClick(node.parentNode, event, originalNode);
     } else {

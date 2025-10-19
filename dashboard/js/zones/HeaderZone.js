@@ -133,10 +133,53 @@ export class HeaderZone extends BaseZone {
    * Setup header interactions
    */
   setupInteractions() {
-    // Setup zoom button interactions
+    // Setup zoom button interactions FIRST with capture to intercept clicks early
     if (this.zoomButton) {
+      // Remove any existing D3 click handlers on the zoom button to prevent conflicts
+      this.zoomButton.on('click', null);
+      this.zoomButton.on('dblclick', null);
+      
+      // Get the zoom button group element (g.zoom-button)
+      const zoomButtonGroup = this.zoomButton.node();
+      
+      // CRITICAL: Attach handler to the NODE ELEMENT (highest ancestor) in capture phase
+      // This ensures it fires BEFORE the container's capture-phase handler
+      const nodeElement = this.node.element.node();
+      
+      const handleZoomButtonClick = (event) => {
+        // Check if click originated from zoom button or its children
+        let target = event.target;
+        let isZoomButton = false;
+        
+        while (target && target !== nodeElement) {
+          if (target === zoomButtonGroup || target.closest?.('.zoom-button') === zoomButtonGroup) {
+            isZoomButton = true;
+            break;
+          }
+          target = target.parentNode;
+        }
+        
+        if (isZoomButton) {
+          // IMMEDIATELY mark the event to prevent other handlers
+          event.__zoomButtonHandled = true;
+          
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          
+          // Handle the zoom action
+          this.handleZoomClick(event);
+        }
+      };
+      
+      // Attach to node element in capture phase - this will fire FIRST
+      nodeElement.addEventListener('click', handleZoomButtonClick, true);
+      
+      // Store for cleanup
+      this._zoomButtonClickHandler = handleZoomButtonClick;
+      
+      // Keep hover handlers on D3 selection (they don't need capture)
       this.zoomButton
-        .on('click', (event) => this.handleZoomClick(event))
         .on('mouseenter', (event) => this.handleZoomMouseEnter(event))
         .on('mouseleave', (event) => this.handleZoomMouseLeave(event));
     }
@@ -627,7 +670,7 @@ export class HeaderZone extends BaseZone {
   handleZoomClick(event) {
     event.stopPropagation();
     event.preventDefault();
-    
+    // Event propagation is already stopped in setupInteractions
     if (this.node.isContainer) {
       this.node.collapsed = !this.node.collapsed;
     }
@@ -654,7 +697,7 @@ export class HeaderZone extends BaseZone {
    */
   handleTextClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.target.closest('.zoom-button')) {
+    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -670,7 +713,7 @@ export class HeaderZone extends BaseZone {
    */
   handleTextDblClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.target.closest('.zoom-button')) {
+    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -710,7 +753,7 @@ export class HeaderZone extends BaseZone {
    */
   handleBackgroundClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.target.closest('.zoom-button')) {
+    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -726,7 +769,7 @@ export class HeaderZone extends BaseZone {
    */
   handleBackgroundDblClick(event) {
     // Don't propagate if click originated from zoom button
-    if (event.target.closest('.zoom-button')) {
+    if (event.__zoomButtonHandled || event.target.closest('.zoom-button')) {
       return;
     }
     
@@ -787,6 +830,13 @@ export class HeaderZone extends BaseZone {
    * Clean up resources when zone is destroyed
    */
   destroy() {
+    // Clean up zoom button click handler
+    if (this._zoomButtonClickHandler && this.node?.element?.node) {
+      const nodeElement = this.node.element.node();
+      nodeElement.removeEventListener('click', this._zoomButtonClickHandler, true);
+      this._zoomButtonClickHandler = null;
+    }
+    
     // Clear any pending timers
     if (this._updateBatchTimer) {
       clearTimeout(this._updateBatchTimer);

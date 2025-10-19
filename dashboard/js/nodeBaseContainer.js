@@ -596,12 +596,18 @@ export default class BaseContainerNode extends BaseNode {
 
       // Capture-phase click: select this container on background clicks
       this.element.on('click.container-capture', (event) => {
+        // Don't handle clicks that originated from zoom button
+        if (event.__zoomButtonHandled) {
+          return;
+        }
         if (isFromChildNode(event)) return; // let child node handle it
         this.handleClicked(event, this);
       }, true);
 
       // Capture-phase dblclick: forward to this container (zoom to container)
       this.element.on('dblclick.container-capture', (event) => {
+        // Don't handle double-clicks that originated from zoom button
+        if (event.__zoomButtonHandled) return;
         if (isFromChildNode(event)) return; // let child node handle it
         this.handleDblClicked(event, this);
       }, true);
