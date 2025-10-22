@@ -11,41 +11,160 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
 ```javascript
 {
   settings: {
-    // Neighbor Selection
+    // ============================================================
+    // NEIGHBOR SELECTION
+    // ============================================================
     selector: { 
-      incomming: 1,    // Depth of incoming edge traversal (default: 1)
-      outgoing: 1      // Depth of outgoing edge traversal (default: 1)
+      // Type: number (integer)
+      // Range: 0 to unlimited (practical range: 0-10)
+      // Default: 1
+      // UI: Number input / Slider
+      // Description: Controls how many levels of incoming edges to traverse when selecting neighbors.
+      //              0 = no incoming neighbors, 1 = direct parents, 2 = parents + grandparents, etc.
+      incomming: 1,
+      
+      // Type: number (integer)
+      // Range: 0 to unlimited (practical range: 0-10)
+      // Default: 1
+      // UI: Number input / Slider
+      // Description: Controls how many levels of outgoing edges to traverse when selecting neighbors.
+      //              0 = no outgoing neighbors, 1 = direct children, 2 = children + grandchildren, etc.
+      outgoing: 1
     },
     
-    // Display Options
-    showBoundingBox: true,              // Show selection bounding box (default: true)
-    showCenterMark: false,              // Show center mark on canvas (default: false)
-    showConnectionPoints: false,        // Show connection points on nodes (default: false)
-    showInnerZoneRect: false,           // Show inner zone rectangles (default: false)
-    showGhostlines: false,              // Show edge ghostlines (default: false)
+    // ============================================================
+    // DISPLAY OPTIONS
+    // ============================================================
     
-    // Zoom Behavior
-    zoomToRoot: true,                   // Auto-fit all nodes on load (default: true)
+    // Type: boolean
+    // Values: true | false
+    // Default: true
+    // UI: Toggle / Checkbox
+    // Description: Shows or hides the bounding box around selected nodes. The bounding box is a 
+    //              visual indicator that highlights the area containing all currently selected nodes.
+    showBoundingBox: true,
     
-    // Status & Collapse Behavior
-    toggleCollapseOnStatusChange: true, // Auto-collapse nodes on status change (default: true for flowdash-js/bundle, false for demos)
-    cascadeOnStatusChange: true,        // Cascade status changes to children (default: true for flowdash-js/bundle, false for demos)
+    // Type: boolean
+    // Values: true | false
+    // Default: false
+    // UI: Toggle / Checkbox
+    // Description: Shows or hides a center mark indicator on the canvas. Useful for debugging 
+    //              and understanding the canvas coordinate system and zoom center point.
+    showCenterMark: false,
     
-    // Edge Rendering
-    curved: false,                      // Use curved edges instead of straight (default: false)
-    curveMargin: 0.1,                   // Curve margin for curved edges (default: 0.1 if curved, 0 otherwise)
-    showEdges: true,                    // Show edges (default: true)
+    // Type: boolean
+    // Values: true | false
+    // Default: false
+    // UI: Toggle / Checkbox
+    // Description: Shows or hides connection points on nodes where edges attach. Useful for 
+    //              debugging edge routing and understanding how edges connect to node boundaries.
+    showConnectionPoints: false,
     
-    // Layout
-    containerMargin: {                  // Margin around container content
-      top: 8,
-      right: 8,
-      bottom: 8,
-      left: 8
+    // Type: boolean
+    // Values: true | false
+    // Default: false
+    // UI: Toggle / Checkbox
+    // Description: Shows or hides the inner zone rectangles of container nodes. Inner zones 
+    //              define the content area inside containers. Useful for debugging layout issues.
+    showInnerZoneRect: false,
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: false
+    // UI: Toggle / Checkbox
+    // Description: Shows or hides ghostlines for edges. Ghostlines are subtle visual guides that 
+    //              help trace edge paths, especially useful for complex diagrams with many edges.
+    showGhostlines: false,
+    
+    // ============================================================
+    // ZOOM BEHAVIOR
+    // ============================================================
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: true
+    // UI: Toggle / Checkbox
+    // Description: When enabled, automatically fits all nodes into view when the diagram is first 
+    //              loaded. When disabled, the diagram loads at 100% zoom at position (0,0).
+    zoomToRoot: true,
+    
+    // ============================================================
+    // STATUS & COLLAPSE BEHAVIOR
+    // ============================================================
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: true (flowdash-js/bundle), false (demos)
+    // UI: Toggle / Checkbox
+    // Description: When enabled, automatically collapses container nodes when their status changes.
+    //              This helps keep the diagram clean by hiding details of nodes that change state.
+    toggleCollapseOnStatusChange: true,
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: true (flowdash-js/bundle), false (demos)
+    // UI: Toggle / Checkbox
+    // Description: When enabled, status changes cascade down to all child nodes within containers.
+    //              When disabled, only the clicked node's status changes, preserving child states.
+    cascadeOnStatusChange: true,
+    
+    // ============================================================
+    // EDGE RENDERING
+    // ============================================================
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: false
+    // UI: Toggle / Checkbox
+    // Description: Controls edge path rendering style. When true, edges are drawn with smooth curves.
+    //              When false, edges are drawn as straight line segments with right angles.
+    curved: false,
+    
+    // Type: number (float)
+    // Range: 0.0 to 1.0 (practical range)
+    // Default: 0.1 (when curved=true), 0 (when curved=false)
+    // UI: Number input / Slider
+    // Description: Controls the curve intensity for curved edges. Higher values create more pronounced
+    //              curves. Only applicable when curved=true. Value represents the control point offset
+    //              as a fraction of the edge length.
+    curveMargin: 0.1,
+    
+    // Type: boolean
+    // Values: true | false
+    // Default: true
+    // UI: Toggle / Checkbox
+    // Description: Master switch to show or hide all edges in the diagram. When false, only nodes
+    //              are visible, which can be useful for focusing on node layout and hierarchy.
+    showEdges: true,
+    
+    // ============================================================
+    // LAYOUT
+    // ============================================================
+    
+    // Type: object {top, right, bottom, left}
+    // Each property type: number (integer)
+    // Range: 0 to 100 (pixels, practical range)
+    // Default: {top: 8, right: 8, bottom: 8, left: 8}
+    // UI: Number inputs (4 fields) or unified margin control
+    // Description: Defines the internal padding/margin around the content area within container nodes.
+    //              Controls spacing between container boundaries and their child content.
+    containerMargin: {
+      top: 8,      // Top margin in pixels
+      right: 8,    // Right margin in pixels
+      bottom: 8,   // Bottom margin in pixels
+      left: 8      // Left margin in pixels
     },
-    nodeSpacing: {                      // Spacing between nodes
-      horizontal: 20,
-      vertical: 10
+    
+    // Type: object {horizontal, vertical}
+    // Each property type: number (integer)
+    // Range: 0 to 200 (pixels, practical range)
+    // Default: {horizontal: 20, vertical: 10}
+    // UI: Number inputs (2 fields)
+    // Description: Defines the spacing between adjacent nodes in the layout algorithm.
+    //              Horizontal controls left-right spacing, vertical controls top-bottom spacing.
+    nodeSpacing: {
+      horizontal: 20,  // Horizontal spacing between nodes (in pixels)
+      vertical: 10     // Vertical spacing between nodes (in pixels)
     },
     divRatio: null,                     // Aspect ratio (auto-calculated from container if not specified)
     
@@ -59,18 +178,75 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // Debug Options
     isDebug: false,                     // Enable debug visualizations (default: false)
     
-    // Minimap Configuration
+    // ============================================================
+    // MINIMAP CONFIGURATION
+    // ============================================================
     minimap: {
-      enabled: true,                    // Enable minimap (default: true)
-      mode: "always",                   // Display mode: "hidden" | "always" | "hover" (default: "always")
-      position: "bottom-right",         // Position: "bottom-right" | "bottom-left" | "top-right" | "top-left"
-      size: "m",                        // Size token: "s" (180px) | "m" (240px) | "l" (400px) or {width: number}
-      opacity: 1,                       // Minimap opacity (default: 1)
-      collapsed: false,                 // Start collapsed (default: false)
-      pinned: false,                    // Pin minimap open (default: false)
+      // Type: boolean
+      // Values: true | false
+      // Default: true
+      // UI: Toggle / Checkbox
+      // Description: Master switch to enable or disable the minimap feature entirely. When disabled,
+      //              no minimap will be shown regardless of other minimap settings.
+      enabled: true,
+      
+      // Type: string (enum)
+      // Values: "hidden" | "always" | "hover"
+      // Default: "always"
+      // UI: Dropdown / Radio buttons
+      // Description: Controls minimap visibility behavior. 
+      //              - "hidden": minimap is never shown
+      //              - "always": minimap is always visible
+      //              - "hover": minimap appears only when hovering over its area
+      mode: "always",
+      
+      // Type: string (enum)
+      // Values: "bottom-right" | "bottom-left" | "top-right" | "top-left"
+      // Default: "bottom-right"
+      // UI: Dropdown / Position picker (4-quadrant selector)
+      // Description: Controls the corner position where the minimap is anchored on the canvas.
+      position: "bottom-right",
+      
+      // Type: string (enum) | object {width: number}
+      // Values: "s" (180px) | "m" (240px) | "l" (400px) | {width: number}
+      // Default: "m"
+      // UI: Dropdown for presets + optional custom number input
+      // Description: Controls the minimap dimensions. Use size tokens for standard sizes, or provide
+      //              a custom object with width in pixels for custom sizing. Height is auto-calculated.
+      size: "m",
+      
+      // Type: number (float)
+      // Range: 0.0 to 1.0
+      // Default: 1
+      // UI: Slider / Number input
+      // Description: Controls the opacity/transparency of the minimap. 1.0 is fully opaque, 0.0 is 
+      //              fully transparent (invisible). Useful for reducing visual clutter.
+      opacity: 1,
+      
+      // Type: boolean
+      // Values: true | false
+      // Default: false
+      // UI: Toggle / Checkbox
+      // Description: Controls the initial state of the minimap. When true, minimap starts in collapsed
+      //              state (showing only the collapsed icon). User can click to expand.
+      collapsed: false,
+      
+      // Type: boolean
+      // Values: true | false
+      // Default: false
+      // UI: Toggle / Checkbox
+      // Description: When enabled, the minimap remains visible and cannot be auto-hidden (if mode="hover").
+      //              Acts as a "lock open" feature to keep the minimap permanently visible.
+      pinned: false,
       
       collapsedIcon: {
-        position: "bottom-right"        // Collapsed icon position
+        // Type: string (enum)
+        // Values: "bottom-right" | "bottom-left" | "top-right" | "top-left"
+        // Default: "bottom-right"
+        // UI: Dropdown / Position picker (4-quadrant selector)
+        // Description: Controls the corner position of the collapsed minimap icon when minimap is collapsed.
+        //              Typically matches the main minimap position for consistent placement.
+        position: "bottom-right"
       },
       
       hover: {

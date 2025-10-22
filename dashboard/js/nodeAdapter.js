@@ -65,7 +65,38 @@ export default class AdapterNode extends BaseContainerNode {
       nodeData.width = 176; // 80 + 80 + 20 + 8 + 8
     }
     
-    if (!nodeData.layout.mode) nodeData.layout.mode = AdapterMode.FULL;
+    // Set default mode if not specified, based on children presence
+    // if none of the required children are present, default to FULL
+    // if three children are present, default to FULL
+    // if two children are present, infer mode based on the names STAGING, ARCHIVE, TRANSFORM (see below in code)
+    // if one child is present, default to ARCHIVE_ONLY
+    if (!nodeData.layout.mode) {
+      if (nodeData.children.length === 1) {
+        nodeData.layout.mode = AdapterMode.ARCHIVE_ONLY;
+        nodeData.layout.arrangement = 5;
+        nodeData.layout.displayMode = DisplayMode.ROLE;
+      } else if (nodeData.children.length === 3 || nodeData.children.length === 0) {
+        nodeData.layout.mode = AdapterMode.FULL;
+        nodeData.layout.arrangement = 1;
+        nodeData.layout.displayMode = DisplayMode.ROLE;
+      } else { // (nodeData.children.length === 2)
+        const childRoles = nodeData.children.map(child => (child.role || '').toLowerCase());
+        if (childRoles.includes('staging') && childRoles.includes('archive')) {
+          nodeData.layout.mode = AdapterMode.STAGING_ARCHIVE;
+          nodeData.layout.arrangement = 4;
+          nodeData.layout.displayMode = DisplayMode.ROLE;
+        } else if (childRoles.includes('staging') && childRoles.includes('transform')) {
+          nodeData.layout.mode = AdapterMode.STAGING_TRANSFORM;
+          nodeData.layout.arrangement = 4;
+          nodeData.layout.displayMode = DisplayMode.ROLE;
+        } else {
+          nodeData.layout.mode = AdapterMode.FULL;
+          nodeData.layout.arrangement = 1;
+          nodeData.layout.displayMode = DisplayMode.ROLE;
+        }
+      } 
+    }
+
     
     if (nodeData.layout.mode === AdapterMode.STAGING_ARCHIVE || 
         nodeData.layout.mode === AdapterMode.STAGING_TRANSFORM) {
@@ -155,6 +186,7 @@ export default class AdapterNode extends BaseContainerNode {
             type: "node",
             width: isRoleMode ? 80 : 150,
             height: 44,
+            layout: { layoutMode: 'fixed-size' }
           };
           nodeData.children.push(childData);
         }
@@ -173,6 +205,7 @@ export default class AdapterNode extends BaseContainerNode {
           type: "node", // rectangular node type
           width: isRoleMode ? 80 : 150,
           height: 44,
+          layout: { layoutMode: 'fixed-size' }
         };
         nodeData.children.push(childData);
       });
@@ -363,6 +396,7 @@ export default class AdapterNode extends BaseContainerNode {
           type: "node", // Use "node" type for rectangular nodes
           width: this.data.layout.displayMode === DisplayMode.ROLE ? 80 : 150,
           height: 44,
+          layout: { layoutMode: 'fixed-size' }
         };
         this.data.children.push(childData);
       }
