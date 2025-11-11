@@ -564,9 +564,22 @@ export class Dashboard {
     this.main.zoom = this.initializeZoom();
     this.main.root.onClick = (node, event) => this.selectNode(node, event);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+    
+    // Set up display change callback on root (for collapse/expand zoom behavior)
+    this.main.root.onDisplayChange = () => {
+      this.onMainDisplayChange();
+    };
 
     // Add background double-click handler to zoom to root
     this.setupBackgroundDoubleClick();
+    
+    // Trigger initial zoom to root (using same logic as double-click)
+    // This is deferred to allow the DOM to fully render
+    if (this.data?.settings?.zoomToRoot) {
+      setTimeout(() => {
+        this.onMainDisplayChange();
+      }, 100);
+    }
 
     // OPTIMIZATION #6: Defer minimap initialization to improve initial load time
     // Clean up any orphaned elements but DON'T initialize minimap yet

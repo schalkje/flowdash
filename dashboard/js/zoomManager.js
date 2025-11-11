@@ -125,7 +125,15 @@ export class ZoomManager {
 
     let target;
     if (isInitial || initialPhase) {
-      // Initial load and early stabilization: always snap to baseline fit
+      // Initial load and early stabilization: 
+      // If zoomToRoot is enabled and we have a root node, use handleNodeDblClick behavior
+      // Otherwise, always snap to baseline fit
+      if (isInitial && this.dashboard.data?.settings?.zoomToRoot && this.dashboard.main?.root) {
+        // Use the same logic as double-clicking the background/root node
+        // This will be handled after the transform is applied
+        console.log('[ZoomManager] Initial zoom - will trigger handleNodeDblClick on root');
+        this.dashboard._shouldZoomToRootOnInit = true;
+      }
       target = fitTransform;
     } else if (this.approximatelyEqual(oldTransform.k, oldFitK)) {
       // User was at 100% → snap to new baseline
@@ -134,6 +142,19 @@ export class ZoomManager {
       target = this.preserveKAndRecenter(oldTransform, oldBounds, bounds);
     }
     this.applyTransform(target, { animate: false });
+    
+    // After applying the initial transform, trigger zoom to root if requested
+    if (this.dashboard._shouldZoomToRootOnInit) {
+      console.log('[ZoomManager] Triggering zoom to root node');
+      this.dashboard._shouldZoomToRootOnInit = false;
+      // Use a short delay to ensure the initial transform is applied
+      setTimeout(() => {
+        if (this.dashboard.main?.root) {
+          console.log('[ZoomManager] Calling handleNodeDblClick on root node:', this.dashboard.main.root.id);
+          this.dashboard.handleNodeDblClick(this.dashboard.main.root, null);
+        }
+      }, 100);
+    }
   }
 
   zoomReset() {
