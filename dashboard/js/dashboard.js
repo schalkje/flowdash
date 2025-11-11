@@ -1727,8 +1727,9 @@ export class Dashboard {
   }
 
   // Double-click behavior:
-  // - If a neighborhood bbox is active and the dblclick is inside it, zoom to bbox
-  // - Otherwise zoom to node
+  // Double-click handler:
+  // - If a neighborhood bbox is active and the dblclick is on a node in that neighborhood, zoom to bbox
+  // - Otherwise zoom to the specific node that was clicked
   handleNodeDblClick(node, event) {
     // Cancel any pending single click
     if (this._clickDelayTimer) {
@@ -1737,23 +1738,21 @@ export class Dashboard {
     }
 
     const nb = this.selection.neighborhood;
+    
+    // Only use the existing neighborhood bbox if we're double-clicking on a node that's already
+    // part of that neighborhood (not a different node that happens to be spatially inside it)
     if (nb && nb.boundingBox) {
-      // If an event is available, determine pointer in SVG coordinates
-      // Fallback: if the node is part of the neighborhood, consider it inside
+      // Check if the clicked node is part of the neighborhood
       const insideByNode = nb.nodes && nb.nodes.indexOf(node) !== -1;
-      let insideByPoint = false;
-      try {
-        if (event && this.main.container) {
-          const [px, py] = d3.pointer(event, this.main.container.node());
-          const b = nb.boundingBox;
-          insideByPoint = px >= b.x && px <= b.x + b.width && py >= b.y && py <= b.y + b.height;
-        }
-      } catch {}
-      if (insideByPoint || insideByNode) {
+      
+      if (insideByNode) {
+        // Double-clicking on a node that's part of the active neighborhood - zoom to neighborhood
         this.zoomToBoundingBox(nb.boundingBox);
         return;
       }
+      // Otherwise, fall through to zoom to the specific node that was clicked
     }
+    
     // Default: zoom to the specific node; if node has no neighbors, ensure a sane bbox
     const neighbors = node.getNeighbors(this.data.settings.selector);
     const onlySelf =
