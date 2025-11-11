@@ -123,17 +123,11 @@ export  function createEdges(rootNode, edges, settings, nodeMap = null) {
       isActive: edgeData.isActive !== false
     };
     
-    // Explicitly ignore sourceName and targetName
-    // Only use the numeric source and target properties
-    if (typeof normalized.source !== 'number') {
-      console.error('Edge has invalid source (not a number):', edgeData);
-      return null;
+    // Preserve the id field if it exists
+    if (edgeData.id) {
+      normalized.id = edgeData.id;
     }
-    if (typeof normalized.target !== 'number') {
-      console.error('Edge has invalid target (not a number):', edgeData);
-      return null;
-    }
-    
+        
     return normalized;
   }).filter(edge => edge !== null);
 

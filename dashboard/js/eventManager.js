@@ -65,7 +65,7 @@ export class EventManager {
   static handleNodeClick(node, event, originalNode = node) {
     // Always invoke handlers with the originally clicked node
     if (node.onClick) {
-      node.onClick(originalNode);
+      node.onClick(originalNode, event);
     } else if (node.parentNode) {
       this.handleNodeClick(node.parentNode, event, originalNode);
     } else {

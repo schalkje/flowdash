@@ -27,6 +27,22 @@ export const demoData = {
       status: "Updating"
     },
     {
+    id: "adapter1",
+    label: "adapter Node",
+    type: "adapter",
+    // Node-specific properties
+    code: "N1",
+    status: "Ready",
+    // Layout properties
+    layout: {
+        mode: "full", // or "role", "code"
+    },
+    // Child nodes (for container nodes)
+    children: [],
+    // Parent reference
+    parentId: null
+},
+    {
       id: "node3",
       type: "rect", 
       label: "Storage",
