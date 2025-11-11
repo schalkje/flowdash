@@ -409,6 +409,9 @@ export class Dashboard {
       this.main.zoom = this.initializeZoom();
     }
 
+    // Add background double-click handler to zoom to root
+    this.setupBackgroundDoubleClick();
+
     // OPTIMIZATION #6: Defer minimap initialization during setData
     // Clean up any orphaned elements first, but keep minimap working for data updates
     this.cleanupOrphanedElements();
@@ -561,6 +564,9 @@ export class Dashboard {
     this.main.zoom = this.initializeZoom();
     this.main.root.onClick = (node, event) => this.selectNode(node, event);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
+
+    // Add background double-click handler to zoom to root
+    this.setupBackgroundDoubleClick();
 
     // OPTIMIZATION #6: Defer minimap initialization to improve initial load time
     // Clean up any orphaned elements but DON'T initialize minimap yet
@@ -1333,6 +1339,49 @@ export class Dashboard {
     d3.select("#zoom-node").on("click", () => this.zoomToRoot(dashboard));
 
     return zoom;
+  }
+
+  setupBackgroundDoubleClick() {
+    // Add double-click handler to the SVG element using native DOM addEventListener
+    // to ensure it captures all double-click events
+    const svgElement = this.main.svg.node();
+    console.log('[setupBackgroundDoubleClick] Setting up handler on:', svgElement);
+    
+    svgElement.addEventListener('dblclick', (event) => {
+      console.log('[Background dblclick] event fired, target:', event.target);
+      
+      // Check if the actual target is a node or inside a node
+      let target = event.target;
+      let foundNode = null;
+      
+      // Walk up the DOM tree looking for an element with __node
+      while (target && target !== svgElement) {
+        if (target.__node) {
+          foundNode = target.__node;
+          console.log('[Background dblclick] Found node:', foundNode.id);
+          break;
+        }
+        target = target.parentNode;
+      }
+      
+      // If we found a node, don't handle it here - the node's handler already dealt with it
+      if (foundNode) {
+        console.log('[Background dblclick] Ignoring - node handler will process it');
+        return;
+      }
+      
+      // No node found - clicked on background (empty space)
+      console.log('[Background dblclick] Background clicked - zooming to root');
+      
+      if (this.main.root) {
+        this.handleNodeDblClick(this.main.root, event);
+      } else {
+        // Fallback: just zoom to root if no root node
+        this.zoomToRoot();
+      }
+    });
+    
+    console.log('[setupBackgroundDoubleClick] Handler installed');
   }
 
   onDragUpdate() {}
