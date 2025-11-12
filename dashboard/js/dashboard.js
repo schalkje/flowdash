@@ -340,7 +340,6 @@ export class Dashboard {
   }
 
   getContentBBox() {
-    // Prefer DOM-accurate bounding box to account for nested transforms and collapsed containers
     try {
       if (this.main?.root) {
         const nodes = this.main.root.getAllNodes(false);
@@ -1978,20 +1977,14 @@ export function computeBoundingBox(dashboard, nodes) {
     if (useEffectiveSize) {
       const effectiveWidth = node.getEffectiveWidth();
       const effectiveHeight = node.getEffectiveHeight();
-      // Convert from top-left corner (DOM bbox) to center-based bounds
-      const centerX = dimensions.x + dimensions.width / 2;
-      const centerY = dimensions.y + dimensions.height / 2;
-      minX = Math.min(minX, centerX - effectiveWidth / 2);
-      minY = Math.min(minY, centerY - effectiveHeight / 2);
-      maxX = Math.max(maxX, centerX + effectiveWidth / 2);
-      maxY = Math.max(maxY, centerY + effectiveHeight / 2);
+      // Use SVG world coordinates (node.x, node.y), not DOM bbox coordinates
+      updateBounds(node.x, node.y, effectiveWidth, effectiveHeight);
       return;
     }
     
-    minX = Math.min(minX, dimensions.x);
-    minY = Math.min(minY, dimensions.y);
-    maxX = Math.max(maxX, dimensions.x + dimensions.width);
-    maxY = Math.max(maxY, dimensions.y + dimensions.height);
+    // Use SVG world coordinates (node.x, node.y) with DOM-measured dimensions
+    // This ensures we use the node's actual position in the SVG coordinate system
+    updateBounds(node.x, node.y, dimensions.width, dimensions.height);
   });
 
   return {

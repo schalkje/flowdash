@@ -109,7 +109,7 @@ export class Minimap {
       case 's': return 180;
       case 'l': return 400;
       case 'm':
-      default: return 240;
+      default: return 244;
     }
   }
 
@@ -535,7 +535,7 @@ export class Minimap {
     const padding = 12;
     // Use monitor pixel sizing for cockpit DIV
     const sizePx = {
-      width: this.targetWidthPx || 240,
+      width: this.targetWidthPx || 244,
       height: this.targetHeightPx || 160
     };
     const iconSize = { width: 20, height: 14 };

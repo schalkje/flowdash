@@ -458,6 +458,7 @@ export default class BaseContainerNode extends BaseNode {
         });
       }
     } catch {}
+
     this.suspenseDisplayChange = false;
   }
 

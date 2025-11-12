@@ -49,12 +49,6 @@ export default class BaseNode {
     this.zoneManager = null;
     this._updatingCollapseState = false;
 
-    // Set default values for x, y, width, and height
-    this.x ??= 0;
-    this.y ??= 0;
-    this.data.width ??= 60;
-    this.data.height ??= 60;
-
     // Apply pre-render position if available
     if (nodeData.prerender) {
       this.x = nodeData.prerender.x;
@@ -63,6 +57,11 @@ export default class BaseNode {
       this.data.height = nodeData.prerender.height;
       this._hasPrerenderData = true;
     } else {
+      // Read initial position from nodeData, with defaults
+      this.x = nodeData.x ?? 0;
+      this.y = nodeData.y ?? 0;
+      this.data.width ??= 60;
+      this.data.height ??= 60;
       this._hasPrerenderData = false;
     }
   }
