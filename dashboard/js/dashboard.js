@@ -344,7 +344,7 @@ export class Dashboard {
       if (this.main?.root) {
         const nodes = this.main.root.getAllNodes(false);
         if (nodes && nodes.length) {
-          const bbox = computeBoundingBox(this, nodes);
+          const bbox = computeContentBounds(this, nodes);
           if (
             bbox &&
             Number.isFinite(bbox.x) &&
@@ -1531,7 +1531,7 @@ export class Dashboard {
     if (!this.main.root) return;
     const allNodes = this.main.root.getAllNodes(false);
     if (!allNodes || allNodes.length === 0) return;
-    const bbox = computeBoundingBox(this, allNodes);
+    const bbox = computeContentBounds(this, allNodes);
     const { fitK, fitTransform } = this.zoomManager.computeFit(bbox);
     this.main.fitK = fitK || 1.0;
     this.main.fitTransform = fitTransform;
@@ -1917,6 +1917,82 @@ export function getImmediateNeighbors(baseNode, graphData) {
   return neighbors;
 }
 
+/**
+ * Compute content bounding box using SVG world coordinates
+ * Used for zoom/fit operations after layout changes
+ */
+export function computeContentBounds(dashboard, nodes) {
+  const padding = 2;
+
+  let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity];
+
+  const updateBounds = (x, y, width, height) => {
+    minX = Math.min(minX, x - width / 2);
+    minY = Math.min(minY, y - height / 2);
+    maxX = Math.max(maxX, x + width / 2);
+    maxY = Math.max(maxY, y + height / 2);
+  };
+
+  nodes.forEach((node) => {
+    const useEffectiveSize = node?.isContainer && node?.collapsed;
+    
+    let dimensions;
+    try {
+      dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
+    } catch {
+      dimensions = null;
+    }
+    
+    if (!dimensions || !isFinite(dimensions.width) || !isFinite(dimensions.height)) {
+      const hasDom = !!(node?.element && typeof node.element.node === "function" && node.element.node());
+      const isVisible = node?.visible !== false;
+      if (!hasDom || !isVisible) {
+        return;
+      }
+      const nx = typeof node.x === "number" ? node.x : 0;
+      const ny = typeof node.y === "number" ? node.y : 0;
+      const nw =
+        typeof node.getEffectiveWidth === "function"
+          ? node.getEffectiveWidth()
+          : node.data && typeof node.data.width === "number"
+          ? node.data.width
+          : typeof node.width === "number"
+          ? node.width
+          : 0;
+      const nh =
+        typeof node.getEffectiveHeight === "function"
+          ? node.getEffectiveHeight()
+          : node.data && typeof node.data.height === "number"
+          ? node.data.height
+          : typeof node.height === "number"
+          ? node.height
+          : 0;
+      updateBounds(nx, ny, nw, nh);
+      return;
+    }
+    
+    // Use SVG world coordinates for content bounds
+    if (useEffectiveSize) {
+      const effectiveWidth = node.getEffectiveWidth();
+      const effectiveHeight = node.getEffectiveHeight();
+      updateBounds(node.x, node.y, effectiveWidth, effectiveHeight);
+    } else {
+      updateBounds(node.x, node.y, dimensions.width, dimensions.height);
+    }
+  });
+
+  return {
+    x: minX - padding,
+    y: minY - padding,
+    width: maxX - minX + 2 * padding,
+    height: maxY - minY + 2 * padding,
+  };
+}
+
+/**
+ * Compute visual bounding box using DOM coordinates
+ * Used for selection rectangle display
+ */
 export function computeBoundingBox(dashboard, nodes) {
   const padding = 2;
 
@@ -1930,7 +2006,6 @@ export function computeBoundingBox(dashboard, nodes) {
   };
 
   nodes.forEach((node) => {
-    // For collapsed containers, prefer effective size over DOM bbox to avoid stale dimensions
     const useEffectiveSize = node?.isContainer && node?.collapsed;
     
     let dimensions;
@@ -1973,18 +2048,21 @@ export function computeBoundingBox(dashboard, nodes) {
       return;
     }
     
-    // For collapsed containers, use DOM position but effective size to avoid stale height
+    // For collapsed containers, use DOM position with effective size
     if (useEffectiveSize) {
       const effectiveWidth = node.getEffectiveWidth();
       const effectiveHeight = node.getEffectiveHeight();
-      // Use SVG world coordinates (node.x, node.y), not DOM bbox coordinates
-      updateBounds(node.x, node.y, effectiveWidth, effectiveHeight);
+      const centerX = dimensions.x + dimensions.width / 2;
+      const centerY = dimensions.y + dimensions.height / 2;
+      updateBounds(centerX, centerY, effectiveWidth, effectiveHeight);
       return;
     }
     
-    // Use SVG world coordinates (node.x, node.y) with DOM-measured dimensions
-    // This ensures we use the node's actual position in the SVG coordinate system
-    updateBounds(node.x, node.y, dimensions.width, dimensions.height);
+    // Use DOM coordinates for visual selection
+    minX = Math.min(minX, dimensions.x);
+    minY = Math.min(minY, dimensions.y);
+    maxX = Math.max(maxX, dimensions.x + dimensions.width);
+    maxY = Math.max(maxY, dimensions.y + dimensions.height);
   });
 
   return {
