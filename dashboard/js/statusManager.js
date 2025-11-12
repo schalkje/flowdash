@@ -27,6 +27,15 @@ export class StatusManager {
       return NodeStatus.UNKNOWN;
     }
     
+    // Special case: if children are only SKIPPED and/or UPDATED, return UPDATED
+    const uniqueStatuses = [...new Set(statuses)];
+    const onlySkippedAndUpdated = uniqueStatuses.every(s => 
+      s === NodeStatus.SKIPPED || s === NodeStatus.UPDATED
+    );
+    if (onlySkippedAndUpdated && uniqueStatuses.length > 0) {
+      return NodeStatus.UPDATED;
+    }
+    
     // Priority order: Error > Warning > Delayed > Unknown > Updating > Updated > Skipped > Ready
     const priority = [
       NodeStatus.ERROR,
@@ -54,6 +63,44 @@ export class StatusManager {
     }
     
     return [NodeStatus.READY, NodeStatus.DISABLED, NodeStatus.UPDATED, NodeStatus.SKIPPED].includes(status);
+  }
+  
+  /**
+   * Determines if a container should collapse based on its children's statuses
+   * Rules:
+   * 1. Collapse when all non-disabled children share the same status
+   * 2. Collapse when children are only SKIPPED and/or UPDATED (any combination)
+   * 
+   * @param {Array} childStatuses - Array of child node statuses
+   * @param {Object} settings - Settings object
+   * @returns {boolean} - True if container should collapse
+   */
+  static shouldContainerCollapse(childStatuses, settings) {
+    if (!settings.toggleCollapseOnStatusChange || childStatuses.length === 0) {
+      return false;
+    }
+    
+    // Filter out DISABLED statuses
+    const nonDisabledStatuses = childStatuses.filter(s => s !== NodeStatus.DISABLED);
+    
+    if (nonDisabledStatuses.length === 0) {
+      return false; // All disabled, don't collapse
+    }
+    
+    // Get unique statuses
+    const uniqueStatuses = [...new Set(nonDisabledStatuses)];
+    
+    // Rule 1: All non-disabled children have the same status
+    if (uniqueStatuses.length === 1) {
+      return true;
+    }
+    
+    // Rule 2: Children are only SKIPPED and/or UPDATED
+    const onlySkippedAndUpdated = uniqueStatuses.every(s => 
+      s === NodeStatus.SKIPPED || s === NodeStatus.UPDATED
+    );
+    
+    return onlySkippedAndUpdated;
   }
   
   static getStatusPriority(status) {

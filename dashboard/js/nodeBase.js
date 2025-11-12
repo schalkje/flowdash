@@ -122,12 +122,29 @@ export default class BaseNode {
     // Auto collapse/expand based on status when enabled, avoiding re-entrancy
     // Only containers should auto-toggle collapsed state
     if (this.isContainer && this.settings.toggleCollapseOnStatusChange && !this._updatingCollapseState) {
-      // Determine collapse rule based on effective status (containers use aggregated child status)
-      let effectiveStatus = value;
+      // For containers, determine collapse based on children's statuses
+      let shouldCollapse = false;
       if (this.isContainer && this.childNodes && this.childNodes.length > 0) {
-        try { effectiveStatus = StatusManager.calculateContainerStatus(this.childNodes, this.settings); } catch {}
+        try {
+          // Collect leaf node statuses
+          const collectLeafStatuses = (nodes, out) => {
+            for (const n of nodes) {
+              if (n.isContainer && Array.isArray(n.childNodes) && n.childNodes.length > 0) {
+                collectLeafStatuses(n.childNodes, out);
+              } else {
+                out.push(n.status);
+              }
+            }
+          };
+          const childStatuses = [];
+          collectLeafStatuses(this.childNodes, childStatuses);
+          shouldCollapse = StatusManager.shouldContainerCollapse(childStatuses, this.settings);
+        } catch {}
+      } else {
+        // Non-container or no children: use simple status check
+        shouldCollapse = StatusManager.shouldCollapseOnStatus(value, this.settings);
       }
-      const shouldCollapse = StatusManager.shouldCollapseOnStatus(effectiveStatus, this.settings);
+      
       this._updatingCollapseState = true;
       try {
         if (shouldCollapse) {
