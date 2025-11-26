@@ -27,12 +27,20 @@ export class StatusManager {
       return NodeStatus.UNKNOWN;
     }
     
+    // Filter out DISABLED statuses for aggregate calculation
+    const nonDisabledStatuses = statuses.filter(s => s !== NodeStatus.DISABLED);
+    
+    if (nonDisabledStatuses.length === 0) {
+      return NodeStatus.DISABLED; // All disabled
+    }
+    
     // Special case: if children are only SKIPPED and/or UPDATED, return UPDATED
-    const uniqueStatuses = [...new Set(statuses)];
+    const uniqueStatuses = [...new Set(nonDisabledStatuses)];
     const onlySkippedAndUpdated = uniqueStatuses.every(s => 
       s === NodeStatus.SKIPPED || s === NodeStatus.UPDATED
     );
     if (onlySkippedAndUpdated && uniqueStatuses.length > 0) {
+      console.log('[determineAggregateStatus] Special case: SKIPPED/UPDATED mix ->', uniqueStatuses, '-> UPDATED');
       return NodeStatus.UPDATED;
     }
     
@@ -49,7 +57,8 @@ export class StatusManager {
     ];
     
     for (const status of priority) {
-      if (statuses.includes(status)) {
+      if (nonDisabledStatuses.includes(status)) {
+        console.log('[determineAggregateStatus] Priority match:', statuses, '->', status);
         return status;
       }
     }
@@ -92,6 +101,7 @@ export class StatusManager {
     
     // Rule 1: All non-disabled children have the same status
     if (uniqueStatuses.length === 1) {
+      console.log('[shouldContainerCollapse] Rule 1: All same status ->', uniqueStatuses[0], '-> COLLAPSE');
       return true;
     }
     
@@ -99,6 +109,12 @@ export class StatusManager {
     const onlySkippedAndUpdated = uniqueStatuses.every(s => 
       s === NodeStatus.SKIPPED || s === NodeStatus.UPDATED
     );
+    
+    if (onlySkippedAndUpdated) {
+      console.log('[shouldContainerCollapse] Rule 2: Only SKIPPED/UPDATED ->', uniqueStatuses, '-> COLLAPSE');
+    } else {
+      console.log('[shouldContainerCollapse] Mixed statuses ->', uniqueStatuses, '-> STAY EXPANDED');
+    }
     
     return onlySkippedAndUpdated;
   }
