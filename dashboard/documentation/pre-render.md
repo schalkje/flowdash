@@ -4,6 +4,8 @@
 
 Pre-rendering is a **performance optimization strategy** that dramatically improves initial dashboard load times by storing pre-calculated node positions, sizes, and edge paths directly in the dashboard JSON. This allows the dashboard to skip expensive layout calculations during the initial render.
 
+**Critical Principle:** Pre-render data is **one-time use only** for the initial load. After the first render completes, all pre-render data is cleared from memory and subsequent operations (collapse, expand, layout changes) behave exactly as if the dashboard never had pre-render data. This ensures consistent behavior between pre-rendered and non-pre-rendered dashboards.
+
 ## Problem Statement
 
 Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds due to:
@@ -25,8 +27,12 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 1. Check if pre-render data exists in nodes/edges AND settings flag is enabled
 2. If yes: Use pre-calculated positions for instant initial render
 3. Skip layout calculations entirely for initial draw
-4. **After** initial render completes: Apply status rules and collapse states
+4. **After** initial render completes: 
+   - Apply status rules and collapse states
+   - **Clear all pre-render data** from node/edge objects
 5. If no: Fall back to standard initialization flow
+
+**Important:** Once the initial render is complete and status rules are applied, all pre-render data (`node.prerender`, `edge.prerender`) is permanently removed. From that point forward, the dashboard behaves identically to a non-pre-rendered dashboard for all subsequent operations (expand, collapse, layout changes, etc.).
 
 ## Expected Performance Impact
 
@@ -39,6 +45,31 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 
 **Combined with Phase 2 DOM batching optimizations:**
 - **Total estimated load time: ~10-12 seconds (70-75% improvement)** ✅
+
+## Pre-Render Data Lifecycle
+
+### Phase 1: Generation (One-Time)
+Pre-render data is generated once using the pre-render generator tool and saved to the dashboard JSON file.
+
+### Phase 2: Initial Load (One-Time Use)
+1. Dashboard loads with pre-render data present
+2. Nodes/edges use pre-render positions for instant render
+3. Initial display completes (~10-12 seconds vs ~40 seconds)
+
+### Phase 3: Post-Load Cleanup (Automatic)
+1. Status rules are applied (auto-collapse, status cascade)
+2. **All pre-render data is cleared** from runtime objects
+3. Nodes no longer have `node.data.prerender` or `node._hasPrerenderData`
+4. Edges no longer have `edge.data.prerender`
+
+### Phase 4: Normal Operation (Standard Behavior)
+From this point forward, the dashboard operates exactly like a non-pre-rendered dashboard:
+- Collapse/expand triggers layout recalculation
+- Zoom operations use current node positions
+- Status changes trigger normal update flow
+- No remnants of pre-render data affect behavior
+
+**Key Insight:** Pre-render is a loading optimization only. After load completes, it's as if pre-render never existed.
 
 ## Data Structure
 
@@ -136,10 +167,10 @@ A standalone HTML page that:
 ### 2. Dashboard Loading Modifications
 
 **Files to modify:**
-- `dashboard/js/dashboard.js` - Add pre-render detection and fast-path loading
+- `dashboard/js/dashboard.js` - Add pre-render detection, fast-path loading, and cleanup
 - `dashboard/js/node.js` - Add pre-render position application
 - `dashboard/js/nodeBase.js` - Support pre-render coordinates
-- `dashboard/js/nodeBaseContainer.js` - Skip layout when pre-render available
+- `dashboard/js/nodeBaseContainer.js` - Skip layout when pre-render available (remove per-node cleanup)
 - `dashboard/js/edge.js` - Support pre-render paths
 
 **Key functions to add/modify:**
@@ -160,6 +191,38 @@ initializeWithPrerender(mainDivSelector) {
   // Skip layout calculations
   // Render nodes at pre-calculated positions
   // THEN apply status rules in second pass
+}
+
+// Clear all pre-render data after initial load completes
+clearPrerenderData() {
+  if (!this.main.root) return;
+  
+  console.log('🧹 Clearing pre-render data after initial load');
+  
+  // Clear from all nodes recursively
+  const clearNodeData = (node) => {
+    if (node.data.prerender) {
+      delete node.data.prerender;
+    }
+    node._hasPrerenderData = false;
+    
+    if (node.childNodes) {
+      node.childNodes.forEach(clearNodeData);
+    }
+  };
+  
+  clearNodeData(this.main.root);
+  
+  // Clear from all edges
+  if (this.data.edges) {
+    this.data.edges.forEach(edge => {
+      if (edge.prerender) {
+        delete edge.prerender;
+      }
+    });
+  }
+  
+  console.log('✅ Pre-render data cleared - dashboard now operates in standard mode');
 }
 ```
 
@@ -214,22 +277,31 @@ if (this.hasPrerenderData(this.data)) {
 }
 ```
 
-#### Second Pass (Status Application)
+#### Second Pass (Status Application and Cleanup)
 ```javascript
-applyStatusRules() {
+applyDeferredStatusRules(root) {
   // Re-enable status change handlers
   this._suspendStatusChanges = false;
   
+  // Re-enable display change callbacks
+  this._suspendDisplayChange = false;
+  
   // Determine container statuses based on children
-  this.initializeChildrenStatusses(this.main.root);
+  if (this.data.settings.cascadeOnStatusChange) {
+    this.initializeChildrenStatusses(root);
+  }
   
   // Apply collapse rules if enabled
-  if (this.settings.toggleCollapseOnStatusChange) {
-    this.applyAutoCollapse(this.main.root);
+  if (this.data.settings.toggleCollapseOnStatusChange) {
+    this.applyAutoCollapse(root);
   }
   
   // Final layout adjustments
   this.onMainDisplayChange();
+  
+  // CRITICAL: Clear all pre-render data after initial render completes
+  // From this point on, dashboard behaves as if it never had pre-render data
+  this.clearPrerenderData();
 }
 ```
 
@@ -317,8 +389,11 @@ When nodes are added, removed, or modified:
 2. Load non-pre-rendered dashboard - verify standard flow
 3. Disable pre-render via settings - verify fallback works
 4. Test status application in second pass
-5. Test collapse/expand after initial render
-6. Compare visual output (pre-render vs standard should be identical after status application)
+5. **Verify pre-render data is cleared after load completes**
+6. Test collapse/expand after initial render - should work identically to non-pre-rendered
+7. Test status changes triggering auto-collapse - should work identically to non-pre-rendered
+8. Compare visual output (pre-render vs standard should be identical after status application)
+9. Inspect node objects after load - verify no `node.data.prerender` or `node._hasPrerenderData`
 
 ### Performance Testing
 1. Measure load time with pre-render vs without

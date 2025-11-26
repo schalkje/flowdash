@@ -151,6 +151,10 @@ export class Dashboard {
     // Final layout adjustments
     this.onMainDisplayChange();
 
+    // CRITICAL: Clear all pre-render data after initial render completes
+    // From this point on, dashboard behaves as if it never had pre-render data
+    this.clearPrerenderData();
+
     console.log("📊 Pre-render: Status rules applied");
   }
 
@@ -169,6 +173,42 @@ export class Dashboard {
     if (node.childNodes) {
       node.childNodes.forEach((child) => this.applyAutoCollapse(child));
     }
+  }
+
+  /**
+   * Clear all pre-render data after initial render completes
+   * This ensures the dashboard behaves identically to a non-pre-rendered dashboard
+   * for all subsequent operations (collapse, expand, status changes)
+   */
+  clearPrerenderData() {
+    if (!this.main.root) return;
+
+    console.log("🧹 Clearing pre-render data after initial load");
+
+    // Clear from all nodes recursively
+    const clearNodeData = (node) => {
+      if (node.data.prerender) {
+        delete node.data.prerender;
+      }
+      node._hasPrerenderData = false;
+
+      if (node.childNodes) {
+        node.childNodes.forEach(clearNodeData);
+      }
+    };
+
+    clearNodeData(this.main.root);
+
+    // Clear from all edges
+    if (this.data.edges) {
+      this.data.edges.forEach((edge) => {
+        if (edge.prerender) {
+          delete edge.prerender;
+        }
+      });
+    }
+
+    console.log("✅ Pre-render data cleared - dashboard now operates in standard mode");
   }
 
   // --- Performance Metrics Methods ---

@@ -301,36 +301,12 @@ export default class BaseContainerNode extends BaseNode {
       }
       
       // Update parent container if this container's size changed
-      // Disable pre-render mode for this layout pass since user manually changed layout
       if (this.parentNode && !this.parentNode._updating) {
-        const parentZone = this.parentNode.zoneManager?.innerContainerZone;
-        const wasPrerenderMode = parentZone?._prerenderMode;
-        
-        // Invalidate parent's pre-render data since child size changed
-        if (this.parentNode.data.prerender) {
-          delete this.parentNode.data.prerender;
-        }
-        
-        // Temporarily disable pre-render mode so parent can recalculate layout
-        if (parentZone) {
-          parentZone._prerenderMode = false;
-        }
-        
-        // Also disable the ZoneManager's prerender mode
-        if (this.parentNode.zoneManager) {
-          this.parentNode.zoneManager._prerenderMode = false;
-        }
-        
         this.parentNode._updating = true;
         try {
           this.parentNode.updateChildren();
         } finally {
           this.parentNode._updating = false;
-          // Restore pre-render mode flag (but don't re-enable it, manual edits invalidate pre-render)
-          if (parentZone && wasPrerenderMode) {
-            // Keep it disabled - manual interaction invalidated the pre-render data
-            // parentZone._prerenderMode = wasPrerenderMode;
-          }
         }
       }
       

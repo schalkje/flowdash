@@ -179,12 +179,15 @@ static shouldContainerCollapse(childStatuses, settings) {
 
 ### Pre-Render Optimization
 
-When pre-render data is available (`settings.usePrerender !== false`), the auto-collapse behavior is deferred:
+When pre-render data is available (`settings.usePrerender !== false`), the auto-collapse behavior is deferred to avoid conflicts during the initial fast-path render:
 
 1. **Initial Load:** Status change handlers are suspended (`_suspendStatusChanges = true`)
 2. **Pre-render Display:** Nodes are displayed with their pre-rendered positions/sizes
 3. **Deferred Application:** After initial render, `applyDeferredStatusRules()` applies collapse logic
-4. **Re-enable:** Status change handlers are re-enabled for subsequent updates
+4. **Pre-render Cleanup:** All pre-render data is cleared from nodes/edges (`clearPrerenderData()`)
+5. **Re-enable:** Status change handlers are re-enabled for subsequent updates
+
+**Critical:** After step 4, the dashboard no longer has any pre-render data. All subsequent operations (collapse, expand, status changes) behave identically to a dashboard that was never pre-rendered. This ensures consistent behavior and prevents "strange effects" where pre-render positions interfere with dynamic layout changes.
 
 **Code Location:** `dashboard.js` - `applyDeferredStatusRules(root)`
 
