@@ -1208,6 +1208,9 @@ export class Dashboard {
       return;
     }
 
+    // Store the root immediately so reparentNodesByParentIds() can access it
+    this._dashboardRoot = root;
+
     if (displayChangeCallback) {
       root.onDisplayChange = () => {
         if (this._suspendDisplayChange) return;
@@ -1271,8 +1274,12 @@ export class Dashboard {
 
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
     try {
+      console.log('🔄 About to call reparentNodesByParentIds');
       this.reparentNodesByParentIds();
-    } catch {}
+      console.log('🔄 reparentNodesByParentIds completed');
+    } catch (e) {
+      console.error('🔄 reparentNodesByParentIds failed:', e);
+    }
 
     // Lift suspension after all initialization, edge creation, and reparenting is complete
     this._suspendDisplayChange = false;
@@ -1298,15 +1305,23 @@ export class Dashboard {
   }
 
   reparentNodesByParentIds() {
-    if (!this.main?.root) return;
-    const all = this.main.root.getAllNodes(false, false);
+    console.log('🔄 reparentNodesByParentIds: STARTING');
+    const root = this._dashboardRoot || this.main?.root;
+    if (!root) {
+      console.log('🔄 reparentNodesByParentIds: No root found, returning');
+      return;
+    }
+    const all = root.getAllNodes(false, false);
+    console.log(`🔄 reparentNodesByParentIds: Found ${all.length} nodes`);
     const idMap = new Map(all.map((n) => [n.id, n]));
     const ensureChildAttached = (parent, child) => {
       try {
+        console.log(`reparentNodesByParentIds: Processing child ${child.id}, current parent: ${child.parentNode?.id}, target parent: ${parent.id}`);
         // Adjust logical tree
         if (child.parentNode && child.parentNode !== parent) {
           const prev = child.parentNode;
           const idx = prev.childNodes ? prev.childNodes.indexOf(child) : -1;
+          console.log(`reparentNodesByParentIds: Removing child ${child.id} from prev parent ${prev.id}, index: ${idx}`);
           if (idx >= 0) prev.childNodes.splice(idx, 1);
           // Remove from previous zone listing
           try {
@@ -1315,7 +1330,12 @@ export class Dashboard {
         }
         child.parentNode = parent;
         parent.childNodes = parent.childNodes || [];
-        if (parent.childNodes.indexOf(child) === -1) parent.childNodes.push(child);
+        if (parent.childNodes.indexOf(child) === -1) {
+          console.log(`reparentNodesByParentIds: Adding child ${child.id} to new parent ${parent.id}`);
+          parent.childNodes.push(child);
+        } else {
+          console.log(`reparentNodesByParentIds: Child ${child.id} already in parent ${parent.id} childNodes`);
+        }
         // Register with zone system and move DOM
         const innerZone =
           parent.zoneManager?.innerContainerZone ||
@@ -1357,7 +1377,7 @@ export class Dashboard {
       }
     }
     // Update top-level after reparenting
-    this.main.root.update();
+    root.update();
   }
 
   initializeChildrenStatusses(node) {

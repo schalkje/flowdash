@@ -26,7 +26,7 @@
               "children": [
                 {
                   "id": 4,
-                  "label": "Eximius",
+                  "label": "Eximius 1",
                   "code": "EXM_REN",
                   "type": "adapter",
                   "layout": {
@@ -37,7 +37,7 @@
                 },
                 {
                   "id": 5,
-                  "label": "Eximius",
+                  "label": "Eximius 2",
                   "code": "EXM_EXI",
                   "type": "adapter",
                   "layout": {
@@ -184,82 +184,5 @@
     }
   ],
   "edges": [
-    {
-      "isActive": false,
-      "source": "transform_bankview",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "pbdwh_ods"
-    },
-    {
-      "isActive": false,
-      "source": "transform_matrix",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "pbdwh_ods"
-    },
-    {
-      "isActive": false,
-      "source": "transform_fidor",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "pbdwh_ods"
-    },
-    {
-      "isActive": false,
-      "source": "transform_exm_ren",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "pbdwh_ods"
-    },
-    {
-      "isActive": false,
-      "source": "pbdwh_ods",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "pbdwh_dwh"
-    },
-    {
-      "isActive": false,
-      "source": "pbdwh_dwh",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "em_payments"
-    },
-    {
-      "isActive": false,
-      "source": "pbdwh_dwh",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "dm_via"
-    },
-    {
-      "isActive": false,
-      "source": "pbdwh_dwh",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "em_dgs"
-    },
-    {
-      "isActive": false,
-      "source": "em_payments",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "raw_foundation_em_payments"
-    },
-    {
-      "isActive": false,
-      "source": "dm_via",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "raw_foundation_dm_via"
-    },
-    {
-      "isActive": false,
-      "source": "em_dgs",
-      "type": "SSIS",
-      "state": "Unknown",
-      "target": "raw_foundation_em_dgs"
-    }
   ]
 }
