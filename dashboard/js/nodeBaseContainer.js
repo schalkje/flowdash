@@ -930,28 +930,37 @@ export default class BaseContainerNode extends BaseNode {
         if (!childNode.element) {
           console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
           
-          // CRITICAL: Determine collapsed state BEFORE reinitializing ONLY if not already set
+          // CRITICAL: Determine collapsed state BEFORE reinitializing if needed
           // This is necessary because initializeChildrenStatusses skipped this node when it had null element
-          // But we should preserve user's manual expand/collapse actions
-          if (childNode.collapsed === undefined && childNode.isContainer && this.settings?.toggleCollapseOnStatusChange && childNode.childNodes?.length > 0) {
-            try {
-              // Calculate what the collapsed state should be based on children
-              const collectLeafStatuses = (nodes, out) => {
-                for (const n of nodes) {
-                  if (n.isContainer && Array.isArray(n.childNodes) && n.childNodes.length > 0) {
-                    collectLeafStatuses(n.childNodes, out);
-                  } else {
-                    out.push(n.status);
+          // Only recalculate if: (1) never been initialized, OR (2) still has default collapsed state from constructor
+          // We detect "never auto-collapsed" by checking if collapsed is still the default false value
+          // and the node has never been manually toggled (we assume first reinitialization means it was skipped)
+          if (childNode.isContainer && this.settings?.toggleCollapseOnStatusChange && childNode.childNodes?.length > 0) {
+            // Only recalculate if this is likely the first time (was skipped during initializeChildrenStatusses)
+            // Check if node has the default collapsed value and no prior status-based collapse was applied
+            const likelySkippedDuringInit = childNode.collapsed === false && !childNode._statusCollapseApplied;
+            
+            if (likelySkippedDuringInit) {
+              try {
+                // Calculate what the collapsed state should be based on children
+                const collectLeafStatuses = (nodes, out) => {
+                  for (const n of nodes) {
+                    if (n.isContainer && Array.isArray(n.childNodes) && n.childNodes.length > 0) {
+                      collectLeafStatuses(n.childNodes, out);
+                    } else {
+                      out.push(n.status);
+                    }
                   }
-                }
-              };
-              const childStatuses = [];
-              collectLeafStatuses(childNode.childNodes, childStatuses);
-              const shouldCollapse = StatusManager.shouldContainerCollapse(childStatuses, this.settings);
-              // Set collapsed state directly without triggering setters
-              childNode.collapsed = shouldCollapse;
-            } catch (e) {
-              console.warn('Failed to determine collapse state for reinitialized node:', childNode.id, e);
+                };
+                const childStatuses = [];
+                collectLeafStatuses(childNode.childNodes, childStatuses);
+                const shouldCollapse = StatusManager.shouldContainerCollapse(childStatuses, this.settings);
+                // Set collapsed state directly without triggering setters
+                childNode.collapsed = shouldCollapse;
+                childNode._statusCollapseApplied = true; // Mark that status-based collapse was applied
+              } catch (e) {
+                console.warn('Failed to determine collapse state for reinitialized node:', childNode.id, e);
+              }
             }
           }
           

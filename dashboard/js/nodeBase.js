@@ -149,9 +149,11 @@ export default class BaseNode {
       try {
         if (shouldCollapse) {
           this.collapsed = true;
+          this._statusCollapseApplied = true; // Mark that status-based collapse was applied
         } else {
           // Explicitly expand when status becomes non-collapsible
           this.collapsed = false;
+          this._statusCollapseApplied = true; // Mark that status-based collapse was applied
           // Ensure all ancestor containers are expanded so this node becomes visible
           let ancestor = this.parentNode;
           while (ancestor) {
