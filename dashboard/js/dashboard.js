@@ -192,6 +192,18 @@ export class Dashboard {
       }
       node._hasPrerenderData = false;
 
+      // Clear pre-render mode from zone manager and zones
+      if (node.zoneManager) {
+        node.zoneManager._prerenderMode = false;
+        
+        // Clear from individual zones
+        if (node.zoneManager.zones) {
+          node.zoneManager.zones.forEach(zone => {
+            zone._prerenderMode = false;
+          });
+        }
+      }
+
       if (node.childNodes) {
         node.childNodes.forEach(clearNodeData);
       }

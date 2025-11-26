@@ -61,6 +61,7 @@ Pre-render data is generated once using the pre-render generator tool and saved 
 2. **All pre-render data is cleared** from runtime objects
 3. Nodes no longer have `node.data.prerender` or `node._hasPrerenderData`
 4. Edges no longer have `edge.data.prerender`
+5. **Zone managers and zones have `_prerenderMode` flags cleared**
 
 ### Phase 4: Normal Operation (Standard Behavior)
 From this point forward, the dashboard operates exactly like a non-pre-rendered dashboard:
@@ -205,6 +206,18 @@ clearPrerenderData() {
       delete node.data.prerender;
     }
     node._hasPrerenderData = false;
+    
+    // Clear pre-render mode from zone manager and zones
+    if (node.zoneManager) {
+      node.zoneManager._prerenderMode = false;
+      
+      // Clear from individual zones
+      if (node.zoneManager.zones) {
+        node.zoneManager.zones.forEach(zone => {
+          zone._prerenderMode = false;
+        });
+      }
+    }
     
     if (node.childNodes) {
       node.childNodes.forEach(clearNodeData);
