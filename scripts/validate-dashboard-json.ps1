@@ -108,6 +108,174 @@ function Add-Info {
     Write-Host "  ℹ $message" -ForegroundColor Cyan
 }
 
+# Function to resolve a JSON property name case-insensitively
+function Get-JsonPropertyName {
+    param(
+        [Parameter(Mandatory=$false)]
+        $Object,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name
+    )
+
+    if ($null -eq $Object) {
+        return $null
+    }
+
+    if ($Object -is [System.Collections.IDictionary]) {
+        foreach ($key in $Object.Keys) {
+            if ([string]$key -ceq $Name) {
+                return [string]$key
+            }
+        }
+
+        foreach ($key in $Object.Keys) {
+            if ([string]$key -ieq $Name) {
+                return [string]$key
+            }
+        }
+
+        return $null
+    }
+
+    foreach ($property in $Object.PSObject.Properties) {
+        if ($property.Name -ceq $Name) {
+            return $property.Name
+        }
+    }
+
+    foreach ($property in $Object.PSObject.Properties) {
+        if ($property.Name -ieq $Name) {
+            return $property.Name
+        }
+    }
+
+    return $null
+}
+
+# Function to test whether a JSON property exists, ignoring casing
+function Test-JsonProperty {
+    param(
+        [Parameter(Mandatory=$false)]
+        $Object,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name
+    )
+
+    return $null -ne (Get-JsonPropertyName -Object $Object -Name $Name)
+}
+
+# Function to get JSON property metadata without losing collection shape
+function Get-JsonPropertyInfo {
+    param(
+        [Parameter(Mandatory=$false)]
+        $Object,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name
+    )
+
+    $actualName = Get-JsonPropertyName -Object $Object -Name $Name
+    if ($null -eq $actualName) {
+        return @{
+            Exists = $false
+            Name = $null
+            Value = $null
+            IsCollection = $false
+        }
+    }
+
+    if ($Object -is [System.Collections.IDictionary]) {
+        $value = $Object[$actualName]
+    } else {
+        $value = $Object.PSObject.Properties[$actualName].Value
+    }
+
+    $isCollection = ($value -is [System.Array]) -or ($value -is [System.Collections.IList] -and $value -isnot [string] -and $value -isnot [System.Collections.IDictionary])
+
+    $propertyValue = $value
+    if ($isCollection) {
+        $propertyValue = [System.Collections.ArrayList]::new()
+        foreach ($item in $value) {
+            [void]$propertyValue.Add($item)
+        }
+    }
+
+    return @{
+        Exists = $true
+        Name = $actualName
+        Value = $propertyValue
+        IsCollection = $isCollection
+    }
+}
+
+# Function to get a JSON property value, ignoring casing
+function Get-JsonPropertyValue {
+    param(
+        [Parameter(Mandatory=$false)]
+        $Object,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+
+        [Parameter(Mandatory=$false)]
+        $Default = $null
+    )
+
+    $propertyInfo = Get-JsonPropertyInfo -Object $Object -Name $Name
+    if (-not $propertyInfo.Exists) {
+        return $Default
+    }
+
+    return $propertyInfo.Value
+}
+
+# Function to check whether a value is an array/list-like JSON collection
+function Test-IsJsonArray {
+    param([Parameter(Mandatory=$false)]$Value)
+
+    return ($Value -is [System.Array]) -or ($Value -is [System.Collections.IList] -and $Value -isnot [string])
+}
+
+# Function to normalize node types to the validator's canonical casing
+function Normalize-NodeType {
+    param([Parameter(Mandatory=$false)][string]$Type)
+
+    if ([string]::IsNullOrWhiteSpace($Type)) {
+        return $null
+    }
+
+    foreach ($validType in $script:validTypes.Keys) {
+        if ($validType -ieq $Type) {
+            return $validType
+        }
+    }
+
+    return $Type
+}
+
+# Function to read a layout mode from either an object or a JSON string
+function Get-NodeLayoutMode {
+    param([Parameter(Mandatory=$false)]$Node)
+
+    $layout = Get-JsonPropertyValue -Object $Node -Name 'layout'
+    if ($null -eq $layout) {
+        return $null
+    }
+
+    $layoutObject = $layout
+    if ($layout -is [string]) {
+        try {
+            $layoutObject = $layout | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+        } catch {
+            return $null
+        }
+    }
+
+    return Get-JsonPropertyValue -Object $layoutObject -Name 'mode'
+}
+
 # Function to validate node recursively
 function Validate-Node {
     param(
@@ -122,72 +290,76 @@ function Validate-Node {
     )
     
     $script:validationResults.NodeCount++
+    $nodeLabel = Get-JsonPropertyValue -Object $node -Name 'label'
+    $nodeId = Get-JsonPropertyValue -Object $node -Name 'id'
+    $nodeTypeRaw = Get-JsonPropertyValue -Object $node -Name 'type'
+    $nodeType = Normalize-NodeType -Type $nodeTypeRaw
+    $childrenInfo = Get-JsonPropertyInfo -Object $node -Name 'children'
+    $children = $childrenInfo.Value
     
     # Check for required properties
-    if (-not $node.PSObject.Properties['label']) {
+    if (-not (Test-JsonProperty -Object $node -Name 'label')) {
         Add-Error "Node missing 'label' property" $path
         $script:validationResults.MissingLabels += $path
     }
     
-    if (-not $node.PSObject.Properties['id']) {
-        Add-Error "Node missing 'id' property" "$path -> label: $($node.label)"
+    if (-not (Test-JsonProperty -Object $node -Name 'id')) {
+        Add-Error "Node missing 'id' property" "$path -> label: $nodeLabel"
         $script:validationResults.NodesWithoutId += $path
     } else {
         # Check for duplicate IDs
-        if ($script:nodeIds.ContainsKey($node.id)) {
-            Add-Error "Duplicate node ID found: '$($node.id)'" "$path -> $($node.id)"
-            $script:validationResults.DuplicateIds += $node.id
+        if ($script:nodeIds.ContainsKey($nodeId)) {
+            Add-Error "Duplicate node ID found: '$nodeId'" "$path -> $nodeId"
+            $script:validationResults.DuplicateIds += $nodeId
         } else {
-            $script:nodeIds[$node.id] = $path
+            $script:nodeIds[$nodeId] = $path
         }
     }
     
     # Track node label
-    if ($node.label) {
-        if (-not $script:nodeLabels.ContainsKey($node.label)) {
-            $script:nodeLabels[$node.label] = @()
+    if ($nodeLabel) {
+        if (-not $script:nodeLabels.ContainsKey($nodeLabel)) {
+            $script:nodeLabels[$nodeLabel] = @()
         }
-        $script:nodeLabels[$node.label] += $path
+        $script:nodeLabels[$nodeLabel] += $path
     }
     
-    # Validate node type
-    $nodeType = if ($node.PSObject.Properties['type']) { $node.type } else { $null }
-    
     if (-not $nodeType) {
-        Add-Warning "Node has no 'type' property" "$path -> $($node.label)"
+        Add-Warning "Node has no 'type' property" "$path -> $nodeLabel"
     } elseif (-not $script:validTypes.ContainsKey($nodeType)) {
-        Add-Warning "Unknown node type: '$nodeType'" "$path -> $($node.label)"
+        Add-Warning "Unknown node type: '$nodeTypeRaw'" "$path -> $nodeLabel"
         $script:validationResults.InvalidTypes += @{
-            Type = $nodeType
+            Type = $nodeTypeRaw
             Path = $path
-            Label = $node.label
+            Label = $nodeLabel
         }
     }
     
     # Validate children
-    if ($node.PSObject.Properties['children'] -and $node.children -is [Array]) {
-        $childCount = $node.children.Count
+    if ($childrenInfo.Exists -and $childrenInfo.IsCollection) {
+        $childCount = $children.Count
         
         # Check if this node type should have children
         if ($nodeType -eq 'Node' -and $childCount -gt 0) {
-            Add-Warning "Node type 'Node' should not have children (has $childCount)" "$path -> $($node.label)"
+            Add-Warning "Node type 'Node' should not have children (has $childCount)" "$path -> $nodeLabel"
         }
         
         # Validate nesting rules
         if ($nodeType -and $script:validTypes.ContainsKey($nodeType)) {
             $allowedChildTypes = $script:validTypes[$nodeType]
             
-            foreach ($child in $node.children) {
-                $childType = if ($child.PSObject.Properties['type']) { $child.type } else { 'Unknown' }
-                $childLabel = if ($child.PSObject.Properties['label']) { $child.label } else { 'No Label' }
+            foreach ($child in $children) {
+                $childTypeRaw = Get-JsonPropertyValue -Object $child -Name 'type'
+                $childType = if ($childTypeRaw) { Normalize-NodeType -Type $childTypeRaw } else { 'Unknown' }
+                $childLabel = Get-JsonPropertyValue -Object $child -Name 'label' -Default 'No Label'
                 $childPath = "$path -> $childLabel"
                 
                 # Check for invalid nesting (e.g., Foundation containing Foundation)
                 if ($nodeType -eq 'Foundation' -and $childType -eq 'Foundation') {
-                    Add-Error "Invalid nesting: Foundation node contains Foundation child" "$childPath (parent: $($node.label))"
+                    Add-Error "Invalid nesting: Foundation node contains Foundation child" "$childPath (parent: $nodeLabel)"
                     $script:validationResults.InvalidNesting += @{
                         ParentType = $nodeType
-                        ParentLabel = $node.label
+                        ParentLabel = $nodeLabel
                         ParentPath = $path
                         ChildType = $childType
                         ChildLabel = $childLabel
@@ -195,10 +367,10 @@ function Validate-Node {
                         Issue = "Foundation cannot contain Foundation"
                     }
                 } elseif ($nodeType -eq 'Adapter' -and $childType -eq 'Adapter') {
-                    Add-Error "Invalid nesting: Adapter node contains Adapter child" "$childPath (parent: $($node.label))"
+                    Add-Error "Invalid nesting: Adapter node contains Adapter child" "$childPath (parent: $nodeLabel)"
                     $script:validationResults.InvalidNesting += @{
                         ParentType = $nodeType
-                        ParentLabel = $node.label
+                        ParentLabel = $nodeLabel
                         ParentPath = $path
                         ChildType = $childType
                         ChildLabel = $childLabel
@@ -206,10 +378,10 @@ function Validate-Node {
                         Issue = "Adapter cannot contain Adapter"
                     }
                 } elseif ($nodeType -eq 'Mart' -and $childType -eq 'Mart') {
-                    Add-Error "Invalid nesting: Mart node contains Mart child" "$childPath (parent: $($node.label))"
+                    Add-Error "Invalid nesting: Mart node contains Mart child" "$childPath (parent: $nodeLabel)"
                     $script:validationResults.InvalidNesting += @{
                         ParentType = $nodeType
-                        ParentLabel = $node.label
+                        ParentLabel = $nodeLabel
                         ParentPath = $path
                         ChildType = $childType
                         ChildLabel = $childLabel
@@ -217,16 +389,16 @@ function Validate-Node {
                         Issue = "Mart cannot contain Mart"
                     }
                 } elseif ($nodeType -eq 'Foundation' -and $childType -ne 'Node') {
-                    Add-Warning "Foundation should only contain Node children, found: $childType" "$childPath (parent: $($node.label))"
+                    Add-Warning "Foundation should only contain Node children, found: $childType" "$childPath (parent: $nodeLabel)"
                 } elseif ($nodeType -eq 'Adapter' -and $childType -ne 'Node') {
-                    Add-Warning "Adapter should only contain Node children, found: $childType" "$childPath (parent: $($node.label))"
+                    Add-Warning "Adapter should only contain Node children, found: $childType" "$childPath (parent: $nodeLabel)"
                 } elseif ($nodeType -eq 'Mart' -and $childType -ne 'Node') {
-                    Add-Warning "Mart should only contain Node children, found: $childType" "$childPath (parent: $($node.label))"
+                    Add-Warning "Mart should only contain Node children, found: $childType" "$childPath (parent: $nodeLabel)"
                 }
                 
                 # Check if child type is allowed
                 if ($allowedChildTypes.Count -gt 0 -and $childType -notin $allowedChildTypes -and $childType -ne 'Unknown') {
-                    Add-Warning "Node type '$nodeType' should not contain child type '$childType'" "$childPath (parent: $($node.label))"
+                    Add-Warning "Node type '$nodeType' should not contain child type '$childType'" "$childPath (parent: $nodeLabel)"
                 }
                 
                 # Recursively validate child
@@ -236,33 +408,24 @@ function Validate-Node {
             # Validate role requirements for Foundation, Mart, and Adapter
             if ($script:requiredRoles.ContainsKey($nodeType)) {
                 $roleReq = $script:requiredRoles[$nodeType]
-                $childCount = $node.children.Count
+                $childCount = $children.Count
                 
                 # For Adapter nodes, check the mode from layout to determine required roles
                 $expectedRoles = $roleReq.Roles
-                $adapterMode = $null
-                if ($nodeType -eq 'Adapter' -and $node.PSObject.Properties['layout'] -and $node.layout) {
-                    try {
-                        $layoutObj = $node.layout | ConvertFrom-Json -ErrorAction SilentlyContinue
-                        if ($layoutObj -and $layoutObj.PSObject.Properties['mode']) {
-                            $adapterMode = $layoutObj.mode
-                            
-                            # Adjust expected roles based on mode
-                            switch ($adapterMode) {
-                                'staging-archive' {
-                                    $expectedRoles = @('staging', 'archive')
-                                }
-                                'staging-transform' {
-                                    $expectedRoles = @('staging', 'transform')
-                                }
-                                'archive-only' {
-                                    $expectedRoles = @('archive')
-                                }
-                                # 'full' or default: use all three roles (staging, archive, transform)
-                            }
+                $adapterMode = if ($nodeType -eq 'Adapter') { Get-NodeLayoutMode -Node $node } else { $null }
+                if ($adapterMode) {
+                    # Adjust expected roles based on mode
+                    switch ($adapterMode) {
+                        'staging-archive' {
+                            $expectedRoles = @('staging', 'archive')
                         }
-                    } catch {
-                        # If layout parsing fails, use default roles
+                        'staging-transform' {
+                            $expectedRoles = @('staging', 'transform')
+                        }
+                        'archive-only' {
+                            $expectedRoles = @('archive')
+                        }
+                        # 'full' or default: use all three roles (staging, archive, transform)
                     }
                 }
                 
@@ -270,12 +433,9 @@ function Validate-Node {
                 $minCount = if ($adapterMode -and $expectedRoles.Count -gt 0) { $expectedRoles.Count } else { $roleReq.MinCount }
                 $maxCount = if ($adapterMode -and $expectedRoles.Count -gt 0) { $expectedRoles.Count } else { $roleReq.MaxCount }
                 
-                if ($childCount -lt $minCount) {
+                if ($childCount -gt $maxCount) {
                     $modeInfo = if ($adapterMode) { " (mode: '$adapterMode')" } else { "" }
-                    Add-Error "$nodeType has too few children: found $childCount, minimum required is $minCount$modeInfo" "$path -> $($node.label)"
-                } elseif ($childCount -gt $maxCount) {
-                    $modeInfo = if ($adapterMode) { " (mode: '$adapterMode')" } else { "" }
-                    Add-Error "$nodeType has too many children: found $childCount, maximum allowed is $maxCount$modeInfo" "$path -> $($node.label)"
+                    Add-Error "$nodeType has too many children: found $childCount, maximum allowed is $maxCount$modeInfo" "$path -> $nodeLabel"
                 }
                 
                 # Check roles
@@ -283,10 +443,10 @@ function Validate-Node {
                 $missingRoles = @()
                 $invalidRoles = @()
                 
-                foreach ($child in $node.children) {
-                    $childRole = if ($child.PSObject.Properties['role']) { $child.role } else { $null }
-                    $childCategory = if ($child.PSObject.Properties['category']) { $child.category } else { $null }
-                    $childLabel = if ($child.PSObject.Properties['label']) { $child.label } else { 'No Label' }
+                foreach ($child in $children) {
+                    $childRole = Get-JsonPropertyValue -Object $child -Name 'role'
+                    $childCategory = Get-JsonPropertyValue -Object $child -Name 'category'
+                    $childLabel = Get-JsonPropertyValue -Object $child -Name 'label' -Default 'No Label'
                     
                     # Determine effective role (prefer 'role' property, fallback to 'category')
                     $effectiveRole = if ($childRole) { $childRole.ToLower() } elseif ($childCategory) { $childCategory.ToLower() } else { $null }
@@ -365,19 +525,19 @@ function Validate-Node {
                 
                 if ($missingRoles.Count -gt 0) {
                     $modeInfo = if ($adapterMode) { " [mode: '$adapterMode']" } else { "" }
-                    Add-Error "$nodeType missing required child roles: $($missingRoles -join ', ')$modeInfo" "$path -> $($node.label)"
+                    Add-Error "$nodeType missing required child roles: $($missingRoles -join ', ')$modeInfo" "$path -> $nodeLabel"
                 }
                 
                 # Check for duplicate roles
                 $duplicateRoles = $foundRoles | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object -ExpandProperty Name
                 if ($duplicateRoles) {
-                    Add-Warning "$nodeType has duplicate child roles: $($duplicateRoles -join ', ')" "$path -> $($node.label)"
+                    Add-Warning "$nodeType has duplicate child roles: $($duplicateRoles -join ', ')" "$path -> $nodeLabel"
                 }
             }
         } else {
             # Node type is unknown, still validate children
-            foreach ($child in $node.children) {
-                $childLabel = if ($child.PSObject.Properties['label']) { $child.label } else { 'No Label' }
+            foreach ($child in $children) {
+                $childLabel = Get-JsonPropertyValue -Object $child -Name 'label' -Default 'No Label'
                 Validate-Node -node $child -path "$path -> $childLabel" -depth ($depth + 1)
             }
         }
@@ -391,8 +551,10 @@ function Validate-Edges {
     foreach ($edge in $edges) {
         $script:validationResults.EdgeCount++
         
-        $hasSource = $edge.PSObject.Properties['source']
-        $hasTarget = $edge.PSObject.Properties['target']
+        $hasSource = Test-JsonProperty -Object $edge -Name 'source'
+        $hasTarget = Test-JsonProperty -Object $edge -Name 'target'
+        $source = Get-JsonPropertyValue -Object $edge -Name 'source'
+        $target = Get-JsonPropertyValue -Object $edge -Name 'target'
         
         # Check for required properties
         if (-not $hasSource) {
@@ -404,27 +566,27 @@ function Validate-Edges {
         }
         
         # Check if source and target are different
-        if ($hasSource -and $hasTarget -and $edge.source -and $edge.target) {
-            if ($edge.source -eq $edge.target) {
-                $nodePath = if ($script:nodeIds.ContainsKey($edge.source)) { $script:nodeIds[$edge.source] } else { "Unknown" }
-                Add-Error "Edge has same source and target (self-loop): id='$($edge.source)', path='$nodePath'"
-                $script:validationResults.OrphanedEdges += "Self-loop: $($edge.source)"
+        if ($hasSource -and $hasTarget -and $source -and $target) {
+            if ($source -eq $target) {
+                $nodePath = if ($script:nodeIds.ContainsKey($source)) { $script:nodeIds[$source] } else { "Unknown" }
+                Add-Error "Edge has same source and target (self-loop): id='$source', path='$nodePath'"
+                $script:validationResults.OrphanedEdges += "Self-loop: $source"
             }
         }
         
         # Check if source node ID exists
-        if ($edge.source) {
-            if (-not $script:nodeIds.ContainsKey($edge.source)) {
-                Add-Error "Edge references non-existent source node ID: '$($edge.source)'"
-                $script:validationResults.OrphanedEdges += "Source ID: $($edge.source)"
+        if ($source) {
+            if (-not $script:nodeIds.ContainsKey($source)) {
+                Add-Error "Edge references non-existent source node ID: '$source'"
+                $script:validationResults.OrphanedEdges += "Source ID: $source"
             }
         }
         
         # Check if target node ID exists
-        if ($edge.target) {
-            if (-not $script:nodeIds.ContainsKey($edge.target)) {
-                Add-Error "Edge references non-existent target node ID: '$($edge.target)'"
-                $script:validationResults.OrphanedEdges += "Target ID: $($edge.target)"
+        if ($target) {
+            if (-not $script:nodeIds.ContainsKey($target)) {
+                Add-Error "Edge references non-existent target node ID: '$target'"
+                $script:validationResults.OrphanedEdges += "Target ID: $target"
             }
         }
     }
@@ -492,10 +654,10 @@ The JSON file has errors that must be fixed before it can be used.
 The following errors must be fixed:
 
 "@
-        foreach ($error in $script:validationResults.Errors) {
-            $report += "### $($error.Message)`n`n"
-            if ($error.Path) {
-                $report += "**Path**: ``$($error.Path)```n`n"
+        foreach ($validationError in $script:validationResults.Errors) {
+            $report += "### $($validationError.Message)`n`n"
+            if ($validationError.Path) {
+                $report += "**Path**: ``$($validationError.Path)```n`n"
             }
         }
     }
@@ -664,7 +826,7 @@ try {
     
     # Try to parse JSON
     try {
-        $jsonContent = Get-Content $InputFile -Raw | ConvertFrom-Json
+        $jsonContent = Get-Content $InputFile -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
         Add-Info "JSON is syntactically valid"
     } catch {
         Add-Error "JSON parsing failed: $_"
@@ -675,33 +837,37 @@ try {
     Write-Host "`nValidating structure..." -ForegroundColor Cyan
     
     # Validate settings
-    if (-not $jsonContent.PSObject.Properties['settings']) {
+    if (-not (Test-JsonProperty -Object $jsonContent -Name 'settings')) {
         Add-Warning "Missing 'settings' object at root level"
     }
     
     # Validate nodes
-    if (-not $jsonContent.PSObject.Properties['nodes']) {
+    if (-not (Test-JsonProperty -Object $jsonContent -Name 'nodes')) {
         Add-Error "Missing 'nodes' array at root level"
     } else {
-        if ($jsonContent.nodes -isnot [Array]) {
+        $rootNodesInfo = Get-JsonPropertyInfo -Object $jsonContent -Name 'nodes'
+        $rootNodes = $rootNodesInfo.Value
+        if (-not $rootNodesInfo.IsCollection) {
             Add-Error "'nodes' property must be an array"
         } else {
-            Add-Info "Found $($jsonContent.nodes.Count) root node(s)"
+            Add-Info "Found $($rootNodes.Count) root node(s)"
             
-            foreach ($node in $jsonContent.nodes) {
-                $nodeLabel = if ($node.PSObject.Properties['label']) { $node.label } else { 'No Label' }
+            foreach ($node in $rootNodes) {
+                $nodeLabel = Get-JsonPropertyValue -Object $node -Name 'label' -Default 'No Label'
                 Validate-Node -node $node -path $nodeLabel
             }
         }
     }
     
     # Validate edges
-    if ($jsonContent.PSObject.Properties['edges']) {
-        if ($jsonContent.edges -isnot [Array]) {
+    if (Test-JsonProperty -Object $jsonContent -Name 'edges') {
+        $rootEdgesInfo = Get-JsonPropertyInfo -Object $jsonContent -Name 'edges'
+        $rootEdges = $rootEdgesInfo.Value
+        if (-not $rootEdgesInfo.IsCollection) {
             Add-Warning "'edges' property should be an array"
         } else {
-            Add-Info "Found $($jsonContent.edges.Count) edge(s)"
-            Validate-Edges -edges $jsonContent.edges
+            Add-Info "Found $($rootEdges.Count) edge(s)"
+            Validate-Edges -edges $rootEdges
         }
     }
     
