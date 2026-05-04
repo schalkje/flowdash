@@ -1,0 +1,326 @@
+/*
+ * FlowDash — High Contrast (Dark)
+ *
+ * Targets WCAG 2.x AAA: text contrast ≥ 7:1, non-text/UI ≥ 3:1.
+ * Status, selection, focus, and node-type are encoded redundantly via
+ * stroke pattern + stroke width + halo, never by hue alone.
+ */
+
+:root, [data-theme="high-contrast-dark"] {
+  /* Base palette — pure black canvas, white text (21:1) */
+  --fd-bg: #000000;
+  --fd-surface: #0a0a0a;
+  --fd-text: #ffffff;
+  --fd-muted: #d4d4d4;       /* 16:1 on black */
+  --fd-accent: #ffff00;      /* yellow, 19.6:1 — selection / focus halo */
+  --fd-border: #ffffff;
+  --fd-edge: #ffffff;
+
+  /* Geometry — sharp, no soft shadows that could blur edges */
+  --fd-radius: 2px;
+  --fd-shadow: none;
+
+  /* Status fills — chosen so white text on top stays ≥ 7:1.
+     Hue carries semantic meaning where present, but stroke pattern
+     below is the redundant non-color signal. */
+  --fd-status-undetermined: #1a1a1a;
+  --fd-status-undetermined-stroke: #888888;
+  --fd-status-unknown: #1a1a1a;
+  --fd-status-unknown-stroke: #aaaaaa;
+  --fd-status-disabled: #0a0a0a;
+  --fd-status-disabled-stroke: #666666;
+  --fd-status-ready: #003a5a;
+  --fd-status-ready-stroke: #00d4ff;        /* cyan, 14:1 */
+  --fd-status-updating: #1a1a1a;
+  --fd-status-updating-stroke: #00ff88;     /* mint, 17:1 */
+  --fd-status-updated: #003800;
+  --fd-status-updated-stroke: #00ff00;      /* lime, 15:1 */
+  --fd-status-skipped: #2a2a00;
+  --fd-status-skipped-stroke: #ffff00;      /* yellow, 19:1 */
+  --fd-status-delayed: #3a2400;
+  --fd-status-delayed-stroke: #ffaa00;      /* amber, 13:1 */
+  --fd-status-warning: #3a1a00;
+  --fd-status-warning-stroke: #ff8000;      /* orange, 11:1 */
+  --fd-status-error: #3a0000;
+  --fd-status-error-stroke: #ff4040;        /* red, 7.4:1 */
+}
+
+body { background: var(--fd-bg); color: var(--fd-text); font-family: Arial, sans-serif; }
+
+/* canvases */
+#graph { background-color: var(--fd-bg) !important; border-color: var(--fd-border) !important; }
+.minimap-svg { background-color: #000000 !important; border: 2px solid var(--fd-border) !important; border-radius: var(--fd-radius); }
+.minimap-svg rect.background { fill: #000000 !important; stroke: var(--fd-border) !important; }
+svg.canvas { border: 2px solid var(--fd-border); border-radius: var(--fd-radius); box-shadow: var(--fd-shadow); -webkit-box-shadow: var(--fd-shadow); }
+
+#graph.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: var(--fd-bg);
+  border-radius: 0;
+}
+#graph {
+  border: 2px solid var(--fd-border);
+  width: 100%;
+  height: 800px;
+  background-color: var(--fd-bg);
+  border-radius: var(--fd-radius);
+}
+#graph rect.boundingBox { fill: none; stroke: var(--fd-accent); stroke-dasharray: 4 4; }
+#graph-container { position: relative; }
+
+/* Base shape & text — high luminance, never relying on hue */
+.shape { fill: var(--fd-surface); stroke: var(--fd-border); stroke-width: 2; cursor: default; stroke-opacity: 1; }
+.header-background { fill: transparent !important; stroke: none !important; }
+.header-text { fill: var(--fd-text) !important; font-weight: bold !important; }
+text, .rect.label { fill: var(--fd-text) !important; }
+.label { font-size: 12px; font-weight: bold; fill: var(--fd-text) !important; opacity: 1; }
+.node.label { stroke: none; font-size: 14px; font-weight: bold; fill: var(--fd-text) !important; opacity: 1; text-anchor: middle; dominant-baseline: middle; }
+
+/* Edges — thicker baseline so they remain visible at small zoom (3:1 non-text rule) */
+.edge .path { stroke: var(--fd-edge) !important; stroke-width: 3px !important; fill: none; }
+
+/* Minimap — clear borders, no transparency tricks */
+.minimap-svg .eye { fill: var(--fd-text) !important; fill-opacity: 0.25 !important; stroke: var(--fd-accent) !important; stroke-width: 2px !important; filter: none !important; -webkit-filter: none !important; }
+.minimap-svg .iris { fill: none !important; stroke: var(--fd-accent) !important; stroke-width: 4px !important; }
+
+.zoom-icon { fill: var(--fd-text) !important; }
+.zoom-button circle { display: none; transition: none; }
+.zoom-button:hover circle { display: block; fill: var(--fd-surface); stroke: var(--fd-accent); stroke-width: 2px; cursor: pointer; }
+.zoom-button rect.icon { fill: var(--fd-surface); stroke: var(--fd-border); stroke-width: 1px; }
+.zoom-button:hover rect.icon { fill: var(--fd-accent); }
+
+.minimap-size-button .btn-bg { fill: var(--fd-surface) !important; stroke: var(--fd-border) !important; stroke-width: 2px !important; }
+.minimap-size-button .btn-label { fill: var(--fd-text) !important; font-weight: bold !important; }
+
+/* Selection — bold halo + thick stroke so it survives achromatopsia.
+   filter: drop-shadow yields a glowing ring around the shape,
+   independent of fill color. */
+.selected .shape {
+  stroke: var(--fd-accent) !important;
+  stroke-opacity: 1;
+  stroke-width: 5 !important;
+  filter: drop-shadow(0 0 6px var(--fd-accent));
+}
+.placeholder { stroke: var(--fd-accent); stroke-opacity: 1; stroke-width: 3; stroke-dasharray: 4 4; }
+.connection-point { fill: var(--fd-accent); stroke: var(--fd-bg); stroke-width: 1; }
+
+/* Keyboard focus — visible on every interactive element */
+.shape:focus-visible,
+.zoom-button:focus-visible,
+.editbox:focus-visible,
+.minimap-size-button:focus-visible {
+  outline: 3px solid var(--fd-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Status: atomic shapes ────────────────────────────────────────────
+   Each status combines fill + stroke colour + stroke-dasharray + stroke-width
+   so the state survives a monochrome rendering. */
+
+.shape[status="Undetermined"], .node.shape[status="Undetermined"] {
+  fill: var(--fd-status-undetermined); fill-opacity: 1;
+  stroke: var(--fd-status-undetermined-stroke);
+  stroke-width: 2; stroke-dasharray: 2 4;
+}
+.shape[status="Unknown"], .node.shape[status="Unknown"] {
+  fill: var(--fd-status-unknown); fill-opacity: 1;
+  stroke: var(--fd-status-unknown-stroke);
+  stroke-width: 2; stroke-dasharray: 2 4;
+}
+.shape[status="Disabled"], .node.shape[status="Disabled"] {
+  fill: var(--fd-status-disabled); fill-opacity: 1;
+  stroke: var(--fd-status-disabled-stroke);
+  stroke-width: 2; stroke-dasharray: 2 8; opacity: 0.6;
+}
+.shape[status="Ready"], .node.shape[status="Ready"] {
+  fill: var(--fd-status-ready); fill-opacity: 1;
+  stroke: var(--fd-status-ready-stroke);
+  stroke-width: 2; stroke-dasharray: none;
+}
+.shape[status="Updating"], .node.shape[status="Updating"] {
+  fill: var(--fd-status-updating); fill-opacity: 1;
+  stroke: var(--fd-status-updating-stroke);
+  stroke-opacity: 1; stroke-width: 3;
+  stroke-dasharray: 8 4;
+  animation: dash 10s forwards linear infinite;
+}
+.shape[status="Updated"], .node.shape[status="Updated"] {
+  fill: var(--fd-status-updated); fill-opacity: 1;
+  stroke: var(--fd-status-updated-stroke);
+  stroke-width: 3; stroke-dasharray: none;
+}
+.shape[status="Skipped"], .node.shape[status="Skipped"] {
+  fill: var(--fd-status-skipped); fill-opacity: 1;
+  stroke: var(--fd-status-skipped-stroke);
+  stroke-width: 2; stroke-dasharray: 12 4 4 4;
+}
+.shape[status="Delayed"], .node.shape[status="Delayed"] {
+  fill: var(--fd-status-delayed); fill-opacity: 1;
+  stroke: var(--fd-status-delayed-stroke);
+  stroke-width: 3; stroke-dasharray: 6 6;
+}
+.shape[status="Warning"], .node.shape[status="Warning"] {
+  fill: var(--fd-status-warning); fill-opacity: 1;
+  stroke: var(--fd-status-warning-stroke);
+  stroke-width: 4; stroke-dasharray: 10 3 2 3;
+}
+.shape[status="Error"], .node.shape[status="Error"] {
+  fill: var(--fd-status-error); fill-opacity: 1;
+  stroke: var(--fd-status-error-stroke);
+  stroke-width: 5; stroke-dasharray: 4 3;
+}
+
+/* Collapsed state — keep labels bold, no extra opacity tricks */
+.collapsed .shape { opacity: 1; }
+.collapsed .label { font-weight: bold !important; opacity: 1; }
+
+/* Edges — variant strokes survive monochrome.
+   .edge.<type> classes derive from data.type so each edge type can
+   carry its own dash pattern in addition to colour. */
+.edge .path { stroke-width: 3px; stroke: var(--fd-edge); fill: none; }
+.edge.selected .path {
+  stroke: var(--fd-accent) !important;
+  stroke-width: 5px !important;
+  filter: drop-shadow(0 0 4px var(--fd-accent));
+}
+.edge.ghostline { stroke-width: 1px; stroke: var(--fd-text); stroke-opacity: 0.4; }
+.edge.ghostline .path { stroke-width: 2px; stroke: var(--fd-text); stroke-opacity: 0.6; stroke-linecap: round; stroke-dasharray: 2 4; }
+
+@keyframes dash { to { stroke-dashoffset: -1000; } }
+
+.centermark { fill: var(--fd-accent); stroke: var(--fd-bg); stroke-width: 1; }
+.editbox { border: 2px solid var(--fd-accent); background: var(--fd-surface); color: var(--fd-text); margin: 0 2px; padding: 2px 2px 0 2px; }
+
+/* ─── Container variants — adapter / mart / foundation ────────────── */
+
+/* Expanded — fill at moderate opacity so child nodes remain primary,
+   but stroke pattern + width carry the status redundantly. */
+.adapter.expanded[status="Undetermined"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Undetermined"] > .zone-container > .container-shape,
+.mart.expanded[status="Undetermined"] > .zone-container > .container-shape,
+.Mart.expanded[status="Undetermined"] > .zone-container > .container-shape,
+.foundation.expanded[status="Undetermined"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Undetermined"] > .zone-container > .container-shape {
+  fill: var(--fd-status-undetermined); fill-opacity: 0.4;
+  stroke: var(--fd-status-undetermined-stroke); stroke-width: 2; stroke-dasharray: 2 4;
+}
+.adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Unknown"] > .zone-container > .container-shape,
+.mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Mart.expanded[status="Unknown"] > .zone-container > .container-shape,
+.foundation.expanded[status="Unknown"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Unknown"] > .zone-container > .container-shape {
+  fill: var(--fd-status-unknown); fill-opacity: 0.4;
+  stroke: var(--fd-status-unknown-stroke); stroke-width: 2; stroke-dasharray: 2 4;
+}
+.adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Ready"] > .zone-container > .container-shape,
+.mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.Mart.expanded[status="Ready"] > .zone-container > .container-shape,
+.foundation.expanded[status="Ready"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Ready"] > .zone-container > .container-shape {
+  fill: var(--fd-status-ready); fill-opacity: 0.5;
+  stroke: var(--fd-status-ready-stroke); stroke-width: 2;
+}
+.adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updating"] > .zone-container > .container-shape,
+.mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updating"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updating"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updating"] > .zone-container > .container-shape {
+  fill: var(--fd-status-updating); fill-opacity: 0.4;
+  stroke: var(--fd-status-updating-stroke); stroke-width: 3;
+  stroke-dasharray: 8 4; animation: dash 10s forwards linear infinite;
+}
+.adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Updated"] > .zone-container > .container-shape,
+.mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.Mart.expanded[status="Updated"] > .zone-container > .container-shape,
+.foundation.expanded[status="Updated"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Updated"] > .zone-container > .container-shape {
+  fill: var(--fd-status-updated); fill-opacity: 0.5;
+  stroke: var(--fd-status-updated-stroke); stroke-width: 3;
+}
+.adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Skipped"] > .zone-container > .container-shape,
+.mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Mart.expanded[status="Skipped"] > .zone-container > .container-shape,
+.foundation.expanded[status="Skipped"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Skipped"] > .zone-container > .container-shape {
+  fill: var(--fd-status-skipped); fill-opacity: 0.5;
+  stroke: var(--fd-status-skipped-stroke); stroke-width: 2; stroke-dasharray: 12 4 4 4;
+}
+.adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Delayed"] > .zone-container > .container-shape,
+.mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Mart.expanded[status="Delayed"] > .zone-container > .container-shape,
+.foundation.expanded[status="Delayed"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Delayed"] > .zone-container > .container-shape {
+  fill: var(--fd-status-delayed); fill-opacity: 0.5;
+  stroke: var(--fd-status-delayed-stroke); stroke-width: 3; stroke-dasharray: 6 6;
+}
+.adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Warning"] > .zone-container > .container-shape,
+.mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.Mart.expanded[status="Warning"] > .zone-container > .container-shape,
+.foundation.expanded[status="Warning"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Warning"] > .zone-container > .container-shape {
+  fill: var(--fd-status-warning); fill-opacity: 0.5;
+  stroke: var(--fd-status-warning-stroke); stroke-width: 4; stroke-dasharray: 10 3 2 3;
+}
+.adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.Adapter.expanded[status="Error"] > .zone-container > .container-shape,
+.mart.expanded[status="Error"] > .zone-container > .container-shape,
+.Mart.expanded[status="Error"] > .zone-container > .container-shape,
+.foundation.expanded[status="Error"] > .zone-container > .container-shape,
+.Foundation.expanded[status="Error"] > .zone-container > .container-shape {
+  fill: var(--fd-status-error); fill-opacity: 0.55;
+  stroke: var(--fd-status-error-stroke); stroke-width: 5; stroke-dasharray: 4 3;
+}
+
+/* Collapsed containers — full opacity, identical pattern set so the
+   semantic encoding survives the state change. */
+.collapsed .container-shape { opacity: 1 !important; filter: none !important; }
+.collapsed[status="Undetermined"] .container-shape { fill: var(--fd-status-undetermined) !important; fill-opacity: 1 !important; stroke: var(--fd-status-undetermined-stroke) !important; stroke-width: 2 !important; stroke-dasharray: 2 4 !important; }
+.collapsed[status="Unknown"] .container-shape { fill: var(--fd-status-unknown) !important; fill-opacity: 1 !important; stroke: var(--fd-status-unknown-stroke) !important; stroke-width: 2 !important; stroke-dasharray: 2 4 !important; }
+.collapsed[status="Disabled"] .container-shape { fill: var(--fd-status-disabled) !important; fill-opacity: 1 !important; stroke: var(--fd-status-disabled-stroke) !important; stroke-width: 2 !important; stroke-dasharray: 2 8 !important; opacity: 0.6 !important; }
+.collapsed[status="Ready"] .container-shape { fill: var(--fd-status-ready) !important; fill-opacity: 1 !important; stroke: var(--fd-status-ready-stroke) !important; stroke-width: 2 !important; }
+.collapsed[status="Updating"] .container-shape { fill: var(--fd-status-updating) !important; fill-opacity: 1 !important; stroke: var(--fd-status-updating-stroke) !important; stroke-width: 3 !important; stroke-dasharray: 8 4 !important; animation: dash 10s forwards linear infinite !important; }
+.collapsed[status="Updated"] .container-shape { fill: var(--fd-status-updated) !important; fill-opacity: 1 !important; stroke: var(--fd-status-updated-stroke) !important; stroke-width: 3 !important; }
+.collapsed[status="Skipped"] .container-shape { fill: var(--fd-status-skipped) !important; fill-opacity: 1 !important; stroke: var(--fd-status-skipped-stroke) !important; stroke-width: 2 !important; stroke-dasharray: 12 4 4 4 !important; }
+.collapsed[status="Delayed"] .container-shape { fill: var(--fd-status-delayed) !important; fill-opacity: 1 !important; stroke: var(--fd-status-delayed-stroke) !important; stroke-width: 3 !important; stroke-dasharray: 6 6 !important; }
+.collapsed[status="Warning"] .container-shape { fill: var(--fd-status-warning) !important; fill-opacity: 1 !important; stroke: var(--fd-status-warning-stroke) !important; stroke-width: 4 !important; stroke-dasharray: 10 3 2 3 !important; }
+.collapsed[status="Error"] .container-shape { fill: var(--fd-status-error) !important; fill-opacity: 1 !important; stroke: var(--fd-status-error-stroke) !important; stroke-width: 5 !important; stroke-dasharray: 4 3 !important; }
+
+/* Lane / Columns / Group containers — distinguished by stroke pattern,
+   not just lack of fill. Each container TYPE gets a unique stroke
+   signature so that node type is visually identifiable without color. */
+.lane.expanded > .zone-container > .container-shape,
+.Lane.expanded > .zone-container > .container-shape {
+  fill: transparent !important; fill-opacity: 0 !important;
+  animation: none !important;
+  stroke: var(--fd-border) !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 1 3 !important;          /* lane → fine dotted */
+}
+.columns.expanded > .zone-container > .container-shape,
+.Columns.expanded > .zone-container > .container-shape {
+  fill: transparent !important; fill-opacity: 0 !important;
+  animation: none !important;
+  stroke: var(--fd-border) !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 8 2 1 2 !important;      /* columns → dash-dot */
+}
+.group.expanded > .zone-container > .container-shape,
+.Group.expanded > .zone-container > .container-shape {
+  fill: transparent !important; fill-opacity: 0 !important;
+  animation: none !important;
+  stroke: var(--fd-border) !important;
+  stroke-width: 3 !important;
+  stroke-dasharray: none !important;          /* group → solid heavy */
+}

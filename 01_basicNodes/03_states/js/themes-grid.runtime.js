@@ -17,6 +17,8 @@ const DEFAULT_THEMES = [
   'glassmorphism',
   'neumorphism',
   'retro',
+  'high-contrast-light',
+  'high-contrast-dark',
 ];
 
 /**
@@ -295,7 +297,7 @@ function scheduleExpandAll(opts = {}) {
   // Wait for ALL iframes to be ready before expanding (otherwise the iframes
   // that finish later stay in the data's initial collapsed state). After the
   // initial sweep, do a couple of follow-up passes to catch any stragglers.
-  const { maxWaitMs = 12000, pollMs = 200 } = opts;
+  const { maxWaitMs = 18000, pollMs = 200 } = opts;
   const expected = document.querySelectorAll('.card iframe').length || 1;
   const start = Date.now();
   let expanded = false;

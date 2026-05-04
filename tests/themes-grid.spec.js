@@ -11,7 +11,10 @@ const PAGES = [
 
 test.describe('themes-grid pages', () => {
   for (const path of PAGES) {
-    test(`${path} renders 8 themed iframes`, async ({ page }) => {
+    test(`${path} renders 10 themed iframes`, async ({ page }) => {
+      // 10 iframes per page can stretch teardown past the default 30s budget
+      // under parallel worker contention. Triple it.
+      test.slow();
       const errors = [];
       page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
       page.on('console', (msg) => {
@@ -19,26 +22,29 @@ test.describe('themes-grid pages', () => {
       });
       await page.goto(path);
       await page.waitForSelector('.card iframe', { timeout: 15000 });
-      // 8 themes are expected.
+      // 10 themes are expected (8 visual + 2 high-contrast WCAG AAA).
       const iframeCount = await page.locator('.card iframe').count();
-      expect(iframeCount).toBe(8);
+      expect(iframeCount).toBe(10);
       // Give iframes time to bootstrap.
       await page.waitForTimeout(2500);
       expect(errors, `no console errors on ${path}: ${errors.join('\n')}`).toEqual([]);
     });
 
     test(`${path} clicking a card's fullscreen button overlays it over the grid`, async ({ page }) => {
+      // 10 iframes per page × parallel workers can starve any single card's
+      // bootstrap. Triple the default test budget so the button-rebind has
+      // headroom even under contention.
+      test.slow();
       await page.goto(path);
       await page.waitForSelector('.card iframe', { timeout: 15000 });
-      // Wait long enough for the iframe-internal d3 + dashboard + button rebind.
-      await page.waitForTimeout(6000);
 
       const firstCard = page.locator('.card').first();
       const firstFrame = firstCard.locator('iframe').contentFrame();
-
-      // The fullscreen-toggle button must be visible inside the iframe.
       const fsButton = firstFrame.locator('.fullscreen-toggle');
-      await expect(fsButton).toBeVisible({ timeout: 5000 });
+
+      // Wait for the button to actually exist instead of guessing a fixed delay
+      // — the iframe loads d3 + the dashboard + then re-binds this button.
+      await expect(fsButton).toBeVisible({ timeout: 30000 });
 
       // Click it; the parent card should pick up the .card--fullscreen class.
       await fsButton.click();
@@ -50,11 +56,14 @@ test.describe('themes-grid pages', () => {
     });
 
     test(`${path} default state has no collapsed inner containers`, async ({ page }) => {
+      // 10 iframes (incl. high-contrast) take longer to settle than 8 — give
+      // the test triple the default budget so the readiness wait + asserts fit.
+      test.slow();
       await page.goto(path);
       await page.waitForSelector('.card iframe', { timeout: 15000 });
-      // The runtime waits for all iframes to be ready (up to 12s) before
+      // The runtime waits for all iframes to be ready (up to 18s) before
       // expanding. Give it enough time, then a beat for the follow-up pass.
-      await page.waitForTimeout(13000);
+      await page.waitForTimeout(19000);
 
       const summary = await page.evaluate(() => {
         let collapsedSomewhere = false;
