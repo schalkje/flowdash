@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>states – themes grid (adapter children collapsed)</title>
 
-    <!-- Base demo styles for layout only (kept minimal, not a theme) -->
     <style>
       :root { --card-w: 250px; --card-h: 400px; }
       body {
@@ -60,159 +59,14 @@
     <header>
       <h1>states – themes grid (adapter children collapsed)</h1>
       <p>Lane with multiple adapter nodes (all Ready), each collapsed.</p>
-      <p><button id="toggle-all" type="button">Toggle collapsed</button></p>
+      <p><button id="toggle-all" type="button">Collapse all</button></p>
     </header>
 
     <section id="grid" class="grid" aria-label="Themes Grid"></section>
 
-    <script>
-      // List of available themes we want to preview
-      const themes = [
-        'light',
-        'dark',
-        'brutalism',
-        'cyberpunk',
-        'flat',
-        'glassmorphism',
-        'neumorphism',
-        'retro'
-      ];
-
-      const grid = document.getElementById('grid');
-
-      // Create a card with an iframe for each theme.
-      // Each iframe uses srcdoc to load the base libs + theme CSS and render the dashboard.
-      themes.forEach(theme => {
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        const title = document.createElement('h3');
-        title.textContent = theme;
-        card.appendChild(title);
-
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('title', `Dashboard theme: ${theme}`);
-
-        // Build the iframe document without <script> tags to avoid parent parser issues.
-        iframe.srcdoc = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset=\"utf-8\" />
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
-    <style>
-      html, body { height: 100%; margin: 0; }
-      body { display: flex; }
-      .wrap { flex: 1 1 auto; display: flex; }
-      svg#graph.canvas { width: 100%; height: 100%; border: 1px solid #ddd; }
-    </style>
-    <!-- Base dashboard CSS + theme CSS (scoped by iframe) -->
-    <link rel=\"stylesheet\" href=\"../../dashboard/flowdash.css\" />
-    <link rel=\"stylesheet\" href=\"../../dashboard/themes/${theme}/flowdash.css\" />
-  </head>
-  <body>
-    <div class=\"wrap\">
-      <svg id=\"graph\" class=\"canvas\"></svg>
-    </div>
-  </body>
-  </html>`;
-
-        // After the iframe loads, inject scripts in order and then start the dashboard
-        iframe.addEventListener('load', () => {
-          const doc = iframe.contentDocument;
-          const addScript = (src) => new Promise((resolve, reject) => {
-            const s = doc.createElement('script');
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = () => reject(new Error('Failed to load ' + src));
-            doc.head.appendChild(s);
-          });
-
-          // Load d3 libs sequentially to ensure globals are available
-          addScript('../../dashboard/libs/d3.min.js')
-            .then(() => addScript('../../dashboard/libs/d3-shape.min.js'))
-            .then(() => addScript('../../dashboard/libs/d3-dag.iife.min.js'))
-            .then(() => {
-              const mod = doc.createElement('script');
-              mod.type = 'module';
-              mod.textContent = `
-                import { demoData } from './js/graphData.adapters-collapsed.js';
-                import flowDashboard from '../../dashboard/js/index.js';
-                const data = {
-                  ...demoData,
-                  settings: {
-                    ...demoData.settings,
-                    minimap: { enabled: false }
-                  }
-                };
-                const flowdash = new flowDashboard.Dashboard(data);
-                flowdash.initialize('#graph');
-                window.flowdash = flowdash;
-
-                // Put the dashboard into maximized mode and hide the normal size button
-                // Give the toggle a moment to be inserted by initializeFullscreenToggle
-                requestAnimationFrame(() => {
-                  const btn = document.querySelector('.fullscreen-toggle');
-                  if (btn && !flowdash.main.svg.classed('flowdash-fullscreen')) {
-                    try { btn.click(); } catch {}
-                  }
-                  const overlay = document.querySelector('.fullscreen-overlay');
-                  if (overlay) overlay.style.display = 'none';
-                });
-              `;
-              doc.body.appendChild(mod);
-              try { setTimeout(updateButtonLabel, 0); } catch {}
-            })
-            .catch(err => {
-              // Surface load issues in the parent console for easier debugging
-              console.error('Failed to load scripts for theme', `${theme}:`, err);
-            });
-        });
-
-        card.appendChild(iframe);
-        grid.appendChild(card);
-      });
-
-      // Toggle all containers' collapsed state across all iframes
-      const getChildContainers = (win) => {
-        const root = win?.flowdash?.main?.root;
-        if (!root || typeof root.getAllNodes !== 'function') return { root: null, containers: [] };
-        const nodes = root.getAllNodes(false);
-        const containers = nodes.filter(n => n && n.isContainer && n !== root);
-        return { root, containers };
-      };
-
-      const computeAnyExpandedAcross = () => {
-        let any = false;
-        document.querySelectorAll('.card iframe').forEach(iframe => {
-          const { containers } = getChildContainers(iframe.contentWindow);
-          if (containers.length && containers.some(n => !n.collapsed)) any = true;
-        });
-        return any;
-      };
-
-      const updateButtonLabel = () => {
-        const btn = document.getElementById('toggle-all');
-        if (!btn) return;
-        const anyExpanded = computeAnyExpandedAcross();
-        btn.textContent = anyExpanded ? 'Collapse all' : 'Expand all';
-      };
-
-      const toggleAll = () => {
-        const target = computeAnyExpandedAcross() ? true : false;
-        document.querySelectorAll('.card iframe').forEach(iframe => {
-          const { root, containers } = getChildContainers(iframe.contentWindow);
-          if (!root || !containers.length) return;
-          try { root.collapsed = false; } catch {}
-          containers.forEach(n => { try { n.collapsed = target; } catch {} });
-        });
-        updateButtonLabel();
-      };
-
-      const btn = document.getElementById('toggle-all');
-      if (btn) btn.addEventListener('click', toggleAll);
-      try { updateButtonLabel(); } catch {}
+    <script type="module">
+      import { setupThemesGrid } from './js/themes-grid.runtime.js';
+      setupThemesGrid({ dataFile: './js/graphData.adapters-collapsed.js' });
     </script>
   </body>
-  </html>
-
-
+</html>
