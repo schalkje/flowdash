@@ -372,6 +372,8 @@
                 mm.scaleIndicator.visible = !!(document.getElementById('minimapScaleVisible')?.checked);
                 dashboard = new flowDashboard.Dashboard(dashboardData);
                 dashboard.initialize('#graph');
+                // Expose for test instrumentation (perf, e2e probes).
+                if (typeof window !== 'undefined') window.dashboard = dashboard;
             });
         }
 
@@ -480,6 +482,8 @@
                     // Assigning .data triggers a full reinitialization including the minimap
                     dashboard.data = dashboardData;
                 }
+                // Expose for test instrumentation (perf, e2e probes).
+                if (typeof window !== 'undefined') window.dashboard = dashboard;
             });
         }
 

@@ -59,10 +59,11 @@
         import flowDashboard from '../../dashboard/js/index.js';
 
         let dashboard;
-        function build(data) {
+        async function build(data) {
             dashboard = new flowDashboard.Dashboard(data);
-            dashboard.initialize('#graph');
+            await dashboard.initialize('#graph');
             window.dashboard = dashboard;
+            wireSelectionLogging();
         }
         build(demoData);
 
@@ -83,10 +84,10 @@
             };
             document.querySelector('#graph').replaceChildren();
             build(next);
-            wireSelectionLogging();
         }
 
         function wireSelectionLogging() {
+            if (!dashboard?.main?.root) return;
             const origClick = dashboard.main.root.onClick;
             dashboard.main.root.onClick = (node, ev) => {
                 origClick?.(node, ev);
@@ -102,12 +103,11 @@
                 neighborhoodSize.textContent = n;
             };
         }
-        wireSelectionLogging();
 
         depthIn.addEventListener('input', rebuild);
         depthOut.addEventListener('input', rebuild);
         document.getElementById('clearBtn').addEventListener('click', () => {
-            dashboard.selectNode(null);
+            dashboard?.selectNode?.(null);
             selectedLabel.textContent = '(none)';
             neighborhoodSize.textContent = '0';
         });

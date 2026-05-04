@@ -29,7 +29,10 @@ const TOLERANCE = baselines._tolerance ?? 1.5;
 
 async function loadFixtureAndCollectMetrics(page, fixtureName) {
   await gotoAndReady(page, '/dashboard/flowdash-js.html');
-  await page.selectOption('#fileSelect', { label: fixtureName });
+  // The fileSelect lives inside a collapsed settings panel; open it before
+  // interacting. (Or use force: true to bypass the visibility check.)
+  await page.click('#settingsBtn').catch(() => {});
+  await page.selectOption('#fileSelect', { label: fixtureName }, { force: true });
   // After a file change, the dashboard re-runs initialize on the existing div;
   // the readiness attribute may have been cleared by the rerun, so re-wait.
   await page.waitForFunction(
@@ -66,6 +69,8 @@ test.describe('Performance benchmarks', () => {
     ({ browserName }) => browserName !== 'chromium',
     'Perf benchmarks pinned to chromium for stability',
   );
+  // Force serial execution: parallel workers compete for CPU and inflate timings.
+  test.describe.configure({ mode: 'serial' });
 
   for (const [fixtureName, fixture] of Object.entries(baselines.fixtures)) {
     test(`load ${fixtureName} stays within phase budgets`, async ({ page }) => {

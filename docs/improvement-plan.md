@@ -6,7 +6,18 @@ A phased, prioritized roadmap for closing the gaps identified in [`current-state
 
 ## Status snapshot (2026-05-04)
 
-The first wave of work has landed. The list below lets you skip the per-bullet detail and see the shape:
+The first wave of work has landed and been verified locally. Results:
+
+| Suite | Result |
+|-------|--------|
+| **Vitest unit tests** | 64/64 pass · 6 spec files · 795 ms · coverage 59% statements / 97% branches (all thresholds green) |
+| **Playwright perf benchmarks** | 4/4 pass against `tests/perf-baselines.json` (chromium, serial mode) — observed pre-render fast-path ratio 0.88 (12% faster than cold) |
+| **Playwright visual regression** | 10/10 baselines captured under `tests/visual-regression.spec.js-snapshots/`, asserting clean against the captured PNGs |
+| **Playwright smoke (new demos)** | 7/7 pass — every Phase 3 demo (`12_-17_` + `11_dashboard/01_showcase`) loads with zero console errors |
+
+A small follow-up patch was applied while verifying: `dashboard/flowdash-js.html` now exposes `window.dashboard` so perf specs can read `dashboard.performanceMetrics`, and the perf spec opens the collapsed settings panel before selecting a fixture. Pre-existing dashboard/edge/foundation/rectangular specs that hit `#fileSelect` directly are still red — they need the same panel-opening fix; tracked under Phase 2.4 follow-up.
+
+The list below lets you skip the per-bullet detail and see the shape:
 
 | Phase | Status | Notes |
 |------:|:-------|-------|

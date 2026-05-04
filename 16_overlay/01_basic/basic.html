@@ -49,7 +49,6 @@
       import flowDashboard from '../../dashboard/js/index.js';
 
       const dashboard = new flowDashboard.Dashboard(demoData);
-      dashboard.initialize('#graph');
       window.dashboard = dashboard;
 
       document.getElementById('loadingBtn').addEventListener('click', () => {
@@ -69,6 +68,8 @@
       function hideTooltip() { tooltip.classList.remove('show'); }
       document.getElementById('hideTipBtn').addEventListener('click', hideTooltip);
 
+      // Wait for init (which constructs main.root) before attaching the click handler.
+      await dashboard.initialize('#graph');
       const origClick = dashboard.main.root.onClick;
       dashboard.main.root.onClick = (node, event) => {
         origClick?.(node, event);

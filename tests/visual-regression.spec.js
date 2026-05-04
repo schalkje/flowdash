@@ -32,8 +32,8 @@ const TARGETS = [
   { name: 'lane-default',         path: '/04_laneNodes/01_simple-tests/01_default-mode/default-mode.html' },
   { name: 'columns-default',      path: '/05_columnsNodes/01_basic/basic.html' },
 
-  // Theme grid — guards the CSS-only theme system
-  { name: 'themes-grid',          path: '/01_basicNodes/03_states/themes-grid.html' },
+  // Theme grid renders themed dashboards inside iframes (srcdoc); wait on the iframe grid, not a top-level <svg>.
+  { name: 'themes-grid',          path: '/01_basicNodes/03_states/themes-grid.html', readySelector: 'iframe', settle: 2500 },
 
   // Edge directional flows
   { name: 'edge-horizontal-ltr',  path: '/10_edges/01_basic/horizontal-ltr.html' },
@@ -62,10 +62,15 @@ test.describe('Visual regression', () => {
 
   for (const target of TARGETS) {
     test(`${target.name} matches baseline`, async ({ page }) => {
+      const readySelector = target.readySelector ?? 'svg';
+      const readyTimeout = target.svgTimeout ?? 10000;
+      const settle = target.settle ?? 750;
+      // Allow the test itself a little more headroom on slower-loading pages.
+      test.setTimeout(Math.max(30000, readyTimeout + settle + 15000));
       await page.goto(target.path);
-      await page.waitForSelector('svg', { timeout: 10000 });
+      await page.waitForSelector(readySelector, { timeout: readyTimeout });
       // Settle: D3 / force layout / theme manager finish their work.
-      await page.waitForTimeout(750);
+      await page.waitForTimeout(settle);
 
       await expect(page).toHaveScreenshot(`${target.name}.png`, {
         fullPage: true,
