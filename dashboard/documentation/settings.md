@@ -474,7 +474,7 @@ All other settings use defaults from `ConfigManager`.
 ```javascript
 {
   settings: {
-    zoomToRoot: false,
+    zoomToRoot: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
     curved: false,

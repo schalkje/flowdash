@@ -2360,7 +2360,7 @@ export async function generatePrerenderData(dashboardData, containerSelector = "
       usePrerender: false, // Don't use existing pre-render
       toggleCollapseOnStatusChange: false, // Force expanded
       cascadeOnStatusChange: false,
-      zoomToRoot: false,
+      zoomToRoot: true,
       minimap: {
         ...(dashboardData.settings?.minimap || {}),
         enabled: false, // Disable minimap for generation

@@ -40,7 +40,8 @@ export const demoData = {
         isDebug: true,
         
         // Zoom settings
-        zoomToRoot: true
+        zoomToRoot: true,
+        toggleCollapseOnStatusChange: false
     },
     
     // Node definitions

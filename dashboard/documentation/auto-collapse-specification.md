@@ -281,7 +281,7 @@ Auto-collapse interacts with zoom behavior:
   settings: {
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
-    zoomToRoot: false
+    zoomToRoot: true
   },
   nodes: [/* ... */],
   edges: [/* ... */]
