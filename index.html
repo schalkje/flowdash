@@ -9,13 +9,13 @@
         *{box-sizing:border-box}
         html,body{height:100%}
         body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--sidebar-fg)}
-        .app{display:flex;min-height:100vh}
+        .app{display:flex;height:100vh;overflow:hidden}
         .sidebar{width:320px;background:var(--sidebar-bg);color:var(--sidebar-fg);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .2s ease;overflow:hidden}
-        .sidebar-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;position:sticky;top:0;background:var(--sidebar-bg);border-bottom:1px solid var(--border);z-index:1}
+        .sidebar-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;flex:0 0 auto;background:var(--sidebar-bg);border-bottom:1px solid var(--border);z-index:1}
         .sidebar-header h1{font-size:16px;font-weight:700;margin:0;color:var(--sidebar-fg-strong)}
         #sidebarToggle{appearance:none;border:1px solid var(--border);background:transparent;color:var(--sidebar-fg-strong);border-radius:8px;padding:6px 10px;cursor:pointer}
         #sidebarToggle:hover{background:rgba(255,255,255,.06)}
-        nav#index{padding:8px 10px 24px;overflow-y:auto}
+        nav#index{padding:8px 10px 24px;overflow-y:auto;flex:1 1 auto;min-height:0}
         .app.sidebar-collapsed .sidebar{width:48px}
         .app.sidebar-collapsed nav#index{display:none}
         .app.sidebar-collapsed .sidebar-header{justify-content:center}
