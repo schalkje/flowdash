@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { gotoAndReady } from './helpers/ready.js';
 
 test.describe('Dashboard Header Zone Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Start the local server and navigate to the dashboard
-    await page.goto('/dashboard/flowdash-js.html');
-    // Wait for the dashboard to load
-    await page.waitForSelector('svg', { timeout: 10000 });
+    // Use the data-flowdash-ready signal instead of an opaque sleep — the
+    // dashboard sets it at the end of Dashboard.initialize().
+    await gotoAndReady(page, '/dashboard/flowdash-js.html');
   });
 
   test('debug - check what elements are rendered', async ({ page }) => {

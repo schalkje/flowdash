@@ -1,5 +1,7 @@
 # Flow Dashboard (FlowDash)
 
+[![Test](https://github.com/schalkje/flowdash/actions/workflows/test.yml/badge.svg)](https://github.com/schalkje/flowdash/actions/workflows/test.yml)
+
 ## Overview
 
 **FlowDash** is a production-ready data flow visualization dashboard built with D3.js. It provides advanced capabilities for visualizing data processes, ETL pipelines, and data lineage through an interactive, modular interface.
@@ -25,10 +27,15 @@ The **dashboard** folder contains the production-ready FlowDash application:
 
 ## 📚 Documentation Structure
 
+### Repo-Level Documentation
+- **[`docs/`](docs/)** - Project goals, current-state analysis, improvement plan, contributing/release/testing guides
+- **[`docs/project-goals.md`](docs/project-goals.md)** - What the project is trying to be and why
+- **[`docs/improvement-plan.md`](docs/improvement-plan.md)** - Phased roadmap for hygiene, testing, demos, docs
+
 ### Core Dashboard Documentation
 - **`dashboard/readme.md`** - Dashboard overview and quick start
 - **`dashboard/documentation/`** - Comprehensive implementation guides
-- **`dashboard/implementation-*.md`** - Technical implementation details
+- **`dashboard/documentation/implementation*.md`** - Technical implementation details
 
 ### Visual Themes
 - **[`dashboard/themes/themes.md`](dashboard/themes/themes.md)** - Collection of FlowDash dashboard themes and usage guide
@@ -50,9 +57,10 @@ The **dashboard** folder contains the production-ready FlowDash application:
 - **`10_edges/`** - Edge and curve rendering components
 
 ### Testing & Quality
-- **`tests/`** - Comprehensive test suite
-- **`TEST_PLAN.md`** - Testing strategy and implementation
-- **`test-results/`** - Test execution results
+- **`tests/`** - Comprehensive Playwright test suite
+- **`docs/testing-strategy.md`** - Testing strategy across unit, integration, e2e, visual regression, and performance layers
+- **`tests/COMPREHENSIVE_TESTING.md`** - Lane/columns comprehensive test runner reference
+- **`dashboard/tests/PERFORMANCE_INSTRUMENTATION.md`** - How to use the built-in performance metrics
 
 ---
 
@@ -125,7 +133,7 @@ The `scripts/copy-flowdash-css.ps1` PowerShell script manages CSS distribution f
 
 - **Dashboard Implementation**: See `dashboard/implementation.md` for architecture details
 - **Component Development**: Each numbered folder contains its own README with examples
-- **Testing Strategy**: `TEST_PLAN.md` explains the comprehensive testing approach
+- **Testing Strategy**: [`docs/testing-strategy.md`](docs/testing-strategy.md) explains the testing approach across all pyramid layers
 - **API Reference**: Check individual component documentation for usage examples
 
 ---
@@ -134,7 +142,7 @@ The `scripts/copy-flowdash-css.ps1` PowerShell script manages CSS distribution f
 
 - Add new components in the appropriate numbered folders
 - Update documentation as you learn and improve
-- Follow the testing standards outlined in `TEST_PLAN.md`
+- Follow the testing standards outlined in [`docs/testing-strategy.md`](docs/testing-strategy.md)
 - For major changes, open an issue or pull request
 
 ---

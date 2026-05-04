@@ -668,6 +668,20 @@ export class Dashboard {
 
     this._isInitialized = true;
 
+    // Test-readiness signal — Playwright specs and external integrations should
+    // wait for `[data-flowdash-ready="true"]` rather than relying on opaque
+    // timeouts. Documented in /docs/testing-strategy.md.
+    try {
+      if (typeof document !== "undefined" && this.mainDivSelector) {
+        const root = typeof this.mainDivSelector === "string"
+          ? document.querySelector(this.mainDivSelector)
+          : this.mainDivSelector;
+        if (root && typeof root.setAttribute === "function") {
+          root.setAttribute("data-flowdash-ready", "true");
+        }
+      }
+    } catch {}
+
     // Ensure loading popup is hidden after initialization completes
     // This serves as a fallback if onMainDisplayChange doesn't trigger
     // Use setTimeout to ensure all synchronous operations complete first

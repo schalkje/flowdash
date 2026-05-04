@@ -1,0 +1,50 @@
+{
+  "_doc": "Performance ratchets for tests/performance.spec.js. Each fixture has a budget (ms) per phase. Specs assert metrics <= budget * tolerance. Update with `npm run test:perf -- --update-snapshots` after a justified change, then commit.",
+  "_tolerance": 1.5,
+  "_recordedOn": "2026-05-04 (initial generous baselines — ratchet downward after first CI run)",
+  "fixtures": {
+    "dwh-1.json": {
+      "phases": {
+        "nodeCreation": 800,
+        "nodeInitialization": 400,
+        "edgeCreation": 600,
+        "zoomSetup": 200,
+        "total": 2500
+      },
+      "nodeStats": {
+        "totalNodes": null,
+        "minDepth": 1
+      }
+    },
+    "dwh-6.fixed.json": {
+      "phases": {
+        "nodeCreation": 2500,
+        "nodeInitialization": 1200,
+        "edgeCreation": 1800,
+        "zoomSetup": 400,
+        "total": 6500
+      },
+      "nodeStats": {
+        "totalNodes": null,
+        "minDepth": 1
+      }
+    },
+    "dwh-6.fixed.prerender.json": {
+      "phases": {
+        "nodeCreation": 1500,
+        "nodeInitialization": 700,
+        "edgeCreation": 1100,
+        "zoomSetup": 400,
+        "total": 4000
+      },
+      "_note": "Pre-render fast-path target — should be substantially faster than dwh-6.fixed.json"
+    }
+  },
+  "fastPathRatio": {
+    "_doc": "Ratio of pre-rendered total to cold total. fastPathRatio < 1 means pre-render is genuinely faster.",
+    "dwh-6.fixed": {
+      "max": 0.85,
+      "_note": "Pre-rendered should be at least 15% faster than cold."
+    }
+  }
+}

@@ -1,5 +1,7 @@
 # Playwright Testing Strategy for D3 Dashboard
 
+> ⚠️ **Superseded.** The current canonical testing strategy lives at [`/docs/testing-strategy.md`](../../docs/testing-strategy.md). This document references the old `4_edges/`, `5_nodes/`, `6_groups/`, `7_dashboard/` folder names that no longer exist. It is kept here for historical reference only and should not be relied on for current decisions.
+
 ## Overview
 
 This document outlines the testing strategy for the D3 dashboard project using [Playwright](https://playwright.dev/). The goal is to ensure robust, reliable, and maintainable end-to-end (E2E) tests that verify user-visible behavior across supported browsers, with a focus on Chromium and WebKit.

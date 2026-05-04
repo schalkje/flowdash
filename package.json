@@ -1,9 +1,9 @@
 {
-  "name": "flowdash",
-  "version": "1.0.0",
-  "description": "Visualize data flow processes",
+  "name": "flowdash-harness",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test + tooling harness for the flowdash library. The library itself lives in /dashboard and is versioned independently (see /dashboard/package.json).",
   "homepage": "https://schalken.net",
-  "main": "index.js",
   "type": "module",
   "keywords": [
     "d3",
@@ -16,8 +16,8 @@
     "canvas"
   ],
   "scripts": {
-    "build": "webpack --mode production",
-    "start": "webpack serve --open --mode development",
+    "build": "cd dashboard && npm run build",
+    "start": "cd dashboard && npm start",
     "test": "npx playwright test",
     "test:adapter": "npx playwright test tests/adapter-nodes.spec.js",
     "test:foundation": "npx playwright test tests/foundation-nodes.spec.js",
@@ -26,18 +26,17 @@
     "test:headed": "npx playwright test --headed",
     "test:comprehensive": "node tests/run-comprehensive-tests.js",
     "test:lane": "npx playwright test tests/lane-nodes-comprehensive.spec.js",
-    "test:columns": "npx playwright test tests/columns-nodes-comprehensive.spec.js"
+    "test:columns": "npx playwright test tests/columns-nodes-comprehensive.spec.js",
+    "test:unit": "cd dashboard && npm run test:unit",
+    "test:coverage": "cd dashboard && npm run test:coverage",
+    "test:perf": "npx playwright test tests/performance.spec.js",
+    "test:visual": "npx playwright test tests/visual-regression.spec.js"
   },
   "author": "Jeroen Schalken",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7",
-    "@babel/preset-env": "^7",
     "@playwright/test": "^1.54.1",
-    "@types/node": "^24.0.14",
-    "babel-loader": "^9",
-    "webpack": "^5",
-    "webpack-cli": "^5"
+    "@types/node": "^24.0.14"
   },
   "dependencies": {
     "playwright": "^1.54.1"
