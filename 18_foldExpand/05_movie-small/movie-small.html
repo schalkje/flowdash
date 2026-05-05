@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fold/Expand 05 — Small Movie</title>
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../fold-expand.css">
+
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+</head>
+<body>
+    <header class="demo-header">
+        <h1>Fold / Expand</h1>
+        <h2>05 — Small Movie</h2>
+        <p class="demo-description">
+            A compact dashboard that autoplays a sequence of fold and
+            expand operations. Use Pause to inspect any step, Step to
+            advance one frame, or Reset to return to the start.
+        </p>
+    </header>
+
+    <div class="fe-toolbar">
+        <button id="btn-play" class="fe-active">Play</button>
+        <button id="btn-pause">Pause</button>
+        <button id="btn-step">Step ▶</button>
+        <button id="btn-reset">Reset</button>
+        <label style="margin-left:12px;">
+            Step duration:
+            <input id="speed" type="range" min="600" max="3000" step="200" value="1400" style="vertical-align:middle;">
+            <span id="speed-out">1400 ms</span>
+        </label>
+        <span class="fe-status" id="fe-status">step 0 / —</span>
+    </div>
+
+    <div class="fe-canvas-wrapper">
+        <svg id="graph" class="canvas fe-tall"></svg>
+    </div>
+
+    <script type="module">
+        import { demoData, movieScript } from './js/graphData.js';
+        import flowDashboard from '../../dashboard/js/index.js';
+
+        const dashboard = new flowDashboard.Dashboard(demoData);
+        await dashboard.initialize('#graph');
+        window.flowdash = dashboard;
+        window.foldExpandMovie = { script: movieScript, currentStep: 0, playing: true };
+
+        const allContainerIds = ["stage", "ingest", "process", "process-cols", "publish"];
+
+        function applyStep(step) {
+            const targets = new Set(step.collapsed);
+            allContainerIds.forEach(id => {
+                const node = dashboard.main.root.getNode(id);
+                if (!node) return;
+                const shouldCollapse = targets.has(id);
+                if (node.collapsed !== shouldCollapse) {
+                    node.collapsed = shouldCollapse;
+                }
+            });
+            window.foldExpandMovie.lastApplied = step;
+        }
+
+        const statusEl = document.getElementById('fe-status');
+        function refreshStatus() {
+            const m = window.foldExpandMovie;
+            const s = m.script[m.currentStep];
+            statusEl.textContent = `step ${m.currentStep + 1} / ${m.script.length}: ${s.name}`;
+        }
+
+        function next() {
+            const m = window.foldExpandMovie;
+            applyStep(m.script[m.currentStep]);
+            refreshStatus();
+            m.currentStep = (m.currentStep + 1) % m.script.length;
+        }
+
+        // Run the first step immediately so the page doesn't sit on a
+        // pre-script frame waiting for the first tick.
+        next();
+
+        let timer = null;
+        function start() {
+            stop();
+            window.foldExpandMovie.playing = true;
+            const speed = parseInt(document.getElementById('speed').value, 10);
+            timer = setInterval(next, speed);
+            document.getElementById('btn-play').classList.add('fe-active');
+            document.getElementById('btn-pause').classList.remove('fe-active');
+        }
+        function stop() {
+            if (timer) clearInterval(timer);
+            timer = null;
+            window.foldExpandMovie.playing = false;
+            document.getElementById('btn-play').classList.remove('fe-active');
+            document.getElementById('btn-pause').classList.add('fe-active');
+        }
+
+        document.getElementById('btn-play').addEventListener('click', start);
+        document.getElementById('btn-pause').addEventListener('click', stop);
+        document.getElementById('btn-step').addEventListener('click', () => { stop(); next(); });
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            stop();
+            window.foldExpandMovie.currentStep = 0;
+            next();
+        });
+        document.getElementById('speed').addEventListener('input', (e) => {
+            document.getElementById('speed-out').textContent = `${e.target.value} ms`;
+            if (window.foldExpandMovie.playing) start();
+        });
+
+        // Autoplay by default; tests stop the loop themselves before driving.
+        start();
+    </script>
+</body>
+</html>

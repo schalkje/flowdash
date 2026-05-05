@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fold/Expand 01 — Simple</title>
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../fold-expand.css">
+
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+</head>
+<body>
+    <header class="demo-header">
+        <h1>Fold / Expand</h1>
+        <h2>01 — Simple</h2>
+        <p class="demo-description">
+            One Lane container with three rectangle children. Click the
+            <code>−</code> / <code>+</code> button on the lane header to
+            collapse and expand. The control bar drives the same setter
+            programmatically.
+        </p>
+    </header>
+
+    <div class="fe-toolbar">
+        <span class="fe-step-label">Lane:</span>
+        <button id="btn-collapse">Collapse</button>
+        <button id="btn-expand">Expand</button>
+        <button id="btn-toggle">Toggle</button>
+        <span class="fe-status" id="fe-status">collapsed = false</span>
+    </div>
+
+    <div class="fe-canvas-wrapper">
+        <svg id="graph" class="canvas"></svg>
+    </div>
+
+    <script type="module">
+        import { demoData } from './js/graphData.js';
+        import flowDashboard from '../../dashboard/js/index.js';
+
+        const dashboard = new flowDashboard.Dashboard(demoData);
+        await dashboard.initialize('#graph');
+        window.flowdash = dashboard;
+
+        const statusEl = document.getElementById('fe-status');
+        function refresh() {
+            const node = dashboard.main.root.getNode('lane1');
+            statusEl.textContent = `collapsed = ${node?.collapsed}`;
+        }
+        refresh();
+
+        function set(value) {
+            const node = dashboard.main.root.getNode('lane1');
+            if (!node) return;
+            if (value === 'toggle') node.collapsed = !node.collapsed;
+            else node.collapsed = value;
+            refresh();
+        }
+        document.getElementById('btn-collapse').addEventListener('click', () => set(true));
+        document.getElementById('btn-expand').addEventListener('click', () => set(false));
+        document.getElementById('btn-toggle').addEventListener('click', () => set('toggle'));
+
+        // Refresh when user clicks the on-node zoom button too
+        new MutationObserver(refresh).observe(
+            document.getElementById('graph'),
+            { subtree: true, attributes: true, attributeFilter: ['class', 'width', 'height'] }
+        );
+    </script>
+</body>
+</html>

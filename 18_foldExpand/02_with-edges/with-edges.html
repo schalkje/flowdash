@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fold/Expand 02 — With Edges</title>
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../fold-expand.css">
+
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+</head>
+<body>
+    <header class="demo-header">
+        <h1>Fold / Expand</h1>
+        <h2>02 — With Edges</h2>
+        <p class="demo-description">
+            Source → Transform → Sink. Collapse <em>Transform</em>: the
+            edges feeding it should re-route to the collapsed lane's
+            bounding box rather than to the now-hidden child rect.
+        </p>
+    </header>
+
+    <div class="fe-toolbar">
+        <button data-target="source" data-action="toggle">Toggle Source</button>
+        <button data-target="transform" data-action="toggle">Toggle Transform</button>
+        <button data-target="sink" data-action="toggle">Toggle Sink</button>
+        <button data-target="root" data-action="toggle">Toggle Root</button>
+        <span class="fe-status" id="fe-status">ready</span>
+    </div>
+
+    <div class="fe-canvas-wrapper">
+        <svg id="graph" class="canvas fe-tall"></svg>
+    </div>
+
+    <script type="module">
+        import { demoData } from './js/graphData.js';
+        import flowDashboard from '../../dashboard/js/index.js';
+
+        const dashboard = new flowDashboard.Dashboard(demoData);
+        await dashboard.initialize('#graph');
+        window.flowdash = dashboard;
+
+        const statusEl = document.getElementById('fe-status');
+        function refresh() {
+            const states = ['source', 'transform', 'sink', 'root']
+                .map(id => `${id}=${dashboard.main.root.getNode(id)?.collapsed}`)
+                .join('  ');
+            statusEl.textContent = states;
+        }
+        refresh();
+
+        document.querySelectorAll('.fe-toolbar button[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const node = dashboard.main.root.getNode(btn.dataset.target);
+                if (!node) return;
+                node.collapsed = !node.collapsed;
+                refresh();
+            });
+        });
+    </script>
+</body>
+</html>
