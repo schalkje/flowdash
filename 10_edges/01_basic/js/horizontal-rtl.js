@@ -1,6 +1,5 @@
 export const demoData = {
-    settings: {
-        showGhostlines: false,
+    settings: { demoMode: true, showGhostlines: false,
         showEdges: true,
         curved: false,
         nodeSpacing: { horizontal: 40, vertical: 20 }

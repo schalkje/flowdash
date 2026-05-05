@@ -55,6 +55,17 @@
             loadPage(initialPath);
             var initialLink = document.querySelector('a[data-path="'+initialPath.replace(/"/g,'\\"')+'"]');
             if(initialLink) { initialLink.classList.add('active'); }
+
+            // Demo pages embed dashboard/demo-nav.js, which posts a message
+            // when the user clicks Prev/Next inside the iframe. Mirror the
+            // change in the sidebar + URL hash so the two stay aligned.
+            window.addEventListener('message', function(e){
+                var d = e && e.data; if(!d || d.type !== 'flowdash-nav' || !d.path) return;
+                loadPage(d.path);
+                document.querySelectorAll('.file-li a[data-load].active').forEach(function(el){el.classList.remove('active')});
+                var link = document.querySelector('a[data-path="'+d.path.replace(/"/g,'\\"')+'"]');
+                if(link) link.classList.add('active');
+            });
         });
     </script>
 </head>

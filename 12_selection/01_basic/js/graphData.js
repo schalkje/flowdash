@@ -10,6 +10,8 @@ export const demoData = {
     version: '1.0.0',
   },
   settings: {
+    demoMode: true,
+    showBoundingBox: true,
     selector: { incomming: 1, outgoing: 1 },
     showCenterMark: false,
     showConnectionPoints: false,

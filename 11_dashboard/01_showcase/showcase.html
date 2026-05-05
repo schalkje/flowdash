@@ -26,6 +26,7 @@
       .swatch-disabled { background: #ddd; }
       .demo-container { height: calc(100vh - 220px); min-height: 500px; }
     </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
 </head>
 <body>
     <header class="demo-header">
@@ -99,8 +100,17 @@
         document.querySelector('#graph').replaceChildren();
         const r = await fetch(`../../dashboard/data/${datasetName}.json`);
         const data = await r.json();
-        // Force the minimap on so the showcase always demos it
-        data.settings = { ...(data.settings || {}), minimap: { ...((data.settings || {}).minimap || {}), enabled: true, mode: 'always' } };
+        // Force demo-friendly settings: keep the minimap on, and disable the
+        // production-leaning auto-collapse + selection bounding box that some
+        // dwh-* fixtures inherit.
+        data.settings = {
+          ...(data.settings || {}),
+          demoMode: true,
+          showBoundingBox: false,
+          toggleCollapseOnStatusChange: false,
+          cascadeOnStatusChange: false,
+          minimap: { ...((data.settings || {}).minimap || {}), enabled: true, mode: 'always' }
+        };
         dashboard = new flowDashboard.Dashboard(data);
         await dashboard.initialize('#graph');
         window.dashboard = dashboard;

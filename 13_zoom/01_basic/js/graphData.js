@@ -3,6 +3,7 @@
 export const demoData = {
   metadata: { name: 'zoom-basic', description: 'Pan, zoom, and auto-zoom controls.' },
   settings: {
+    demoMode: true,
     zoomToRoot: true,
     zoom: { scaleExtent: [0.1, 40], epsilonPct: 0.005, minTargetBBoxPx: { w: 24, h: 24 } },
   },

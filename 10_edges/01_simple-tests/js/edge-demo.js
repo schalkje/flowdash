@@ -4,8 +4,7 @@ export function makeData(cfg = {}) {
     const mode = cfg.mode || 'grid'; // grid, h-shifted, v-shifted, v-shifted2, stair-up, stair-down
 
     return {
-        settings: {
-            showGhostlines: ghost,
+        settings: { demoMode: true, showGhostlines: ghost,
             showEdges: true,
             curved: curved,
             curveMargin: curved ? 0.1 : 0,

@@ -61,13 +61,26 @@ $htmlContent = @"
             if(toggleBtn){toggleBtn.addEventListener('click',function(){app.classList.toggle('sidebar-collapsed');localStorage.setItem('sidebarCollapsed',app.classList.contains('sidebar-collapsed')?'1':'0')})}
             document.querySelectorAll('details[data-key]').forEach(function(d){var key='open:'+d.dataset.key;var saved=localStorage.getItem(key);if(saved==='0'){d.removeAttribute('open')}if(saved==='1'){d.setAttribute('open','open')}d.addEventListener('toggle',function(){localStorage.setItem(key,d.open?'1':'0')})});
             document.addEventListener('click',function(e){var a=e.target.closest('a[data-load]');if(!a)return;e.preventDefault();var p=a.getAttribute('data-path');loadPage(p);document.querySelectorAll('.file-li a[data-load].active').forEach(function(el){el.classList.remove('active')});a.classList.add('active')});
-            // Load flowdash-bundle.html by default
-            loadPage('dashboard/flowdash-bundle.html');
-            // Set the dashboard link as active by default
-            var dashboardLink = document.querySelector('a[data-path="dashboard/flowdash-bundle.html"]');
-            if(dashboardLink) {
-                dashboardLink.classList.add('active');
+            // Resolve the initial page from the URL hash (so bookmarked /#path
+            // links actually open that page), falling back to the dashboard.
+            var initialPath = 'dashboard/flowdash-bundle.html';
+            if(location.hash && location.hash.length > 1){
+                try { initialPath = decodeURIComponent(location.hash.slice(1)); } catch(e) {}
             }
+            loadPage(initialPath);
+            var initialLink = document.querySelector('a[data-path="'+initialPath.replace(/"/g,'\\"')+'"]');
+            if(initialLink) { initialLink.classList.add('active'); }
+
+            // Demo pages embed dashboard/demo-nav.js, which posts a message
+            // when the user clicks Prev/Next inside the iframe. Mirror the
+            // change in the sidebar + URL hash so the two stay aligned.
+            window.addEventListener('message', function(e){
+                var d = e && e.data; if(!d || d.type !== 'flowdash-nav' || !d.path) return;
+                loadPage(d.path);
+                document.querySelectorAll('.file-li a[data-load].active').forEach(function(el){el.classList.remove('active')});
+                var link = document.querySelector('a[data-path="'+d.path.replace(/"/g,'\\"')+'"]');
+                if(link) link.classList.add('active');
+            });
         });
     </script>
 </head>

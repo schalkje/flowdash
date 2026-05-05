@@ -3,6 +3,7 @@
 export const demoData = {
   metadata: { name: 'minimap-basic', description: 'Minimap interactions and modes.' },
   settings: {
+    demoMode: true,
     minimap: {
       enabled: true,
       mode: 'always',

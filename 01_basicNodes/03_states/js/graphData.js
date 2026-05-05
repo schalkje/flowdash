@@ -18,8 +18,7 @@ export const demoData = {
 	},
 
 	// Dashboard settings
-	settings: {
-		showCenterMark: false,
+	settings: { demoMode: true, showCenterMark: false,
 		showGrid: true,
 		showGroupLabels: true,
 		showGroupTitles: true,

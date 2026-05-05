@@ -3,6 +3,7 @@
 export const demoData = {
   metadata: { name: 'status-basic', description: 'Status state machine and cascade behavior.' },
   settings: {
+    demoMode: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: true,
   },
