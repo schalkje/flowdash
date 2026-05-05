@@ -45,17 +45,21 @@ export const DEFAULT_SETTINGS = {
   }
 };
 
-// Default settings for demo pages (other than flowdash-js and flowdash-bundle)
+// Default settings for demo pages (other than flowdash-js and flowdash-bundle).
+// Activated via `data.settings.demoMode === true` — see ConfigManager.mergeWithDefaults.
 export const DEMO_DEFAULT_SETTINGS = {
   ...DEFAULT_SETTINGS,
-  toggleCollapseOnStatusChange: false, // Default false for demo pages
-  cascadeOnStatusChange: false, // Default false for demo pages
+  toggleCollapseOnStatusChange: false, // demos don't auto-collapse on status
+  cascadeOnStatusChange: false,
+  showBoundingBox: false,              // demos hide the canvas bounding box (selection demo opts back in)
 };
 
 export class ConfigManager {
   static mergeWithDefaults(userSettings, isDemoPage = false) {
-    const defaults = isDemoPage ? DEMO_DEFAULT_SETTINGS : DEFAULT_SETTINGS;
-    return this.deepMerge(defaults, userSettings);
+    const settings = userSettings || {};
+    const useDemo = isDemoPage || settings.demoMode === true;
+    const defaults = useDemo ? DEMO_DEFAULT_SETTINGS : DEFAULT_SETTINGS;
+    return this.deepMerge(defaults, settings);
   }
   
   static deepMerge(target, source) {
