@@ -1,7 +1,8 @@
 // Demo data for click handler functionality
 export const demoData = {
-  settings: { demoMode: true, zoomToRoot: true,
-    showBoundingBox: true,
+  settings: {
+    demoMode: true,
+    zoomToRoot: true,
     selector: { incoming: 1, outgoing: 1 }
   },
   nodes: [
