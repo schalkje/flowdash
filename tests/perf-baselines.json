@@ -76,12 +76,12 @@
     "/themes/02_theme-overview.html": {
       "phases": {
         "nodeCreation": 100,
-        "nodeInitialization": 3700,
+        "nodeInitialization": 3000,
         "edgeCreation": 200,
         "zoomSetup": 400,
-        "total": 3800
+        "total": 3100
       },
-      "_note": "Showcase page: 6 sections × 10 statuses + role children = 177 nodes (57 containers, 120 leaves, depth 3). Three Workstream C optimizations brought nodeInitialization from ~7.7-13.5s down to a stable 3.4s: (1) replaced the redundant expand() call during init with a lean _postInitLayout pass (nodeBaseContainer.js); (2) ConfigManager.mergeWithDefaults is now idempotent so the deep-merge of DEFAULT_SETTINGS only runs once per dashboard instead of once per node; (3) nestedCorrection_x/y getters now read the cached transformOffset on InnerContainerZone instead of regex-parsing the translate() string. Budget set 10% above the stable observation. Per-postinit performance.mark/measure entries surface in performance.getEntriesByType('measure') under the 'postinit-' prefix for further profiling."
+      "_note": "Showcase page: 6 sections × 10 statuses + role children = 177 nodes (57 containers, 120 leaves, depth 3). Five Workstream C optimizations brought nodeInitialization from ~7.7-13.5s down to a stable 2.9s: (1) replaced the redundant expand() call during init with a lean _postInitLayout pass; (2) removed the redundant updateChildren() pass at the end of initChildren — _postInitLayout (during init) and expand() (during transition) both run it themselves; (3) removed the per-container forceUpdateChildPositions setTimeout — child positioning is handled by updateChildren which runs anyway; (4) ConfigManager.mergeWithDefaults is now idempotent so the deep-merge of DEFAULT_SETTINGS only runs once per dashboard instead of once per node; (5) nestedCorrection_x/y getters read the cached transformOffset on InnerContainerZone instead of regex-parsing the translate() string. Budget set ~5% above stable observation."
     }
   },
   "fastPathRatio": {

@@ -729,8 +729,6 @@ export default class BaseContainerNode extends BaseNode {
    */
   _postInitLayout() {
     if (!this.zoneManager) return;
-    const perfId = `postinit-${this.id}`;
-    performance.mark(`${perfId}-start`);
     if (typeof this.updateChildren === 'function' && !this._updating) {
       this._updating = true;
       try {
@@ -739,7 +737,6 @@ export default class BaseContainerNode extends BaseNode {
         this._updating = false;
       }
     }
-    performance.mark(`${perfId}-after-updateChildren`);
     const innerZone = this.zoneManager.innerContainerZone;
     if (innerZone) {
       innerZone.update();
@@ -747,14 +744,6 @@ export default class BaseContainerNode extends BaseNode {
         innerZone.updateChildVisibility(true);
       }
     }
-    performance.mark(`${perfId}-end`);
-    performance.measure(`${perfId}-total`, `${perfId}-start`, `${perfId}-end`);
-    performance.measure(
-      `${perfId}-updateChildren`,
-      `${perfId}-start`,
-      `${perfId}-after-updateChildren`,
-    );
-    performance.measure(`${perfId}-zoneUpdate`, `${perfId}-after-updateChildren`, `${perfId}-end`);
   }
 
   initChildren() {
@@ -831,11 +820,6 @@ export default class BaseContainerNode extends BaseNode {
         // Don't call init() on existing children - they're already initialized
       }
 
-      // Trigger child positioning after all children are initialized
-      if (innerZone) {
-        innerZone.forceUpdateChildPositions();
-      }
-
       if (this.settings?.isDebug) {
         console.log(
           `🔍 After initChildren for node ${this.id}: childNodes count = ${this.childNodes?.length}, child IDs = ${this.childNodes?.map((c) => c.id).join(',')}`,
@@ -843,16 +827,12 @@ export default class BaseContainerNode extends BaseNode {
       }
     }
 
-    // Only call updateChildren if we're not already in an update cycle OR during DOM attachment
-    // During DOM attachment (_attachingChildren), the parent will handle the updateChildren call
-    if (!this._updating && !this._attachingChildren) {
-      this._updating = true;
-      try {
-        this.updateChildren();
-      } finally {
-        this._updating = false;
-      }
-    }
+    // Note: child positioning (forceUpdateChildPositions) and the
+    // post-children updateChildren() pass used to live here, but both are
+    // redundant during init (the caller does updateChildren() in
+    // _postInitLayout) and during expand (which runs updateChildren itself).
+    // Re-attachment paths call updateChildren above through the existing
+    // child-already-exists branch, which is the only legitimate use case.
   }
 
   update() {
