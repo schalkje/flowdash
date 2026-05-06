@@ -347,3 +347,89 @@ text,
 .collapsed[status='Error'] .label {
   fill: #000 !important;
 }
+
+/* === Status: Unknown / Undetermined / Disabled — neutral palette ===
+   Dark-theme equivalents of the light theme spec:
+     - Light grey bg → muted dark grey (#2a2f3a, a few shades up from
+       --fd-bg=#0b0e14)
+     - Extra-light grey bg → an even more muted neutral (#1a1d24)
+     - Dark text → high-contrast light text (var(--fd-text))
+     - Dark grey muted text → low-contrast text (#7a8290)
+   Appended last so we override the vivid lavender Unknown declared earlier
+   and the global "fill #000 on collapsed" text rule. */
+
+/* Leaf node fills */
+.shape[status='Unknown'],
+.shape[status='Undetermined'],
+.shape[status='Disabled'],
+.node.shape[status='Unknown'],
+.node.shape[status='Undetermined'],
+.node.shape[status='Disabled'],
+.container-shape[status='Unknown'],
+.container-shape[status='Undetermined'],
+.container-shape[status='Disabled'],
+.rect.shape[status='Unknown'],
+.rect.shape[status='Undetermined'],
+.rect.shape[status='Disabled'] {
+  fill: #2a2f3a !important;
+  stroke: #4a5160 !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Collapsed-container fills */
+.collapsed[status='Unknown'] > .zone-container > .container-shape,
+.collapsed[status='Undetermined'] > .zone-container > .container-shape,
+.collapsed[status='Disabled'] > .zone-container > .container-shape {
+  fill: #2a2f3a !important;
+  stroke: #4a5160 !important;
+}
+
+/* Expanded container fills — Disabled gets an even more muted bg */
+.adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.foundation.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Undetermined'] > .zone-container > .container-shape {
+  fill: #2a2f3a !important;
+  fill-opacity: 0.4 !important;
+  stroke: var(--fd-border) !important;
+}
+.adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.foundation.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Disabled'] > .zone-container > .container-shape {
+  fill: #1a1d24 !important;
+  fill-opacity: 1 !important;
+  stroke: var(--fd-border) !important;
+}
+
+/* Text — Unknown/Undetermined high-contrast light;
+   Disabled stays low-contrast (muted grey).
+   Note: this block runs after the global "collapsed → fill #000" rule
+   above and reverses it for these three statuses. */
+.collapsed[status='Unknown'] .header-text,
+.collapsed[status='Unknown'] .label,
+.collapsed[status='Undetermined'] .header-text,
+.collapsed[status='Undetermined'] .label,
+.rect[status='Unknown'] text,
+.rect[status='Undetermined'] text,
+.node[status='Unknown'] text,
+.node[status='Undetermined'] text {
+  fill: var(--fd-text) !important;
+}
+.collapsed[status='Disabled'] .header-text,
+.collapsed[status='Disabled'] .label,
+.rect[status='Disabled'] text,
+.node[status='Disabled'] text {
+  fill: #7a8290 !important;
+}

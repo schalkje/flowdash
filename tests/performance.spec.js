@@ -46,6 +46,21 @@ async function loadFixtureAndCollectMetrics(page, fixtureName) {
   return metrics;
 }
 
+/**
+ * Variant for pages that mount their own dataset (no fileSelect dropdown).
+ * Examples: themes/02_theme-overview.html constructs its data inline from
+ * a JS module and calls dashboard.initialize() directly. We just navigate,
+ * wait for the readiness signal, and read the metrics off `window.dashboard`.
+ */
+async function loadDirectPageAndCollectMetrics(page, urlPath) {
+  await gotoAndReady(page, urlPath, { timeout: 30000 });
+  return page.evaluate(() =>
+    typeof window.dashboard !== 'undefined' && window.dashboard.performanceMetrics
+      ? JSON.parse(JSON.stringify(window.dashboard.performanceMetrics))
+      : null,
+  );
+}
+
 function assertPhaseBudgets(metrics, fixture, fixtureName) {
   expect(
     metrics,
@@ -79,6 +94,29 @@ test.describe('Performance benchmarks', () => {
     test(`load ${fixtureName} stays within phase budgets`, async ({ page }) => {
       const metrics = await loadFixtureAndCollectMetrics(page, fixtureName);
       assertPhaseBudgets(metrics, fixture, fixtureName);
+    });
+  }
+
+  // Direct-page perf tests: pages that don't go through flowdash-js.html's
+  // file dropdown but mount their own dataset. Same metrics format, different
+  // load mechanism.
+  for (const [urlPath, fixture] of Object.entries(baselines.directPages || {})) {
+    if (urlPath.startsWith('_')) continue;
+    test(`load ${urlPath} stays within phase budgets`, async ({ page }) => {
+      const metrics = await loadDirectPageAndCollectMetrics(page, urlPath);
+      assertPhaseBudgets(metrics, fixture, urlPath);
+      // Surface the breakdown so the user can see where time is spent — the
+      // perf-prerender-comparison artifact is keyed on file fixtures, but
+      // direct-page numbers only show up here.
+
+      console.log(`\n=== ${urlPath} ===`);
+
+      console.table({
+        phases: metrics?.phases ?? {},
+        paint: metrics?.paintMetrics ?? {},
+        memory: metrics?.memoryStats ?? {},
+        nodes: metrics?.nodeStats ?? {},
+      });
     });
   }
 

@@ -344,11 +344,9 @@ export default class BaseNode {
     // show the center stip
     if (this.settings.showCenterMark)
       this.element
-        .append('circle')
+        .append('use')
         .attr('class', 'centermark')
-        .attr('r', 3)
-        .attr('cx', 0)
-        .attr('cy', 0);
+        .attr('href', '#flowdash-centermark-template');
     performance.mark(`${perfId}-after-center-mark`);
 
     // Performance profiling: Connection points
@@ -365,11 +363,11 @@ export default class BaseNode {
       );
       Object.values(connectionPoints).forEach((point) => {
         this.connectionPointsGroup
-          .append('circle')
+          .append('use')
           .attr('class', `connection-point side-${point.side}`)
-          .attr('cx', point.x)
-          .attr('cy', point.y)
-          .attr('r', 2);
+          .attr('href', '#flowdash-connection-point-template')
+          .attr('x', point.x)
+          .attr('y', point.y);
       });
       try {
         if (this.settings.isDebug) {
@@ -461,27 +459,17 @@ export default class BaseNode {
 
       const connectionPoints = this.computeConnectionPoints(0, 0, width, height);
       Object.values(connectionPoints).forEach((point) => {
-        // Update only this node's own points (scoped to the dedicated group)
+        // Update only this node's own points (scoped to the dedicated group).
+        // Connection points are now <use> elements; their position attributes
+        // are `x`/`y` rather than `cx`/`cy`.
         const scope = this.connectionPointsGroup || this.element;
         if (scope) {
           scope
             .select(`.connection-point.side-${point.side}`)
-            .attr('cx', point.x)
-            .attr('cy', point.y);
+            .attr('x', point.x)
+            .attr('y', point.y);
         }
       });
-      try {
-        if (this.settings.isDebug) {
-          const scope = this.connectionPointsGroup || this.element;
-          if (scope) {
-            const read = (side) => ({
-              side,
-              cx: parseFloat(scope.select(`.connection-point.side-${side}`).attr('cx')),
-              cy: parseFloat(scope.select(`.connection-point.side-${side}`).attr('cy')),
-            });
-          }
-        }
-      } catch {}
     }
   }
 

@@ -53,7 +53,7 @@ E2E and component testing are mature today; the rest are aspirations the [`impro
 ### Themability
 
 - Themes are CSS-only. Switching themes is a stylesheet swap, never a code change.
-- A theme grid (`01_basicNodes/03_states/themes-grid*.html`) shows every theme side-by-side.
+- A theme grid (`themes/*_themes-grid*.html`) shows every theme side-by-side.
 
 ### Performance at scale
 

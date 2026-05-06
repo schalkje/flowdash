@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Theme Overview — every node type × every status</title>
+
+    <!-- Standard CSS (theme stylesheets are injected by themeManager.js below). -->
+    <link rel="stylesheet" href="../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../dashboard/flowdash-demo.css" />
+
+    <!-- Required Libraries -->
+    <script src="../dashboard/libs/d3.min.js"></script>
+    <script src="../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../dashboard/libs/d3-dag.iife.min.js"></script>
+
+    <!-- Theme manager: auto-injects link tags for every known theme, exposes
+         a floating top-left selector + toggle, and remembers the choice in
+         localStorage so a reload resumes where the user left off. -->
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../dashboard/js/themeManager.js"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+      header.demo-header {
+        padding: 14px 16px 6px;
+        flex: 0 0 auto;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      header p {
+        margin: 4px 0 0;
+        color: #666;
+        font-size: 13px;
+      }
+      .demo-container {
+        flex: 1 1 auto;
+        position: relative;
+        min-height: 0;
+      }
+      svg#graph.canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="demo-header">
+      <h1>Theme Overview</h1>
+      <p>
+        Each section below shows one node type rendered in all 10 statuses (Undetermined → Error).
+        Use the floating theme picker in the top-left to switch themes live.
+      </p>
+    </header>
+
+    <div class="demo-container">
+      <svg id="graph" class="canvas"></svg>
+    </div>
+
+    <script type="module">
+      import { demoData } from './js/graphData.theme-overview.js';
+      import flowDashboard from '../dashboard/js/index.js';
+
+      // Disable the minimap auto-init for this demo — the showcase has many
+      // containers and a parallel SVG mirror would clutter the view. The
+      // theme-pinned float in the top-left is the only chrome we need.
+      const data = {
+        ...demoData,
+        settings: {
+          ...(demoData.settings || {}),
+          minimap: {
+            ...((demoData.settings && demoData.settings.minimap) || {}),
+            mode: 'hidden',
+            enabled: false,
+          },
+        },
+      };
+
+      const dashboard = new flowDashboard.Dashboard(data);
+      await dashboard.initialize('#graph');
+      window.flowdash = dashboard;
+      window.dashboard = dashboard;
+    </script>
+  </body>
+</html>

@@ -22,6 +22,12 @@ export const DEFAULT_SETTINGS = {
     opacity: 1,
     collapsed: false,
     pinned: false,
+    // Skip the deferred auto-init when the dashboard has more than this many
+    // nodes — the minimap mirrors every node into a parallel SVG, which can
+    // dominate post-init time on large fixtures. Above the threshold the
+    // minimap is created lazily on the first call to `dashboard.initMinimap()`
+    // (e.g. from a UI button). Set `null` or `Infinity` to always auto-init.
+    autoInitMaxNodes: 500,
     collapsedIcon: { position: 'bottom-right' },
     hover: { showDelayMs: 120, hideDelayMs: 300, zoomFitThreshold: 1.0 },
     touch: { autoHideAfterMs: 2500 },

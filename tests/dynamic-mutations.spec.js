@@ -253,4 +253,53 @@ test.describe('Dynamic mutations API', () => {
     // fires far fewer times than the number of mutations (proving coalescing).
     expect(result.displayChangeCount).toBeLessThanOrEqual(2);
   });
+
+  test('updateNodeStatuses applies many status writes in one cascade', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      // Pick the first 30 leaves we can find, plus a known-bogus id.
+      const leaves = [];
+      const visit = (n) => {
+        if (!n.childNodes || n.childNodes.length === 0) {
+          if (n.parentNode) leaves.push(n);
+        } else {
+          for (const c of n.childNodes) visit(c);
+        }
+      };
+      visit(window.dashboard.main.root);
+      const targets = leaves.slice(0, Math.min(30, leaves.length));
+      const updates = targets.map((n, i) => ({ id: n.id, status: i % 2 ? 'ERROR' : 'READY' }));
+      updates.push({ id: 'definitely-not-a-real-id', status: 'READY' });
+
+      let displayChangeCount = 0;
+      const original = window.dashboard.onMainDisplayChange.bind(window.dashboard);
+      window.dashboard.onMainDisplayChange = function (...args) {
+        displayChangeCount++;
+        return original.apply(this, args);
+      };
+
+      let report;
+      try {
+        report = await window.dashboard.updateNodeStatuses(updates);
+      } finally {
+        window.dashboard.onMainDisplayChange = original;
+      }
+
+      // Verify every targeted leaf actually has the new status.
+      const verified = targets.every((n, i) => n.status === (i % 2 ? 'ERROR' : 'READY'));
+      return {
+        applied: report.applied,
+        missingCount: report.missing.length,
+        verified,
+        displayChangeCount,
+        targetCount: targets.length,
+      };
+    });
+
+    expect(result.applied).toBe(result.targetCount);
+    expect(result.missingCount).toBe(1); // the bogus id
+    expect(result.verified).toBe(true);
+    // The whole bulk update should fire onMainDisplayChange a small constant
+    // number of times — not once per status write.
+    expect(result.displayChangeCount).toBeLessThanOrEqual(2);
+  });
 });

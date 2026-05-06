@@ -323,17 +323,66 @@ export class Dashboard {
    */
   _deferredMinimapInit() {
     if (this._minimapInitialized) return;
+    if (this._exceedsMinimapAutoInitThreshold()) {
+      // Don't auto-init on large fixtures — let the consumer call
+      // `dashboard.initMinimap()` explicitly (e.g. from a UI button or hover).
+      this._minimapAutoInitSkipped = true;
+      this._debugLog(
+        `🗺️ Minimap auto-init skipped: ${this._approximateNodeCount()} nodes exceeds settings.minimap.autoInitMaxNodes=${this.data.settings?.minimap?.autoInitMaxNodes}`,
+      );
+      return;
+    }
+    this._initMinimap('deferred');
+  }
 
-    this._debugLog('🗺️ Initializing minimap (deferred)...');
+  /**
+   * Public minimap init. Always initializes regardless of node-count
+   * threshold; intended for UI affordances ("Show minimap" button, hover-
+   * triggered show). Idempotent: returns immediately if already initialized.
+   *
+   * @returns {boolean} true if the minimap is initialized after the call
+   */
+  initMinimap() {
+    if (this._minimapInitialized) return true;
+    return this._initMinimap('explicit');
+  }
+
+  /** @private */
+  _initMinimap(source) {
+    this._debugLog(`🗺️ Initializing minimap (${source})...`);
     const t0 = performance.now();
-
     try {
       this.minimap.safeInitialize();
       this._minimapInitialized = true;
+      this._minimapAutoInitSkipped = false;
       this._debugLog(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
+      return true;
     } catch (e) {
       console.error('❌ Failed to initialize minimap:', e);
+      return false;
     }
+  }
+
+  /** @private */
+  _exceedsMinimapAutoInitThreshold() {
+    const max = this.data.settings?.minimap?.autoInitMaxNodes;
+    if (max === null || max === undefined || max === Infinity) return false;
+    if (typeof max !== 'number' || max <= 0) return false;
+    return this._approximateNodeCount() > max;
+  }
+
+  /** @private — uses already-collected stats if available, falls back to a one-shot walk */
+  _approximateNodeCount() {
+    const stat = this.performanceMetrics?.nodeStats?.totalNodes;
+    if (stat && stat > 0) return stat;
+    let n = 0;
+    const visit = (node) => {
+      if (!node) return;
+      n += 1;
+      if (Array.isArray(node.childNodes)) for (const c of node.childNodes) visit(c);
+    };
+    visit(this.main?.root);
+    return n;
   }
 
   /**
@@ -1277,6 +1326,53 @@ export class Dashboard {
       }
     }
     return stateUpdated;
+  }
+
+  /**
+   * Apply many status updates in one cascade.
+   *
+   * Equivalent to calling `updateNodeStatus(id, status)` in a loop, but wrapped
+   * in `batch()` so the display-change cascade fires once at the end instead of
+   * once per write. For consumer apps loading "current state" from a backend
+   * after `initialize()`, this is the difference between O(N×tree) and
+   * O(N + tree).
+   *
+   * Unknown ids and setter exceptions are reported via console.warn but do not
+   * stop the rest of the batch — same forgiving semantics as
+   * `updateDatasetStatus`.
+   *
+   * @param {Array<{id: string|number, status: string}>} updates
+   * @returns {Promise<{applied: number, missing: Array<string|number>}>}
+   */
+  async updateNodeStatuses(updates) {
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return { applied: 0, missing: [] };
+    }
+    const missing = [];
+    let applied = 0;
+    await this.batch(() => {
+      for (const update of updates) {
+        if (!update || update.id === undefined) continue;
+        const node = this.main.root.getNode(update.id);
+        if (!node) {
+          missing.push(update.id);
+          continue;
+        }
+        try {
+          node.status = update.status;
+          applied += 1;
+        } catch (e) {
+          console.warn('updateNodeStatuses: failed to set status on node', update.id, e);
+        }
+      }
+    });
+    if (missing.length > 0) {
+      console.warn(
+        `updateNodeStatuses: ${missing.length} of ${updates.length} ids not found in tree`,
+        missing.length <= 10 ? missing : missing.slice(0, 10).concat('…'),
+      );
+    }
+    return { applied, missing };
   }
 
   // ------------------------------------------------------------------

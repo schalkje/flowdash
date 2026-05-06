@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 const PAGES = [
-  '/01_basicNodes/03_states/themes-grid.html',
-  '/01_basicNodes/03_states/themes-grid-adapters-collapsed.html',
-  '/01_basicNodes/03_states/themes-grid-columns-2rects.html',
-  '/01_basicNodes/03_states/themes-grid-foundation-explicit.html',
-  '/01_basicNodes/03_states/themes-grid-lane-2rects.html',
-  '/01_basicNodes/03_states/themes-grid-mart-explicit.html',
+  '/themes/03_themes-grid.html',
+  '/themes/04_themes-grid-adapters-collapsed.html',
+  '/themes/05_themes-grid-columns-2rects.html',
+  '/themes/06_themes-grid-foundation-explicit.html',
+  '/themes/07_themes-grid-lane-2rects.html',
+  '/themes/08_themes-grid-mart-explicit.html',
 ];
 
 test.describe('themes-grid pages', () => {

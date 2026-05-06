@@ -1,4 +1,4 @@
-// Shared runtime for the themes-grid pages under 01_basicNodes/03_states/.
+// Shared runtime for the themes-grid pages under /themes/.
 // Each page renders a grid of iframes, one per theme, all driving the same
 // FlowDash demo dataset. This module owns:
 //   - Building the iframe cards.
@@ -113,8 +113,8 @@ function renderIframeSrcdoc({ theme, dataFile }) {
          is reachable; the prior inline scripts hid it. */
       .fullscreen-overlay { display: block !important; }
     </style>
-    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
-    <link rel="stylesheet" href="../../dashboard/themes/${theme}/flowdash.css" />
+    <link rel="stylesheet" href="../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../dashboard/themes/${theme}/flowdash.css" />
   </head>
   <body>
     <div class="wrap"><svg id="graph" class="canvas"></svg></div>
@@ -137,9 +137,9 @@ function bootstrapIframe(iframe, theme, dataFile) {
 
   // d3 libs must load in order so each global is available when the next runs.
   Promise.resolve()
-    .then(() => addScript('../../dashboard/libs/d3.min.js'))
-    .then(() => addScript('../../dashboard/libs/d3-shape.min.js'))
-    .then(() => addScript('../../dashboard/libs/d3-dag.iife.min.js'))
+    .then(() => addScript('../dashboard/libs/d3.min.js'))
+    .then(() => addScript('../dashboard/libs/d3-shape.min.js'))
+    .then(() => addScript('../dashboard/libs/d3-dag.iife.min.js'))
     .then(() => {
       const mod = doc.createElement('script');
       mod.type = 'module';
@@ -164,7 +164,7 @@ function bootstrapIframe(iframe, theme, dataFile) {
 function renderModuleScript({ dataFile }) {
   return `
     import { demoData } from '${dataFile}';
-    import flowDashboard from '../../dashboard/js/index.js';
+    import flowDashboard from '../dashboard/js/index.js';
 
     const data = {
       ...demoData,

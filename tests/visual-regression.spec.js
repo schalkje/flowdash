@@ -35,7 +35,7 @@ const TARGETS = [
   // Theme grid renders themed dashboards inside iframes (srcdoc); wait on the iframe grid, not a top-level <svg>.
   {
     name: 'themes-grid',
-    path: '/01_basicNodes/03_states/themes-grid.html',
+    path: '/themes/03_themes-grid.html',
     readySelector: 'iframe',
     settle: 2500,
   },

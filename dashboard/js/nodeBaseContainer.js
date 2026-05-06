@@ -47,10 +47,16 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   get nestedCorrection_y() {
-    // Prefer zone-system derived offset when available (offset from container center to inner content origin)
+    // Prefer zone-system derived offset when available (offset from container center to inner content origin).
+    // InnerContainerZone caches the numeric transform offset as `transformOffset`;
+    // we read that directly. Fall back to regex-parsing the `translate(…)`
+    // string on legacy zones that haven't populated the cache yet.
     try {
-      const innerZone = this.zoneManager?.innerContainerZone;
-      const transform = innerZone?.coordinateSystem?.transform;
+      const cs = this.zoneManager?.innerContainerZone?.coordinateSystem;
+      if (cs?.transformOffset && typeof cs.transformOffset.y === 'number') {
+        return cs.transformOffset.y;
+      }
+      const transform = cs?.transform;
       if (transform && typeof transform === 'string') {
         const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
         if (match) return parseFloat(match[2]);
@@ -62,10 +68,14 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   get nestedCorrection_x() {
-    // Prefer zone-system derived offset when available (offset from container center to inner content origin)
+    // Prefer zone-system derived offset when available (offset from container center to inner content origin).
+    // See nestedCorrection_y for the cache rationale.
     try {
-      const innerZone = this.zoneManager?.innerContainerZone;
-      const transform = innerZone?.coordinateSystem?.transform;
+      const cs = this.zoneManager?.innerContainerZone?.coordinateSystem;
+      if (cs?.transformOffset && typeof cs.transformOffset.x === 'number') {
+        return cs.transformOffset.x;
+      }
+      const transform = cs?.transform;
       if (transform && typeof transform === 'string') {
         const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
         if (match) return parseFloat(match[1]);
@@ -644,11 +654,33 @@ export default class BaseContainerNode extends BaseNode {
       this.initChildren();
     }
 
-    // Apply collapsed state after children are initialized
+    // Apply collapsed state after children are initialized.
+    //
+    // For containers that start in *collapsed* state we still need the
+    // collapse() transition (it detaches children from the DOM and recomputes
+    // header size).
+    //
+    // For already-expanded containers we used to call expand() unconditionally
+    // here, but expand() is designed to transition FROM collapsed: it
+    // re-initialises the inner-container zone, re-attaches every child's DOM
+    // element, re-runs the layout algorithm, and does a multi-pass size
+    // recompute (calculateChildContentSize → getMinimumWidth → resize →
+    // zoneManager.resize → zoneManager.update). Almost none of that is
+    // needed during init — super.init() + initChildren() already set up the
+    // zones, attached the children, and ran updateChildPositions via
+    // forceUpdateChildPositions. Calling expand() afterwards repeats every
+    // step.
+    //
+    // Profiling on themes/02_theme-overview.html (57 expanded containers)
+    // showed phases.nodeInitialization at ~7.4 s; the per-node init marks
+    // only summed to ~50 ms, so the remaining ~7.3 s lived in expand()
+    // running for every container. The lean post-init pass below does the
+    // one thing expand() needed to do that initChildren did NOT: a single
+    // updateChildren() call to size the container against its children.
     if (this.collapsed) {
       this.collapse();
     } else {
-      this.expand();
+      this._postInitLayout();
     }
 
     // you cannot move the g node,, move the child elements in stead
@@ -684,6 +716,36 @@ export default class BaseContainerNode extends BaseNode {
     }
   }
 
+  /**
+   * Lean alternative to expand() for the init() code path. Handles only the
+   * post-init layout work that was actually missing after super.init() +
+   * initChildren(): size the container against its children once, then run
+   * the standard child-positioning pass. Avoids the expensive zone re-init
+   * + DOM reattach + multi-pass size recompute that a real collapse→expand
+   * transition does.
+   *
+   * Safe to call even when this.zoneManager is null (degrades to a no-op).
+   * @private
+   */
+  _postInitLayout() {
+    if (!this.zoneManager) return;
+    if (typeof this.updateChildren === 'function' && !this._updating) {
+      this._updating = true;
+      try {
+        this.updateChildren();
+      } finally {
+        this._updating = false;
+      }
+    }
+    const innerZone = this.zoneManager.innerContainerZone;
+    if (innerZone) {
+      innerZone.update();
+      if (typeof innerZone.updateChildVisibility === 'function') {
+        innerZone.updateChildVisibility(true);
+      }
+    }
+  }
+
   initChildren() {
     if (!this.data.children || this.data.children.length === 0) {
       return;
@@ -711,9 +773,11 @@ export default class BaseContainerNode extends BaseNode {
       // Get child container from zone system (prefer inner container)
       const childContainer = innerZone?.getChildContainer() || this.element;
 
-      console.log(
-        `🔍 initChildren for node ${this.id}: data.children count = ${this.data.children?.length}, child IDs = ${this.data.children?.map((c) => c.id).join(',')}`,
-      );
+      if (this.settings?.isDebug) {
+        console.log(
+          `🔍 initChildren for node ${this.id}: data.children count = ${this.data.children?.length}, child IDs = ${this.data.children?.map((c) => c.id).join(',')}`,
+        );
+      }
 
       for (const node of this.data.children) {
         // Create the childComponent instance based on node type
@@ -761,9 +825,11 @@ export default class BaseContainerNode extends BaseNode {
         innerZone.forceUpdateChildPositions();
       }
 
-      console.log(
-        `🔍 After initChildren for node ${this.id}: childNodes count = ${this.childNodes?.length}, child IDs = ${this.childNodes?.map((c) => c.id).join(',')}`,
-      );
+      if (this.settings?.isDebug) {
+        console.log(
+          `🔍 After initChildren for node ${this.id}: childNodes count = ${this.childNodes?.length}, child IDs = ${this.childNodes?.map((c) => c.id).join(',')}`,
+        );
+      }
     }
 
     // Only call updateChildren if we're not already in an update cycle OR during DOM attachment

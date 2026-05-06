@@ -637,3 +637,94 @@ text,
   color: var(--fd-text) !important;
   border-color: var(--fd-border) !important;
 }
+
+/* === Status: Unknown / Undetermined / Disabled — neutral palette ===
+   Retro-theme equivalents of the light spec, in the phosphor-on-black
+   idiom this theme uses:
+     - Light grey bg → dim phosphor-tinged green (#0c160c)
+     - Extra-light grey bg → even dimmer (#080d08)
+     - Dark text → full phosphor (var(--fd-text)=#a8ff60)
+     - Dark grey muted text → muted phosphor (var(--fd-muted)=#66aa55)
+   Appended last so we override earlier per-status colors and the existing
+   muted Unknown text. */
+
+/* Leaf node + container fills (Unknown / Undetermined / Disabled) */
+.shape[status='Unknown'],
+.shape[status='Undetermined'],
+.shape[status='Disabled'],
+.node.shape[status='Unknown'],
+.node.shape[status='Undetermined'],
+.node.shape[status='Disabled'],
+.container-shape[status='Unknown'],
+.container-shape[status='Undetermined'],
+.container-shape[status='Disabled'],
+.rect.shape[status='Unknown'],
+.rect.shape[status='Undetermined'],
+.rect.shape[status='Disabled'] {
+  fill: #0c160c !important;
+  stroke: #2a5a2a !important;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 102, 0.15)) !important;
+}
+
+/* Collapsed-container fills */
+.collapsed[status='Unknown'] .container-shape,
+.collapsed[status='Undetermined'] .container-shape,
+.collapsed[status='Disabled'] .container-shape {
+  fill: #0c160c !important;
+  stroke: #2a5a2a !important;
+}
+
+/* Header background on collapsed containers — keep retro's separate
+   header-background pattern but mirror Undetermined → Unknown. */
+.collapsed[status='Undetermined'] .zone-header .header-background {
+  fill: #0b130b !important;
+  stroke: #2a5a2a !important;
+}
+
+/* Expanded container fills — Disabled gets the dimmer bg */
+.adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.foundation.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Undetermined'] > .zone-container > .container-shape {
+  fill: #0c160c !important;
+  fill-opacity: 0.5 !important;
+  stroke: #2a5a2a !important;
+}
+.adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.foundation.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Disabled'] > .zone-container > .container-shape {
+  fill: #080d08 !important;
+  fill-opacity: 1 !important;
+  stroke: #1a2a1a !important;
+}
+
+/* Text — Unknown/Undetermined full phosphor (high contrast);
+   Disabled uses the muted phosphor variable. */
+.collapsed[status='Unknown'] .zone-header .header-text,
+.collapsed[status='Undetermined'] .zone-header .header-text,
+.rect[status='Unknown'] text,
+.rect[status='Undetermined'] text,
+.node[status='Unknown'] text,
+.node[status='Undetermined'] text {
+  fill: var(--fd-text) !important;
+  text-shadow:
+    0 0 6px rgba(168, 255, 96, 0.45),
+    0 0 12px rgba(168, 255, 96, 0.2) !important;
+}
+.collapsed[status='Disabled'] .zone-header .header-text,
+.rect[status='Disabled'] text,
+.node[status='Disabled'] text {
+  fill: var(--fd-muted) !important;
+  text-shadow: none !important;
+}

@@ -136,3 +136,45 @@ High luminance contrast (7:1)
 No color-only communication
 Clear visual separation of UI elements
 Redundant visual cues (shape, text, pattern)
+
+## Color theme improvements
+
+Let update the themes a bit:
+
+### light
+
+- Unknown
+  - collapsed: light grey background; dark text
+  - Expanded:
+    - group: light grey background; dark text
+    - node: light grey background; dark text
+- Undetermined equals Unknown
+- disabled
+  - collapsed: light grey background; dark grey text
+  - Expanded::
+    - group: extra light grey background; dark grey text
+    - node: light grey background; dark grey text
+
+Can you update the dark and retro theme with this with equivalents in line with the theme?
+
+Undetermined
+Unknown
+Disabled
+Ready
+Updating
+Updated
+Skipped
+Delayed
+Warning
+Error
+
+Can you create a new theme overview page: call it theme-overview.html
+It should show for one theme, with the theme selector:
+For all states each of:
+
+- basic nodes
+- adapter nodes
+- columns
+- foundation
+- lane 2 rects
+- marts

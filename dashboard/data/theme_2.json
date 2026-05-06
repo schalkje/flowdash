@@ -9842,6 +9842,26 @@
             ],
             "state": "Unknown"
           }
+        ,
+        {
+          "id": "all-statuses",
+          "label": "All statuses",
+          "description": "One node per NodeStatus value — themes should style every entry visibly distinct.",
+          "type": "lane",
+          "category": "Showcase",
+          "children": [
+            { "id": "status-undetermined", "label": "Undetermined", "type": "node", "state": "Undetermined" },
+            { "id": "status-unknown",      "label": "Unknown",      "type": "node", "state": "Unknown" },
+            { "id": "status-disabled",     "label": "Disabled",     "type": "node", "state": "Disabled" },
+            { "id": "status-ready",        "label": "Ready",        "type": "node", "state": "Ready" },
+            { "id": "status-updating",     "label": "Updating",     "type": "node", "state": "Updating" },
+            { "id": "status-updated",      "label": "Updated",      "type": "node", "state": "Updated" },
+            { "id": "status-skipped",      "label": "Skipped",      "type": "node", "state": "Skipped" },
+            { "id": "status-delayed",      "label": "Delayed",      "type": "node", "state": "Delayed" },
+            { "id": "status-warning",      "label": "Warning",      "type": "node", "state": "Warning" },
+            { "id": "status-error",        "label": "Error",        "type": "node", "state": "Error" }
+          ]
+        }
         ],
         "state": "Unknown"
       }

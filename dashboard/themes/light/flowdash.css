@@ -435,3 +435,69 @@ text,
   stroke-dasharray: none !important;
   stroke: var(--fd-border) !important;
 }
+
+/* === Status: Unknown / Undetermined / Disabled — neutral palette ===
+   These three statuses should NOT draw the eye. Per spec:
+     - Unknown   → light grey bg, dark text
+     - Undetermined → identical to Unknown
+     - Disabled  → light grey bg, dark grey (muted) text;
+                   expanded group container uses an extra-light grey bg.
+   Appended last so we override the per-status fills declared earlier. */
+
+/* Leaf node fills */
+.shape[status='Unknown'],
+.shape[status='Undetermined'],
+.shape[status='Disabled'],
+.node.shape[status='Unknown'],
+.node.shape[status='Undetermined'],
+.node.shape[status='Disabled'] {
+  fill: #e0e0e0 !important;
+  fill-opacity: 1 !important;
+  stroke: #c0c0c0 !important;
+}
+
+/* Collapsed-container fills */
+.collapsed[status='Unknown'] .container-shape,
+.collapsed[status='Undetermined'] .container-shape,
+.collapsed[status='Disabled'] .container-shape {
+  fill: #e0e0e0 !important;
+  fill-opacity: 1 !important;
+  stroke: #c0c0c0 !important;
+}
+
+/* Expanded container fills — Unknown/Undetermined neutral grey;
+   Disabled gets a softer (extra-light) bg per spec. */
+.adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Unknown'] > .zone-container > .container-shape,
+.adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Mart.expanded[status='Unknown'] > .zone-container > .container-shape,
+.mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Mart.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Unknown'] > .zone-container > .container-shape,
+.foundation.expanded[status='Undetermined'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Undetermined'] > .zone-container > .container-shape {
+  fill: #e0e0e0 !important;
+  fill-opacity: 0.5 !important;
+  stroke: var(--fd-border) !important;
+}
+.adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Adapter.expanded[status='Disabled'] > .zone-container > .container-shape,
+.mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Mart.expanded[status='Disabled'] > .zone-container > .container-shape,
+.foundation.expanded[status='Disabled'] > .zone-container > .container-shape,
+.Foundation.expanded[status='Disabled'] > .zone-container > .container-shape {
+  fill: #f0f0f0 !important; /* extra-light grey for the expanded group */
+  fill-opacity: 1 !important;
+  stroke: var(--fd-border) !important;
+}
+
+/* Text — Unknown/Undetermined keep dark text (default); Disabled muted */
+.collapsed[status='Disabled'] .header-text,
+.collapsed[status='Disabled'] .label,
+.rect[status='Disabled'] text,
+.node[status='Disabled'] text {
+  fill: #666666 !important;
+}

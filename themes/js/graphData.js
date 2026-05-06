@@ -42,6 +42,11 @@ export const demoData = {
         display: 'content',
       },
       children: [
+        // One node per NodeStatus enum value (dashboard/js/nodeBase.js).
+        // Order matches the enum so theme authors see them in canonical
+        // priority order: lifecycle states first, then process states, then
+        // failure modes.
+        { id: 'n-undetermined', label: 'Undetermined', type: 'rect', state: 'Undetermined' },
         { id: 'n-unknown', label: 'Unknown', type: 'rect', state: 'Unknown' },
         { id: 'n-disabled', label: 'Disabled', type: 'rect', state: 'Disabled' },
         { id: 'n-ready', label: 'Ready', type: 'rect', state: 'Ready' },
