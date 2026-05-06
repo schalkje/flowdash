@@ -729,6 +729,8 @@ export default class BaseContainerNode extends BaseNode {
    */
   _postInitLayout() {
     if (!this.zoneManager) return;
+    const perfId = `postinit-${this.id}`;
+    performance.mark(`${perfId}-start`);
     if (typeof this.updateChildren === 'function' && !this._updating) {
       this._updating = true;
       try {
@@ -737,6 +739,7 @@ export default class BaseContainerNode extends BaseNode {
         this._updating = false;
       }
     }
+    performance.mark(`${perfId}-after-updateChildren`);
     const innerZone = this.zoneManager.innerContainerZone;
     if (innerZone) {
       innerZone.update();
@@ -744,6 +747,14 @@ export default class BaseContainerNode extends BaseNode {
         innerZone.updateChildVisibility(true);
       }
     }
+    performance.mark(`${perfId}-end`);
+    performance.measure(`${perfId}-total`, `${perfId}-start`, `${perfId}-end`);
+    performance.measure(
+      `${perfId}-updateChildren`,
+      `${perfId}-start`,
+      `${perfId}-after-updateChildren`,
+    );
+    performance.measure(`${perfId}-zoneUpdate`, `${perfId}-after-updateChildren`, `${perfId}-end`);
   }
 
   initChildren() {

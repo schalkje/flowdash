@@ -59,12 +59,30 @@ export const DEMO_DEFAULT_SETTINGS = {
   showBoundingBox: false, // demos hide the canvas bounding box (selection demo opts back in)
 };
 
+// Non-enumerable marker placed on a merged settings object so subsequent
+// mergeWithDefaults calls on the same object can short-circuit. The initial
+// merge at the Dashboard level creates one merged object that gets passed
+// down through the createNode factory chain to every node; without the
+// marker, every node's BaseNode constructor would re-walk the entire defaults
+// tree and re-allocate the full nested settings shape (177 times on the
+// theme-overview page — visible as a large unaccounted chunk of
+// nodeInitialization).
+const MERGED_MARKER = '__flowdashSettingsMerged';
+
 export class ConfigManager {
   static mergeWithDefaults(userSettings, isDemoPage = false) {
+    if (userSettings && userSettings[MERGED_MARKER]) return userSettings;
     const settings = userSettings || {};
     const useDemo = isDemoPage || settings.demoMode === true;
     const defaults = useDemo ? DEMO_DEFAULT_SETTINGS : DEFAULT_SETTINGS;
-    return this.deepMerge(defaults, settings);
+    const merged = this.deepMerge(defaults, settings);
+    Object.defineProperty(merged, MERGED_MARKER, {
+      value: true,
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    });
+    return merged;
   }
 
   static deepMerge(target, source) {
