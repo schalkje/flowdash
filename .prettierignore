@@ -1,0 +1,7 @@
+node_modules/
+dashboard/dist/
+playwright-report/
+test-results/
+dashboard/data/
+**/*.min.js
+**/package-lock.json
