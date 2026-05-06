@@ -29,6 +29,7 @@ const PAIRS = [
   { id: 'dwh-1', cold: 'dwh-1.json', warm: 'dwh-1.prerender.json' },
   { id: 'dwh-5', cold: 'dwh-5.json', warm: 'dwh-5.prerender.json' },
   { id: 'dwh-6.fixed', cold: 'dwh-6.fixed.json', warm: 'dwh-6.fixed.prerender.json' },
+  { id: 'All', cold: 'All.json', warm: 'All.prerender.json' },
 ];
 
 async function loadAndCollect(page, fixtureName) {

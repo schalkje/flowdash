@@ -51,6 +51,11 @@
         'dwh-tiny.json',
         'dwh-tiny.prerender.json',
         'dwh-stress.json',
+        // Real production export — 1017 user-supplied nodes — kept as the
+        // live perf-test target. Pair regenerated via
+        // `node scripts/generate-prerender.mjs dashboard/data/All.json`.
+        'All.json',
+        'All.prerender.json',
       ];
       const initialFileIndex = 8;
       let dashboard;

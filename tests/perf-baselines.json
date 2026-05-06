@@ -49,6 +49,26 @@
         "total": 10000
       },
       "_note": "Synthetic 1,296-node stress fixture, generated via tests/generate-stress-fixture.js. Initial generous budgets — ratchet downward after Workstream C hot-path fixes land."
+    },
+    "All.json": {
+      "phases": {
+        "nodeCreation": 4000,
+        "nodeInitialization": 2000,
+        "edgeCreation": 2500,
+        "zoomSetup": 600,
+        "total": 10000
+      },
+      "_note": "Real production export from a consumer dashboard (1017 nodes, 0 edges). Live perf-test target — when timings here regress it actually matters. Initial generous budgets; ratchet after observing one stable CI run."
+    },
+    "All.prerender.json": {
+      "phases": {
+        "nodeCreation": 3000,
+        "nodeInitialization": 1500,
+        "edgeCreation": 2000,
+        "zoomSetup": 500,
+        "total": 7500
+      },
+      "_note": "Pre-render of All.json. Regenerate via `node scripts/generate-prerender.mjs dashboard/data/All.json` whenever the source changes."
     }
   },
   "fastPathRatio": {
@@ -56,6 +76,10 @@
     "dwh-6.fixed": {
       "max": 1.5,
       "_note": "Pre-rendered SHOULD be faster than cold but currently runs ~0.7-1.6× across consecutive runs on the same machine. The cold improvement from removing console.log in hot status-cascade paths narrowed the gap relative to the original 0.88 baseline. Threshold 1.5 catches a fast-path that has actively broken. Investigate the warm-path cost on this fixture in Workstream C; once stabilized, ratchet the threshold back below 1.0. See tests/perf-prerender-comparison.spec.js for per-phase visibility."
+    },
+    "All": {
+      "max": 1.5,
+      "_note": "Production-fixture warm/cold ratio. Same caveat as dwh-6.fixed — first-paint variance on fresh-page loads sometimes makes warm slower than cold. Threshold loosened until Workstream C edge/zone caches reduce variance."
     }
   }
 }
