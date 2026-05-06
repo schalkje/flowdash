@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Double-Click Test</title>
-    <link rel="stylesheet" href="../flowdash.css">
-    <link rel="stylesheet" href="../flowdash-demo.css">
+    <link rel="stylesheet" href="../flowdash.css" />
+    <link rel="stylesheet" href="../flowdash-demo.css" />
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="dashboard"></div>
-    
+
     <script src="../libs/d3.min.js"></script>
     <script src="../libs/d3-shape.min.js"></script>
     <script src="../libs/d3-dag.iife.min.js"></script>
@@ -53,47 +53,45 @@
     <script src="../js/zones/HeaderZone.js"></script>
     <script src="../js/zones/MarginZone.js"></script>
     <script src="../js/zones/InnerContainerZone.js"></script>
-    
+
     <script>
-        // Test the double-click functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Testing double-click functionality...');
-            
-            // Wait for dashboard to load
-            setTimeout(() => {
-                const dashboard = window.dashboard;
-                if (dashboard) {
-                    console.log('Dashboard loaded, testing zones...');
-                    
-                    // Test that zones have event handlers
-                    const zones = document.querySelectorAll('g[class*="zone-"]');
-                    console.log(`Found ${zones.length} zones`);
-                    
-                    zones.forEach((zone, index) => {
-                        console.log(`Zone ${index}: ${zone.className}`);
-                        
-                        // Check if zone has __node property
-                        if (zone.__node) {
-                            console.log(`  - Has __node property: ${zone.__node.constructor.name}`);
-                        } else {
-                            console.log(`  - Missing __node property`);
-                        }
-                        
-                        // Check for D3 event handlers
-                        const d3Data = zone.__data__;
-                        if (d3Data && d3Data.on) {
-                            console.log(`  - Has D3 event handlers:`, Object.keys(d3Data.on));
-                        } else {
-                            console.log(`  - No D3 event handlers found`);
-                        }
-                    });
-                } else {
-                    console.error('Dashboard not loaded');
-                }
-            }, 3000);
-        });
+      // Test the double-click functionality
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log('Testing double-click functionality...');
+
+        // Wait for dashboard to load
+        setTimeout(() => {
+          const dashboard = window.dashboard;
+          if (dashboard) {
+            console.log('Dashboard loaded, testing zones...');
+
+            // Test that zones have event handlers
+            const zones = document.querySelectorAll('g[class*="zone-"]');
+            console.log(`Found ${zones.length} zones`);
+
+            zones.forEach((zone, index) => {
+              console.log(`Zone ${index}: ${zone.className}`);
+
+              // Check if zone has __node property
+              if (zone.__node) {
+                console.log(`  - Has __node property: ${zone.__node.constructor.name}`);
+              } else {
+                console.log(`  - Missing __node property`);
+              }
+
+              // Check for D3 event handlers
+              const d3Data = zone.__data__;
+              if (d3Data && d3Data.on) {
+                console.log(`  - Has D3 event handlers:`, Object.keys(d3Data.on));
+              } else {
+                console.log(`  - No D3 event handlers found`);
+              }
+            });
+          } else {
+            console.error('Dashboard not loaded');
+          }
+        }, 3000);
+      });
     </script>
-</body>
+  </body>
 </html>
-
-

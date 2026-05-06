@@ -10,6 +10,7 @@
 **Find what's consuming 4,180ms (99% of load time) during node initialization for dwh-6.fixed.json**
 
 Current performance:
+
 ```
 dwh-6.fixed.json (885 nodes):
 ├── Total time: 4,234ms
@@ -20,6 +21,7 @@ dwh-6.fixed.json (885 nodes):
 ```
 
 **Known Facts**:
+
 - ✅ Optimization #1 (Batch DOM) had ZERO effect
 - ✅ Small files are fast (< 200ms)
 - ✅ Problem scales with node count
@@ -38,6 +40,7 @@ cd dashboard
 ```
 
 Then in the browser:
+
 1. Click "Start Profiling"
 2. Wait for test to complete
 3. Analyze results in DevTools
@@ -81,16 +84,19 @@ Then in the browser:
 The Performance panel will show several sections:
 
 #### A. Timeline Overview (Top)
+
 - Shows screenshots and page activity over time
 - Look for the 4-second "busy" period
 - Select this region for detailed analysis
 
 #### B. Main Thread Activity (Middle - Most Important!)
+
 - **Flame Graph**: Shows function call stack
 - **Wider bars = more time spent**
 - **Nested bars = function calls**
 
 **What to Look For**:
+
 1. **Long-running JavaScript functions** (> 100ms)
    - Yellow bars = JavaScript execution
    - Look for wide yellow bars
@@ -111,12 +117,14 @@ The Performance panel will show several sections:
    - Long paint times = rendering issue
 
 #### C. Bottom-Up Tab (Bottom Panel)
+
 - Shows functions by total time consumed
 - **Click "Bottom-Up" tab**
 - Sort by "Self Time" (descending)
 - This shows you the actual work being done
 
 #### D. Call Tree Tab
+
 - Shows hierarchical function calls
 - Good for understanding call patterns
 - Look for repeated calls to same function
@@ -135,7 +143,7 @@ Example format:
    - Self Time: 1,234ms (30%)
    - Total Time: 2,100ms
    - Call Count: 885 times
-   
+
 2. Function: getBoundingClientRect (browser)
    - Self Time: 890ms (21%)
    - Total Time: 890ms
@@ -145,6 +153,7 @@ Example format:
 ### 2. Style Recalculation
 
 Count and measure:
+
 ```
 - Number of "Recalculate Style" events: ___
 - Total time in style recalculation: ___ ms
@@ -155,6 +164,7 @@ Count and measure:
 ### 3. Layout Thrashing
 
 Check for:
+
 ```
 - Number of "Layout" events: ___
 - Any "Forced reflow" warnings: Yes/No
@@ -165,6 +175,7 @@ Check for:
 ### 4. JavaScript Execution
 
 Identify:
+
 ```
 - Total JavaScript execution time: ___ ms
 - Longest single function: ___ ms (function name)
@@ -175,6 +186,7 @@ Identify:
 ### 5. DOM Operations
 
 Count:
+
 ```
 - appendChild operations: ___
 - style property reads: ___
@@ -199,16 +211,16 @@ Copy this template to `PROFILING_RESULTS.md`:
 ## Top 5 Time Consumers
 
 1. **[Function Name]**
-   - Self Time: ___ms (___%)
-   - Total Time: ___ms
-   - Call Count: ___
+   - Self Time: **_ms (_**%)
+   - Total Time: \_\_\_ms
+   - Call Count: \_\_\_
    - Location: [file:line]
    - Description: [what it does]
 
 2. **[Function Name]**
-   - Self Time: ___ms (___%)
-   - Total Time: ___ms
-   - Call Count: ___
+   - Self Time: **_ms (_**%)
+   - Total Time: \_\_\_ms
+   - Call Count: \_\_\_
    - Location: [file:line]
    - Description: [what it does]
 
@@ -216,23 +228,23 @@ Copy this template to `PROFILING_RESULTS.md`:
 
 ## Style Recalculation
 
-- Events: ___
-- Total Time: ___ms (___%)
+- Events: \_\_\_
+- Total Time: **_ms (_**%)
 - Triggered By: [function/pattern]
 - Severity: Low / Medium / High
 
 ## Layout Operations
 
-- Events: ___
-- Total Time: ___ms (___%)
+- Events: \_\_\_
+- Total Time: **_ms (_**%)
 - Forced Reflows: Yes / No
 - Layout Thrashing: Yes / No
 - Severity: Low / Medium / High
 
 ## JavaScript Execution
 
-- Total JS Time: ___ms (___%)
-- Longest Function: [name] - ___ms
+- Total JS Time: **_ms (_**%)
+- Longest Function: [name] - \_\_\_ms
 - Repeated Operations: [list]
 - Optimization Opportunities: [list]
 
@@ -247,12 +259,12 @@ Based on the profiling data, the bottleneck appears to be:
 ## Recommended Solutions
 
 1. **[Solution Name]**
-   - Expected Impact: ___ms savings (___%)
+   - Expected Impact: **_ms savings (_**%)
    - Complexity: Low / Medium / High
    - Priority: High / Medium / Low
 
 2. **[Solution Name]**
-   - Expected Impact: ___ms savings (___%)
+   - Expected Impact: **_ms savings (_**%)
    - Complexity: Low / Medium / High
    - Priority: High / Medium / Low
 
@@ -267,85 +279,105 @@ Based on the profiling data, the bottleneck appears to be:
 ## 🎯 Common Bottlenecks to Look For
 
 ### 1. Style Recalculation Storm
+
 **Symptoms**:
+
 - Many purple "Recalculate Style" bars
 - Happens after DOM modifications
 - Scales with node count
 
 **Causes**:
+
 - Complex CSS selectors
 - Modifying styles individually
 - Triggering style recalc for each node
 
 **Solution Ideas**:
+
 - Use CSS classes instead of inline styles
 - Batch style changes
 - Simplify CSS selectors
 
 ### 2. Layout Thrashing
+
 **Symptoms**:
+
 - Alternating read/write of layout properties
 - Many "Layout" events
 - "Forced reflow" warnings
 
 **Causes**:
+
 ```javascript
 // BAD - causes layout thrashing
 for (let node of nodes) {
-    const width = node.offsetWidth;  // READ (forces layout)
-    node.style.width = width + 10;   // WRITE (invalidates layout)
+  const width = node.offsetWidth; // READ (forces layout)
+  node.style.width = width + 10; // WRITE (invalidates layout)
 }
 ```
 
 **Solution Ideas**:
+
 - Batch reads, then batch writes
 - Cache layout measurements
 - Use transform instead of position changes
 
 ### 3. Expensive Property Access
+
 **Symptoms**:
+
 - Many `getBoundingClientRect()` calls
 - High time in DOM property reads
 - Scales with node count
 
 **Causes**:
+
 - Reading layout properties repeatedly
 - Not caching measurements
 - Accessing properties in loops
 
 **Solution Ideas**:
+
 - Cache bounding boxes
 - Use viewport intersection observer
 - Defer measurements until needed
 
 ### 4. JavaScript Execution
+
 **Symptoms**:
+
 - Wide yellow bars in flame graph
 - Long-running single functions
 - Deep call stacks
 
 **Causes**:
+
 - Complex calculations
 - Inefficient algorithms
 - Synchronous operations
 
 **Solution Ideas**:
+
 - Optimize algorithms
 - Use web workers for heavy computation
 - Break into smaller chunks with requestAnimationFrame
 
 ### 5. Rendering/Painting
+
 **Symptoms**:
+
 - Long green "Paint" bars
 - High GPU usage
 - Slow compositing
 
 **Causes**:
+
 - Too many layers
 - Complex visual effects
 - Large paint areas
 
 **Solution Ideas**:
+
 - Reduce shadow/blur effects
 - Use `will-change` for animations
 - Optimize layer composition
@@ -357,6 +389,7 @@ for (let node of nodes) {
 ### Compare Small vs Large Files
 
 Profile both files and compare:
+
 ```
 dwh-1.json (4 nodes):
 - Node init: 17ms
@@ -372,6 +405,7 @@ Analysis: Linear scaling suggests cumulative issue, not algorithmic
 ### Use Performance Marks
 
 The profiling test page includes custom marks:
+
 ```javascript
 performance.mark('before-node-creation');
 // ... code ...
@@ -384,6 +418,7 @@ Look for these in the "Timings" row of the profiler.
 ### Check for Memory Leaks
 
 While profiling, watch the Memory chart:
+
 - Should plateau after load
 - If keeps growing = leak
 - If sawtooth pattern = excessive GC
@@ -391,6 +426,7 @@ While profiling, watch the Memory chart:
 ### CPU Throttling Test
 
 Try with 4x CPU throttling to exaggerate JavaScript issues:
+
 1. Set CPU throttling to "4x slowdown"
 2. Profile again
 3. If time increases 4x = CPU-bound (JavaScript)
@@ -401,11 +437,13 @@ Try with 4x CPU throttling to exaggerate JavaScript issues:
 ## 📚 Resources
 
 ### Chrome DevTools Documentation
+
 - [Performance Profiling Guide](https://developer.chrome.com/docs/devtools/performance/)
 - [Diagnose Forced Synchronous Layouts](https://developer.chrome.com/docs/devtools/performance/reference/)
 - [Runtime Performance](https://web.dev/rendering-performance/)
 
 ### Related Documents
+
 - `IMPLEMENTATION_STATUS.md` - Current optimization status
 - `PERFORMANCE_IMPLEMENTATION_PLAN.md` - Original plan
 - `BASELINE_TESTING_GUIDE.md` - Testing methodology

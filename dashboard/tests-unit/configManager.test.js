@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  ConfigManager,
-  DEFAULT_SETTINGS,
-  DEMO_DEFAULT_SETTINGS,
-} from '../js/configManager.js';
+import { ConfigManager, DEFAULT_SETTINGS, DEMO_DEFAULT_SETTINGS } from '../js/configManager.js';
 
 describe('ConfigManager.deepMerge', () => {
   it('returns the target unchanged when source is empty', () => {
@@ -25,10 +21,7 @@ describe('ConfigManager.deepMerge', () => {
   });
 
   it('treats arrays as scalars (replaces, does not concat)', () => {
-    const merged = ConfigManager.deepMerge(
-      { extent: [0.1, 40] },
-      { extent: [0.5, 5] },
-    );
+    const merged = ConfigManager.deepMerge({ extent: [0.1, 40] }, { extent: [0.5, 5] });
     expect(merged.extent).toEqual([0.5, 5]);
   });
 

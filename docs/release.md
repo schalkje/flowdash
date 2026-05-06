@@ -4,10 +4,10 @@ This repo contains **two npm projects**. Understanding which is which matters wh
 
 ## The dual-package model
 
-| Package | Path | Role | Versioning |
-|---------|------|------|-----------|
-| `flowdash` | [`/dashboard/package.json`](../dashboard/package.json) | The library itself. Webpack-bundled, externalises D3, ships [`flowdash.min.js`](../dashboard/dist/flowdash.min.js) and CSS. **This is the version external consumers care about.** | `prebuild` auto-bumps the patch (`npm version patch --no-git-tag-version`) on every successful `npm run build`. |
-| `flowdash-harness` | [`/package.json`](../package.json) | Test runner, demo server orchestrator, and dev tooling. **Not published, not consumed by anyone.** | Stays at `0.0.0`, marked `"private": true`. Don't bump it. |
+| Package            | Path                                                   | Role                                                                                                                                                                               | Versioning                                                                                                      |
+| ------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `flowdash`         | [`/dashboard/package.json`](../dashboard/package.json) | The library itself. Webpack-bundled, externalises D3, ships [`flowdash.min.js`](../dashboard/dist/flowdash.min.js) and CSS. **This is the version external consumers care about.** | `prebuild` auto-bumps the patch (`npm version patch --no-git-tag-version`) on every successful `npm run build`. |
+| `flowdash-harness` | [`/package.json`](../package.json)                     | Test runner, demo server orchestrator, and dev tooling. **Not published, not consumed by anyone.**                                                                                 | Stays at `0.0.0`, marked `"private": true`. Don't bump it.                                                      |
 
 If you find yourself looking at "the version" of FlowDash, you almost always mean the version inside `/dashboard/package.json`.
 
@@ -28,7 +28,7 @@ npm run build
 
 What `dashboard/`'s `build` does:
 
-1. **`prebuild` hook fires first** — runs `npm version patch --no-git-tag-version`, which bumps the `version` field in `dashboard/package.json` (e.g. `1.2.32` → `1.2.33`). It does *not* tag git.
+1. **`prebuild` hook fires first** — runs `npm version patch --no-git-tag-version`, which bumps the `version` field in `dashboard/package.json` (e.g. `1.2.32` → `1.2.33`). It does _not_ tag git.
 2. **Webpack runs in production mode** — produces minified `dashboard/dist/flowdash.min.js` and `dashboard/dist/flowdash.css`. D3 is externalised; consumers must provide it.
 3. **CSS distribution scripts** (PowerShell, see `/scripts/`) can copy the bundle and themes into a release tree.
 
@@ -47,12 +47,12 @@ Opens [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundl
 
 PowerShell scripts under [`/scripts/`](../scripts/):
 
-| Script | Purpose |
-|--------|---------|
-| `distribute.ps1` | Builds the dashboard then copies bundle + CSS to a dist root. |
-| `copy-flowdash-css.ps1` | Copies `flowdash.css` and all theme CSS into a dist tree. |
-| `validate-dashboard-json.ps1` | JSON schema check on dashboard data files. |
-| `add-node-ids.ps1` | Adds missing IDs to nodes in dashboard JSON fixtures. |
+| Script                        | Purpose                                                       |
+| ----------------------------- | ------------------------------------------------------------- |
+| `distribute.ps1`              | Builds the dashboard then copies bundle + CSS to a dist root. |
+| `copy-flowdash-css.ps1`       | Copies `flowdash.css` and all theme CSS into a dist tree.     |
+| `validate-dashboard-json.ps1` | JSON schema check on dashboard data files.                    |
+| `add-node-ids.ps1`            | Adds missing IDs to nodes in dashboard JSON fixtures.         |
 
 These are Windows-only today. Cross-platform replacements are tracked in [`improvement-plan.md`](./improvement-plan.md) under "Out of scope (intentional, for now)".
 

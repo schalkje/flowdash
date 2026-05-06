@@ -6,23 +6,23 @@ import { BaseZone } from './BaseZone.js';
  * Handles text rendering, overflow, and styling
  * Manages header-specific interactions (click, hover)
  * Supports status indicators, icons, and zoom buttons
- * 
+ *
  * PERFORMANCE OPTIMIZATIONS:
- * 
+ *
  * 1. CACHING: getMinimumWidth() caches results and only recalculates when text changes
  * 2. THROTTLING: getMinimumWidthThrottled() provides immediate cached results during rapid updates
  * 3. BATCHING: Rapid calls are batched to reduce expensive DOM operations
  * 4. MONITORING: Performance warnings when called too frequently
- * 
+ *
  * USAGE RECOMMENDATIONS:
- * 
+ *
  * - Use getMinimumWidth() for normal operations (initial layout, text changes)
  * - Use getMinimumWidthThrottled() during rapid updates (resizing, animations, force simulation)
  * - The throttled version returns cached values immediately and schedules background updates
  * - Performance warnings will suggest when to switch to throttled version
- * 
+ *
  * CACHE INVALIDATION:
- * 
+ *
  * - Cache is automatically cleared when text content changes
  * - Call clearMinWidthCache() manually if node properties change
  * - Call recalculateMinWidth() to force fresh calculation
@@ -36,13 +36,13 @@ export class HeaderZone extends BaseZone {
     this.zoomButton = null;
     this.minHeight = 10; // Minimum height constraint
     this.padding = 4; // Left padding for text
-    
+
     // Performance optimization: batch updates and throttling
     this._cachedMinWidth = null;
     this._lastTextContent = null;
     this._updateBatchTimer = null;
     this._pendingMinWidthUpdate = false;
-    
+
     // Performance monitoring (can be disabled in production)
     this._callCount = 0;
     this._lastCallTime = 0;
@@ -54,24 +54,27 @@ export class HeaderZone extends BaseZone {
    */
   createElement() {
     super.createElement();
-    
+
     // Create background rectangle
-    this.background = this.element.append('rect')
+    this.background = this.element
+      .append('rect')
       .attr('class', 'header-background')
       .attr('fill', 'transparent'); // Make it clickable
-    
+
     // Create text element
-    this.textElement = this.element.append('text')
+    this.textElement = this.element
+      .append('text')
       .attr('class', 'header-text')
       .attr('x', this.padding)
       .attr('y', 0)
       .attr('dy', '0.35em');
-    
+
     // Create status indicator
-    this.statusIndicator = this.element.append('circle')
+    this.statusIndicator = this.element
+      .append('circle')
       .attr('class', 'status-indicator')
       .attr('r', 3);
-    
+
     // Create zoom button (for container nodes)
     if (this.node.isContainer) {
       this.createZoomButton();
@@ -82,19 +85,13 @@ export class HeaderZone extends BaseZone {
    * Create zoom button for container nodes
    */
   createZoomButton() {
-    this.zoomButton = this.element.append('g')
-      .attr('class', 'zoom-button');
-    
+    this.zoomButton = this.element.append('g').attr('class', 'zoom-button');
+
     // Button background
-    this.zoomButton.append('circle')
-      .attr('class', 'zoom-button-bg')
-      .attr('r', 8);
-    
+    this.zoomButton.append('circle').attr('class', 'zoom-button-bg').attr('r', 8);
+
     // Plus/minus icon
-    this.zoomButton.append('text')
-      .attr('class', 'zoom-icon')
-      .attr('dy', '0.35em')
-      .text('−'); // Default to minus (expanded)
+    this.zoomButton.append('text').attr('class', 'zoom-icon').attr('dy', '0.35em').text('−'); // Default to minus (expanded)
   }
 
   /**
@@ -111,7 +108,7 @@ export class HeaderZone extends BaseZone {
     if (this.node.settings.headerStrokeWidth) {
       this.background.attr('stroke-width', this.node.settings.headerStrokeWidth);
     }
-    
+
     if (this.node.settings.fontFamily) {
       this.textElement.attr('font-family', this.node.settings.fontFamily);
     }
@@ -124,7 +121,7 @@ export class HeaderZone extends BaseZone {
     if (this.node.settings.textColor) {
       this.textElement.attr('fill', this.node.settings.textColor);
     }
-    
+
     // Status indicator styling
     this.updateStatusIndicator();
   }
@@ -138,19 +135,19 @@ export class HeaderZone extends BaseZone {
       // Remove any existing D3 click handlers on the zoom button to prevent conflicts
       this.zoomButton.on('click', null);
       this.zoomButton.on('dblclick', null);
-      
+
       // Get the zoom button group element (g.zoom-button)
       const zoomButtonGroup = this.zoomButton.node();
-      
+
       // CRITICAL: Attach handler to the NODE ELEMENT (highest ancestor) in capture phase
       // This ensures it fires BEFORE the container's capture-phase handler
       const nodeElement = this.node.element.node();
-      
+
       const handleZoomButtonClick = (event) => {
         // Check if click originated from zoom button or its children
         let target = event.target;
         let isZoomButton = false;
-        
+
         while (target && target !== nodeElement) {
           if (target === zoomButtonGroup || target.closest?.('.zoom-button') === zoomButtonGroup) {
             isZoomButton = true;
@@ -158,43 +155,43 @@ export class HeaderZone extends BaseZone {
           }
           target = target.parentNode;
         }
-        
+
         if (isZoomButton) {
           event.stopPropagation();
           event.stopImmediatePropagation();
           event.preventDefault();
-          
+
           // Handle the zoom action
           this.handleZoomClick(event);
         }
       };
-      
+
       // Attach to node element in capture phase - this will fire FIRST
       nodeElement.addEventListener('click', handleZoomButtonClick, true);
-      
+
       // Store for cleanup
       this._zoomButtonClickHandler = handleZoomButtonClick;
-      
+
       // Keep hover handlers on D3 selection (they don't need capture)
       this.zoomButton
         .on('mouseenter', (event) => this.handleZoomMouseEnter(event))
         .on('mouseleave', (event) => this.handleZoomMouseLeave(event));
     }
-    
+
     // Setup text interactions
     this.textElement
       .on('click', (event) => this.handleTextClick(event))
       .on('dblclick', (event) => this.handleTextDblClick(event))
       .on('mouseenter', (event) => this.handleTextMouseEnter(event))
       .on('mouseleave', (event) => this.handleTextMouseLeave(event));
-    
+
     // Setup background interactions - these are the actual clickable elements
     this.background
       .on('click', (event) => this.handleBackgroundClick(event))
       .on('dblclick', (event) => this.handleBackgroundDblClick(event))
       .on('mouseenter', (event) => this.handleBackgroundMouseEnter(event))
       .on('mouseleave', (event) => this.handleBackgroundMouseLeave(event));
-    
+
     // Also setup interactions on the zone element itself for better event handling
     this.element
       .on('click', (event) => this.handleBackgroundClick(event))
@@ -208,23 +205,23 @@ export class HeaderZone extends BaseZone {
    */
   updateSize() {
     if (!this.background || !this.textElement) return;
-    
+
     const width = this.size.width;
     const height = this.calculateTextHeight();
-    
+
     // Update background - position relative to zone (which is already at top of container)
     this.background
       .attr('width', width)
       .attr('height', height)
       .attr('x', -width / 2)
       .attr('y', 0); // Position at top of zone (which is already at top of container)
-    
+
     // Update text position and content
     this.updateText();
-    
+
     // Update status indicator position
     this.updateStatusIndicatorPosition();
-    
+
     // Update zoom button position
     this.updateZoomButtonPosition();
   }
@@ -240,16 +237,20 @@ export class HeaderZone extends BaseZone {
     const settings = this.node?.settings || {};
     const nested = settings.headerText || {};
     const defaultMode = 'truncate';
-    let mode = (settings.headerTextMode ?? nested.mode ?? defaultMode);
+    let mode = settings.headerTextMode ?? nested.mode ?? defaultMode;
     mode = typeof mode === 'string' ? mode.toLowerCase() : defaultMode;
     if (mode !== 'full' && mode !== 'truncate') mode = defaultMode;
 
     const minWidth = Number.isFinite(settings.headerTextMinWidth)
       ? settings.headerTextMinWidth
-      : (Number.isFinite(nested.minWidth) ? nested.minWidth : 50);
+      : Number.isFinite(nested.minWidth)
+        ? nested.minWidth
+        : 50;
     const maxWidth = Number.isFinite(settings.headerTextMaxWidth)
       ? settings.headerTextMaxWidth
-      : (Number.isFinite(nested.maxWidth) ? nested.maxWidth : 300);
+      : Number.isFinite(nested.maxWidth)
+        ? nested.maxWidth
+        : 300;
 
     return { mode, minWidth, maxWidth };
   }
@@ -266,19 +267,21 @@ export class HeaderZone extends BaseZone {
     if (now - this._lastCallTime > 100) {
       // Reset counter every 100ms
       if (this._callCount > this._performanceWarningThreshold) {
-        console.warn(`HeaderZone ${this.node?.data?.id}: getMinimumWidth called ${this._callCount} times in 100ms. Consider using getMinimumWidthThrottled() for rapid updates.`);
+        console.warn(
+          `HeaderZone ${this.node?.data?.id}: getMinimumWidth called ${this._callCount} times in 100ms. Consider using getMinimumWidthThrottled() for rapid updates.`,
+        );
       }
       this._callCount = 1;
       this._lastCallTime = now;
     }
-    
+
     // Check if we have a cached result and the text hasn't changed
     const currentText = this.node?.data?.label || this.node?.data?.name || '';
     const currentIsContainer = this.node?.isContainer || false;
-    
+
     // Cache key includes text content and container state
     const cacheKey = `${currentText}|${currentIsContainer}`;
-    
+
     // Return cached result if available and valid
     if (this._cachedMinWidth && this._cachedMinWidth.key === cacheKey) {
       return this._cachedMinWidth.value;
@@ -304,7 +307,7 @@ export class HeaderZone extends BaseZone {
           textWidth = rect.width;
           document.body.removeChild(tempElement);
         }
-        
+
         // Fallback if measurement yields 0
         if (!textWidth) {
           textWidth = currentText.length * 8; // Fallback approximation
@@ -320,8 +323,8 @@ export class HeaderZone extends BaseZone {
     const rightPadding = this.padding || 0;
     const indicatorDiameter = 6; // Matches updateStatusIndicatorPosition()
     const buttonDiameter = currentIsContainer ? 16 : 0; // Matches updateZoomButtonPosition()
-    const gapBetweenTextAndIcons = (indicatorDiameter > 0 || buttonDiameter > 0) ? 8 : 0;
-    const gapBetweenIndicatorAndButton = (indicatorDiameter > 0 && buttonDiameter > 0) ? 4 : 0;
+    const gapBetweenTextAndIcons = indicatorDiameter > 0 || buttonDiameter > 0 ? 8 : 0;
+    const gapBetweenIndicatorAndButton = indicatorDiameter > 0 && buttonDiameter > 0 ? 4 : 0;
 
     // Base width needed to fit full text + icons
     const baseWidth =
@@ -351,12 +354,12 @@ export class HeaderZone extends BaseZone {
     }
 
     const result = Math.ceil(constrainedWidth);
-    
+
     // Cache the result for future calls
     this._cachedMinWidth = {
       key: cacheKey,
       value: result,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     return result;
@@ -388,16 +391,16 @@ export class HeaderZone extends BaseZone {
     if (this._cachedMinWidth && this._cachedMinWidth.key === this._getCurrentCacheKey()) {
       return this._cachedMinWidth.value;
     }
-    
+
     // If no update is pending, schedule one
     if (!this._pendingMinWidthUpdate) {
       this._pendingMinWidthUpdate = true;
-      
+
       // Clear any existing timer
       if (this._updateBatchTimer) {
         clearTimeout(this._updateBatchTimer);
       }
-      
+
       // Schedule update after a short delay to batch rapid calls
       this._updateBatchTimer = setTimeout(() => {
         this._pendingMinWidthUpdate = false;
@@ -406,7 +409,7 @@ export class HeaderZone extends BaseZone {
         this.getMinimumWidth();
       }, 16); // ~60fps
     }
-    
+
     // Return cached value or fallback
     return this._cachedMinWidth ? this._cachedMinWidth.value : this._getFallbackMinWidth();
   }
@@ -421,17 +424,17 @@ export class HeaderZone extends BaseZone {
     const rightPadding = this.padding || 0;
     const indicatorDiameter = 6;
     const buttonDiameter = this.node?.isContainer ? 16 : 0;
-    const gapBetweenTextAndIcons = (indicatorDiameter > 0 || buttonDiameter > 0) ? 8 : 0;
-    const gapBetweenIndicatorAndButton = (indicatorDiameter > 0 && buttonDiameter > 0) ? 4 : 0;
-    
+    const gapBetweenTextAndIcons = indicatorDiameter > 0 || buttonDiameter > 0 ? 8 : 0;
+    const gapBetweenIndicatorAndButton = indicatorDiameter > 0 && buttonDiameter > 0 ? 4 : 0;
+
     return Math.ceil(
       leftPadding +
-      textWidth +
-      gapBetweenTextAndIcons +
-      indicatorDiameter +
-      gapBetweenIndicatorAndButton +
-      buttonDiameter +
-      rightPadding
+        textWidth +
+        gapBetweenTextAndIcons +
+        indicatorDiameter +
+        gapBetweenIndicatorAndButton +
+        buttonDiameter +
+        rightPadding,
     );
   }
 
@@ -452,8 +455,8 @@ export class HeaderZone extends BaseZone {
     const rightPadding = this.padding || 0;
     const indicatorDiameter = 6; // Matches updateStatusIndicatorPosition()
     const buttonDiameter = this.node?.isContainer ? 16 : 0; // Matches updateZoomButtonPosition()
-    const gapBetweenTextAndIcons = (indicatorDiameter > 0 || buttonDiameter > 0) ? 8 : 0;
-    const gapBetweenIndicatorAndButton = (indicatorDiameter > 0 && buttonDiameter > 0) ? 4 : 0;
+    const gapBetweenTextAndIcons = indicatorDiameter > 0 || buttonDiameter > 0 ? 8 : 0;
+    const gapBetweenIndicatorAndButton = indicatorDiameter > 0 && buttonDiameter > 0 ? 4 : 0;
 
     return (
       gapBetweenTextAndIcons +
@@ -469,19 +472,19 @@ export class HeaderZone extends BaseZone {
    */
   calculateTextHeight() {
     if (!this.textElement) return this.minHeight;
-    
+
     const text = this.node.data.label || this.node.data.name || '';
     if (!text) return this.minHeight;
-    
+
     try {
       // Try to create temporary element to measure text height
       const tempElement = this.textElement.node().cloneNode(true);
       tempElement.textContent = text;
       document.body.appendChild(tempElement);
-      
+
       const textHeight = tempElement.getBoundingClientRect().height;
       document.body.removeChild(tempElement);
-      
+
       return Math.max(textHeight, this.minHeight);
     } catch (error) {
       // Fallback to minimum height if DOM measurement fails
@@ -495,9 +498,9 @@ export class HeaderZone extends BaseZone {
    */
   updateText() {
     if (!this.textElement) return;
-    
+
     const text = this.node.data.label || this.node.data.name || '';
-    
+
     // Clear cache if text content has changed
     if (this._lastTextContent !== text) {
       this.clearMinWidthCache();
@@ -521,9 +524,7 @@ export class HeaderZone extends BaseZone {
       this.textElement.style('cursor', 'default');
       // Position text - align with header position (zone is already at top of container)
       const textHeight = this.calculateTextHeight();
-      this.textElement
-        .attr('x', -this.size.width / 2 + this.padding)
-        .attr('y', textHeight / 2);
+      this.textElement.attr('x', -this.size.width / 2 + this.padding).attr('y', textHeight / 2);
       return;
     }
 
@@ -532,11 +533,11 @@ export class HeaderZone extends BaseZone {
       const allowedWidth = Math.max(0, cfgMax - this.padding - reservedRight);
       maxWidth = Math.min(maxWidth, allowedWidth);
     }
-    
+
     // Handle text overflow with ellipsis
     if (text.length > 0) {
       this.textElement.text(text);
-      
+
       // Check if text needs ellipsis
       const textNode = this.textElement.node();
       if (!textNode || typeof textNode.getComputedTextLength !== 'function') {
@@ -552,14 +553,19 @@ export class HeaderZone extends BaseZone {
         }
         return;
       }
-      
+
       const textLength = textNode.getComputedTextLength();
       if (textLength > maxWidth) {
         // Truncate text with ellipsis; trim trailing spaces before adding '...'
         let truncatedText = text;
-        const rtrim = (s) => s.replace(/\s+$/,'');
-        while (truncatedText.length > 0 && 
-               this.textElement.text(rtrim(truncatedText) + '...').node().getComputedTextLength() > maxWidth) {
+        const rtrim = (s) => s.replace(/\s+$/, '');
+        while (
+          truncatedText.length > 0 &&
+          this.textElement
+            .text(rtrim(truncatedText) + '...')
+            .node()
+            .getComputedTextLength() > maxWidth
+        ) {
           truncatedText = truncatedText.slice(0, -1);
         }
         const finalText = rtrim(truncatedText) + '...';
@@ -579,13 +585,11 @@ export class HeaderZone extends BaseZone {
       this.textElement.select('title').remove();
       this.textElement.style('cursor', 'default');
     }
-    
+
     // Position text - align with header position (zone is already at top of container)
     const textHeight = this.calculateTextHeight();
-    
-    this.textElement
-      .attr('x', -this.size.width / 2 + this.padding)
-      .attr('y', textHeight / 2); // Center text vertically within header (relative to zone)
+
+    this.textElement.attr('x', -this.size.width / 2 + this.padding).attr('y', textHeight / 2); // Center text vertically within header (relative to zone)
   }
 
   /**
@@ -593,13 +597,13 @@ export class HeaderZone extends BaseZone {
    */
   updateStatusIndicator() {
     if (!this.statusIndicator) return;
-    
+
     const status = this.node.status;
     const statusColors = this.node.settings.statusColors || {};
-    
+
     // Remove all status classes
     this.statusIndicator.classed('unknown ready updating updated error warning', false);
-    
+
     if (statusColors[status] && statusColors[status].indicator) {
       // Apply custom indicator color if provided
       this.statusIndicator.attr('fill', statusColors[status].indicator);
@@ -614,10 +618,10 @@ export class HeaderZone extends BaseZone {
    */
   updateStatusIndicatorPosition() {
     if (!this.statusIndicator) return;
-    
+
     const height = this.calculateTextHeight();
     const indicatorSize = 6; // Diameter of indicator
-    
+
     this.statusIndicator
       .attr('cx', this.size.width / 2 - indicatorSize - this.padding)
       .attr('cy', height / 2); // Center indicator vertically within header (relative to zone)
@@ -628,13 +632,15 @@ export class HeaderZone extends BaseZone {
    */
   updateZoomButtonPosition() {
     if (!this.zoomButton) return;
-    
+
     const height = this.calculateTextHeight();
     const buttonSize = 16; // Diameter of button
-    
-    this.zoomButton
-      .attr('transform', `translate(${this.size.width / 2 - buttonSize - this.padding}, ${height / 2})`);
-    
+
+    this.zoomButton.attr(
+      'transform',
+      `translate(${this.size.width / 2 - buttonSize - this.padding}, ${height / 2})`,
+    );
+
     // Update zoom button state
     this.updateZoomButtonState();
   }
@@ -644,7 +650,7 @@ export class HeaderZone extends BaseZone {
    */
   updateZoomButtonState() {
     if (!this.zoomButton) return;
-    
+
     const icon = this.zoomButton.select('.zoom-icon');
     if (this.node.collapsed) {
       icon.text('+'); // Plus for collapsed
@@ -677,16 +683,14 @@ export class HeaderZone extends BaseZone {
    * Handle zoom button mouse enter
    */
   handleZoomMouseEnter(event) {
-    this.zoomButton.select('.zoom-button-bg')
-      .classed('hover', true);
+    this.zoomButton.select('.zoom-button-bg').classed('hover', true);
   }
 
   /**
    * Handle zoom button mouse leave
    */
   handleZoomMouseLeave(event) {
-    this.zoomButton.select('.zoom-button-bg')
-      .classed('hover', false);
+    this.zoomButton.select('.zoom-button-bg').classed('hover', false);
   }
 
   /**
@@ -697,7 +701,7 @@ export class HeaderZone extends BaseZone {
     if (event.target.closest('.zoom-button')) {
       return;
     }
-    
+
     event.stopPropagation();
     // Propagate to node click handler
     if (this.node.handleClicked) {
@@ -713,7 +717,7 @@ export class HeaderZone extends BaseZone {
     if (event.target.closest('.zoom-button')) {
       return;
     }
-    
+
     event.stopPropagation();
     // Propagate to node double click handler
     if (this.node.handleDblClicked) {
@@ -753,7 +757,7 @@ export class HeaderZone extends BaseZone {
     if (event.target.closest('.zoom-button')) {
       return;
     }
-    
+
     event.stopPropagation();
     // Propagate to node click handler
     if (this.node.handleClicked) {
@@ -769,7 +773,7 @@ export class HeaderZone extends BaseZone {
     if (event.target.closest('.zoom-button')) {
       return;
     }
-    
+
     event.stopPropagation();
     // Propagate to node double click handler
     if (this.node.handleDblClicked) {
@@ -807,7 +811,7 @@ export class HeaderZone extends BaseZone {
       // The header should be positioned at the top edge of the container
       const containerHeight = this.node.data.height;
       const headerY = -containerHeight / 2; // Top of the container
-      
+
       // Position the header at the top of the container, centered horizontally
       this.element.attr('transform', `translate(0, ${headerY})`);
     }
@@ -833,18 +837,18 @@ export class HeaderZone extends BaseZone {
       nodeElement.removeEventListener('click', this._zoomButtonClickHandler, true);
       this._zoomButtonClickHandler = null;
     }
-    
+
     // Clear any pending timers
     if (this._updateBatchTimer) {
       clearTimeout(this._updateBatchTimer);
       this._updateBatchTimer = null;
     }
-    
+
     // Clear cache
     this._cachedMinWidth = null;
     this._pendingMinWidthUpdate = false;
-    
+
     // Call parent destroy
     super.destroy();
   }
-} 
+}

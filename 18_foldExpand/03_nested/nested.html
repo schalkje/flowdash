@@ -1,91 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fold/Expand 03 — Nested</title>
 
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
-    <link rel="stylesheet" href="../fold-expand.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <link rel="stylesheet" href="../fold-expand.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Fold / Expand</h1>
-        <h2>03 — Nested</h2>
-        <p class="demo-description">
-            Four-level nested structure. Collapse the root and the whole
-            subtree disappears; collapse one wing and the other resizes
-            independently.
-        </p>
+      <h1>Fold / Expand</h1>
+      <h2>03 — Nested</h2>
+      <p class="demo-description">
+        Four-level nested structure. Collapse the root and the whole subtree disappears; collapse
+        one wing and the other resizes independently.
+      </p>
     </header>
 
     <div class="fe-toolbar">
-        <button data-target="root" data-action="toggle">Toggle Root</button>
-        <button data-target="wing-a" data-action="toggle">Toggle Wing A</button>
-        <button data-target="wing-b" data-action="toggle">Toggle Wing B</button>
-        <button data-target="wing-a-cols" data-action="toggle">Toggle A · Tasks</button>
-        <button data-target="wing-b-cols" data-action="toggle">Toggle B · Tasks</button>
-        <button id="btn-collapse-all">Collapse All</button>
-        <button id="btn-expand-all">Expand All</button>
-        <span class="fe-status" id="fe-status">ready</span>
+      <button data-target="root" data-action="toggle">Toggle Root</button>
+      <button data-target="wing-a" data-action="toggle">Toggle Wing A</button>
+      <button data-target="wing-b" data-action="toggle">Toggle Wing B</button>
+      <button data-target="wing-a-cols" data-action="toggle">Toggle A · Tasks</button>
+      <button data-target="wing-b-cols" data-action="toggle">Toggle B · Tasks</button>
+      <button id="btn-collapse-all">Collapse All</button>
+      <button id="btn-expand-all">Expand All</button>
+      <span class="fe-status" id="fe-status">ready</span>
     </div>
 
     <div class="fe-canvas-wrapper">
-        <svg id="graph" class="canvas fe-tall"></svg>
+      <svg id="graph" class="canvas fe-tall"></svg>
     </div>
 
     <script type="module">
-        import { demoData } from './js/graphData.js';
-        import flowDashboard from '../../dashboard/js/index.js';
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
 
-        const dashboard = new flowDashboard.Dashboard(demoData);
-        await dashboard.initialize('#graph');
-        window.flowdash = dashboard;
+      const dashboard = new flowDashboard.Dashboard(demoData);
+      await dashboard.initialize('#graph');
+      window.flowdash = dashboard;
 
-        const containerIds = ['root', 'wing-a', 'wing-b', 'wing-a-cols', 'wing-b-cols'];
+      const containerIds = ['root', 'wing-a', 'wing-b', 'wing-a-cols', 'wing-b-cols'];
 
-        const statusEl = document.getElementById('fe-status');
-        function refresh() {
-            statusEl.textContent = containerIds
-                .map(id => `${id}=${dashboard.main.root.getNode(id)?.collapsed}`)
-                .join('  ');
-        }
+      const statusEl = document.getElementById('fe-status');
+      function refresh() {
+        statusEl.textContent = containerIds
+          .map((id) => `${id}=${dashboard.main.root.getNode(id)?.collapsed}`)
+          .join('  ');
+      }
+      refresh();
+
+      document.querySelectorAll('.fe-toolbar button[data-action]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const node = dashboard.main.root.getNode(btn.dataset.target);
+          if (!node) return;
+          node.collapsed = !node.collapsed;
+          refresh();
+        });
+      });
+
+      document.getElementById('btn-collapse-all').addEventListener('click', () => {
+        // Collapse leaves first to avoid triggering propagateVisibility on
+        // already-hidden nodes.
+        [...containerIds].reverse().forEach((id) => {
+          const n = dashboard.main.root.getNode(id);
+          if (n && !n.collapsed) n.collapsed = true;
+        });
         refresh();
-
-        document.querySelectorAll('.fe-toolbar button[data-action]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const node = dashboard.main.root.getNode(btn.dataset.target);
-                if (!node) return;
-                node.collapsed = !node.collapsed;
-                refresh();
-            });
+      });
+      document.getElementById('btn-expand-all').addEventListener('click', () => {
+        // Expand from the root downwards.
+        containerIds.forEach((id) => {
+          const n = dashboard.main.root.getNode(id);
+          if (n && n.collapsed) n.collapsed = false;
         });
-
-        document.getElementById('btn-collapse-all').addEventListener('click', () => {
-            // Collapse leaves first to avoid triggering propagateVisibility on
-            // already-hidden nodes.
-            [...containerIds].reverse().forEach(id => {
-                const n = dashboard.main.root.getNode(id);
-                if (n && !n.collapsed) n.collapsed = true;
-            });
-            refresh();
-        });
-        document.getElementById('btn-expand-all').addEventListener('click', () => {
-            // Expand from the root downwards.
-            containerIds.forEach(id => {
-                const n = dashboard.main.root.getNode(id);
-                if (n && n.collapsed) n.collapsed = false;
-            });
-            refresh();
-        });
+        refresh();
+      });
     </script>
-</body>
+  </body>
 </html>

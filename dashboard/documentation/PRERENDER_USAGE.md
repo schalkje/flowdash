@@ -33,7 +33,7 @@ await dashboard.initialize('#container');
 import { generatePrerenderData } from './js/dashboard.js';
 
 // Load your original dashboard data
-const dashboardData = await fetch('my-dashboard.json').then(r => r.json());
+const dashboardData = await fetch('my-dashboard.json').then((r) => r.json());
 
 // Generate pre-render data
 const enhanced = await generatePrerenderData(dashboardData);
@@ -107,6 +107,7 @@ Settings are updated to indicate pre-render availability:
 ## Performance Benefits
 
 Expected improvements for large dashboards:
+
 - **885 nodes**: ~45% faster (40s → 22s)
 - **Layout calculation**: Skip entirely with pre-render
 - **Initial render**: Immediate positioning
@@ -115,11 +116,13 @@ Expected improvements for large dashboards:
 ## Implementation Status
 
 **Phase 1: Complete** ✅
+
 - Generator tool (`prerender-generator.html`)
 - Core API functions (`generatePrerenderData`, etc.)
 - Data structure cleanup (width/height placement, default removal)
 
 **Phase 2: Pending** 🔨
+
 - Dashboard fast-path loading
 - Apply pre-render positions during node creation
 - Skip layout calculations when pre-render available
@@ -147,6 +150,7 @@ node -e "console.log(JSON.stringify(require('./dwh-1-enhanced.json').nodes[0], n
 ```
 
 Expected output structure:
+
 ```json
 {
   "id": "root",

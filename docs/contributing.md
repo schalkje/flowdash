@@ -71,13 +71,13 @@ python -m http.server 8000
 
 The right layer depends on what you're asserting:
 
-| Asserting | Layer | File |
-|-----------|-------|------|
-| Pure function correctness | Unit (Vitest) | `dashboard/tests-unit/<module>.test.js` |
-| A demo or dashboard page renders correctly | Integration (Playwright) | `tests/<feature>.spec.js` |
-| A user-flow across the full dashboard | E2E (Playwright) | `tests/dashboard.spec.js` or `tests/integration.spec.js` |
-| Visual fidelity (subtle rendering bugs) | Visual regression | extend `TARGETS` in `tests/visual-regression.spec.js` |
-| Performance regression | Perf | extend `tests/perf-baselines.json` |
+| Asserting                                  | Layer                    | File                                                     |
+| ------------------------------------------ | ------------------------ | -------------------------------------------------------- |
+| Pure function correctness                  | Unit (Vitest)            | `dashboard/tests-unit/<module>.test.js`                  |
+| A demo or dashboard page renders correctly | Integration (Playwright) | `tests/<feature>.spec.js`                                |
+| A user-flow across the full dashboard      | E2E (Playwright)         | `tests/dashboard.spec.js` or `tests/integration.spec.js` |
+| Visual fidelity (subtle rendering bugs)    | Visual regression        | extend `TARGETS` in `tests/visual-regression.spec.js`    |
+| Performance regression                     | Perf                     | extend `tests/perf-baselines.json`                       |
 
 For Playwright specs, **use the readiness helper** rather than `waitForTimeout`:
 

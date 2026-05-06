@@ -1,20 +1,22 @@
-import { createNode, createNodes } from "./node.js";
-import { getRegisteredNodeTypes } from "./nodeRegistry.js";
-import { getBoundingBoxRelativeToParent } from "./utils.js";
-import { createMarkers } from "./markers.js";
-import { createEdges } from "./edge.js";
-import { ConfigManager } from "./configManager.js";
-import { fetchDashboardFile } from "./data.js";
-import { LoadingOverlay, resolveLoadingContainer as resolveLoadingHost } from "./loadingOverlay.js";
-import { Minimap } from "./minimap.js";
-import ZoomManager from "./zoomManager.js";
-import { NodeStatus } from "./nodeBase.js";
+import { createNode, createNodes } from './node.js';
+import { getRegisteredNodeTypes } from './nodeRegistry.js';
+import { getBoundingBoxRelativeToParent } from './utils.js';
+import { createMarkers } from './markers.js';
+import { createEdges, createInternalEdge } from './edge.js';
+import { createNode as createNodeFromFactory } from './node.js';
+import { ConfigManager } from './configManager.js';
+import { fetchDashboardFile } from './data.js';
+import { LoadingOverlay, resolveLoadingContainer as resolveLoadingHost } from './loadingOverlay.js';
+import { Minimap } from './minimap.js';
+import ZoomManager from './zoomManager.js';
+import { NodeStatus } from './nodeBase.js';
+import { computeFingerprint, validatePrerenderFreshness } from './prerenderValidator.js';
 
 export class Dashboard {
   constructor(dashboardData) {
     this._isInitialized = false;
     this._data = null;
-    Object.defineProperty(this, "data", {
+    Object.defineProperty(this, 'data', {
       get: () => this._data,
       set: (value) => {
         if (!this._isInitialized) {
@@ -53,6 +55,22 @@ export class Dashboard {
         appendOperations: 0,
         layoutRecalculations: 0,
         boundingBoxQueries: 0,
+      },
+      // Time from initialize() entry to (a) first SVG element in DOM, and
+      // (b) the data-flowdash-ready signal. firstPaintMs ≈ time-to-paint;
+      // interactiveMs ≈ time-to-interactive. Pre-render should narrow both,
+      // particularly interactiveMs for layout-heavy fixtures.
+      paintMetrics: {
+        firstPaintMs: 0,
+        interactiveMs: 0,
+      },
+      // performance.memory is Chromium-only and reports approximate heap
+      // sizes. Non-Chromium browsers leave these at 0. Useful as a soft
+      // signal for allocation pressure and leak detection.
+      memoryStats: {
+        heapBeforeInit: 0,
+        heapAfterSettle: 0,
+        heapDelta: 0,
       },
     };
 
@@ -96,6 +114,15 @@ export class Dashboard {
     this._clickDelayMs = 250; // Delay before executing single click handler
   }
 
+  /**
+   * Debug-gated console.log. Routes diagnostic chatter through settings.isDebug.
+   * Call sites should use this instead of console.log; keep console.warn/error
+   * for genuine warnings.
+   */
+  _debugLog(...args) {
+    if (this.data?.settings?.isDebug) console.log(...args);
+  }
+
   // --- Pre-Render Methods ---
 
   /**
@@ -105,7 +132,22 @@ export class Dashboard {
   hasPrerenderData() {
     const settingsUsePrerender = this.data.settings?.usePrerender !== false;
     const hasNodePrerender = this.hasNodePrerenderData(this.data.nodes);
-    return settingsUsePrerender && hasNodePrerender;
+    if (!settingsUsePrerender || !hasNodePrerender) return false;
+
+    // Prerender data is present and enabled — check freshness. If the
+    // fingerprint embedded at generation time no longer matches the current
+    // node/edge/settings inputs, the baked positions are stale and would
+    // produce a wrong layout. Warn and fall back to cold load.
+    const result = validatePrerenderFreshness(this.data);
+    if (!result.ok) {
+      // Once-per-load warning. Hard-fail behind a setting can be added later
+      // (e.g. settings.prerenderStrict === true).
+      console.warn(
+        `flowdash: prerender data is stale and will not be used (fingerprint ${result.actual} vs expected ${result.expected}). Regenerate the prerender JSON to silence this warning.`,
+      );
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -130,7 +172,7 @@ export class Dashboard {
    * @param {Object} root - Root node
    */
   applyDeferredStatusRules(root) {
-    console.log("📊 Pre-render: Applying deferred status rules");
+    this._debugLog('📊 Pre-render: Applying deferred status rules');
 
     // Re-enable status change handlers
     this._suspendStatusChanges = false;
@@ -155,7 +197,7 @@ export class Dashboard {
     // From this point on, dashboard behaves as if it never had pre-render data
     this.clearPrerenderData();
 
-    console.log("📊 Pre-render: Status rules applied");
+    this._debugLog('📊 Pre-render: Status rules applied');
   }
 
   /**
@@ -183,7 +225,7 @@ export class Dashboard {
   clearPrerenderData() {
     if (!this.main.root) return;
 
-    console.log("🧹 Clearing pre-render data after initial load");
+    this._debugLog('🧹 Clearing pre-render data after initial load');
 
     // Clear from all nodes recursively
     const clearNodeData = (node) => {
@@ -195,10 +237,10 @@ export class Dashboard {
       // Clear pre-render mode from zone manager and zones
       if (node.zoneManager) {
         node.zoneManager._prerenderMode = false;
-        
+
         // Clear from individual zones
         if (node.zoneManager.zones) {
-          node.zoneManager.zones.forEach(zone => {
+          node.zoneManager.zones.forEach((zone) => {
             zone._prerenderMode = false;
           });
         }
@@ -220,18 +262,18 @@ export class Dashboard {
       });
     }
 
-    console.log("✅ Pre-render data cleared - dashboard now operates in standard mode");
+    this._debugLog('✅ Pre-render data cleared - dashboard now operates in standard mode');
   }
 
   // --- Performance Metrics Methods ---
 
   reportPerformanceMetrics() {
-    console.group("🚀 Dashboard Performance Metrics");
+    console.group('🚀 Dashboard Performance Metrics');
     console.table(this.performanceMetrics.phases);
-    console.group("Node Statistics");
+    console.group('Node Statistics');
     console.table(this.performanceMetrics.nodeStats);
     console.groupEnd();
-    console.group("DOM Statistics");
+    console.group('DOM Statistics');
     console.table(this.performanceMetrics.domStats);
     console.groupEnd();
     console.groupEnd();
@@ -239,11 +281,15 @@ export class Dashboard {
     // Identify bottlenecks (phases taking > 20% of total time)
     const totalTime = this.performanceMetrics.phases.total;
     const bottlenecks = Object.entries(this.performanceMetrics.phases)
-      .filter(([phase, time]) => phase !== "total" && time / totalTime > 0.2)
-      .map(([phase, time]) => ({ phase, time, percentage: ((time / totalTime) * 100).toFixed(1) + "%" }));
+      .filter(([phase, time]) => phase !== 'total' && time / totalTime > 0.2)
+      .map(([phase, time]) => ({
+        phase,
+        time,
+        percentage: ((time / totalTime) * 100).toFixed(1) + '%',
+      }));
 
     if (bottlenecks.length > 0) {
-      console.warn("⚠️ Performance Bottlenecks (>20% of load time):", bottlenecks);
+      console.warn('⚠️ Performance Bottlenecks (>20% of load time):', bottlenecks);
     }
 
     return this.performanceMetrics;
@@ -278,15 +324,15 @@ export class Dashboard {
   _deferredMinimapInit() {
     if (this._minimapInitialized) return;
 
-    console.log("🗺️ Initializing minimap (deferred)...");
+    this._debugLog('🗺️ Initializing minimap (deferred)...');
     const t0 = performance.now();
 
     try {
       this.minimap.safeInitialize();
       this._minimapInitialized = true;
-      console.log(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
+      this._debugLog(`✅ Minimap initialized in ${(performance.now() - t0).toFixed(2)}ms`);
     } catch (e) {
-      console.error("❌ Failed to initialize minimap:", e);
+      console.error('❌ Failed to initialize minimap:', e);
     }
   }
 
@@ -301,7 +347,10 @@ export class Dashboard {
   collectNodeStatistics() {
     const countNodes = (node, depth = 0) => {
       this.performanceMetrics.nodeStats.totalNodes++;
-      this.performanceMetrics.nodeStats.maxDepth = Math.max(this.performanceMetrics.nodeStats.maxDepth, depth);
+      this.performanceMetrics.nodeStats.maxDepth = Math.max(
+        this.performanceMetrics.nodeStats.maxDepth,
+        depth,
+      );
 
       if (node.childNodes && node.childNodes.length > 0) {
         this.performanceMetrics.nodeStats.containerNodes++;
@@ -324,19 +373,19 @@ export class Dashboard {
    */
   cleanupOrphanedElements() {
     try {
-      if (typeof document !== "undefined") {
+      if (typeof document !== 'undefined') {
         // Remove any orphaned zoom-cockpit elements that might exist outside the current minimap instance
-        const allCockpits = document.querySelectorAll(".zoom-cockpit");
+        const allCockpits = document.querySelectorAll('.zoom-cockpit');
         allCockpits.forEach((cockpit) => {
           // Only remove if it's not the current minimap's cockpit
           if (cockpit !== this.minimap?.cockpit?.node()) {
-            console.warn("Removing orphaned zoom-cockpit element");
+            console.warn('Removing orphaned zoom-cockpit element');
             cockpit.remove();
           }
         });
 
         // Remove empty overlay hosts
-        const emptyOverlayHosts = document.querySelectorAll(".zoom-overlay-host");
+        const emptyOverlayHosts = document.querySelectorAll('.zoom-overlay-host');
         emptyOverlayHosts.forEach((host) => {
           if (host.children.length === 0) {
             host.remove();
@@ -344,7 +393,7 @@ export class Dashboard {
         });
       }
     } catch (e) {
-      console.warn("Error during cleanup of orphaned elements:", e);
+      console.warn('Error during cleanup of orphaned elements:', e);
     }
   }
 
@@ -355,24 +404,24 @@ export class Dashboard {
         this.clearSelectionBoundingBox();
         return;
       }
-      this.main.container.selectAll(".boundingBox").remove();
+      this.main.container.selectAll('.boundingBox').remove();
       this.main.container
-        .append("rect")
-        .attr("class", "boundingBox")
-        .attr("x", bbox.x)
-        .attr("y", bbox.y)
-        .attr("width", bbox.width)
-        .attr("height", bbox.height)
-        .attr("fill", "none")
-        .attr("stroke", "var(--fd-border, rgba(0,0,0,0.85))")
-        .attr("stroke-width", 2)
-        .attr("pointer-events", "none");
+        .append('rect')
+        .attr('class', 'boundingBox')
+        .attr('x', bbox.x)
+        .attr('y', bbox.y)
+        .attr('width', bbox.width)
+        .attr('height', bbox.height)
+        .attr('fill', 'none')
+        .attr('stroke', 'var(--fd-border, rgba(0,0,0,0.85))')
+        .attr('stroke-width', 2)
+        .attr('pointer-events', 'none');
     } catch {}
   }
 
   clearSelectionBoundingBox() {
     try {
-      this.main.container.selectAll(".boundingBox").remove();
+      this.main.container.selectAll('.boundingBox').remove();
     } catch {}
   }
 
@@ -380,7 +429,7 @@ export class Dashboard {
   // on-screen size to avoid extreme zooming. Returns a bbox in parent coordinates.
   computeSaneNodeBoundingBox(node) {
     // Start from DOM-based bbox for accuracy
-    let bbox = computeBoundingBox(this, [node]);
+    const bbox = computeBoundingBox(this, [node]);
     const k = this.main.transform.k || 1;
     const minPx = 80; // minimum visual size in pixels
     const minWorld = minPx / k;
@@ -410,7 +459,12 @@ export class Dashboard {
       }
     } catch {}
     // Fallback: centered viewport
-    return { x: -this.main.width / 2, y: -this.main.height / 2, width: this.main.width, height: this.main.height };
+    return {
+      x: -this.main.width / 2,
+      y: -this.main.height / 2,
+      width: this.main.width,
+      height: this.main.height,
+    };
   }
 
   recomputeBaselineFit() {
@@ -430,7 +484,8 @@ export class Dashboard {
   }
 
   async _setDataContinue(newDashboardData) {
-    const userSettings = newDashboardData && newDashboardData.settings ? newDashboardData.settings : {};
+    const userSettings =
+      newDashboardData && newDashboardData.settings ? newDashboardData.settings : {};
     this._data = newDashboardData || {};
     this._data.settings = ConfigManager.mergeWithDefaults(userSettings);
     try {
@@ -441,10 +496,10 @@ export class Dashboard {
     } catch {}
 
     if (this.main?.svg) {
-      this.main.svg.selectAll("*").remove();
+      this.main.svg.selectAll('*').remove();
     }
 
-    this.main.container = this.createContainer(this.main, "dashboard");
+    this.main.container = this.createContainer(this.main, 'dashboard');
     await this.createDashboard(this.data, this.main.container);
     this.main.root = this._dashboardRoot;
 
@@ -480,13 +535,29 @@ export class Dashboard {
           }
         }, 50);
       } catch (e) {
-        console.warn("Failed to schedule minimap reinit:", e);
+        console.warn('Failed to schedule minimap reinit:', e);
       }
     }
 
     this.hasPerformedInitialZoomToRoot = false;
     // Defer baseline fit to onMainDisplayChange to ensure layout is settled
     this.onMainDisplayChange();
+
+    // Re-publish the readiness signal so test specs and external integrations
+    // can wait deterministically after data-driven re-init (initialize() is
+    // not called by setData; before this, the old attribute lingered and made
+    // the file-switch flow ambiguous).
+    try {
+      if (typeof document !== 'undefined' && this.mainDivSelector) {
+        const root =
+          typeof this.mainDivSelector === 'string'
+            ? document.querySelector(this.mainDivSelector)
+            : this.mainDivSelector;
+        if (root && typeof root.setAttribute === 'function') {
+          root.setAttribute('data-flowdash-ready', 'true');
+        }
+      }
+    } catch {}
   }
 
   /**
@@ -535,11 +606,15 @@ export class Dashboard {
 
   async initialize(mainDivSelector) {
     const t0 = performance.now();
+    this._initT0 = t0;
+    if (typeof performance !== 'undefined' && performance.memory) {
+      this.performanceMetrics.memoryStats.heapBeforeInit = performance.memory.usedJSHeapSize;
+    }
 
     this.mainDivSelector = mainDivSelector;
 
     try {
-      if (typeof window !== "undefined" && window.showFlowDashLoading) {
+      if (typeof window !== 'undefined' && window.showFlowDashLoading) {
         window.showFlowDashLoading();
       } else {
         this.showLoading();
@@ -553,11 +628,14 @@ export class Dashboard {
   }
 
   async _initializeContinue(mainDivSelector, t0) {
-    this.setLoadingStage("Initializing SVG");
+    this.setLoadingStage('Initializing SVG');
     await this._yieldToMain();
 
     const div = this.initializeSvg(mainDivSelector);
     this.main.svg = div.svg;
+    // SVG is now in the DOM; this is the earliest moment the user can see
+    // anything dashboard-related. Capture as firstPaintMs.
+    this.performanceMetrics.paintMetrics.firstPaintMs = performance.now() - t0;
     this.main.width = div.width;
     this.main.height = div.height;
     this.main.divRatio = this.main.width / this.main.height;
@@ -568,7 +646,7 @@ export class Dashboard {
 
     this._initialLoading = true;
 
-    this.main.container = this.createContainer(this.main, "dashboard");
+    this.main.container = this.createContainer(this.main, 'dashboard');
 
     const tempDisplayChangeCallback = () => {
       this.onMainDisplayChange();
@@ -578,7 +656,7 @@ export class Dashboard {
     const hasPrerenderData = this.hasPrerenderData();
 
     if (hasPrerenderData) {
-      console.log("📊 Pre-render data detected - using fast-path initialization");
+      this._debugLog('📊 Pre-render data detected - using fast-path initialization');
 
       // Suspend display change callbacks during initial render
       this._suspendDisplayChange = true;
@@ -596,9 +674,9 @@ export class Dashboard {
 
     // If using pre-render, apply status rules in second pass
     if (hasPrerenderData && this.main.root) {
-      console.log("📊 Pre-render: Scheduling deferred status application");
+      this._debugLog('📊 Pre-render: Scheduling deferred status application');
 
-      this.setLoadingStage("Applying status rules");
+      this.setLoadingStage('Applying status rules');
       await this._yieldToMain();
 
       // Schedule status application after initial render
@@ -607,7 +685,7 @@ export class Dashboard {
       });
     }
 
-    this.setLoadingStage("Setting up zoom");
+    this.setLoadingStage('Setting up zoom');
     await this._yieldToMain();
 
     // Phase 4: Zoom Setup
@@ -615,7 +693,7 @@ export class Dashboard {
     this.main.zoom = this.initializeZoom();
     this.main.root.onClick = (node, event) => this.selectNode(node, event);
     this.main.root.onDblClick = (node, event) => this.handleNodeDblClick(node, event);
-    
+
     // Set up display change callback on root (for collapse/expand zoom behavior)
     this.main.root.onDisplayChange = () => {
       this.onMainDisplayChange();
@@ -623,7 +701,7 @@ export class Dashboard {
 
     // Add background double-click handler to zoom to root
     this.setupBackgroundDoubleClick();
-    
+
     // Trigger initial zoom to root (using same logic as double-click)
     // This is deferred to allow the DOM to fully render
     if (this.data?.settings?.zoomToRoot) {
@@ -640,21 +718,21 @@ export class Dashboard {
 
     this.performanceMetrics.phases.zoomSetup = performance.now() - t4;
 
-    this.setLoadingStage("Finalizing");
+    this.setLoadingStage('Finalizing');
     await this._yieldToMain();
 
     // Defer initial zoom-to-root to onMainDisplayChange so it happens after layout settles
 
     this.initializeFullscreenToggle();
 
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       this._onWindowResize = () => {
-        if (this.main.svg.classed("flowdash-fullscreen")) return;
+        if (this.main.svg.classed('flowdash-fullscreen')) return;
         // Avoid early resizes during initial layout stabilization which can shift the view
         if ((this._displayChangeCount || 0) < 2) return;
         this.applyResizePreserveZoom();
       };
-      window.addEventListener("resize", this._onWindowResize);
+      window.addEventListener('resize', this._onWindowResize);
     }
 
     // Total time
@@ -671,13 +749,21 @@ export class Dashboard {
     // Test-readiness signal — Playwright specs and external integrations should
     // wait for `[data-flowdash-ready="true"]` rather than relying on opaque
     // timeouts. Documented in /docs/testing-strategy.md.
+    this.performanceMetrics.paintMetrics.interactiveMs = performance.now() - t0;
+    if (typeof performance !== 'undefined' && performance.memory) {
+      this.performanceMetrics.memoryStats.heapAfterSettle = performance.memory.usedJSHeapSize;
+      this.performanceMetrics.memoryStats.heapDelta =
+        this.performanceMetrics.memoryStats.heapAfterSettle -
+        this.performanceMetrics.memoryStats.heapBeforeInit;
+    }
     try {
-      if (typeof document !== "undefined" && this.mainDivSelector) {
-        const root = typeof this.mainDivSelector === "string"
-          ? document.querySelector(this.mainDivSelector)
-          : this.mainDivSelector;
-        if (root && typeof root.setAttribute === "function") {
-          root.setAttribute("data-flowdash-ready", "true");
+      if (typeof document !== 'undefined' && this.mainDivSelector) {
+        const root =
+          typeof this.mainDivSelector === 'string'
+            ? document.querySelector(this.mainDivSelector)
+            : this.mainDivSelector;
+        if (root && typeof root.setAttribute === 'function') {
+          root.setAttribute('data-flowdash-ready', 'true');
         }
       }
     } catch {}
@@ -687,7 +773,7 @@ export class Dashboard {
     // Use setTimeout to ensure all synchronous operations complete first
     setTimeout(() => {
       if (this._initialLoading) {
-        console.log("📊 Dashboard.initialize() - Fallback hideLoading() called");
+        this._debugLog('📊 Dashboard.initialize() - Fallback hideLoading() called');
         this._initialLoading = false;
         this.hideLoading();
       }
@@ -707,146 +793,147 @@ export class Dashboard {
       return;
     }
 
-    const isSmallScreen = typeof window !== "undefined" && (window.innerWidth || 0) < 600;
-    let mode = this.data.settings.minimap.mode || (isSmallScreen ? "disabled" : "hover");
-    if (mode === "hidden") mode = "disabled";
+    const isSmallScreen = typeof window !== 'undefined' && (window.innerWidth || 0) < 600;
+    let mode = this.data.settings.minimap.mode || (isSmallScreen ? 'disabled' : 'hover');
+    if (mode === 'hidden') mode = 'disabled';
     this.data.settings.minimap.mode = mode;
 
-    if (mode === "disabled") {
+    if (mode === 'disabled') {
       this.data.settings.minimap.enabled = false;
       return;
     }
 
-    if (mm.persistence && mm.persistence.persistCollapsedState && typeof window !== "undefined") {
+    if (mm.persistence && mm.persistence.persistCollapsedState && typeof window !== 'undefined') {
       try {
         const persisted = window.localStorage.getItem(mm.persistence.storageKey);
         if (persisted !== null) {
-          this.data.settings.minimap.collapsed = persisted === "true";
+          this.data.settings.minimap.collapsed = persisted === 'true';
         }
       } catch {}
     }
-    if (mode === "always") {
+    if (mode === 'always') {
       this.data.settings.minimap.enabled = true;
       this.data.settings.minimap.collapsed = false;
       this.data.settings.minimap.pinned = true;
     }
-    if (mode === "hover" && typeof this.data.settings.minimap.collapsed === "undefined") {
+    if (mode === 'hover' && typeof this.data.settings.minimap.collapsed === 'undefined') {
       this.data.settings.minimap.collapsed = true;
     }
 
     const graphContainer = this.main.svg.node().parentElement;
     try {
-      graphContainer.style.position = graphContainer.style.position || "relative";
-      graphContainer.style.overflow = "hidden";
+      graphContainer.style.position = graphContainer.style.position || 'relative';
+      graphContainer.style.overflow = 'hidden';
     } catch {}
-    const cockpitDiv = d3.select(graphContainer).append("div").attr("class", "zoom-cockpit");
+    const cockpitDiv = d3.select(graphContainer).append('div').attr('class', 'zoom-cockpit');
     this.minimap.cockpit = cockpitDiv;
     this.minimap.overlay = cockpitDiv;
     const cockpitSvg = cockpitDiv
-      .append("svg")
-      .attr("class", "minimap-chrome")
-      .style("position", "absolute")
-      .style("top", "0")
-      .style("left", "0")
-      .style("width", "100%")
-      .style("height", "100%")
-      .style("pointer-events", "all");
+      .append('svg')
+      .attr('class', 'minimap-chrome')
+      .style('position', 'absolute')
+      .style('top', '0')
+      .style('left', '0')
+      .style('width', '100%')
+      .style('height', '100%')
+      .style('pointer-events', 'all');
     this.minimap.chromeSvg = cockpitSvg;
-    this.minimap.content = cockpitSvg.append("g").attr("class", "minimap-content");
+    this.minimap.content = cockpitSvg.append('g').attr('class', 'minimap-content');
     this.minimap.active = true;
     this.minimap.state = { showTimer: null, hideTimer: null, interacting: false, wheelTimer: null };
 
     this.minimap.collapsedIcon = this.minimap.content
-      .append("g")
-      .attr("class", "minimap-collapsed-icon")
-      .style("cursor", "pointer")
-      .style("pointer-events", "all");
+      .append('g')
+      .attr('class', 'minimap-collapsed-icon')
+      .style('cursor', 'pointer')
+      .style('pointer-events', 'all');
     this.minimap.collapsedIcon
-      .append("rect")
-      .attr("class", "collapsed-icon-bg")
-      .attr("width", 20)
-      .attr("height", 14)
-      .attr("rx", 2)
-      .attr("ry", 2);
+      .append('rect')
+      .attr('class', 'collapsed-icon-bg')
+      .attr('width', 20)
+      .attr('height', 14)
+      .attr('rx', 2)
+      .attr('ry', 2);
     this.minimap.collapsedIcon
-      .append("rect")
-      .attr("class", "collapsed-icon-mini")
-      .attr("x", 4)
-      .attr("y", 3)
-      .attr("width", 12)
-      .attr("height", 8);
-    this.minimap.collapsedIcon.on("click", () => {
+      .append('rect')
+      .attr('class', 'collapsed-icon-mini')
+      .attr('x', 4)
+      .attr('y', 3)
+      .attr('width', 12)
+      .attr('height', 8);
+    this.minimap.collapsedIcon.on('click', () => {
       this.setMinimapCollapsed(false, true);
     });
 
-    this.minimap.header = this.minimap.content.append("g").attr("class", "minimap-header");
+    this.minimap.header = this.minimap.content.append('g').attr('class', 'minimap-header');
     this.minimap.headerHeight = 20;
 
     this.minimap.collapseButton = this.minimap.header
-      .append("g")
-      .attr("class", "minimap-collapse-button")
-      .style("cursor", "pointer");
+      .append('g')
+      .attr('class', 'minimap-collapse-button')
+      .style('cursor', 'pointer');
     this.minimap.collapseButton
-      .append("rect")
-      .attr("class", "collapse-btn-bg")
-      .attr("width", 16)
-      .attr("height", 16)
-      .attr("rx", 3)
-      .attr("ry", 3);
-    this.minimap.collapseButton.append("path").attr("class", "collapse-btn-icon").attr("d", "M2,6 L14,6 L8,12 Z");
-    this.minimap.collapseButton.on("click", () => {
+      .append('rect')
+      .attr('class', 'collapse-btn-bg')
+      .attr('width', 16)
+      .attr('height', 16)
+      .attr('rx', 3)
+      .attr('ry', 3);
+    this.minimap.collapseButton
+      .append('path')
+      .attr('class', 'collapse-btn-icon')
+      .attr('d', 'M2,6 L14,6 L8,12 Z');
+    this.minimap.collapseButton.on('click', () => {
       this.setMinimapCollapsed(true, true);
     });
 
     this.minimap.pinButton = this.minimap.header
-      .append("g")
-      .attr("class", "minimap-pin-button")
-      .style("cursor", "pointer")
-      .attr("role", "button")
-      .attr("aria-label", "Pin")
-      .attr("aria-pressed", String(!!mm.pinned));
+      .append('g')
+      .attr('class', 'minimap-pin-button')
+      .style('cursor', 'pointer')
+      .attr('role', 'button')
+      .attr('aria-label', 'Pin')
+      .attr('aria-pressed', String(!!mm.pinned));
     this.minimap.sizeButton = this.minimap.header
-      .append("g")
-      .attr("class", "minimap-size-button")
-      .style("cursor", "pointer");
+      .append('g')
+      .attr('class', 'minimap-size-button')
+      .style('cursor', 'pointer');
     this.minimap.sizeButton
-      .append("rect")
-      .attr("class", "btn-bg")
-      .attr("width", 20)
-      .attr("height", 16)
-      .attr("rx", 3)
-      .attr("ry", 3);
+      .append('rect')
+      .attr('class', 'btn-bg')
+      .attr('width', 20)
+      .attr('height', 16)
+      .attr('rx', 3)
+      .attr('ry', 3);
     this.minimap.sizeLabel = this.minimap.sizeButton
-      .append("text")
-      .attr("class", "btn-label")
-      .attr("x", 10)
-      .attr("y", 10)
-      .attr("text-anchor", "middle")
-      .style("dominant-baseline", "middle")
-      .style("font-size", "10px");
+      .append('text')
+      .attr('class', 'btn-label')
+      .attr('x', 10)
+      .attr('y', 10)
+      .attr('text-anchor', 'middle')
+      .style('dominant-baseline', 'middle')
+      .style('font-size', '10px');
     const updateSizeLabel = () => {
       const token = this.data.settings.minimap.size;
-      const label = typeof token === "object" ? token.label || "M" : String(token || "m").toUpperCase();
+      const label =
+        typeof token === 'object' ? token.label || 'M' : String(token || 'm').toUpperCase();
       this.minimap.sizeLabel.text(label);
     };
     updateSizeLabel();
-    this.minimap.sizeButton.on("click", () => {
-      const order = (this.data.settings.minimap.sizeSwitcher && this.data.settings.minimap.sizeSwitcher.order) || [
-        "s",
-        "m",
-        "l",
-      ];
+    this.minimap.sizeButton.on('click', () => {
+      const order = (this.data.settings.minimap.sizeSwitcher &&
+        this.data.settings.minimap.sizeSwitcher.order) || ['s', 'm', 'l'];
       const current = this.data.settings.minimap.size;
       const idx =
-        order.indexOf(typeof current === "object" ? current.token : current) >= 0
-          ? order.indexOf(typeof current === "object" ? current.token : current)
-          : order.indexOf("m");
+        order.indexOf(typeof current === 'object' ? current.token : current) >= 0
+          ? order.indexOf(typeof current === 'object' ? current.token : current)
+          : order.indexOf('m');
       const nextToken = order[(idx + 1) % order.length];
       this.data.settings.minimap.size = nextToken;
       this.resizeMinimap();
       this.minimap.position();
       updateSizeLabel();
-      if (typeof this.data.settings.minimap.onSizeChange === "function") {
+      if (typeof this.data.settings.minimap.onSizeChange === 'function') {
         try {
           this.data.settings.minimap.onSizeChange({
             size: nextToken,
@@ -856,29 +943,29 @@ export class Dashboard {
         } catch {}
       }
     });
-    this.minimap.pinButton.selectAll("*").remove();
-    const iconGroup = this.minimap.pinButton.append("g").attr("class", "pin-icon");
+    this.minimap.pinButton.selectAll('*').remove();
+    const iconGroup = this.minimap.pinButton.append('g').attr('class', 'pin-icon');
     const pinBasePath =
-      "M8 2 C9.2 2 10 2.8 10 4 L10 6 L12.5 8 L9 8 L9 12 L7 12 L7 8 L3.5 8 L6 6 L6 4 C6 2.8 6.8 2 8 2 Z";
-    const pinSlashPath = "M3 13 L13 3";
+      'M8 2 C9.2 2 10 2.8 10 4 L10 6 L12.5 8 L9 8 L9 12 L7 12 L7 8 L3.5 8 L6 6 L6 4 C6 2.8 6.8 2 8 2 Z';
+    const pinSlashPath = 'M3 13 L13 3';
     this.minimap.pinBase = iconGroup
-      .append("path")
-      .attr("class", "pin-base")
-      .attr("d", pinBasePath)
-      .attr("fill", "var(--fd-border, rgba(0,0,0,0.85))");
+      .append('path')
+      .attr('class', 'pin-base')
+      .attr('d', pinBasePath)
+      .attr('fill', 'var(--fd-border, rgba(0,0,0,0.85))');
     this.minimap.pinSlash = iconGroup
-      .append("path")
-      .attr("class", "pin-slash")
-      .attr("d", pinSlashPath)
-      .attr("stroke", "var(--fd-border, rgba(0,0,0,0.85))")
-      .attr("stroke-width", 2)
-      .attr("stroke-linecap", "round")
-      .style("display", mm.pinned ? "none" : "block");
-    iconGroup.attr("transform", mm.pinned ? "rotate(0,8,8)" : "rotate(-20,8,8)");
-    this.minimap.pinButton.append("title").text("Pin (toggle pinned / hover)");
-    this.minimap.pinButton.on("click", () => {
+      .append('path')
+      .attr('class', 'pin-slash')
+      .attr('d', pinSlashPath)
+      .attr('stroke', 'var(--fd-border, rgba(0,0,0,0.85))')
+      .attr('stroke-width', 2)
+      .attr('stroke-linecap', 'round')
+      .style('display', mm.pinned ? 'none' : 'block');
+    iconGroup.attr('transform', mm.pinned ? 'rotate(0,8,8)' : 'rotate(-20,8,8)');
+    this.minimap.pinButton.append('title').text('Pin (toggle pinned / hover)');
+    this.minimap.pinButton.on('click', () => {
       mm.pinned = !mm.pinned;
-      this.data.settings.minimap.mode = mm.pinned ? "always" : "hover";
+      this.data.settings.minimap.mode = mm.pinned ? 'always' : 'hover';
       if (this.minimap.state.showTimer) {
         clearTimeout(this.minimap.state.showTimer);
         this.minimap.state.showTimer = null;
@@ -892,74 +979,87 @@ export class Dashboard {
       this.minimap.updateHoverBindings();
     });
 
-    this.minimap.svg = this.minimap.content.append("svg").attr("class", "minimap-svg");
-    this.minimap.container = this.minimap.svg.append("g").attr("class", "minimap");
+    this.minimap.svg = this.minimap.content.append('svg').attr('class', 'minimap-svg');
+    this.minimap.container = this.minimap.svg.append('g').attr('class', 'minimap');
 
     this.resizeMinimap();
 
     this.initializeMinimap();
 
-    this.minimap.footer = this.minimap.content.append("g").attr("class", "minimap-footer");
+    this.minimap.footer = this.minimap.content.append('g').attr('class', 'minimap-footer');
     this.minimap.footerHeight = 20;
     if (mm.scaleIndicator?.visible !== false) {
       this.minimap.scaleText = this.minimap.footer
-        .append("text")
-        .attr("class", "minimap-scale")
-        .attr("text-anchor", "end");
+        .append('text')
+        .attr('class', 'minimap-scale')
+        .attr('text-anchor', 'end');
     }
 
     const makeButton = (group, className, onClick) => {
-      const g = group.append("g").attr("class", `minimap-btn ${className}`).style("cursor", "pointer");
-      g.append("rect").attr("class", "btn-bg").attr("width", 16).attr("height", 16).attr("rx", 3).attr("ry", 3);
-      g.on("click", (ev) => {
+      const g = group
+        .append('g')
+        .attr('class', `minimap-btn ${className}`)
+        .style('cursor', 'pointer');
+      g.append('rect')
+        .attr('class', 'btn-bg')
+        .attr('width', 16)
+        .attr('height', 16)
+        .attr('rx', 3)
+        .attr('ry', 3);
+      g.on('click', (ev) => {
         ev.stopPropagation();
         onClick();
       });
       return g;
     };
-    this.minimap.controls = this.minimap.footer.append("g").attr("class", "minimap-controls");
-    this.minimap.btnZoomIn = makeButton(this.minimap.controls, "zoom-in", () => this.zoomIn());
+    this.minimap.controls = this.minimap.footer.append('g').attr('class', 'minimap-controls');
+    this.minimap.btnZoomIn = makeButton(this.minimap.controls, 'zoom-in', () => this.zoomIn());
     this.minimap.btnZoomIn
-      .append("rect")
-      .attr("class", "icon plus-h")
-      .attr("x", 3)
-      .attr("y", 7)
-      .attr("width", 10)
-      .attr("height", 2);
+      .append('rect')
+      .attr('class', 'icon plus-h')
+      .attr('x', 3)
+      .attr('y', 7)
+      .attr('width', 10)
+      .attr('height', 2);
     this.minimap.btnZoomIn
-      .append("rect")
-      .attr("class", "icon plus-v")
-      .attr("x", 7)
-      .attr("y", 3)
-      .attr("width", 2)
-      .attr("height", 10);
+      .append('rect')
+      .attr('class', 'icon plus-v')
+      .attr('x', 7)
+      .attr('y', 3)
+      .attr('width', 2)
+      .attr('height', 10);
 
-    this.minimap.btnZoomOut = makeButton(this.minimap.controls, "zoom-out", () => this.zoomOut());
+    this.minimap.btnZoomOut = makeButton(this.minimap.controls, 'zoom-out', () => this.zoomOut());
     this.minimap.btnZoomOut
-      .append("rect")
-      .attr("class", "icon minus")
-      .attr("x", 3)
-      .attr("y", 7)
-      .attr("width", 10)
-      .attr("height", 2);
+      .append('rect')
+      .attr('class', 'icon minus')
+      .attr('x', 3)
+      .attr('y', 7)
+      .attr('width', 10)
+      .attr('height', 2);
 
-    this.minimap.btnReset = makeButton(this.minimap.controls, "reset", () => this.zoomReset());
-    this.minimap.btnReset.append("circle").attr("class", "icon target-outer").attr("cx", 8).attr("cy", 8).attr("r", 5);
+    this.minimap.btnReset = makeButton(this.minimap.controls, 'reset', () => this.zoomReset());
     this.minimap.btnReset
-      .append("circle")
-      .attr("class", "icon target-inner")
-      .attr("cx", 8)
-      .attr("cy", 8)
-      .attr("r", 1.5);
+      .append('circle')
+      .attr('class', 'icon target-outer')
+      .attr('cx', 8)
+      .attr('cy', 8)
+      .attr('r', 5);
+    this.minimap.btnReset
+      .append('circle')
+      .attr('class', 'icon target-inner')
+      .attr('cx', 8)
+      .attr('cy', 8)
+      .attr('r', 1.5);
 
     this.minimap.headerHitRect = this.minimap.header
-      .append("rect")
-      .attr("class", "minimap-header-hit")
-      .attr("fill", "transparent");
+      .append('rect')
+      .attr('class', 'minimap-header-hit')
+      .attr('fill', 'transparent');
     this.minimap.footerHitRect = this.minimap.footer
-      .append("rect")
-      .attr("class", "minimap-footer-hit")
-      .attr("fill", "transparent");
+      .append('rect')
+      .attr('class', 'minimap-footer-hit')
+      .attr('fill', 'transparent');
     if (this.minimap.headerHitRect) this.minimap.headerHitRect.lower();
     if (this.minimap.footerHitRect) this.minimap.footerHitRect.lower();
 
@@ -977,28 +1077,28 @@ export class Dashboard {
 
   initializeFullscreenToggle() {
     const graphContainer = this.main.svg.node().parentElement;
-    let host = graphContainer.querySelector(".fullscreen-overlay");
+    let host = graphContainer.querySelector('.fullscreen-overlay');
     if (!host) {
-      host = document.createElement("div");
-      host.className = "fullscreen-overlay";
-      host.style.position = "absolute";
-      host.style.right = "12px";
-      host.style.top = "12px";
-      host.style.pointerEvents = "auto";
+      host = document.createElement('div');
+      host.className = 'fullscreen-overlay';
+      host.style.position = 'absolute';
+      host.style.right = '12px';
+      host.style.top = '12px';
+      host.style.pointerEvents = 'auto';
       graphContainer.appendChild(host);
     }
-    let button = host.querySelector(".fullscreen-toggle");
+    let button = host.querySelector('.fullscreen-toggle');
     if (!button) {
-      button = document.createElement("button");
-      button.className = "fullscreen-toggle";
-      button.setAttribute("aria-label", "Toggle fullscreen");
-      button.title = "Maximize / Restore";
+      button = document.createElement('button');
+      button.className = 'fullscreen-toggle';
+      button.setAttribute('aria-label', 'Toggle fullscreen');
+      button.title = 'Maximize / Restore';
       host.appendChild(button);
     }
 
     const updateIcon = () => {
-      const isFullscreen = this.main.svg.classed("flowdash-fullscreen");
-      button.textContent = isFullscreen ? "⤡" : "⤢";
+      const isFullscreen = this.main.svg.classed('flowdash-fullscreen');
+      button.textContent = isFullscreen ? '⤡' : '⤢';
     };
 
     const applySize = () => {
@@ -1022,7 +1122,7 @@ export class Dashboard {
       this.main.width = newWidth;
       this.main.height = newHeight;
       this.main.divRatio = newWidth / newHeight;
-      this.main.svg.attr("viewBox", [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+      this.main.svg.attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
 
       const newK = prevK;
       const newWorldWidth = newWidth / newK;
@@ -1038,7 +1138,7 @@ export class Dashboard {
       }
 
       this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
-      this.main.container.attr("transform", newTransform);
+      this.main.container.attr('transform', newTransform);
       this.main.svg.call(this.main.zoom.transform, newTransform);
 
       this.recomputeBaselineFit();
@@ -1051,27 +1151,32 @@ export class Dashboard {
     };
 
     const onResize = () => {
-      if (!this.main.svg.classed("flowdash-fullscreen")) return;
+      if (!this.main.svg.classed('flowdash-fullscreen')) return;
       applySize();
     };
 
     const toggle = () => {
-      const isFullscreen = this.main.svg.classed("flowdash-fullscreen");
+      const isFullscreen = this.main.svg.classed('flowdash-fullscreen');
       if (!isFullscreen) {
-        this.main.svg.classed("flowdash-fullscreen", true).classed("fullscreen", true);
-        window.addEventListener("resize", onResize);
+        this.main.svg.classed('flowdash-fullscreen', true).classed('fullscreen', true);
+        window.addEventListener('resize', onResize);
         applySize();
-        button.classList.add("fullscreen-active");
+        button.classList.add('fullscreen-active');
       } else {
-        this.main.svg.classed("flowdash-fullscreen", false).classed("fullscreen", false);
-        window.removeEventListener("resize", onResize);
+        this.main.svg.classed('flowdash-fullscreen', false).classed('fullscreen', false);
+        window.removeEventListener('resize', onResize);
         const rect = this.main.svg.node().getBoundingClientRect();
         this.main.width = rect.width;
         this.main.height = rect.height;
         this.main.divRatio = this.main.width / this.main.height;
-        this.main.svg.attr("viewBox", [-this.main.width / 2, -this.main.height / 2, this.main.width, this.main.height]);
+        this.main.svg.attr('viewBox', [
+          -this.main.width / 2,
+          -this.main.height / 2,
+          this.main.width,
+          this.main.height,
+        ]);
         if (this._isMinimapReady()) {
-          this.minimap.svg.attr("viewBox", [
+          this.minimap.svg.attr('viewBox', [
             -this.main.width / 2,
             -this.main.height / 2,
             this.main.width,
@@ -1084,7 +1189,7 @@ export class Dashboard {
           this.minimap.updateViewport(transform);
           this.minimap.position();
         }
-        button.classList.remove("fullscreen-active");
+        button.classList.remove('fullscreen-active');
       }
       updateIcon();
     };
@@ -1118,7 +1223,7 @@ export class Dashboard {
     this.main.height = newHeight;
     this.main.divRatio = newWidth / newHeight;
     this.main.aspectRatio = this.main.divRatio;
-    this.main.svg.attr("viewBox", [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+    this.main.svg.attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
 
     const newK = prevK;
     const newWorldWidth = newWidth / newK;
@@ -1132,7 +1237,7 @@ export class Dashboard {
     if (this._isMinimapReady()) this.minimap.resize();
 
     this.main.transform = { k: newK, x: newTransform.x, y: newTransform.y };
-    this.main.container.attr("transform", newTransform);
+    this.main.container.attr('transform', newTransform);
     this.main.svg.call(this.main.zoom.transform, newTransform);
 
     this.recomputeBaselineFit();
@@ -1151,10 +1256,10 @@ export class Dashboard {
       try {
         node.status = status;
       } catch (e) {
-        console.warn("updateNodeStatus: Failed to update status for node:", nodeId, e);
+        console.warn('updateNodeStatus: Failed to update status for node:', nodeId, e);
       }
     } else {
-      console.error("updateNodeStatus: Node not found:", nodeId);
+      console.error('updateNodeStatus: Node not found:', nodeId);
     }
   }
 
@@ -1167,28 +1272,309 @@ export class Dashboard {
           node.status = status;
           stateUpdated = true;
         } catch (e) {
-          console.warn("updateDatasetStatus: Failed to update status for node:", node.id, e);
+          console.warn('updateDatasetStatus: Failed to update status for node:', node.id, e);
         }
       }
     }
     return stateUpdated;
   }
 
-  createContainer(parentContainer, className) {
-    parentContainer.svg.selectAll("*").remove();
+  // ------------------------------------------------------------------
+  // Public mutation API — Workstream D / dynamic structuring foundation
+  //
+  // Consumer dashboard apps wrap streaming diffs with these primitives:
+  //   await dashboard.batch(() => {
+  //     dashboard.addNode(parentId, { id, label, type: 'Adapter' });
+  //     dashboard.addEdge({ source: a, target: b });
+  //     dashboard.removeNode(staleId);
+  //   });
+  //
+  // Strict-by-default: duplicate IDs throw, missing parents/targets throw.
+  // The library does not implement streaming itself — these are primitives
+  // for consumers to compose. See docs/dynamic-structuring.md.
+  // ------------------------------------------------------------------
 
-    const container = parentContainer.svg.append("g").attr("class", `${className}`);
+  /**
+   * Look up a node by id with a clear error if not found.
+   * @private
+   */
+  _requireNode(nodeId, ctx) {
+    if (!this.main?.root) {
+      throw new Error(`flowdash.${ctx}: dashboard not initialized`);
+    }
+    const node = this.main.root.getNode(nodeId);
+    if (!node) throw new Error(`flowdash.${ctx}: node not found: ${nodeId}`);
+    return node;
+  }
+
+  /**
+   * Throw if a node with this id already exists. Uses the existing
+   * buildNodeMap walk; cheap enough at current scale (<2k nodes).
+   * @private
+   */
+  _assertIdAvailable(nodeId, ctx) {
+    if (nodeId === undefined || nodeId === null) {
+      throw new Error(`flowdash.${ctx}: nodeData.id is required`);
+    }
+    if (this.main.root.getNode(nodeId)) {
+      throw new Error(`flowdash.${ctx}: duplicate node id: ${nodeId}`);
+    }
+  }
+
+  /**
+   * Add a node as a child of the parent with id `parentId`.
+   *
+   * @param {string|number} parentId - id of an existing container node
+   * @param {object} nodeData - node descriptor (id, label, type, …)
+   * @returns {Promise<Node>} the created node, after the cascade settles
+   */
+  async addNode(parentId, nodeData) {
+    const parent = this._requireNode(parentId, 'addNode');
+    if (!parent.isContainer) {
+      throw new Error(`flowdash.addNode: parent ${parentId} is not a container`);
+    }
+    this._assertIdAvailable(nodeData?.id, 'addNode');
+
+    const innerZone =
+      parent.zoneManager?.innerContainerZone ||
+      parent.zoneManager?.ensureInnerContainerZone?.() ||
+      null;
+    const childContainer = innerZone?.getChildContainer?.() || parent.element;
+    if (!childContainer) {
+      throw new Error(`flowdash.addNode: parent ${parentId} has no child container`);
+    }
+
+    const node = createNodeFromFactory(nodeData, childContainer, this.data.settings, parent);
+    if (!node) {
+      throw new Error(`flowdash.addNode: factory rejected nodeData for type "${nodeData.type}"`);
+    }
+    node.__dashboard = this;
+    node.parentNode = parent;
+    parent.childNodes = parent.childNodes || [];
+    parent.childNodes.push(node);
+    if (innerZone?.addChild) innerZone.addChild(node);
+
+    node.init();
+    this._scheduleAfterMutation(parent);
+    await this._settle();
+    return node;
+  }
+
+  /**
+   * Remove the node with the given id and all of its descendants. Detaches
+   * any incident edges (incoming and outgoing) on every removed node.
+   *
+   * @param {string|number} nodeId
+   * @returns {Promise<void>}
+   */
+  async removeNode(nodeId) {
+    const node = this._requireNode(nodeId, 'removeNode');
+    if (!node.parentNode) {
+      throw new Error(`flowdash.removeNode: cannot remove the root node`);
+    }
+    const parent = node.parentNode;
+
+    // Detach all edges incident to this subtree.
+    const subtree = node.getAllNodes(false, false);
+    for (const n of subtree) {
+      const incoming = (n.edges?.incoming || []).slice();
+      for (const e of incoming) this._detachEdge(e);
+      const outgoing = (n.edges?.outgoing || []).slice();
+      for (const e of outgoing) this._detachEdge(e);
+    }
+
+    // Remove from parent's childNodes and zone.
+    if (Array.isArray(parent.childNodes)) {
+      const idx = parent.childNodes.indexOf(node);
+      if (idx >= 0) parent.childNodes.splice(idx, 1);
+    }
+    parent.zoneManager?.innerContainerZone?.removeChild?.(node);
+
+    // Remove DOM.
+    try {
+      node.element?.remove?.();
+    } catch {}
+
+    this._scheduleAfterMutation(parent);
+    await this._settle();
+  }
+
+  /**
+   * Add an edge between two existing nodes.
+   *
+   * @param {{source: string|number, target: string|number, [key: string]: any}} edgeData
+   * @returns {Promise<object>} the created edge
+   */
+  async addEdge(edgeData) {
+    if (!edgeData || edgeData.source === undefined || edgeData.target === undefined) {
+      throw new Error('flowdash.addEdge: edgeData.source and edgeData.target are required');
+    }
+    const source = this._requireNode(edgeData.source, 'addEdge');
+    const target = this._requireNode(edgeData.target, 'addEdge');
+    const edge = createInternalEdge(edgeData, source, target, this.data.settings);
+    if (!edge) {
+      throw new Error(
+        `flowdash.addEdge: edge could not be created (duplicate or no common parent)`,
+      );
+    }
+    // Render and attach the new edge. initEdges is idempotent on already-
+    // initialised edges so calling it on the common-parent container is safe.
+    edge.parent?.initEdges?.(false);
+    this._scheduleAfterMutation(source.parentNode || target.parentNode || this.main.root);
+    await this._settle();
+    return edge;
+  }
+
+  /**
+   * Remove the edge identified either by its `id` field or by an exact
+   * (source, target) pair.
+   *
+   * @param {string|number|{source: any, target: any}} idOrPair
+   * @returns {Promise<void>}
+   */
+  async removeEdge(idOrPair) {
+    const edge = this._findEdge(idOrPair);
+    if (!edge) throw new Error(`flowdash.removeEdge: edge not found: ${JSON.stringify(idOrPair)}`);
+    this._detachEdge(edge);
+    this._scheduleAfterMutation(edge.parent || this.main.root);
+    await this._settle();
+  }
+
+  /**
+   * Coalesce a sequence of mutations into one cascade. Cascades scheduled
+   * via _scheduleAfterMutation are deferred until `fn` completes; one final
+   * onMainDisplayChange fires for the whole batch. Re-entrant: nested
+   * batches join the outer one.
+   *
+   * @param {() => any | Promise<any>} fn
+   */
+  async batch(fn) {
+    if (this._inBatch) {
+      // Already inside a batch — just run the body. The outer call flushes.
+      return await fn();
+    }
+    this._inBatch = true;
+    this._batchPendingRoots = new Set();
+    this._suspendDisplayChange = true;
+    try {
+      await fn();
+    } finally {
+      this._inBatch = false;
+      this._suspendDisplayChange = false;
+      const pending = this._batchPendingRoots;
+      this._batchPendingRoots = null;
+      // Single cascade for the whole batch.
+      for (const root of pending) {
+        try {
+          root.handleDisplayChange?.();
+        } catch {}
+      }
+      this.onMainDisplayChange();
+      await this._settle();
+    }
+  }
+
+  /**
+   * Schedule a post-mutation cascade. When inside a batch the cascade is
+   * deferred; otherwise it fires immediately at the next yield.
+   * @private
+   */
+  _scheduleAfterMutation(node) {
+    if (this._inBatch) {
+      this._batchPendingRoots.add(node);
+      return;
+    }
+    try {
+      node.handleDisplayChange?.();
+    } catch {}
+  }
+
+  /**
+   * Wait one animation frame so the caller can rely on the next paint
+   * reflecting the mutation. Resolves immediately in non-DOM environments.
+   * @private
+   */
+  _settle() {
+    return new Promise((resolve) => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => resolve());
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  /**
+   * Find an edge by id or by an exact (source, target) id pair.
+   * @private
+   */
+  _findEdge(idOrPair) {
+    const isPair =
+      idOrPair && typeof idOrPair === 'object' && 'source' in idOrPair && 'target' in idOrPair;
+    const search = (container) => {
+      const list = container.childEdges || [];
+      for (const e of list) {
+        if (isPair) {
+          const s = e.source?.id;
+          const t = e.target?.id;
+          if (s === idOrPair.source && t === idOrPair.target) return e;
+        } else if (e.id !== undefined && e.id === idOrPair) {
+          return e;
+        }
+      }
+      const children = container.childNodes || [];
+      for (const c of children) {
+        if (c.isContainer) {
+          const found = search(c);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return search(this.main.root);
+  }
+
+  /**
+   * Remove an edge from its source/target and parent, and remove its DOM.
+   * @private
+   */
+  _detachEdge(edge) {
+    if (!edge) return;
+    const sourceList = edge.source?.edges?.outgoing;
+    if (sourceList) {
+      const i = sourceList.indexOf(edge);
+      if (i >= 0) sourceList.splice(i, 1);
+    }
+    const targetList = edge.target?.edges?.incoming;
+    if (targetList) {
+      const i = targetList.indexOf(edge);
+      if (i >= 0) targetList.splice(i, 1);
+    }
+    const parentList = edge.parent?.childEdges;
+    if (parentList) {
+      const i = parentList.indexOf(edge);
+      if (i >= 0) parentList.splice(i, 1);
+    }
+    try {
+      edge.element?.remove?.();
+    } catch {}
+  }
+
+  createContainer(parentContainer, className) {
+    parentContainer.svg.selectAll('*').remove();
+
+    const container = parentContainer.svg.append('g').attr('class', `${className}`);
 
     return container;
   }
 
   initializeSvg(divSelector) {
     const svg = d3.select(`${divSelector}`);
-    svg.selectAll("*").remove();
+    svg.selectAll('*').remove();
 
     const { width, height } = svg.node().getBoundingClientRect();
 
-    svg.attr("viewBox", [-width / 2, -height / 2, width, height]);
+    svg.attr('viewBox', [-width / 2, -height / 2, width, height]);
 
     const onDragUpdate = null;
 
@@ -1196,12 +1582,12 @@ export class Dashboard {
   }
 
   async createDashboard(dashboard, container, displayChangeCallback = null) {
-    this.setLoadingStage("Creating nodes");
+    this.setLoadingStage('Creating nodes');
     await this._yieldToMain();
 
     createMarkers(container);
 
-    var root;
+    let root;
     if (dashboard.nodes.length == 1) {
       root = createNode(dashboard.nodes[0], container, dashboard.settings);
 
@@ -1217,7 +1603,7 @@ export class Dashboard {
     }
 
     if (!root) {
-      console.error("Failed to create node - root is null");
+      console.error('Failed to create node - root is null');
       this._dashboardRoot = null;
       return;
     }
@@ -1235,7 +1621,7 @@ export class Dashboard {
     // Phase 2: Node Initialization
     const t2 = performance.now();
 
-    this.setLoadingStage("Initializing nodes");
+    this.setLoadingStage('Initializing nodes');
     await this._yieldToMain();
 
     // OPTIMIZATION #7: Batch DOM operations to minimize forced reflows
@@ -1256,7 +1642,7 @@ export class Dashboard {
     const t2a = performance.now();
     await this._initializeNodesWithProgress(root);
 
-    this.setLoadingStage("Processing measurements");
+    this.setLoadingStage('Processing measurements');
     await this._yieldToMain();
 
     // Perform all deferred measurements in a single batch (Optimization #7)
@@ -1275,7 +1661,7 @@ export class Dashboard {
     const t3 = performance.now();
 
     const edgeCount = dashboard.edges?.length || 0;
-    this.setLoadingStage(`Creating ${edgeCount} edge${edgeCount !== 1 ? "s" : ""}`);
+    this.setLoadingStage(`Creating ${edgeCount} edge${edgeCount !== 1 ? 's' : ''}`);
     await this._yieldToMain();
 
     this.initializeChildrenStatusses(root);
@@ -1288,9 +1674,9 @@ export class Dashboard {
 
     // After initial construction, fix up hierarchy for nodes with explicit parentId(s)
     try {
-      console.log('🔄 About to call reparentNodesByParentIds');
+      this._debugLog('🔄 About to call reparentNodesByParentIds');
       this.reparentNodesByParentIds();
-      console.log('🔄 reparentNodesByParentIds completed');
+      this._debugLog('🔄 reparentNodesByParentIds completed');
     } catch (e) {
       console.error('🔄 reparentNodesByParentIds failed:', e);
     }
@@ -1302,14 +1688,14 @@ export class Dashboard {
 
     if (this.data.settings.isDebug) {
       container
-        .append("circle")
-        .attr("class", "debug-center")
-        .attr("cx", 0)
-        .attr("cy", 0)
-        .attr("r", 5)
-        .attr("fill", "red")
-        .attr("stroke", "darkred")
-        .attr("stroke-width", 2);
+        .append('circle')
+        .attr('class', 'debug-center')
+        .attr('cx', 0)
+        .attr('cy', 0)
+        .attr('r', 5)
+        .attr('fill', 'red')
+        .attr('stroke', 'darkred')
+        .attr('stroke-width', 2);
     }
 
     // Defer initial baseline fit and zoom until layout has fully settled
@@ -1319,23 +1705,27 @@ export class Dashboard {
   }
 
   reparentNodesByParentIds() {
-    console.log('🔄 reparentNodesByParentIds: STARTING');
+    this._debugLog('🔄 reparentNodesByParentIds: STARTING');
     const root = this._dashboardRoot || this.main?.root;
     if (!root) {
-      console.log('🔄 reparentNodesByParentIds: No root found, returning');
+      this._debugLog('🔄 reparentNodesByParentIds: No root found, returning');
       return;
     }
     const all = root.getAllNodes(false, false);
-    console.log(`🔄 reparentNodesByParentIds: Found ${all.length} nodes`);
+    this._debugLog(`🔄 reparentNodesByParentIds: Found ${all.length} nodes`);
     const idMap = new Map(all.map((n) => [n.id, n]));
     const ensureChildAttached = (parent, child) => {
       try {
-        console.log(`reparentNodesByParentIds: Processing child ${child.id}, current parent: ${child.parentNode?.id}, target parent: ${parent.id}`);
+        this._debugLog(
+          `reparentNodesByParentIds: Processing child ${child.id}, current parent: ${child.parentNode?.id}, target parent: ${parent.id}`,
+        );
         // Adjust logical tree
         if (child.parentNode && child.parentNode !== parent) {
           const prev = child.parentNode;
           const idx = prev.childNodes ? prev.childNodes.indexOf(child) : -1;
-          console.log(`reparentNodesByParentIds: Removing child ${child.id} from prev parent ${prev.id}, index: ${idx}`);
+          this._debugLog(
+            `reparentNodesByParentIds: Removing child ${child.id} from prev parent ${prev.id}, index: ${idx}`,
+          );
           if (idx >= 0) prev.childNodes.splice(idx, 1);
           // Remove from previous zone listing
           try {
@@ -1345,15 +1735,21 @@ export class Dashboard {
         child.parentNode = parent;
         parent.childNodes = parent.childNodes || [];
         if (parent.childNodes.indexOf(child) === -1) {
-          console.log(`reparentNodesByParentIds: Adding child ${child.id} to new parent ${parent.id}`);
+          this._debugLog(
+            `reparentNodesByParentIds: Adding child ${child.id} to new parent ${parent.id}`,
+          );
           parent.childNodes.push(child);
         } else {
-          console.log(`reparentNodesByParentIds: Child ${child.id} already in parent ${parent.id} childNodes`);
+          this._debugLog(
+            `reparentNodesByParentIds: Child ${child.id} already in parent ${parent.id} childNodes`,
+          );
         }
         // Register with zone system and move DOM
         const innerZone =
           parent.zoneManager?.innerContainerZone ||
-          (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
+          (parent.zoneManager?.ensureInnerContainerZone
+            ? parent.zoneManager.ensureInnerContainerZone()
+            : null);
         if (innerZone) {
           innerZone.addChild(child);
           const target = innerZone.getChildContainer?.();
@@ -1381,8 +1777,8 @@ export class Dashboard {
       const pids = Array.isArray(node?.data?.parentIds)
         ? node.data.parentIds
         : node?.data?.parentId
-        ? [node.data.parentId]
-        : [];
+          ? [node.data.parentId]
+          : [];
       if (!pids.length) continue;
       // Prefer first existing container parent
       const target = pids.map((id) => idMap.get(id)).find((n) => n && n.isContainer);
@@ -1395,24 +1791,33 @@ export class Dashboard {
   }
 
   initializeChildrenStatusses(node) {
-    var allNodes = node.getAllNodes();
+    const allNodes = node.getAllNodes();
 
-    for (var i = allNodes.length - 1; i >= 0; i--) {
+    for (let i = allNodes.length - 1; i >= 0; i--) {
       const currentNode = allNodes[i];
       // Safety check: only process nodes with valid elements
       if (!currentNode.element) {
-        console.warn("initializeChildrenStatusses: Node has null element, skipping:", currentNode.id);
+        if (this.data.settings?.isDebug) {
+          console.warn(
+            'initializeChildrenStatusses: Node has null element, skipping:',
+            currentNode.id,
+          );
+        }
         continue;
       }
 
       if (
         currentNode.isContainer &&
-        (currentNode.status == null || currentNode.status == "" || currentNode.status == "Unknown")
+        (currentNode.status == null || currentNode.status == '' || currentNode.status == 'Unknown')
       ) {
         try {
           currentNode.determineStatusBasedOnChildren();
         } catch (e) {
-          console.warn("initializeChildrenStatusses: Failed to determine status for node:", currentNode.id, e);
+          console.warn(
+            'initializeChildrenStatusses: Failed to determine status for node:',
+            currentNode.id,
+            e,
+          );
         }
       }
     }
@@ -1426,15 +1831,15 @@ export class Dashboard {
 
     this.main.svg.call(zoom);
 
-    d3.select("#zoom-in").on("click", () => this.zoomIn(dashboard));
+    d3.select('#zoom-in').on('click', () => this.zoomIn(dashboard));
 
-    d3.select("#zoom-out").on("click", () => this.zoomOut(dashboard));
+    d3.select('#zoom-out').on('click', () => this.zoomOut(dashboard));
 
-    d3.select("#zoom-reset").on("click", () => this.zoomReset(dashboard));
+    d3.select('#zoom-reset').on('click', () => this.zoomReset(dashboard));
 
-    d3.select("#zoom-random").on("click", () => this.zoomRandom(dashboard));
+    d3.select('#zoom-random').on('click', () => this.zoomRandom(dashboard));
 
-    d3.select("#zoom-node").on("click", () => this.zoomToRoot(dashboard));
+    d3.select('#zoom-node').on('click', () => this.zoomToRoot(dashboard));
 
     return zoom;
   }
@@ -1443,34 +1848,34 @@ export class Dashboard {
     // Add double-click handler to the SVG element using native DOM addEventListener
     // to ensure it captures all double-click events
     const svgElement = this.main.svg.node();
-    console.log('[setupBackgroundDoubleClick] Setting up handler on:', svgElement);
-    
+    this._debugLog('[setupBackgroundDoubleClick] Setting up handler on:', svgElement);
+
     svgElement.addEventListener('dblclick', (event) => {
-      console.log('[Background dblclick] event fired, target:', event.target);
-      
+      this._debugLog('[Background dblclick] event fired, target:', event.target);
+
       // Check if the actual target is a node or inside a node
       let target = event.target;
       let foundNode = null;
-      
+
       // Walk up the DOM tree looking for an element with __node
       while (target && target !== svgElement) {
         if (target.__node) {
           foundNode = target.__node;
-          console.log('[Background dblclick] Found node:', foundNode.id);
+          this._debugLog('[Background dblclick] Found node:', foundNode.id);
           break;
         }
         target = target.parentNode;
       }
-      
+
       // If we found a node, don't handle it here - the node's handler already dealt with it
       if (foundNode) {
-        console.log('[Background dblclick] Ignoring - node handler will process it');
+        this._debugLog('[Background dblclick] Ignoring - node handler will process it');
         return;
       }
-      
+
       // No node found - clicked on background (empty space)
-      console.log('[Background dblclick] Background clicked - zooming to root');
-      
+      this._debugLog('[Background dblclick] Background clicked - zooming to root');
+
       if (this.main.root) {
         this.handleNodeDblClick(this.main.root, event);
       } else {
@@ -1478,8 +1883,8 @@ export class Dashboard {
         this.zoomToRoot();
       }
     });
-    
-    console.log('[setupBackgroundDoubleClick] Handler installed');
+
+    this._debugLog('[setupBackgroundDoubleClick] Handler installed');
   }
 
   onDragUpdate() {}
@@ -1533,7 +1938,7 @@ export class Dashboard {
           let nodesToBox = null;
           if (nb && Array.isArray(nb.nodes) && nb.nodes.length > 0) {
             nodesToBox = nb.nodes;
-          } else if (typeof this.getSelectedNodes === "function") {
+          } else if (typeof this.getSelectedNodes === 'function') {
             const sel = this.getSelectedNodes();
             if (sel && sel.length) nodesToBox = sel;
           }
@@ -1581,7 +1986,9 @@ export class Dashboard {
           if (parent.isContainer && !parent.collapsed) {
             const innerZone =
               parent.zoneManager?.innerContainerZone ||
-              (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
+              (parent.zoneManager?.ensureInnerContainerZone
+                ? parent.zoneManager.ensureInnerContainerZone()
+                : null);
             parentGroup = innerZone?.getChildContainer?.() || parent.element;
           }
         } catch {}
@@ -1641,7 +2048,7 @@ export class Dashboard {
           .translate(this.main.width / 2, this.main.height / 2)
           .scale(40)
           .translate(-x, -y),
-        d3.pointer(event)
+        d3.pointer(event),
       );
   }
 
@@ -1651,7 +2058,7 @@ export class Dashboard {
       return this.zoomToNode(node);
     }
 
-    console.error("zoomToNodeById: Node not found:", nodeId);
+    console.error('zoomToNodeById: Node not found:', nodeId);
     return null;
   }
 
@@ -1661,10 +2068,10 @@ export class Dashboard {
       try {
         node.status = status;
       } catch (e) {
-        console.warn("setStatusToNodeById: Failed to update status for node:", nodeId, e);
+        console.warn('setStatusToNodeById: Failed to update status for node:', nodeId, e);
       }
     } else {
-      console.error("setStatusToNodeById: Node not found:", nodeId);
+      console.error('setStatusToNodeById: Node not found:', nodeId);
     }
 
     return null;
@@ -1704,7 +2111,8 @@ export class Dashboard {
     let bbox = computeBoundingBox(this, [node]);
     // If node has no incoming or outgoing edges, also zoom to a sane bbox
     const hasNoEdges =
-      !node.edges || ((node.edges.incoming?.length || 0) === 0 && (node.edges.outgoing?.length || 0) === 0);
+      !node.edges ||
+      ((node.edges.incoming?.length || 0) === 0 && (node.edges.outgoing?.length || 0) === 0);
     if (hasNoEdges) {
       const k = this.main.transform.k || 1;
       const minPx = 80; // minimum size on screen to avoid over-zooming
@@ -1718,11 +2126,11 @@ export class Dashboard {
     this.renderSelectionBoundingBox(bbox);
 
     // Call additional click callback if registered - PASS NODE AS PARAMETER
-    if (this.onNodeClick && typeof this.onNodeClick === "function") {
+    if (this.onNodeClick && typeof this.onNodeClick === 'function') {
       try {
         this.onNodeClick(node);
       } catch (e) {
-        console.error("Error in node click callback:", e);
+        console.error('Error in node click callback:', e);
       }
     }
   }
@@ -1736,17 +2144,17 @@ export class Dashboard {
    * @param {Function} callback - Function to call with the selected node as parameter: callback(node)
    */
   setNodeClickCallback(callback) {
-    if (typeof callback === "function") {
+    if (typeof callback === 'function') {
       this.onNodeClick = callback;
     } else {
-      console.warn("setNodeClickCallback: callback must be a function");
+      console.warn('setNodeClickCallback: callback must be a function');
     }
   }
 
   getStructure() {
     if (!this.main.root) return null;
 
-    var nodes = this.main.root.getAllNodes(false, true);
+    const nodes = this.main.root.getAllNodes(false, true);
     const edges = [];
     this.main.root.getAllEdges(false, edges);
 
@@ -1781,17 +2189,21 @@ export class Dashboard {
 
     // Re-evaluate collapse state for each node based on current status and new setting
     nodes.forEach((node) => {
-      if (node && typeof node.status !== "undefined") {
+      if (node && typeof node.status !== 'undefined') {
         // Safety check: only process nodes with valid elements
         if (!node.element) {
-          console.warn("Skipping node with null element in updateStatusBasedCollapse:", node.id);
+          if (this.data.settings?.isDebug) {
+            console.warn('Skipping node with null element in updateStatusBasedCollapse:', node.id);
+          }
           return;
         }
 
         // Determine if this node should be collapsed based on current status
         const shouldCollapse =
           this.data.settings.toggleCollapseOnStatusChange &&
-          [NodeStatus.READY, NodeStatus.DISABLED, NodeStatus.UPDATED, NodeStatus.SKIPPED].includes(node.status);
+          [NodeStatus.READY, NodeStatus.DISABLED, NodeStatus.UPDATED, NodeStatus.SKIPPED].includes(
+            node.status,
+          );
 
         // Only change state if it's different from current
         if (shouldCollapse !== node.collapsed) {
@@ -1801,7 +2213,7 @@ export class Dashboard {
           try {
             node.collapsed = shouldCollapse;
           } catch (e) {
-            console.warn("Failed to change collapse state for node:", node.id, e);
+            console.warn('Failed to change collapse state for node:', node.id, e);
           }
         }
       }
@@ -1844,7 +2256,9 @@ export class Dashboard {
     // If the node has no neighbors beyond itself, compute a sane bbox to avoid over-zoom
     let boundingBox = computeBoundingBox(this, neighbors.nodes);
     const onlySelf =
-      neighbors && neighbors.nodes && neighbors.nodes.length > 0 ? neighbors.nodes.every((n) => n === node) : true;
+      neighbors && neighbors.nodes && neighbors.nodes.length > 0
+        ? neighbors.nodes.every((n) => n === node)
+        : true;
     if (onlySelf) {
       boundingBox = this.computeSaneNodeBoundingBox(node);
     }
@@ -1885,13 +2299,13 @@ export class Dashboard {
     }
 
     const nb = this.selection.neighborhood;
-    
+
     // Only use the existing neighborhood bbox if we're double-clicking on a node that's already
     // part of that neighborhood (not a different node that happens to be spatially inside it)
     if (nb && nb.boundingBox) {
       // Check if the clicked node is part of the neighborhood
       const insideByNode = nb.nodes && nb.nodes.indexOf(node) !== -1;
-      
+
       if (insideByNode) {
         // Double-clicking on a node that's part of the active neighborhood - zoom to neighborhood
         this.zoomToBoundingBox(nb.boundingBox);
@@ -1899,11 +2313,13 @@ export class Dashboard {
       }
       // Otherwise, fall through to zoom to the specific node that was clicked
     }
-    
+
     // Default: zoom to the specific node; if node has no neighbors, ensure a sane bbox
     const neighbors = node.getNeighbors(this.data.settings.selector);
     const onlySelf =
-      neighbors && neighbors.nodes && neighbors.nodes.length > 0 ? neighbors.nodes.every((n) => n === node) : true;
+      neighbors && neighbors.nodes && neighbors.nodes.length > 0
+        ? neighbors.nodes.every((n) => n === node)
+        : true;
     if (onlySelf) {
       const bbox = this.computeSaneNodeBoundingBox(node);
       this.deselectAll();
@@ -1928,7 +2344,7 @@ export class Dashboard {
     if (!this.loadingOverlay && this.main?.svg) {
       const container = resolveLoadingHost(this.main.svg);
       this.loadingOverlay = new LoadingOverlay(container);
-      console.log("📊 Dashboard._ensureLoadingOverlay() - Created overlay instance");
+      this._debugLog('📊 Dashboard._ensureLoadingOverlay() - Created overlay instance');
     }
     return this.loadingOverlay;
   }
@@ -1937,7 +2353,7 @@ export class Dashboard {
    * Show loading overlay for this dashboard
    */
   showLoading() {
-    console.log("📊 Dashboard.showLoading() called");
+    this._debugLog('📊 Dashboard.showLoading() called');
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.showLoading();
@@ -1948,7 +2364,7 @@ export class Dashboard {
    * Hide loading overlay for this dashboard
    */
   hideLoading() {
-    console.log("📊 Dashboard.hideLoading() called");
+    this._debugLog('📊 Dashboard.hideLoading() called');
     if (this.loadingOverlay) {
       this.loadingOverlay.hideLoading();
     }
@@ -1959,7 +2375,7 @@ export class Dashboard {
    * @param {string} stageName - Name of the stage
    */
   setLoadingStage(stageName) {
-    console.log("📊 Dashboard.setLoadingStage() called with:", stageName);
+    this._debugLog('📊 Dashboard.setLoadingStage() called with:', stageName);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setLoadingStage(stageName);
@@ -1971,7 +2387,7 @@ export class Dashboard {
    * @param {string} progressMessage - Progress message (e.g., "5 / 20 nodes")
    */
   setProgress(progressMessage) {
-    console.log("📊 Dashboard.setProgress() called with:", progressMessage);
+    this._debugLog('📊 Dashboard.setProgress() called with:', progressMessage);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setProgress(progressMessage);
@@ -1983,7 +2399,7 @@ export class Dashboard {
    * @param {string} message - Message to display
    */
   setLoadingMessage(message) {
-    console.log("📊 Dashboard.setLoadingMessage() called with:", message);
+    this._debugLog('📊 Dashboard.setLoadingMessage() called with:', message);
     const overlay = this._ensureLoadingOverlay();
     if (overlay) {
       overlay.setLoadingMessage(message);
@@ -1995,7 +2411,10 @@ export function getImmediateNeighbors(baseNode, graphData) {
   const neighbors = [baseNode];
 
   for (const node of graphData.nodes()) {
-    if (baseNode.data.parentIds.includes(node.data.id) || baseNode.data.childrenIds.includes(node.data.id)) {
+    if (
+      baseNode.data.parentIds.includes(node.data.id) ||
+      baseNode.data.childrenIds.includes(node.data.id)
+    ) {
       neighbors.push(node);
     }
   }
@@ -2021,42 +2440,46 @@ export function computeContentBounds(dashboard, nodes) {
 
   nodes.forEach((node) => {
     const useEffectiveSize = node?.isContainer && node?.collapsed;
-    
+
     let dimensions;
     try {
       dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
     } catch {
       dimensions = null;
     }
-    
+
     if (!dimensions || !isFinite(dimensions.width) || !isFinite(dimensions.height)) {
-      const hasDom = !!(node?.element && typeof node.element.node === "function" && node.element.node());
+      const hasDom = !!(
+        node?.element &&
+        typeof node.element.node === 'function' &&
+        node.element.node()
+      );
       const isVisible = node?.visible !== false;
       if (!hasDom || !isVisible) {
         return;
       }
-      const nx = typeof node.x === "number" ? node.x : 0;
-      const ny = typeof node.y === "number" ? node.y : 0;
+      const nx = typeof node.x === 'number' ? node.x : 0;
+      const ny = typeof node.y === 'number' ? node.y : 0;
       const nw =
-        typeof node.getEffectiveWidth === "function"
+        typeof node.getEffectiveWidth === 'function'
           ? node.getEffectiveWidth()
-          : node.data && typeof node.data.width === "number"
-          ? node.data.width
-          : typeof node.width === "number"
-          ? node.width
-          : 0;
+          : node.data && typeof node.data.width === 'number'
+            ? node.data.width
+            : typeof node.width === 'number'
+              ? node.width
+              : 0;
       const nh =
-        typeof node.getEffectiveHeight === "function"
+        typeof node.getEffectiveHeight === 'function'
           ? node.getEffectiveHeight()
-          : node.data && typeof node.data.height === "number"
-          ? node.data.height
-          : typeof node.height === "number"
-          ? node.height
-          : 0;
+          : node.data && typeof node.data.height === 'number'
+            ? node.data.height
+            : typeof node.height === 'number'
+              ? node.height
+              : 0;
       updateBounds(nx, ny, nw, nh);
       return;
     }
-    
+
     // Use SVG world coordinates for content bounds
     if (useEffectiveSize) {
       const effectiveWidth = node.getEffectiveWidth();
@@ -2093,47 +2516,51 @@ export function computeBoundingBox(dashboard, nodes) {
 
   nodes.forEach((node) => {
     const useEffectiveSize = node?.isContainer && node?.collapsed;
-    
+
     let dimensions;
     try {
       dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
     } catch {
       dimensions = null;
     }
-    
+
     if (!dimensions || !isFinite(dimensions.width) || !isFinite(dimensions.height)) {
       // Skip nodes that are not rendered/visible (e.g., collapsed descendants removed from DOM)
-      const hasDom = !!(node?.element && typeof node.element.node === "function" && node.element.node());
+      const hasDom = !!(
+        node?.element &&
+        typeof node.element.node === 'function' &&
+        node.element.node()
+      );
       const isVisible = node?.visible !== false;
       if (!hasDom || !isVisible) {
         return;
       }
       // Use effective size when DOM bbox is unavailable
-      const nx = typeof node.x === "number" ? node.x : 0;
-      const ny = typeof node.y === "number" ? node.y : 0;
+      const nx = typeof node.x === 'number' ? node.x : 0;
+      const ny = typeof node.y === 'number' ? node.y : 0;
       const nw =
-        typeof node.getEffectiveWidth === "function"
+        typeof node.getEffectiveWidth === 'function'
           ? node.getEffectiveWidth()
-          : node.data && typeof node.data.width === "number"
-          ? node.data.width
-          : typeof node.width === "number"
-          ? node.width
-          : 0;
+          : node.data && typeof node.data.width === 'number'
+            ? node.data.width
+            : typeof node.width === 'number'
+              ? node.width
+              : 0;
       const nh =
-        typeof node.getEffectiveHeight === "function"
+        typeof node.getEffectiveHeight === 'function'
           ? node.getEffectiveHeight()
-          : node.data && typeof node.data.height === "number"
-          ? node.data.height
-          : typeof node.height === "number"
-          ? node.height
-          : 0;
+          : node.data && typeof node.data.height === 'number'
+            ? node.data.height
+            : typeof node.height === 'number'
+              ? node.height
+              : 0;
       minX = Math.min(minX, nx - nw / 2);
       minY = Math.min(minY, ny - nh / 2);
       maxX = Math.max(maxX, nx + nw / 2);
       maxY = Math.max(maxY, ny + nh / 2);
       return;
     }
-    
+
     // For collapsed containers, use DOM position with effective size
     if (useEffectiveSize) {
       const effectiveWidth = node.getEffectiveWidth();
@@ -2143,7 +2570,7 @@ export function computeBoundingBox(dashboard, nodes) {
       updateBounds(centerX, centerY, effectiveWidth, effectiveHeight);
       return;
     }
-    
+
     // Use DOM coordinates for visual selection
     minX = Math.min(minX, dimensions.x);
     minY = Math.min(minY, dimensions.y);
@@ -2166,18 +2593,27 @@ function calculateScaleAndTranslate(boundingBox, dashboard) {
     dashboard.main.canvas.width / dashboard.main.canvas.height >
     dashboard.main.view.width / dashboard.main.view.height
   ) {
-    correctedCanvasHeight = dashboard.main.canvas.width * (dashboard.main.view.height / dashboard.main.view.width);
+    correctedCanvasHeight =
+      dashboard.main.canvas.width * (dashboard.main.view.height / dashboard.main.view.width);
   } else {
-    correctedCanvasWidth = dashboard.main.canvas.height * (dashboard.main.view.width / dashboard.main.view.height);
+    correctedCanvasWidth =
+      dashboard.main.canvas.height * (dashboard.main.view.width / dashboard.main.view.height);
   }
 
   let scale;
   if (dashboard.layout.horizontal) {
-    scale = Math.min(correctedCanvasWidth / boundingBox.width, correctedCanvasHeight / boundingBox.height);
+    scale = Math.min(
+      correctedCanvasWidth / boundingBox.width,
+      correctedCanvasHeight / boundingBox.height,
+    );
   } else {
-    scale = Math.min(correctedCanvasWidth / boundingBox.width, correctedCanvasHeight / boundingBox.height);
+    scale = Math.min(
+      correctedCanvasWidth / boundingBox.width,
+      correctedCanvasHeight / boundingBox.height,
+    );
   }
-  const isHorizontalBoundingBox = boundingBox.width / boundingBox.height > correctedCanvasWidth / correctedCanvasHeight;
+  const isHorizontalBoundingBox =
+    boundingBox.width / boundingBox.height > correctedCanvasWidth / correctedCanvasHeight;
 
   const visualHeight = boundingBox.width * (correctedCanvasHeight / correctedCanvasWidth);
   const heightCorrection = (visualHeight - boundingBox.height) * 0.5;
@@ -2188,7 +2624,8 @@ function calculateScaleAndTranslate(boundingBox, dashboard) {
   let translateX = -boundingBox.x * scale;
   let translateY = -boundingBox.y * scale;
 
-  if (dashboard.minimap.canvas.isHorizontalCanvas) translateY -= dashboard.minimap.canvas.whiteSpaceY;
+  if (dashboard.minimap.canvas.isHorizontalCanvas)
+    translateY -= dashboard.minimap.canvas.whiteSpaceY;
   else translateX -= dashboard.minimap.canvas.whiteSpaceX;
 
   if (isHorizontalBoundingBox) translateY += heightCorrection * scale;
@@ -2205,9 +2642,9 @@ function calculateScaleAndTranslate(boundingBox, dashboard) {
 
 export function createAndInitDashboard(dashboardData, mainDivSelector, thirdArg = null) {
   let minimapDivSelector = null;
-  if (thirdArg && typeof thirdArg === "string") {
+  if (thirdArg && typeof thirdArg === 'string') {
     minimapDivSelector = thirdArg;
-  } else if (thirdArg && typeof thirdArg === "object") {
+  } else if (thirdArg && typeof thirdArg === 'object') {
     const userSettings = dashboardData && dashboardData.settings ? dashboardData.settings : {};
     dashboardData.settings = ConfigManager.mergeWithDefaults({ ...userSettings, ...thirdArg });
   }
@@ -2217,24 +2654,19 @@ export function createAndInitDashboard(dashboardData, mainDivSelector, thirdArg 
 }
 
 export async function loadDashboardFromFile(mainDivSelector, selectedFile, applySettings) {
-  let dashboard = null;
-  try {
-    const dashboardData = await fetchDashboardFile(selectedFile);
-    if (typeof applySettings === "function") {
-      try {
-        applySettings(dashboardData);
-      } catch {}
-    }
-    dashboard = new Dashboard(dashboardData);
-    dashboard.initialize(mainDivSelector);
-    return dashboard;
-  } catch (e) {
-    throw e;
+  const dashboardData = await fetchDashboardFile(selectedFile);
+  if (typeof applySettings === 'function') {
+    try {
+      applySettings(dashboardData);
+    } catch {}
   }
+  const dashboard = new Dashboard(dashboardData);
+  dashboard.initialize(mainDivSelector);
+  return dashboard;
 }
 
 export function setDashboardProperty(dashboardObject, propertyPath, value) {
-  const properties = propertyPath.split(".");
+  const properties = propertyPath.split('.');
   let obj = dashboardObject;
   for (let i = 0; i < properties.length - 1; i++) {
     obj = obj[properties[i]];
@@ -2243,7 +2675,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
 
   try {
     // Handle immediate visual updates for non-minimap properties
-    if (propertyPath.endsWith("showBoundingBox") || propertyPath.includes(".showBoundingBox")) {
+    if (propertyPath.endsWith('showBoundingBox') || propertyPath.includes('.showBoundingBox')) {
       const dash = dashboardObject;
       const show = !!value;
       if (!show) {
@@ -2253,7 +2685,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
         const nb = dash.selection?.neighborhood;
         if (nb?.boundingBox) {
           dash.renderSelectionBoundingBox(nb.boundingBox);
-        } else if (typeof dash.getSelectedNodes === "function") {
+        } else if (typeof dash.getSelectedNodes === 'function') {
           const sel = dash.getSelectedNodes();
           if (sel && sel.length) {
             const bbox = computeBoundingBox(dash, sel);
@@ -2263,7 +2695,7 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
       }
     }
 
-    const isMinimapChange = propertyPath.includes("minimap");
+    const isMinimapChange = propertyPath.includes('minimap');
     if (!isMinimapChange) return;
 
     const dash = dashboardObject;
@@ -2276,67 +2708,73 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
       }
     };
 
-    if (propertyPath.endsWith("minimap.size") || propertyPath.includes(".minimap.size")) {
+    if (propertyPath.endsWith('minimap.size') || propertyPath.includes('.minimap.size')) {
       recalcSize();
       dash.minimap.update();
-      dash.minimap.scale = Math.min(dash.minimap.width / dash.main.width, dash.minimap.height / dash.main.height);
+      dash.minimap.scale = Math.min(
+        dash.minimap.width / dash.main.width,
+        dash.minimap.height / dash.main.height,
+      );
       dash.minimap.position();
     }
 
-    if (propertyPath.endsWith("minimap.position") || propertyPath.includes(".minimap.position")) {
+    if (propertyPath.endsWith('minimap.position') || propertyPath.includes('.minimap.position')) {
       dash.minimap.position();
     }
 
     if (
-      propertyPath.endsWith("minimap.collapsedIcon.position") ||
-      propertyPath.includes(".minimap.collapsedIcon.position")
+      propertyPath.endsWith('minimap.collapsedIcon.position') ||
+      propertyPath.includes('.minimap.collapsedIcon.position')
     ) {
       dash.minimap.position();
     }
 
-    if (propertyPath.endsWith("minimap.collapsed") || propertyPath.includes(".minimap.collapsed")) {
+    if (propertyPath.endsWith('minimap.collapsed') || propertyPath.includes('.minimap.collapsed')) {
       dash.minimap.setCollapsed(!!value, true);
     }
 
-    if (propertyPath.endsWith("minimap.mode") || propertyPath.includes(".minimap.mode")) {
-      const newMode = value === "hidden" ? "disabled" : value;
+    if (propertyPath.endsWith('minimap.mode') || propertyPath.includes('.minimap.mode')) {
+      const newMode = value === 'hidden' ? 'disabled' : value;
       mm.mode = newMode;
-      if (newMode === "always") {
+      if (newMode === 'always') {
         mm.enabled = true;
         mm.pinned = true;
-      } else if (newMode === "hover") {
+      } else if (newMode === 'hover') {
         mm.pinned = false;
-      } else if (newMode === "disabled") {
+      } else if (newMode === 'disabled') {
         dash.minimap.setCollapsed(true);
       }
       dash.minimap.position();
       dash.minimap.updateHoverBindings();
     }
 
-    if (propertyPath.endsWith("minimap.pinned") || propertyPath.includes(".minimap.pinned")) {
+    if (propertyPath.endsWith('minimap.pinned') || propertyPath.includes('.minimap.pinned')) {
       dash.minimap.updatePinVisualState();
       dash.minimap.updateVisibilityByZoom();
       dash.minimap.updateHoverBindings();
     }
 
-    if (propertyPath.endsWith("scaleIndicator.visible") || propertyPath.includes(".minimap.scaleIndicator.visible")) {
+    if (
+      propertyPath.endsWith('scaleIndicator.visible') ||
+      propertyPath.includes('.minimap.scaleIndicator.visible')
+    ) {
       const visible = !!value;
       if (visible) {
         if (!dash.minimap.scaleText && dash.minimap.footer) {
           dash.minimap.scaleText = dash.minimap.footer
-            .append("text")
-            .attr("class", "minimap-scale")
-            .attr("text-anchor", "end");
+            .append('text')
+            .attr('class', 'minimap-scale')
+            .attr('text-anchor', 'end');
         }
-        dash.minimap.scaleText.style("display", "block");
+        dash.minimap.scaleText.style('display', 'block');
       } else if (dash.minimap.scaleText) {
-        dash.minimap.scaleText.style("display", "none");
+        dash.minimap.scaleText.style('display', 'none');
       }
       dash.minimap.position();
       dash.minimap.updateScaleIndicator();
     }
   } catch (e) {
-    console.warn("setDashboardProperty post-update failed", e);
+    console.warn('setDashboardProperty post-update failed', e);
   }
 }
 
@@ -2351,19 +2789,19 @@ export function setDashboardProperty(dashboardObject, propertyPath, value) {
  * @param {string} containerSelector - CSS selector for the container element (will be hidden)
  * @returns {Promise<Object>} Enhanced dashboard data with pre-render information
  */
-export async function generatePrerenderData(dashboardData, containerSelector = "#prerender-temp") {
-  console.log("🎨 Starting pre-render data generation...");
+export async function generatePrerenderData(dashboardData, containerSelector = '#prerender-temp') {
+  console.log('🎨 Starting pre-render data generation...');
 
   // Create temporary container if it doesn't exist
   let container = document.querySelector(containerSelector);
   if (!container) {
-    container = document.createElement("div");
-    container.id = containerSelector.replace("#", "");
-    container.style.position = "absolute";
-    container.style.left = "-10000px";
-    container.style.top = "-10000px";
-    container.style.width = "2000px";
-    container.style.height = "2000px";
+    container = document.createElement('div');
+    container.id = containerSelector.replace('#', '');
+    container.style.position = 'absolute';
+    container.style.left = '-10000px';
+    container.style.top = '-10000px';
+    container.style.width = '2000px';
+    container.style.height = '2000px';
     document.body.appendChild(container);
   }
 
@@ -2387,22 +2825,24 @@ export async function generatePrerenderData(dashboardData, containerSelector = "
     };
 
     // Initialize dashboard - MUST AWAIT THIS!
-    console.log("🎨 Initializing dashboard...");
+    console.log('🎨 Initializing dashboard...');
     const dashboard = new Dashboard(tempData);
     await dashboard.initialize(containerSelector);
 
-    console.log("🎨 Dashboard initialized, waiting for layout stabilization...");
+    console.log('🎨 Dashboard initialized, waiting for layout stabilization...');
 
     // Wait for layout stabilization (simulation to settle)
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Verify root node exists
     if (!dashboard.main?.root) {
-      throw new Error("Dashboard root node not initialized. Dashboard initialization may have failed.");
+      throw new Error(
+        'Dashboard root node not initialized. Dashboard initialization may have failed.',
+      );
     }
 
-    console.log("🎨 Root node ready, extracting node positions...");
-    console.log("🎨 Root node:", {
+    console.log('🎨 Root node ready, extracting node positions...');
+    console.log('🎨 Root node:', {
       id: dashboard.main.root.data?.id,
       label: dashboard.main.root.data?.label,
       hasChildren: !!dashboard.main.root.childNodes,
@@ -2412,7 +2852,7 @@ export async function generatePrerenderData(dashboardData, containerSelector = "
     // Extract enhanced data
     const enhancedNodes = extractNodePositionsFromTree(dashboard.main.root);
 
-    console.log("🎨 Extracting edge paths...");
+    console.log('🎨 Extracting edge paths...');
 
     const enhancedEdges = extractEdgePaths(dashboardData.edges || []);
 
@@ -2425,22 +2865,30 @@ export async function generatePrerenderData(dashboardData, containerSelector = "
         ...(dashboardData.settings || {}),
         usePrerender: true,
         prerenderMetadata: {
-          version: "1.0",
+          version: '1.0',
           generated: new Date().toISOString(),
-          generatedBy: "flowdash-prerender-generator",
+          generatedBy: 'flowdash-prerender-generator',
           nodeCount: countNodesInTree(enhancedNodes),
           edgeCount: enhancedEdges.length,
           expandedState: true,
           statusRulesApplied: false,
+          // Fingerprint is computed AFTER the spread so it covers the
+          // post-generation node/edge IDs and the same settings subset that
+          // validatePrerenderFreshness will check at load time.
+          fingerprint: computeFingerprint({
+            nodes: enhancedNodes,
+            edges: enhancedEdges,
+            settings: dashboardData.settings,
+          }),
         },
       },
     };
 
-    console.log("✅ Pre-render data generated successfully");
+    console.log('✅ Pre-render data generated successfully');
 
     return enhancedData;
   } catch (error) {
-    console.error("❌ Error generating pre-render data:", error);
+    console.error('❌ Error generating pre-render data:', error);
     throw error;
   }
 }
@@ -2452,11 +2900,11 @@ export async function generatePrerenderData(dashboardData, containerSelector = "
  */
 function extractNodePositionsFromTree(rootNode) {
   if (!rootNode) {
-    console.warn("🎨 Missing rootNode");
+    console.warn('🎨 Missing rootNode');
     return [];
   }
 
-  console.log("🎨 Starting node position extraction...");
+  console.log('🎨 Starting node position extraction...');
 
   // Get all rendered nodes in a flat list
   const allRenderedNodes = rootNode.getAllNodes(true, true); // includeRoot=true, includeCollapsed=true
@@ -2484,7 +2932,7 @@ function extractNodePositionsFromTree(rootNode) {
     const enhanced = {};
 
     // 1. Copy basic properties (id, type, label, etc.) - everything except special properties
-    const excludeProps = ["width", "height", "expandedSize", "layout", "prerender", "children"];
+    const excludeProps = ['width', 'height', 'expandedSize', 'layout', 'prerender', 'children'];
     for (const key in nodeData) {
       if (!excludeProps.includes(key)) {
         enhanced[key] = nodeData[key];
@@ -2492,7 +2940,7 @@ function extractNodePositionsFromTree(rootNode) {
     }
 
     // 2. Add pre-render data BEFORE children
-    if (typeof renderNode.x === "number" && typeof renderNode.y === "number") {
+    if (typeof renderNode.x === 'number' && typeof renderNode.y === 'number') {
       enhanced.prerender = {
         x: renderNode.x || 0,
         y: renderNode.y || 0,
@@ -2515,7 +2963,7 @@ function extractNodePositionsFromTree(rootNode) {
     } else {
       missingCount++;
       if (missingCount <= 5) {
-        console.warn("🎨 Node missing position data:", {
+        console.warn('🎨 Node missing position data:', {
           id: nodeData.id,
           label: nodeData.label,
           type: nodeData.type,
@@ -2541,7 +2989,7 @@ function extractNodePositionsFromTree(rootNode) {
       }
 
       // Remove other default layout properties
-      if (layout.mode === "vertical") delete layout.mode; // Default mode
+      if (layout.mode === 'vertical') delete layout.mode; // Default mode
       if (layout.padding === 0) delete layout.padding; // Default padding
       if (layout.spacing === 0) delete layout.spacing; // Default spacing
 
@@ -2553,7 +3001,9 @@ function extractNodePositionsFromTree(rootNode) {
 
     // 4. Recursively process children (at the end)
     if (renderNode.childNodes && renderNode.childNodes.length > 0) {
-      enhanced.children = renderNode.childNodes.map((childRenderNode) => processNode(childRenderNode));
+      enhanced.children = renderNode.childNodes.map((childRenderNode) =>
+        processNode(childRenderNode),
+      );
     }
 
     return enhanced;
@@ -2562,7 +3012,9 @@ function extractNodePositionsFromTree(rootNode) {
   // Process from root node
   const enhancedNodes = [processNode(rootNode)];
 
-  console.log(`✅ Position extraction complete. Processed ${processedCount} nodes with position data.`);
+  console.log(
+    `✅ Position extraction complete. Processed ${processedCount} nodes with position data.`,
+  );
   if (missingCount > 0) {
     console.warn(`⚠️ ${missingCount} nodes were missing render data`);
   }
@@ -2581,15 +3033,15 @@ function extractEdgePaths(edges) {
   const enhancedEdges = [];
 
   // Query all edge groups (g elements with class 'edge')
-  const edgeGroups = document.querySelectorAll("g.edge");
+  const edgeGroups = document.querySelectorAll('g.edge');
   const pathMap = new Map();
 
   // Build map of edge paths from DOM
   // Edge structure: <g class="edge type" id="edge-id"><path class="path" d="..."/></g>
   edgeGroups.forEach((group) => {
-    const id = group.getAttribute("id");
-    const pathElement = group.querySelector("path.path");
-    const path = pathElement ? pathElement.getAttribute("d") : null;
+    const id = group.getAttribute('id');
+    const pathElement = group.querySelector('path.path');
+    const path = pathElement ? pathElement.getAttribute('d') : null;
 
     if (id && path) {
       pathMap.set(id, path);
@@ -2605,7 +3057,7 @@ function extractEdgePaths(edges) {
 
     // Copy all properties except prerender
     for (const key in edge) {
-      if (key !== "prerender") {
+      if (key !== 'prerender') {
         enhanced[key] = edge[key];
       }
     }
@@ -2625,7 +3077,7 @@ function extractEdgePaths(edges) {
 
     if (!path) {
       // Try fallback format
-      const fallbackId = `${edge.source}--${edge.type || "unknown"}--${edge.target}`;
+      const fallbackId = `${edge.source}--${edge.type || 'unknown'}--${edge.target}`;
       path = pathMap.get(fallbackId);
       if (!path) {
         console.warn(`🎨 No path found for edge fallback ID: ${fallbackId}`);

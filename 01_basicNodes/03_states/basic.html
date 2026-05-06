@@ -1,127 +1,138 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>states - node Demo</title>
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>states - node Demo</title>
+    <!-- Standard CSS -->
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
-	<!-- Standard CSS -->
-	<link rel="stylesheet" href="../../dashboard/flowdash.css">
-	<link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
-
-	<!-- Required Libraries -->
-	<script src="../../dashboard/libs/d3.min.js"></script>
-	<script src="../../dashboard/libs/d3-shape.min.js"></script>
-	<script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-	<script>window.FLOWDASH_THEME = { default: 'light' };</script>
-	<script src="../../dashboard/js/themeManager.js"></script>
+    <!-- Required Libraries -->
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
+  </head>
 
-<body>
-	<!-- Demo Header -->
-	<header class="demo-header">
-		<h1>node Demos</h1>
-		<h2>states</h2>
-		<p class="demo-description">Lane with a rectangular node for each available status</p>
+  <body>
+    <!-- Demo Header -->
+    <header class="demo-header">
+      <h1>node Demos</h1>
+      <h2>states</h2>
+      <p class="demo-description">Lane with a rectangular node for each available status</p>
 
-		<!-- Demo Controls -->
-		<div class="demo-controls">
-			<button id="updateBtn" onclick="updateDemo()">Update</button>
-			<button id="resetBtn" onclick="resetDemo()">Reset</button>
-			<button id="testBtn" onclick="runTests()">Run Tests</button>
-		</div>
-	</header>
+      <!-- Demo Controls -->
+      <div class="demo-controls">
+        <button id="updateBtn" onclick="updateDemo()">Update</button>
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+      </div>
+    </header>
 
-	<!-- Demo Container -->
-	<div class="demo-container">
-		<svg id="graph" class="canvas"></svg>
-	</div>
+    <!-- Demo Container -->
+    <div class="demo-container">
+      <svg id="graph" class="canvas"></svg>
+    </div>
 
-	<!-- Demo Information -->
-	<footer class="demo-info">
-		<div class="demo-metadata">
-			<p><strong>Node Type:</strong> rect</p>
-			<p><strong>Features:</strong> Status styles, lane layout</p>
-			<p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-		</div>
-	</footer>
+    <!-- Demo Information -->
+    <footer class="demo-info">
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> rect</p>
+        <p><strong>Features:</strong> Status styles, lane layout</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      </div>
+    </footer>
 
-	<script type="module">
-		// Import demo data
-		import { demoData } from './js/graphData.js';
-		import flowDashboard from '../../dashboard/js/index.js';
-		import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+    <script type="module">
+      // Import demo data
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-		let flowdash;
-		const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-		function build(dataset) {
-			if (!dataset) return;
-			flowdash = new flowDashboard.Dashboard(dataset);
-			flowdash.initialize('#graph');
-			window.flowdash = flowdash;
-		}
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-		injectSettingsUI({
-			containerSelector: 'body',
-			withVariation: false,
-			getBaseData: () => baseData,
-			buildDashboard: (dataset) => build(dataset)
-		});
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-		build(baseData);
+      build(baseData);
 
-		// Attach data for debugging
-		window.demoData = demoData;
+      // Attach data for debugging
+      window.demoData = demoData;
 
-		// Demo functions
-		window.updateDemo = function () {
-			console.log('Update demo called');
-		};
+      // Demo functions
+      window.updateDemo = function () {
+        console.log('Update demo called');
+      };
 
-		window.resetDemo = function () {
-			flowdash.reset?.();
-		};
+      window.resetDemo = function () {
+        flowdash.reset?.();
+      };
 
-		window.runTests = function () {
-			runDemoTests();
-		};
+      window.runTests = function () {
+        runDemoTests();
+      };
 
-		// Test runner
-		function runDemoTests() {
-			const testStatus = document.getElementById('testStatus');
-			testStatus.textContent = 'Running...';
+      // Test runner
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
 
-			const tests = [
-				testDashboardInitialization,
-				testNodesRenderedForEachStatus
-			];
+        const tests = [testDashboardInitialization, testNodesRenderedForEachStatus];
 
-			let passed = 0;
-			let total = tests.length;
+        let passed = 0;
+        let total = tests.length;
 
-			tests.forEach(test => {
-				try { if (test()) passed++; } catch (e) { console.error('Test failed:', e); }
-			});
+        tests.forEach((test) => {
+          try {
+            if (test()) passed++;
+          } catch (e) {
+            console.error('Test failed:', e);
+          }
+        });
 
-			testStatus.textContent = `${passed}/${total} tests passed`;
-			testStatus.className = passed === total ? 'test-pass' : 'test-fail';
-		}
+        testStatus.textContent = `${passed}/${total} tests passed`;
+        testStatus.className = passed === total ? 'test-pass' : 'test-fail';
+      }
 
-		function testDashboardInitialization() {
-			return flowdash && typeof flowdash.initialize === 'function';
-		}
+      function testDashboardInitialization() {
+        return flowdash && typeof flowdash.initialize === 'function';
+      }
 
-		function testNodesRenderedForEachStatus() {
-			const expected = ['Unknown','Disabled','Ready','Updating','Updated','Skipped','Delayed','Warning','Error'];
-			const rendered = Array.from(document.querySelectorAll('.rect')).map(n => n.getAttribute('status'));
-			return expected.every(s => rendered.includes(s));
-		}
-	</script>
-</body>
-
+      function testNodesRenderedForEachStatus() {
+        const expected = [
+          'Unknown',
+          'Disabled',
+          'Ready',
+          'Updating',
+          'Updated',
+          'Skipped',
+          'Delayed',
+          'Warning',
+          'Error',
+        ];
+        const rendered = Array.from(document.querySelectorAll('.rect')).map((n) =>
+          n.getAttribute('status'),
+        );
+        return expected.every((s) => rendered.includes(s));
+      }
+    </script>
+  </body>
 </html>
-
-

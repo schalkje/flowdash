@@ -42,14 +42,14 @@ The starting threshold is **50% statements / 40% branches / 50% functions / 50% 
 
 ## Module-by-module notes
 
-| Spec | Tests | What it asserts |
-|------|-------|----------------|
-| `utilPath.test.js` | side-midpoint geometry for `computeConnectionPoints` and `computeLocalConnectionPoints`, including zero/negative inputs |
-| `nodeRegistry.test.js` | registration round-trip, case normalization, container vs simple constructor dispatch, unknown-type fallback |
-| `utils.test.js` | `computeBoundingBox` for centered nodes, defaults, single-node, negatives. (DOM-dependent helpers in `utils.js` are deferred to integration.) |
-| `configManager.test.js` | `deepMerge` semantics (recurse vs replace, array-as-scalar, no mutation), `mergeWithDefaults` for prod and demo, `validateSettings` aggregation, helper freshness |
-| `geometryManager.test.js` | bounding-box, container size with margins, minimum-size fallbacks, position adjustment, edges & center |
-| `statusManager.test.js` | aggregate-status priority, special SKIPPED+UPDATED → UPDATED case, DISABLED filtering, collapse rules, classification helpers |
+| Spec                      | Tests                                                                                                                                                             | What it asserts |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `utilPath.test.js`        | side-midpoint geometry for `computeConnectionPoints` and `computeLocalConnectionPoints`, including zero/negative inputs                                           |
+| `nodeRegistry.test.js`    | registration round-trip, case normalization, container vs simple constructor dispatch, unknown-type fallback                                                      |
+| `utils.test.js`           | `computeBoundingBox` for centered nodes, defaults, single-node, negatives. (DOM-dependent helpers in `utils.js` are deferred to integration.)                     |
+| `configManager.test.js`   | `deepMerge` semantics (recurse vs replace, array-as-scalar, no mutation), `mergeWithDefaults` for prod and demo, `validateSettings` aggregation, helper freshness |
+| `geometryManager.test.js` | bounding-box, container size with margins, minimum-size fallbacks, position adjustment, edges & center                                                            |
+| `statusManager.test.js`   | aggregate-status priority, special SKIPPED+UPDATED → UPDATED case, DISABLED filtering, collapse rules, classification helpers                                     |
 
 ## What is NOT covered here
 

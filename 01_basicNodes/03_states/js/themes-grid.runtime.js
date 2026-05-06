@@ -269,9 +269,13 @@ function setAllCollapsed(target) {
   document.querySelectorAll('.card iframe').forEach((iframe) => {
     const { root, containers } = getChildContainers(iframe.contentWindow);
     if (!root || !containers.length) return;
-    try { root.collapsed = false; } catch {}
+    try {
+      root.collapsed = false;
+    } catch {}
     containers.forEach((n) => {
-      try { n.collapsed = target; } catch {}
+      try {
+        n.collapsed = target;
+      } catch {}
     });
   });
 }
@@ -290,7 +294,9 @@ function wireToggleAllButton(toggleBtnSelector) {
     setAllCollapsed(target);
     updateButtonLabel(toggleBtnSelector);
   });
-  try { updateButtonLabel(toggleBtnSelector); } catch {}
+  try {
+    updateButtonLabel(toggleBtnSelector);
+  } catch {}
 }
 
 function scheduleExpandAll(opts = {}) {
@@ -304,7 +310,9 @@ function scheduleExpandAll(opts = {}) {
 
   const expandAndUpdate = () => {
     setAllCollapsed(false);
-    try { updateButtonLabel('#toggle-all'); } catch {}
+    try {
+      updateButtonLabel('#toggle-all');
+    } catch {}
   };
 
   const tick = () => {

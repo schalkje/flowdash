@@ -2,8 +2,6 @@
 
 Ignore this file for generation, this file contains user naotes to pick up later.
 
-
-
 ## Analyse and improve project structure
 
 This project is about the flowdash library that is being used in other applications.
@@ -12,7 +10,6 @@ Inside the project I expect extensive testing capabilities, that perform unit te
 The project is also about demonstrating all functionalities in explicit html pages, with static demo data. So we get a nice interactive demonstration of all functionality, from the singled out core functionality to complicated multifeatured dashbaords.
 
 Can you analyse the application, describe the goals of the project and make an improvement plan. All in markdown files in the docs folder.
-
 
 ### High contract / color blind theme
 
@@ -30,8 +27,8 @@ Don’t rely on hue differences alone (red/green is especially problematic)
 
 👉 For color-blind users, luminance contrast matters far more than color hue
 
-2) “Use of Color” — never rely on color alone
-WCAG rule (1.4.1)
+2. “Use of Color” — never rely on color alone
+   WCAG rule (1.4.1)
 
 Color must not be the only visual means of conveying information
 
@@ -51,18 +48,18 @@ You must add:
 
 👉 This is the most important rule for color blindness
 
-3) Non-text contrast (critical for dashboards)
-WCAG rule (1.4.11)
-Graph elements, borders, buttons must have ≥ 3:1 contrast
-Applies to:
-Chart lines
-Nodes in D3 graphs
-Selected states
-Focus outlines
-Practical implication
-Thin, low-contrast lines → fail
-Use thicker strokes + strong contrast
-4) Avoid problematic color combinations
+3. Non-text contrast (critical for dashboards)
+   WCAG rule (1.4.11)
+   Graph elements, borders, buttons must have ≥ 3:1 contrast
+   Applies to:
+   Chart lines
+   Nodes in D3 graphs
+   Selected states
+   Focus outlines
+   Practical implication
+   Thin, low-contrast lines → fail
+   Use thicker strokes + strong contrast
+4. Avoid problematic color combinations
 
 WCAG doesn’t list specific forbidden combos, but in practice:
 
@@ -78,7 +75,7 @@ Monochrome + accents
 
 👉 The trick: separate by brightness + shape, not just hue
 
-5) Redundant encoding (AAA mindset)
+5. Redundant encoding (AAA mindset)
 
 AAA pushes toward multiple channels of distinction:
 
@@ -94,19 +91,16 @@ Example (for your data graphs):
 
 Source systems → squares + solid border
 Transformations → circles + dashed border
-Outputs → rounded rectangles + thick border
-6) Focus & interaction visibility (AAA strengthens this)
+Outputs → rounded rectangles + thick border 6) Focus & interaction visibility (AAA strengthens this)
 Relevant rules
 Focus indicators must be clearly visible
 No subtle outlines
 Practical
 Use high-contrast focus rings
-Avoid “barely visible blue glow” styles
-7) Text readability (AAA extras)
+Avoid “barely visible blue glow” styles 7) Text readability (AAA extras)
 No low-opacity text
 Avoid text on gradients unless contrast is guaranteed
-Prefer solid backgrounds
-8) Testing requirement (often overlooked)
+Prefer solid backgrounds 8) Testing requirement (often overlooked)
 
 WCAG assumes validation:
 

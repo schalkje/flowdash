@@ -1,301 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zone System Test</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        
-        .test-container {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .test-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .test-description {
-            color: #666;
-            margin-bottom: 15px;
-        }
-        
-        .svg-container {
-            border: 1px solid #ccc;
-            background: white;
-            margin: 10px 0;
-        }
-        
-        .controls {
-            margin: 10px 0;
-        }
-        
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        
-        button:hover {
-            background: #0056b3;
-        }
-        
-        .status {
-            padding: 10px;
-            background: #e9ecef;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
-        }
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+      }
+
+      .test-container {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .test-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .test-description {
+        color: #666;
+        margin-bottom: 15px;
+      }
+
+      .svg-container {
+        border: 1px solid #ccc;
+        background: white;
+        margin: 10px 0;
+      }
+
+      .controls {
+        margin: 10px 0;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .status {
+        padding: 10px;
+        background: #e9ecef;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-family: monospace;
+        font-size: 12px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Zone System Implementation Test</h1>
-    
+
     <div class="test-container">
-        <div class="test-title">Basic Node Test</div>
-        <div class="test-description">Testing basic node with zone system integration</div>
-        <div class="svg-container" id="basic-node-test"></div>
-        <div class="controls">
-            <button onclick="testBasicNode()">Create Basic Node</button>
-            <button onclick="testResize()">Resize Node</button>
-            <button onclick="testToggleCollapse()">Toggle Collapse</button>
-        </div>
-        <div class="status" id="basic-node-status"></div>
+      <div class="test-title">Basic Node Test</div>
+      <div class="test-description">Testing basic node with zone system integration</div>
+      <div class="svg-container" id="basic-node-test"></div>
+      <div class="controls">
+        <button onclick="testBasicNode()">Create Basic Node</button>
+        <button onclick="testResize()">Resize Node</button>
+        <button onclick="testToggleCollapse()">Toggle Collapse</button>
+      </div>
+      <div class="status" id="basic-node-status"></div>
     </div>
-    
+
     <div class="test-container">
-        <div class="test-title">Lane Node Test</div>
-        <div class="test-description">Testing LaneNode with zone-based vertical stacking layout</div>
-        <div class="svg-container" id="lane-node-test"></div>
-        <div class="controls">
-            <button onclick="testLaneNode()">Create Lane Node</button>
-            <button onclick="addChildToLane()">Add Child</button>
-            <button onclick="removeChildFromLane()">Remove Child</button>
-        </div>
-        <div class="status" id="lane-node-status"></div>
+      <div class="test-title">Lane Node Test</div>
+      <div class="test-description">Testing LaneNode with zone-based vertical stacking layout</div>
+      <div class="svg-container" id="lane-node-test"></div>
+      <div class="controls">
+        <button onclick="testLaneNode()">Create Lane Node</button>
+        <button onclick="addChildToLane()">Add Child</button>
+        <button onclick="removeChildFromLane()">Remove Child</button>
+      </div>
+      <div class="status" id="lane-node-status"></div>
     </div>
-    
+
     <div class="test-container">
-        <div class="test-title">Columns Node Test</div>
-        <div class="test-description">Testing ColumnsNode with zone-based horizontal row layout</div>
-        <div class="svg-container" id="columns-node-test"></div>
-        <div class="controls">
-            <button onclick="testColumnsNode()">Create Columns Node</button>
-            <button onclick="addChildToColumns()">Add Child</button>
-            <button onclick="removeChildFromColumns()">Remove Child</button>
-        </div>
-        <div class="status" id="columns-node-status"></div>
+      <div class="test-title">Columns Node Test</div>
+      <div class="test-description">Testing ColumnsNode with zone-based horizontal row layout</div>
+      <div class="svg-container" id="columns-node-test"></div>
+      <div class="controls">
+        <button onclick="testColumnsNode()">Create Columns Node</button>
+        <button onclick="addChildToColumns()">Add Child</button>
+        <button onclick="removeChildFromColumns()">Remove Child</button>
+      </div>
+      <div class="status" id="columns-node-status"></div>
     </div>
 
     <script type="module">
-        import BaseNode from './js/nodeBase.js';
-        import LaneNode from './js/nodeLane.js';
-        import ColumnsNode from './js/nodeColumns.js';
-        import { ConfigManager } from './js/configManager.js';
-        
-        // Global variables for testing
-        let basicNode = null;
-        let laneNode = null;
-        let columnsNode = null;
-        let childCounter = 0;
-        
-        // Test functions
-        window.testBasicNode = function() {
-            const container = document.getElementById('basic-node-test');
-            container.innerHTML = '';
-            
-            const svg = d3.select(container)
-                .append('svg')
-                .attr('width', 400)
-                .attr('height', 300);
-            
-            const nodeData = {
-                id: 'test-basic',
-                label: 'Test Basic Node',
-                type: 'basic',
-                width: 120,
-                height: 80
-            };
-            
-            const settings = ConfigManager.mergeWithDefaults({
-                showCenterMark: true,
-                showConnectionPoints: true
-            });
-            
-            basicNode = new BaseNode(nodeData, svg, settings);
-            basicNode.init();
-            
-            updateStatus('basic-node-status', 'Basic node created with zone system');
+      import BaseNode from './js/nodeBase.js';
+      import LaneNode from './js/nodeLane.js';
+      import ColumnsNode from './js/nodeColumns.js';
+      import { ConfigManager } from './js/configManager.js';
+
+      // Global variables for testing
+      let basicNode = null;
+      let laneNode = null;
+      let columnsNode = null;
+      let childCounter = 0;
+
+      // Test functions
+      window.testBasicNode = function () {
+        const container = document.getElementById('basic-node-test');
+        container.innerHTML = '';
+
+        const svg = d3.select(container).append('svg').attr('width', 400).attr('height', 300);
+
+        const nodeData = {
+          id: 'test-basic',
+          label: 'Test Basic Node',
+          type: 'basic',
+          width: 120,
+          height: 80,
         };
-        
-        window.testResize = function() {
-            if (!basicNode) return;
-            
-            const newWidth = Math.random() * 100 + 100;
-            const newHeight = Math.random() * 60 + 60;
-            
-            basicNode.resize({ width: newWidth, height: newHeight });
-            
-            updateStatus('basic-node-status', `Node resized to ${Math.round(newWidth)}x${Math.round(newHeight)}`);
+
+        const settings = ConfigManager.mergeWithDefaults({
+          showCenterMark: true,
+          showConnectionPoints: true,
+        });
+
+        basicNode = new BaseNode(nodeData, svg, settings);
+        basicNode.init();
+
+        updateStatus('basic-node-status', 'Basic node created with zone system');
+      };
+
+      window.testResize = function () {
+        if (!basicNode) return;
+
+        const newWidth = Math.random() * 100 + 100;
+        const newHeight = Math.random() * 60 + 60;
+
+        basicNode.resize({ width: newWidth, height: newHeight });
+
+        updateStatus(
+          'basic-node-status',
+          `Node resized to ${Math.round(newWidth)}x${Math.round(newHeight)}`,
+        );
+      };
+
+      window.testToggleCollapse = function () {
+        if (!basicNode) return;
+
+        basicNode.collapsed = !basicNode.collapsed;
+
+        updateStatus('basic-node-status', `Node collapsed: ${basicNode.collapsed}`);
+      };
+
+      window.testLaneNode = function () {
+        const container = document.getElementById('lane-node-test');
+        container.innerHTML = '';
+
+        const svg = d3.select(container).append('svg').attr('width', 400).attr('height', 400);
+
+        const nodeData = {
+          id: 'test-lane',
+          label: 'Test Lane Node',
+          type: 'lane',
+          width: 200,
+          height: 150,
+          children: [],
         };
-        
-        window.testToggleCollapse = function() {
-            if (!basicNode) return;
-            
-            basicNode.collapsed = !basicNode.collapsed;
-            
-            updateStatus('basic-node-status', `Node collapsed: ${basicNode.collapsed}`);
+
+        const settings = ConfigManager.mergeWithDefaults({
+          showCenterMark: true,
+        });
+
+        laneNode = new LaneNode(nodeData, svg, createChildNode, settings);
+        laneNode.init();
+
+        updateStatus('lane-node-status', 'Lane node created with zone-based layout');
+      };
+
+      window.addChildToLane = function () {
+        if (!laneNode) return;
+
+        childCounter++;
+        const childData = {
+          id: `child-${childCounter}`,
+          label: `Child ${childCounter}`,
+          type: 'rect',
+          width: 80,
+          height: 40,
         };
-        
-        window.testLaneNode = function() {
-            const container = document.getElementById('lane-node-test');
-            container.innerHTML = '';
-            
-            const svg = d3.select(container)
-                .append('svg')
-                .attr('width', 400)
-                .attr('height', 400);
-            
-            const nodeData = {
-                id: 'test-lane',
-                label: 'Test Lane Node',
-                type: 'lane',
-                width: 200,
-                height: 150,
-                children: []
-            };
-            
-            const settings = ConfigManager.mergeWithDefaults({
-                showCenterMark: true
-            });
-            
-            laneNode = new LaneNode(nodeData, svg, createChildNode, settings);
-            laneNode.init();
-            
-            updateStatus('lane-node-status', 'Lane node created with zone-based layout');
+
+        laneNode.data.children.push(childData);
+        laneNode.initChildren();
+
+        updateStatus('lane-node-status', `Added child ${childCounter} to lane node`);
+      };
+
+      window.removeChildFromLane = function () {
+        if (!laneNode || laneNode.data.children.length === 0) return;
+
+        laneNode.data.children.pop();
+        laneNode.cleanContainer();
+        laneNode.initChildren();
+
+        updateStatus('lane-node-status', 'Removed child from lane node');
+      };
+
+      window.testColumnsNode = function () {
+        const container = document.getElementById('columns-node-test');
+        container.innerHTML = '';
+
+        const svg = d3.select(container).append('svg').attr('width', 500).attr('height', 300);
+
+        const nodeData = {
+          id: 'test-columns',
+          label: 'Test Columns Node',
+          type: 'columns',
+          width: 300,
+          height: 120,
+          children: [],
         };
-        
-        window.addChildToLane = function() {
-            if (!laneNode) return;
-            
-            childCounter++;
-            const childData = {
-                id: `child-${childCounter}`,
-                label: `Child ${childCounter}`,
-                type: 'rect',
-                width: 80,
-                height: 40
-            };
-            
-            laneNode.data.children.push(childData);
-            laneNode.initChildren();
-            
-            updateStatus('lane-node-status', `Added child ${childCounter} to lane node`);
+
+        const settings = ConfigManager.mergeWithDefaults({
+          showCenterMark: true,
+        });
+
+        columnsNode = new ColumnsNode(nodeData, svg, createChildNode, settings);
+        columnsNode.init();
+
+        updateStatus('columns-node-status', 'Columns node created with zone-based layout');
+      };
+
+      window.addChildToColumns = function () {
+        if (!columnsNode) return;
+
+        childCounter++;
+        const childData = {
+          id: `child-${childCounter}`,
+          label: `Child ${childCounter}`,
+          type: 'rect',
+          width: 60,
+          height: 60,
         };
-        
-        window.removeChildFromLane = function() {
-            if (!laneNode || laneNode.data.children.length === 0) return;
-            
-            laneNode.data.children.pop();
-            laneNode.cleanContainer();
-            laneNode.initChildren();
-            
-            updateStatus('lane-node-status', 'Removed child from lane node');
-        };
-        
-        window.testColumnsNode = function() {
-            const container = document.getElementById('columns-node-test');
-            container.innerHTML = '';
-            
-            const svg = d3.select(container)
-                .append('svg')
-                .attr('width', 500)
-                .attr('height', 300);
-            
-            const nodeData = {
-                id: 'test-columns',
-                label: 'Test Columns Node',
-                type: 'columns',
-                width: 300,
-                height: 120,
-                children: []
-            };
-            
-            const settings = ConfigManager.mergeWithDefaults({
-                showCenterMark: true
-            });
-            
-            columnsNode = new ColumnsNode(nodeData, svg, createChildNode, settings);
-            columnsNode.init();
-            
-            updateStatus('columns-node-status', 'Columns node created with zone-based layout');
-        };
-        
-        window.addChildToColumns = function() {
-            if (!columnsNode) return;
-            
-            childCounter++;
-            const childData = {
-                id: `child-${childCounter}`,
-                label: `Child ${childCounter}`,
-                type: 'rect',
-                width: 60,
-                height: 60
-            };
-            
-            columnsNode.data.children.push(childData);
-            columnsNode.initChildren();
-            
-            updateStatus('columns-node-status', `Added child ${childCounter} to columns node`);
-        };
-        
-        window.removeChildFromColumns = function() {
-            if (!columnsNode || columnsNode.data.children.length === 0) return;
-            
-            columnsNode.data.children.pop();
-            columnsNode.cleanContainer();
-            columnsNode.initChildren();
-            
-            updateStatus('columns-node-status', 'Removed child from columns node');
-        };
-        
-        function createChildNode(nodeData, parentElement, settings, parentNode) {
-            return new BaseNode(nodeData, parentElement, settings, parentNode);
+
+        columnsNode.data.children.push(childData);
+        columnsNode.initChildren();
+
+        updateStatus('columns-node-status', `Added child ${childCounter} to columns node`);
+      };
+
+      window.removeChildFromColumns = function () {
+        if (!columnsNode || columnsNode.data.children.length === 0) return;
+
+        columnsNode.data.children.pop();
+        columnsNode.cleanContainer();
+        columnsNode.initChildren();
+
+        updateStatus('columns-node-status', 'Removed child from columns node');
+      };
+
+      function createChildNode(nodeData, parentElement, settings, parentNode) {
+        return new BaseNode(nodeData, parentElement, settings, parentNode);
+      }
+
+      function updateStatus(elementId, message) {
+        const statusElement = document.getElementById(elementId);
+        if (statusElement) {
+          statusElement.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
         }
-        
-        function updateStatus(elementId, message) {
-            const statusElement = document.getElementById(elementId);
-            if (statusElement) {
-                statusElement.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            }
-        }
-        
-        // Initialize D3
-        const d3 = window.d3;
-        if (!d3) {
-            console.error('D3.js is required for this test');
-            document.body.innerHTML = '<h1>Error: D3.js is required for this test</h1>';
-        }
+      }
+
+      // Initialize D3
+      const d3 = window.d3;
+      if (!d3) {
+        console.error('D3.js is required for this test');
+        document.body.innerHTML = '<h1>Error: D3.js is required for this test</h1>';
+      }
     </script>
-    
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
-</body>
-</html> 
+  </body>
+</html>

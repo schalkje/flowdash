@@ -8,20 +8,22 @@
 ## Executive Summary
 
 Loading the `dwh-6.fixed.json` file take2. **Cascade Size Recalculation:**
-   ```javascript
-   // In container layout methods (Lane, Columns, Adapter)
-   // Calculate child sizes
-   const totalChildHeight = visibleChildren.reduce((sum, node) => {
-       return sum + node.getEffectiveHeight();
-   }, 0);
-   // Resize self to fit
-   this.resize({ width: newWidth, height: newHeight });
-   // Trigger parent update
-   this.handleDisplayChange();
-   ```
-   - Container sizes adjust to fit children
-   - Size changes trigger parent container updates
-   - Creates cascading resize waves up the hierarchyeconds to initially display, while `dwh-1.json` loads almost instantly. The primary difference is scale:
+
+```javascript
+// In container layout methods (Lane, Columns, Adapter)
+// Calculate child sizes
+const totalChildHeight = visibleChildren.reduce((sum, node) => {
+  return sum + node.getEffectiveHeight();
+}, 0);
+// Resize self to fit
+this.resize({ width: newWidth, height: newHeight });
+// Trigger parent update
+this.handleDisplayChange();
+```
+
+- Container sizes adjust to fit children
+- Size changes trigger parent container updates
+- Creates cascading resize waves up the hierarchyeconds to initially display, while `dwh-1.json` loads almost instantly. The primary difference is scale:
 
 - **dwh-1.json**: 1.3 KB, ~4 nodes, simple structure
 - **dwh-6.fixed.json**: 609 KB, ~885 nodes, deeply nested hierarchy with multiple container types (Columns, Lanes, Adapters)
@@ -31,12 +33,14 @@ Loading the `dwh-6.fixed.json` file take2. **Cascade Size Recalculation:**
 ## File Structure Comparison
 
 ### dwh-1.json (Fast Loading)
+
 ```
 Root (Columns)
 └── 3 child nodes (1 Adapter, 2 Database nodes)
 ```
 
 ### dwh-6.fixed.json (Slow Loading)
+
 ```
 Root (Columns: "DWH & Strada")
 └── DWH (Lane)
@@ -80,16 +84,16 @@ sequenceDiagram
     participant Layout as Layout Algorithm
     participant DOM as DOM Rendering
     participant Minimap as Minimap
-    
+
     User->>HTML: Load page / Select file
     HTML->>Dashboard: fetchDashboardFile(filename)
     Dashboard->>Dashboard: new Dashboard(data)
     Dashboard->>Dashboard: initialize('#graph')
-    
+
     Note over Dashboard: Configuration Phase
     Dashboard->>Dashboard: initializeSvg()
     Dashboard->>Dashboard: createContainer()
-    
+
     Note over Dashboard,Node: Node Creation Phase (SLOW)
     Dashboard->>Node: createDashboard()
     Node->>Node: createNode() / createNodes()
@@ -100,7 +104,7 @@ sequenceDiagram
         Node->>Node: Create DOM elements
         Node->>DOM: Append SVG groups
     end
-    
+
     Note over Node,DOM: Initialization Phase (SLOW)
     Node->>Node: root.init()
     loop For each container
@@ -108,17 +112,17 @@ sequenceDiagram
         Node->>Node: Setup layout algorithms (layoutLane/layoutColumns)
         Node->>DOM: Create header, margin, and container zones
     end
-    
+
     Note over Dashboard: Edge Creation Phase (SLOW)
     Dashboard->>Dashboard: createEdges()
     Dashboard->>Dashboard: reparentNodesByParentIds()
     Dashboard->>Node: initializeChildrenStatusses()
-    
+
     Note over Dashboard,Minimap: UI Setup Phase
     Dashboard->>Dashboard: initializeZoom()
     Dashboard->>Minimap: minimap.safeInitialize()
     Dashboard->>Dashboard: initializeFullscreenToggle()
-    
+
     Note over Dashboard: Layout Stabilization (SLOW)
     Dashboard->>Dashboard: onMainDisplayChange()
     Dashboard->>Layout: Trigger layout cascade
@@ -128,7 +132,7 @@ sequenceDiagram
         Node->>DOM: Update transforms
         Note over Node: Cascading resize chain
     end
-    
+
     Dashboard->>Dashboard: zoomManager.handleLayoutChange()
     Dashboard->>Dashboard: recomputeBaselineFit()
     Dashboard->>Dashboard: Zoom to root (if enabled)
@@ -141,17 +145,19 @@ sequenceDiagram
 ## Detailed Phase Analysis
 
 ### Phase 1: Data Loading (Fast)
+
 **Duration:** < 100ms for 609 KB file
 
 ```javascript
 // In flowdash-js.html (renderDashboard function)
-flowDashboard.fetchDashboardFile(selectedFile).then(dashboardData => {
-    dashboard = new flowDashboard.Dashboard(dashboardData);
-    dashboard.initialize('#graph');
+flowDashboard.fetchDashboardFile(selectedFile).then((dashboardData) => {
+  dashboard = new flowDashboard.Dashboard(dashboardData);
+  dashboard.initialize('#graph');
 });
 ```
 
 **Key Operations:**
+
 1. HTTP fetch of JSON file
 2. JSON parsing
 3. Settings merge with defaults
@@ -161,6 +167,7 @@ flowDashboard.fetchDashboardFile(selectedFile).then(dashboardData => {
 ---
 
 ### Phase 2: Node Tree Construction (SLOW - Primary Bottleneck)
+
 **Estimated Duration:** 15-20 seconds for 885 nodes
 
 ```javascript
@@ -169,27 +176,30 @@ createMarkers(container);
 
 var root;
 if (dashboard.nodes.length == 1) {
-    root = createNode(dashboard.nodes[0], container, dashboard.settings);
-    if (root) root.move(0, 0);
+  root = createNode(dashboard.nodes[0], container, dashboard.settings);
+  if (root) root.move(0, 0);
 } else {
-    root = createNodes(dashboard.nodes, container, dashboard.settings);
+  root = createNodes(dashboard.nodes, container, dashboard.settings);
 }
 ```
 
 **What Happens:**
+
 1. **Recursive Node Creation** - Creates 885+ node objects
    - Each node type (Lane, Columns, Adapter, etc.) has its own constructor
    - Nested containers create their children recursively
-   
 2. **DOM Element Creation** - Creates SVG groups for each node
+
    ```javascript
    // In nodeBase.js
-   this.element = parentElement.append('g')
-       .attr('class', `node ${this.data.type}`)
-       .attr('id', this.id);
+   this.element = parentElement
+     .append('g')
+     .attr('class', `node ${this.data.type}`)
+     .attr('id', this.id);
    ```
 
 3. **Zone Manager Initialization** - For each container node
+
    ```javascript
    // In nodeBaseContainer.js
    this.zoneManager = new ZoneManager(this, this.settings);
@@ -202,6 +212,7 @@ if (dashboard.nodes.length == 1) {
    - Each Adapter creates staging/archive/transform layout
 
 **Performance Issues:**
+
 - **885 DOM manipulations** (one per node)
 - **~200+ container nodes** each initializing zone managers
 - **Deep recursion** (7+ levels) with synchronous execution
@@ -224,7 +235,7 @@ graph TD
     G1 -->|creates| H1[Node 'STAGING']
     G1 -->|creates| H2[Node 'ARCHIVE']
     G1 -->|creates| H3[Node 'TRANSFORM']
-    
+
     style A fill:#ff9999
     style B fill:#ffcc99
     style C fill:#ffff99
@@ -239,6 +250,7 @@ graph TD
 ---
 
 ### Phase 3: Node Initialization (MODERATE)
+
 **Estimated Duration:** 2-3 seconds
 
 ```javascript
@@ -249,6 +261,7 @@ this._suspendDisplayChange = false;
 ```
 
 **What Happens:**
+
 1. **Cascade Initialization** - Calls `init()` on root, which recursively initializes all children
 2. **For Each Container Node:**
    - Initialize zone managers (header, margin, inner container zones)
@@ -257,15 +270,18 @@ this._suspendDisplayChange = false;
    - **NOTE:** Force simulations are NOT used in Lane/Columns/Adapter nodes - they use fixed layout algorithms
 
 3. **Status Initialization:**
+
    ```javascript
    // In dashboard.js
    this.initializeChildrenStatusses(root);
    ```
+
    - Walks tree bottom-up
    - Determines container status from children
    - May trigger collapse/expand based on settings
 
 **Performance Issues:**
+
 - **Zone manager initialization for ~200+ containers**
 - Each zone creates multiple DOM groups and coordinate systems
 - Status cascading walks entire tree (885 nodes)
@@ -276,15 +292,16 @@ this._suspendDisplayChange = false;
 ---
 
 ### Phase 4: Edge Creation (MODERATE)
+
 **Estimated Duration:** 2-5 seconds for 25 edges
 
 ```javascript
 // In dashboard.js createDashboard()
-if (dashboard.edges.length > 0) 
-    createEdges(root, dashboard.edges, dashboard.settings);
+if (dashboard.edges.length > 0) createEdges(root, dashboard.edges, dashboard.settings);
 ```
 
 **What Happens:**
+
 1. For each edge:
    - Find source and target nodes by ID (tree traversal)
    - Create edge object with path calculation
@@ -292,14 +309,19 @@ if (dashboard.edges.length > 0)
    - Create SVG path element
 
 2. **Reparenting:**
+
    ```javascript
-   try { this.reparentNodesByParentIds(); } catch {}
+   try {
+     this.reparentNodesByParentIds();
+   } catch {}
    ```
+
    - Walks all 885 nodes
    - Checks for explicit `parentId` specifications
    - Moves nodes in logical tree and DOM if needed
 
 **Performance Issues:**
+
 - **25 × 885 node searches** = up to 22,125 lookups in worst case
 - Path calculations may trigger layout recalculations
 - DOM manipulations for path elements
@@ -307,47 +329,57 @@ if (dashboard.edges.length > 0)
 ---
 
 ### Phase 5: Layout Stabilization (SLOW - Secondary Bottleneck)
+
 **Estimated Duration:** 10-15 seconds
 
 ```javascript
 // In dashboard.js onMainDisplayChange()
 requestAnimationFrame(() => {
-    try { this.zoomManager.handleLayoutChange(); } catch {}
-    try { this.enforceDomHierarchy(); } catch {}
-    if (this.minimap.svg) {
-        this.minimap.update();
-        // ...
-    }
+  try {
+    this.zoomManager.handleLayoutChange();
+  } catch {}
+  try {
+    this.enforceDomHierarchy();
+  } catch {}
+  if (this.minimap.svg) {
+    this.minimap.update();
+    // ...
+  }
 });
 ```
 
 **What Happens:**
+
 1. **Cascading Layout Recalculations:**
    - Leaf nodes calculate their size
    - Parent containers recalculate to fit children
    - This propagates up through 7+ levels of nesting
 
 2. **Cascade Size Recalculation:**
+
    ```javascript
    // After layout algorithm (layoutLane/layoutColumns) positions children
    this.containerNode.childNodes.forEach((node, index) => {
-       const position = calculatePositionForChild(node, index);
-       node.element.attr('transform', `translate(${position.x}, ${position.y})`);
+     const position = calculatePositionForChild(node, index);
+     node.element.attr('transform', `translate(${position.x}, ${position.y})`);
    });
    this.resizeBoundingContainer(); // Triggers parent to recalculate
    ```
+
    - Container sizes adjust to fit children
    - Size changes trigger parent container updates
    - Creates cascading resize waves up the hierarchy
 
 3. **Bounding Box Computations:**
+
    ```javascript
    // In dashboard.js computeBoundingBox()
    nodes.forEach((node) => {
-       let dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
-       // ... update bounds
+     let dimensions = getBoundingBoxRelativeToParent(node.element, dashboard.main.container);
+     // ... update bounds
    });
    ```
+
    - Called on every display change
    - Queries DOM for actual rendered dimensions
    - For 885 nodes, this is 885 DOM measurements
@@ -358,6 +390,7 @@ requestAnimationFrame(() => {
    - Involves cloning/rendering all 885 nodes again
 
 **Performance Issues:**
+
 - **~200 containers recalculating layout** on initial render
 - **Multiple requestAnimationFrame calls** for display updates
 - **Cascading resize cycles:**
@@ -374,7 +407,7 @@ sequenceDiagram
     participant Container as Container Node
     participant Parent as Parent Container
     participant DOM as Browser DOM
-    
+
     loop Layout Stabilization (multiple passes)
         Leaf->>Leaf: Calculate own size
         Leaf->>Container: Child size known
@@ -390,27 +423,29 @@ sequenceDiagram
         DOM-->>Parent: Dimensions
         Parent->>Parent: Resize to fit
     end
-    
+
     Note over Leaf,DOM: Cascades up through 7+ nesting levels for ~200 containers!
 ```
 
 ---
 
 ### Phase 6: Zoom and Finalization (FAST)
+
 **Estimated Duration:** < 500ms
 
 ```javascript
 // In zoomManager.js handleLayoutChange()
 this.recomputeBaselineFit();
 if (this.dashboard.data.settings.zoomToRoot && !this.dashboard.hasPerformedInitialZoomToRoot) {
-    this.dashboard.hasPerformedInitialZoomToRoot = true;
-    const allNodes = this.dashboard.main.root.getAllNodes(false);
-    const bbox = computeBoundingBox(this.dashboard, allNodes);
-    this.zoomToBoundingBox(bbox, { animate: true, duration: 500 });
+  this.dashboard.hasPerformedInitialZoomToRoot = true;
+  const allNodes = this.dashboard.main.root.getAllNodes(false);
+  const bbox = computeBoundingBox(this.dashboard, allNodes);
+  this.zoomToBoundingBox(bbox, { animate: true, duration: 500 });
 }
 ```
 
 **What Happens:**
+
 1. Compute fit-to-view transform
 2. Optionally zoom to show all content
 3. Hide loading overlay
@@ -425,21 +460,25 @@ if (this.dashboard.data.settings.zoomToRoot && !this.dashboard.hasPerformedIniti
 ### Critical Bottlenecks (High Impact)
 
 #### 1. **Synchronous Recursive Node Creation** (15-20s)
+
 - **Problem:** 885 nodes created in deep recursion (7+ levels), each with immediate DOM manipulation
 - **Impact:** Blocks main thread, prevents progressive rendering
 - **Location:** `dashboard.js` → `createNode()` → recursive constructor calls
 
 #### 2. **Zone Manager and Layout Algorithm Setup** (2-3s)
+
 - **Problem:** ~200 containers each creating zone managers with multiple DOM groups and coordinate systems
 - **Impact:** Memory allocation, DOM structure creation, coordinate system calculations
 - **Location:** Container nodes → `init()` → zone manager initialization
 
 #### 3. **Layout Recalculation Cascades** (8-12s)
+
 - **Problem:** Child size change → parent recalculates → grandparent recalculates → repeat (cascade amplification)
 - **Impact:** Hundreds of DOM queries (`getBoundingClientRect`) forcing layout reflows during initial layout pass
 - **Location:** `nodeBaseContainer.js` → `layoutLane()`/`layoutColumns()` → `resize()` → parent's `updateChildren()`
 
 #### 4. **DOM Measurement on Every Change** (distributed cost)
+
 - **Problem:** `computeBoundingBox()` queries DOM for all visible nodes on every display change
 - **Impact:** 885 × N measurements where N is number of display changes during stabilization
 - **Location:** `dashboard.js` → `computeBoundingBox()` → `getBoundingBoxRelativeToParent()`
@@ -447,16 +486,19 @@ if (this.dashboard.data.settings.zoomToRoot && !this.dashboard.hasPerformedIniti
 ### Secondary Bottlenecks (Moderate Impact)
 
 #### 5. **Edge Creation with Tree Traversal** (2-5s)
+
 - **Problem:** For each edge, must search entire node tree to find source/target
 - **Impact:** O(edges × nodes) complexity = ~22,000 operations
 - **Location:** `edge.js` → `createEdges()`
 
 #### 6. **Minimap Redundant Updates** (1-2s)
+
 - **Problem:** Minimap updates on every layout change during stabilization
 - **Impact:** Extra rendering of entire graph at small scale
 - **Location:** `dashboard.js` → `onMainDisplayChange()` → `minimap.update()`
 
 #### 7. **Status Cascade Calculation** (1-2s)
+
 - **Problem:** Bottom-up tree traversal to determine container statuses
 - **Impact:** Full tree walk, may trigger collapse/expand cycles
 - **Location:** `dashboard.js` → `initializeChildrenStatusses()`
@@ -468,6 +510,7 @@ if (this.dashboard.data.settings.zoomToRoot && !this.dashboard.hasPerformedIniti
 ### High-Priority Optimizations
 
 #### 1. **Batch DOM Operations**
+
 ```javascript
 // Current: Immediate DOM append for each node
 this.element = parentElement.append('g');
@@ -479,23 +522,25 @@ parentElement.node().appendChild(fragment);
 ```
 
 #### 2. **Defer Layout Calculation**
+
 ```javascript
 // Current: All containers calculate layout during init()
 this.init(); // Immediately creates zones and calculates layout
 
 // Proposed: Defer non-visible container layout
 if (this.collapsed || !this.visible) {
-    this.deferredLayout = true; // Mark for later
+  this.deferredLayout = true; // Mark for later
 } else {
-    this.calculateLayout(); // Only for visible/expanded
+  this.calculateLayout(); // Only for visible/expanded
 }
 // Later, when container is expanded:
 if (this.deferredLayout) {
-    this.calculateLayout();
+  this.calculateLayout();
 }
 ```
 
 #### 3. **Memoize Layout Calculations**
+
 ```javascript
 // Current: Every resize triggers parent layout recalculation
 resize(newSize) {
@@ -506,10 +551,10 @@ resize(newSize) {
 
 // Proposed: Only recalculate if size actually changed
 resize(newSize) {
-    const changed = (this.data.width !== newSize.width || 
+    const changed = (this.data.width !== newSize.width ||
                     this.data.height !== newSize.height);
     if (!changed) return; // Short-circuit
-    
+
     this.data.width = newSize.width;
     this.data.height = newSize.height;
     this.handleDisplayChange();
@@ -517,23 +562,25 @@ resize(newSize) {
 ```
 
 #### 4. **Cache Node Lookups for Edges**
+
 ```javascript
 // Current: Search tree for each edge
-edges.forEach(edge => {
-    const source = root.findNodeById(edge.source); // O(n) search
-    const target = root.findNodeById(edge.target); // O(n) search
+edges.forEach((edge) => {
+  const source = root.findNodeById(edge.source); // O(n) search
+  const target = root.findNodeById(edge.target); // O(n) search
 });
 
 // Proposed: Build lookup map once
 const nodeMap = new Map();
-root.getAllNodes().forEach(node => nodeMap.set(node.id, node));
-edges.forEach(edge => {
-    const source = nodeMap.get(edge.source); // O(1) lookup
-    const target = nodeMap.get(edge.target); // O(1) lookup
+root.getAllNodes().forEach((node) => nodeMap.set(node.id, node));
+edges.forEach((edge) => {
+  const source = nodeMap.get(edge.source); // O(1) lookup
+  const target = nodeMap.get(edge.target); // O(1) lookup
 });
 ```
 
 #### 5. **Progressive Rendering with Loading States**
+
 ```javascript
 // Current: Block until everything is ready
 createDashboard() { /* ... synchronous ... */ }
@@ -554,18 +601,22 @@ async createDashboard() {
 ### Medium-Priority Optimizations
 
 #### 6. **Defer Minimap Initialization**
+
 - Don't create/update minimap during initial load
 - Initialize after layout stabilizes (save 1-2s)
 
 #### 7. **Use Virtual Scrolling for Large Containers**
+
 - Only render visible nodes in DOM
 - Keep others in memory but not rendered
 
 #### 8. **Parallel Layout Calculation**
+
 - Calculate layout for independent subtrees in parallel
 - Use Web Workers for size calculations off main thread
 
 #### 9. **Lazy Expand for Containers**
+
 - Start with all containers collapsed
 - Expand on-demand when user interacts
 
@@ -574,6 +625,7 @@ async createDashboard() {
 ## Recommended Investigation Steps
 
 ### Step 1: Add Performance Instrumentation
+
 Add timing measurements to identify which phase is slowest in practice:
 
 ```javascript
@@ -589,21 +641,22 @@ const timings = {
 
 async loadDashboard() {
     const t0 = performance.now();
-    
+
     const data = await fetchDashboardFile(file);
     timings.dataLoad = performance.now() - t0;
-    
+
     const t1 = performance.now();
     const root = createDashboard(data);
     timings.nodeCreation = performance.now() - t1;
-    
+
     // ... continue for each phase
-    
+
     console.table(timings);
 }
 ```
 
 ### Step 2: Profile Layout Recalculations
+
 Determine how many times each container recalculates its layout:
 
 ```javascript
@@ -613,13 +666,13 @@ static layoutStats = new Map();
 layoutLane() { // or layoutColumns(), etc.
     const start = performance.now();
     const stats = this.constructor.layoutStats.get(this.id) || { count: 0, totalTime: 0 };
-    
+
     // ... layout logic
-    
+
     stats.count++;
     stats.totalTime += performance.now() - start;
     this.constructor.layoutStats.set(this.id, stats);
-    
+
     if (stats.count > 10) {
         console.warn(`Excessive layout recalcs for ${this.id}:`, stats);
     }
@@ -627,6 +680,7 @@ layoutLane() { // or layoutColumns(), etc.
 ```
 
 ### Step 3: Measure DOM Operation Cost
+
 Identify which DOM operations are most expensive:
 
 ```javascript
@@ -653,6 +707,7 @@ Create intermediate test files to isolate performance characteristics:
 ### Performance Baselines
 
 Establish target metrics:
+
 - **< 5s total load time** for 1000-node dashboard
 - **< 2s for node creation**
 - **< 1s for layout stabilization**
@@ -672,13 +727,15 @@ The 40-second load time for `dwh-6.fixed.json` is primarily caused by:
 **Important Note:** Despite having `simulation.js` in the codebase, force simulations are NOT used by Lane/Columns/Adapter nodes (which make up the entire dwh-6.fixed.json file). They use deterministic layout algorithms instead.
 
 The architecture fundamentally supports large dashboards, but the implementation lacks:
+
 - Progressive/chunked loading
-- Deferred initialization  
+- Deferred initialization
 - DOM operation batching
 - Layout measurement throttling
 - Layout calculation memoization
 
 **Immediate action items:**
+
 1. Add performance instrumentation to confirm hypothesis
 2. Implement DOM batching for node creation
 3. Defer simulation start until containers are visible/expanded

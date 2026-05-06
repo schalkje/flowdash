@@ -35,10 +35,7 @@ describe('StatusManager.determineAggregateStatus', () => {
   });
 
   it('returns DISABLED when every status is DISABLED', () => {
-    const r = StatusManager.determineAggregateStatus([
-      NodeStatus.DISABLED,
-      NodeStatus.DISABLED,
-    ]);
+    const r = StatusManager.determineAggregateStatus([NodeStatus.DISABLED, NodeStatus.DISABLED]);
     expect(r).toBe(NodeStatus.DISABLED);
   });
 
@@ -70,16 +67,13 @@ describe('StatusManager.determineAggregateStatus', () => {
   });
 
   it('falls back to READY when only READY children are present', () => {
-    expect(
-      StatusManager.determineAggregateStatus([NodeStatus.READY, NodeStatus.READY]),
-    ).toBe(NodeStatus.READY);
+    expect(StatusManager.determineAggregateStatus([NodeStatus.READY, NodeStatus.READY])).toBe(
+      NodeStatus.READY,
+    );
   });
 
   it('ignores DISABLED children when escalating', () => {
-    const r = StatusManager.determineAggregateStatus([
-      NodeStatus.DISABLED,
-      NodeStatus.READY,
-    ]);
+    const r = StatusManager.determineAggregateStatus([NodeStatus.DISABLED, NodeStatus.READY]);
     expect(r).toBe(NodeStatus.READY);
   });
 });
@@ -90,7 +84,10 @@ describe('StatusManager.shouldCollapseOnStatus', () => {
 
   it('never collapses when the setting is off', () => {
     for (const status of Object.values({
-      READY: 'ready', UPDATING: 'updating', UPDATED: 'updated', ERROR: 'error',
+      READY: 'ready',
+      UPDATING: 'updating',
+      UPDATED: 'updated',
+      ERROR: 'error',
     })) {
       expect(StatusManager.shouldCollapseOnStatus(status, offSettings)).toBe(false);
     }
@@ -126,10 +123,7 @@ describe('StatusManager.shouldContainerCollapse', () => {
 
   it('does not collapse when all children are DISABLED', () => {
     expect(
-      StatusManager.shouldContainerCollapse(
-        [NodeStatus.DISABLED, NodeStatus.DISABLED],
-        on,
-      ),
+      StatusManager.shouldContainerCollapse([NodeStatus.DISABLED, NodeStatus.DISABLED], on),
     ).toBe(false);
   });
 
@@ -144,20 +138,14 @@ describe('StatusManager.shouldContainerCollapse', () => {
 
   it('collapses for SKIPPED + UPDATED mixes', () => {
     expect(
-      StatusManager.shouldContainerCollapse(
-        [NodeStatus.SKIPPED, NodeStatus.UPDATED],
-        on,
-      ),
+      StatusManager.shouldContainerCollapse([NodeStatus.SKIPPED, NodeStatus.UPDATED], on),
     ).toBe(true);
   });
 
   it('stays expanded for genuinely mixed statuses', () => {
-    expect(
-      StatusManager.shouldContainerCollapse(
-        [NodeStatus.READY, NodeStatus.ERROR],
-        on,
-      ),
-    ).toBe(false);
+    expect(StatusManager.shouldContainerCollapse([NodeStatus.READY, NodeStatus.ERROR], on)).toBe(
+      false,
+    );
   });
 });
 

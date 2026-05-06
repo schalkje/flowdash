@@ -1,65 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extended 05 - Nesting (3 levels)</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edges – Extended</h1>
-        <h2>05 - Nesting (3 levels)</h2>
-        <div class="demo-controls">
-            <button id="collapseAll">Collapse All</button>
-            <button id="expandAll">Expand All</button>
-        </div>
+      <h1>Edges – Extended</h1>
+      <h2>05 - Nesting (3 levels)</h2>
+      <div class="demo-controls">
+        <button id="collapseAll">Collapse All</button>
+        <button id="expandAll">Expand All</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <script type="module">
-        import { demoData } from './js/extended-05.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/extended-05.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        function build(dataset) {
-            const ds = dataset || demoData;
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      let flowdash;
+      function build(dataset) {
+        const ds = dataset || demoData;
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => demoData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => demoData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(demoData);
+      build(demoData);
 
-        function toggleAll(collapsed) {
-          const root = flowdash?.main?.root; if (!root) return;
-          const nodes = root.getAllNodes();
-          nodes.filter(n => n.isContainer).forEach(n => { n.collapsed = collapsed; });
-        }
-        document.getElementById('collapseAll').addEventListener('click', () => toggleAll(true));
-        document.getElementById('expandAll').addEventListener('click', () => toggleAll(false));
+      function toggleAll(collapsed) {
+        const root = flowdash?.main?.root;
+        if (!root) return;
+        const nodes = root.getAllNodes();
+        nodes
+          .filter((n) => n.isContainer)
+          .forEach((n) => {
+            n.collapsed = collapsed;
+          });
+      }
+      document.getElementById('collapseAll').addEventListener('click', () => toggleAll(true));
+      document.getElementById('expandAll').addEventListener('click', () => toggleAll(false));
     </script>
-</body>
+  </body>
 </html>
-
-

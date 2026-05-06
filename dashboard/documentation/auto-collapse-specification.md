@@ -9,20 +9,23 @@ The auto-collapse feature (`toggleCollapseOnStatusChange`) automatically collaps
 ### Setting: `toggleCollapseOnStatusChange`
 
 **Type:** `boolean`  
-**Default:** 
+**Default:**
+
 - `true` for production (`flowdash-js.html`, `flowdash-bundle.html`)
 - `false` for demo pages
 
 **Location in settings:**
+
 ```javascript
 {
   settings: {
-    toggleCollapseOnStatusChange: true
+    toggleCollapseOnStatusChange: true;
   }
 }
 ```
 
 **Related Settings:**
+
 - `cascadeOnStatusChange`: When `true`, status changes propagate to child nodes
 - `zoomToRoot`: Controls initial zoom behavior
 - `showBoundingBox`: Shows selection bounding box
@@ -53,35 +56,35 @@ The following statuses are defined in `NodeStatus` (from `nodeBase.js`):
 
 ```javascript
 export const NodeStatus = Object.freeze({
-  UNDETERMINED: 'Undetermined',  // Status not yet determined
-  UNKNOWN: 'Unknown',            // Status is unknown
-  DISABLED: 'Disabled',          // Intentionally disabled
+  UNDETERMINED: 'Undetermined', // Status not yet determined
+  UNKNOWN: 'Unknown', // Status is unknown
+  DISABLED: 'Disabled', // Intentionally disabled
   // Process states (success/normal)
-  READY: 'Ready',                // Ready to process → COLLAPSE
-  UPDATING: 'Updating',          // Currently updating
-  UPDATED: 'Updated',            // Successfully updated → COLLAPSE
-  SKIPPED: 'Skipped',            // Skipped as expected → COLLAPSE
+  READY: 'Ready', // Ready to process → COLLAPSE
+  UPDATING: 'Updating', // Currently updating
+  UPDATED: 'Updated', // Successfully updated → COLLAPSE
+  SKIPPED: 'Skipped', // Skipped as expected → COLLAPSE
   // Error states (problems)
-  DELAYED: 'Delayed',            // Processing delayed → EXPAND
-  WARNING: 'Warning',            // Has warnings → EXPAND
-  ERROR: 'Error'                 // Has errors → EXPAND
+  DELAYED: 'Delayed', // Processing delayed → EXPAND
+  WARNING: 'Warning', // Has warnings → EXPAND
+  ERROR: 'Error', // Has errors → EXPAND
 });
 ```
 
 ### Collapse Decision Matrix
 
-| Status | Auto-Collapse | Rationale |
-|--------|---------------|-----------|
-| `READY` | ✅ Yes | Success state - no problems to show |
-| `DISABLED` | ✅ Yes | Intentionally inactive - no action needed |
-| `UPDATED` | ✅ Yes | Successfully completed - no problems |
-| `SKIPPED` | ✅ Yes | Expected skip - no problems |
-| `ERROR` | ❌ No | Problem state - needs visibility |
-| `WARNING` | ❌ No | Problem state - needs visibility |
-| `DELAYED` | ❌ No | Problem state - needs visibility |
-| `UPDATING` | ❌ No | Active state - needs visibility |
-| `UNKNOWN` | ❌ No | Unclear state - keep visible for investigation |
-| `UNDETERMINED` | ❌ No | Not yet evaluated - keep visible |
+| Status         | Auto-Collapse | Rationale                                      |
+| -------------- | ------------- | ---------------------------------------------- |
+| `READY`        | ✅ Yes        | Success state - no problems to show            |
+| `DISABLED`     | ✅ Yes        | Intentionally inactive - no action needed      |
+| `UPDATED`      | ✅ Yes        | Successfully completed - no problems           |
+| `SKIPPED`      | ✅ Yes        | Expected skip - no problems                    |
+| `ERROR`        | ❌ No         | Problem state - needs visibility               |
+| `WARNING`      | ❌ No         | Problem state - needs visibility               |
+| `DELAYED`      | ❌ No         | Problem state - needs visibility               |
+| `UPDATING`     | ❌ No         | Active state - needs visibility                |
+| `UNKNOWN`      | ❌ No         | Unclear state - keep visible for investigation |
+| `UNDETERMINED` | ❌ No         | Not yet evaluated - keep visible               |
 
 ### Implementation Details
 
@@ -132,7 +135,7 @@ static shouldCollapseOnStatus(status, settings) {
   if (!settings.toggleCollapseOnStatusChange) {
     return false;
   }
-  
+
   return [NodeStatus.READY, NodeStatus.DISABLED, NodeStatus.UPDATED, NodeStatus.SKIPPED].includes(status);
 }
 ```
@@ -142,6 +145,7 @@ static shouldCollapseOnStatus(status, settings) {
 Determines if a container should collapse based on its children's statuses.
 
 **Rules:**
+
 1. **Collapse when all non-disabled children share the same collapsible status**
 2. **Collapse when children are only SKIPPED and/or UPDATED** (any combination)
 
@@ -150,27 +154,27 @@ static shouldContainerCollapse(childStatuses, settings) {
   if (!settings.toggleCollapseOnStatusChange || childStatuses.length === 0) {
     return false;
   }
-  
+
   // Filter out DISABLED statuses
   const nonDisabledStatuses = childStatuses.filter(s => s !== NodeStatus.DISABLED);
-  
+
   if (nonDisabledStatuses.length === 0) {
     return false; // All disabled, don't collapse
   }
-  
+
   // Get unique statuses
   const uniqueStatuses = [...new Set(nonDisabledStatuses)];
-  
+
   // Rule 1: All non-disabled children have the same status
   if (uniqueStatuses.length === 1) {
     return true;
   }
-  
+
   // Rule 2: Children are only SKIPPED and/or UPDATED
-  const onlySkippedAndUpdated = uniqueStatuses.every(s => 
+  const onlySkippedAndUpdated = uniqueStatuses.every(s =>
     s === NodeStatus.SKIPPED || s === NodeStatus.UPDATED
   );
-  
+
   return onlySkippedAndUpdated;
 }
 ```
@@ -221,6 +225,7 @@ applyDeferredStatusRules(root) {
 When `cascadeOnStatusChange` is enabled, container status is derived from children:
 
 **Priority Order (highest to lowest):**
+
 1. `ERROR`
 2. `WARNING`
 3. `DELAYED`
@@ -235,6 +240,7 @@ When `cascadeOnStatusChange` is enabled, container status is derived from childr
 ### Zoom Behavior
 
 Auto-collapse interacts with zoom behavior:
+
 - When a node collapses, `onDisplayChange()` is triggered
 - The zoom manager (`ZoomManager.handleLayoutChange()`) adjusts the view to maintain context
 - Double-clicking a collapsed node zooms to its bounding box
@@ -315,11 +321,13 @@ Auto-collapse interacts with zoom behavior:
 Re-evaluates and applies status-based collapse logic to all nodes.
 
 **When to Call:**
+
 - After changing `toggleCollapseOnStatusChange` setting
 - After bulk status updates
 - When manually synchronizing collapse states with statuses
 
 **Example:**
+
 ```javascript
 // Change setting
 dashboard.data.settings.toggleCollapseOnStatusChange = true;
@@ -341,16 +349,18 @@ Applies status rules after pre-render initialization (internal method).
 Determines if a single status should trigger collapse.
 
 **Parameters:**
+
 - `status` (string): Node status value
 - `settings` (object): Dashboard settings
 
 **Returns:** `boolean` - `true` if node should collapse
 
 **Example:**
+
 ```javascript
 const shouldCollapse = StatusManager.shouldCollapseOnStatus(
-  NodeStatus.READY, 
-  dashboard.data.settings
+  NodeStatus.READY,
+  dashboard.data.settings,
 );
 // Returns: true (READY is a collapsible status)
 ```
@@ -360,17 +370,19 @@ const shouldCollapse = StatusManager.shouldCollapseOnStatus(
 Determines if a container should collapse based on its children's statuses.
 
 **Parameters:**
+
 - `childStatuses` (array): Array of child node statuses
 - `settings` (object): Dashboard settings
 
 **Returns:** `boolean` - `true` if container should collapse
 
 **Example:**
+
 ```javascript
 const childStatuses = [NodeStatus.UPDATED, NodeStatus.SKIPPED];
 const shouldCollapse = StatusManager.shouldContainerCollapse(
   childStatuses,
-  dashboard.data.settings
+  dashboard.data.settings,
 );
 // Returns: true (only UPDATED/SKIPPED mix)
 ```
@@ -384,16 +396,18 @@ Controls the collapsed state of a container node.
 **Type:** `boolean`
 
 **Example:**
+
 ```javascript
 // Get current state
 const isCollapsed = node.collapsed;
 
 // Set state (triggers expand/collapse methods)
-node.collapsed = true;  // Collapse
+node.collapsed = true; // Collapse
 node.collapsed = false; // Expand
 ```
 
 **Side Effects:**
+
 - Setting this property triggers `collapse()` or `expand()` methods
 - Calls `onDisplayChange()` callback
 - Updates layout and zoom behavior
@@ -405,6 +419,7 @@ Controls the status of a node.
 **Type:** `string` (one of `NodeStatus` enum values)
 
 **Example:**
+
 ```javascript
 // Get current status
 const currentStatus = node.status;
@@ -436,6 +451,7 @@ console.log('[determineAggregateStatus] Priority match:', statuses, '->', status
 #### Issue: Nodes not collapsing on status change
 
 **Check:**
+
 1. Is `toggleCollapseOnStatusChange` enabled?
 2. Is the status one of the collapsible statuses (READY, DISABLED, UPDATED, SKIPPED)?
 3. Is the node a container (has children)?
@@ -443,6 +459,7 @@ console.log('[determineAggregateStatus] Priority match:', statuses, '->', status
 #### Issue: Container expands when it should collapse
 
 **Check:**
+
 1. Review child statuses - are they all collapsible?
 2. Check if any child has ERROR, WARNING, or other non-collapsible status
 3. Verify `cascadeOnStatusChange` is configured as expected
@@ -450,6 +467,7 @@ console.log('[determineAggregateStatus] Priority match:', statuses, '->', status
 #### Issue: Auto-collapse not working after data update
 
 **Solution:** Call `updateStatusBasedCollapse()` after updating data:
+
 ```javascript
 dashboard.setData(newData).then(() => {
   dashboard.updateStatusBasedCollapse();
@@ -473,6 +491,7 @@ dashboard.setData(newData).then(() => {
 ### Large Dashboards
 
 For dashboards with 100+ nodes:
+
 - Auto-collapse reduces visible nodes, improving rendering performance
 - Collapsed nodes have simplified DOM structure
 - Fewer visible edges means faster edge routing
@@ -502,6 +521,7 @@ For dashboards with 100+ nodes:
 ### Test Files
 
 Relevant test files in the codebase:
+
 - `tests/nodes.spec.js` - Node behavior tests
 - `tests/dashboard.spec.js` - Dashboard-level tests
 - Demo pages in `11_dashboard/` with toggle controls

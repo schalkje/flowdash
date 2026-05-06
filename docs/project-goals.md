@@ -32,13 +32,13 @@ The demo philosophy:
 
 The project should ship with **all four layers of the testing pyramid**:
 
-| Layer | What it asserts | Why we need it |
-|-------|----------------|----------------|
-| **Unit tests** | Pure-function correctness (path math, geometry, force calculations, settings merge, registry dispatch, status transitions). | Fast feedback, low flakiness, exhaustive edge-case coverage that's impractical at higher levels. |
-| **Integration / component tests** | A node renders correctly in a real browser. A container collapses and reflows. | Catches integration mistakes between modules and DOM. |
-| **End-to-end tests** | A full dashboard loads a JSON fixture, the user clicks, selects, zooms, swaps themes, and the system stays consistent. | Mirrors how external consumers will use the library. |
-| **Visual regression** | Pixel/screenshot diffs on canonical demos and themes. | Catches subtle rendering bugs (spacing, stroke, color) that DOM assertions miss. |
-| **Performance benchmarks** | Init / collapse / relayout times on representative datasets, with and without pre-render. | Guards the 800+-node pre-render fast path and prevents silent regressions. |
+| Layer                             | What it asserts                                                                                                             | Why we need it                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Unit tests**                    | Pure-function correctness (path math, geometry, force calculations, settings merge, registry dispatch, status transitions). | Fast feedback, low flakiness, exhaustive edge-case coverage that's impractical at higher levels. |
+| **Integration / component tests** | A node renders correctly in a real browser. A container collapses and reflows.                                              | Catches integration mistakes between modules and DOM.                                            |
+| **End-to-end tests**              | A full dashboard loads a JSON fixture, the user clicks, selects, zooms, swaps themes, and the system stays consistent.      | Mirrors how external consumers will use the library.                                             |
+| **Visual regression**             | Pixel/screenshot diffs on canonical demos and themes.                                                                       | Catches subtle rendering bugs (spacing, stroke, color) that DOM assertions miss.                 |
+| **Performance benchmarks**        | Init / collapse / relayout times on representative datasets, with and without pre-render.                                   | Guards the 800+-node pre-render fast path and prevents silent regressions.                       |
 
 E2E and component testing are mature today; the rest are aspirations the [`improvement-plan.md`](./improvement-plan.md) addresses.
 
@@ -78,8 +78,8 @@ These have been considered and intentionally deferred. They may move into goals 
 
 ## What "done" looks like for each goal
 
-| Goal | Done means |
-|------|-----------|
+| Goal    | Done means                                                                                                                                                                 |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Library | An external app can `<script src=".../flowdash.min.js">`, drop in a JSON, and get a working dashboard. Versioning is predictable. Breaking changes are rare and announced. |
-| Demos | Every public feature has at least one dedicated demo page, listed in the root navigator. The flagship `11_dashboard/` showcase composes them all. |
-| Testing | A green CI run gives high confidence that a release is safe to ship: unit + integration + e2e + visual + perf, all enforced. |
+| Demos   | Every public feature has at least one dedicated demo page, listed in the root navigator. The flagship `11_dashboard/` showcase composes them all.                          |
+| Testing | A green CI run gives high confidence that a release is safe to ship: unit + integration + e2e + visual + perf, all enforced.                                               |

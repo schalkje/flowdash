@@ -65,10 +65,7 @@ js/
 import { createAndInitDashboard } from './js/dashboard.js';
 
 // Initialize dashboard with data and DOM selectors
-const dashboard = createAndInitDashboard(
-  dashboardData, 
-  '#main-container'
-);
+const dashboard = createAndInitDashboard(dashboardData, '#main-container');
 ```
 
 ## Data Structure
@@ -118,4 +115,4 @@ The current implementation has several areas where DRY principles could be bette
 4. **Status Management** - Centralized status calculation logic
 5. **Configuration** - Default settings could be centralized
 
-See [Code Cleanup Plan](implementation-cleanup.md) for detailed recommendations. 
+See [Code Cleanup Plan](implementation-cleanup.md) for detailed recommendations.

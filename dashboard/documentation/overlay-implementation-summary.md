@@ -11,12 +11,14 @@ The loading overlay has been partially renewed following the requirements in `ov
 ## Completed Items ✅
 
 ### 1. Overlay Instance Management
+
 - ✅ Created `LoadingOverlay` class for per-dashboard instances
 - ✅ Updated MIN_VISIBLE_MS to 2000ms (2 seconds)
 - ✅ Dashboard class now creates its own overlay instance (`this.loadingOverlay`)
 - ✅ Added `_ensureLoadingOverlay()` method to Dashboard class
 
 ### 2. API & Integration
+
 - ✅ Added `setProgress(progressMessage)` function (new requirement)
 - ✅ Dashboard class has methods:
   - `showLoading()`
@@ -28,6 +30,7 @@ The loading overlay has been partially renewed following the requirements in `ov
 - ✅ Window globals include `setProgress`
 
 ### 3. Class Methods Added
+
 - ✅ `ensure()` - Creates overlay elements
 - ✅ `createContainer()` - Creates modal container
 - ✅ `removeContainer()` - Cleanup
@@ -42,11 +45,13 @@ The loading overlay has been partially renewed following the requirements in `ov
 - ✅ `hideLoading()` - Hide with min duration
 
 ### 4. Accessibility
+
 - ✅ ARIA attributes updated on stage/message changes
 - ✅ `role="status"` and `aria-live="polite"` set on overlay
 - ✅ Dynamic `aria-label` updates
 
 ### 5. Modal Behavior
+
 - ✅ Container blocks pointer events when visible (`pointerEvents: 'auto'`)
 - ✅ Container is hidden by default
 - ✅ Host element gets `position: relative` if needed
@@ -54,14 +59,17 @@ The loading overlay has been partially renewed following the requirements in `ov
 ## Remaining Work ⚠️
 
 ### File Cleanup Required
+
 The `loadingOverlay.js` file currently has **duplicate object-style methods** that need to be removed. The class has proper methods but the old object-based methods (lines ~540-720) still exist and cause syntax errors.
 
 **Required actions:**
+
 1. Remove old object-style methods (commas instead of proper method syntax)
 2. Keep only the class-based implementation
 3. Ensure `LoadingOverlay` export points to the legacy compatibility object
 
 ### Testing Needed
+
 - [ ] Unit tests for overlay creation
 - [ ] Unit tests for visibility timing (2-second minimum)
 - [ ] Unit tests for stage recording
@@ -70,6 +78,7 @@ The `loadingOverlay.js` file currently has **duplicate object-style methods** th
 - [ ] Test parallel dashboard loads
 
 ### Documentation Updates
+
 - [ ] Update overlay.md with new class-based approach
 - [ ] Add examples of using per-dashboard instances
 - [ ] Document backward compatibility layer
@@ -79,6 +88,7 @@ The `loadingOverlay.js` file currently has **duplicate object-style methods** th
 ### Architecture
 
 **Per-Dashboard Instances:**
+
 ```javascript
 // In Dashboard constructor:
 this.loadingOverlay = null; // Created on first use
@@ -93,6 +103,7 @@ showLoading() {
 ```
 
 **Legacy Global Compatibility:**
+
 ```javascript
 // Global functions delegate to singleton instance
 export function showLoading(containerOrSelector = null) {

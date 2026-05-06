@@ -30,7 +30,9 @@ test.describe('themes-grid pages', () => {
       expect(errors, `no console errors on ${path}: ${errors.join('\n')}`).toEqual([]);
     });
 
-    test(`${path} clicking a card's fullscreen button overlays it over the grid`, async ({ page }) => {
+    test(`${path} clicking a card's fullscreen button overlays it over the grid`, async ({
+      page,
+    }) => {
       // 10 iframes per page × parallel workers can starve any single card's
       // bootstrap. Triple the default test budget so the button-rebind has
       // headroom even under contention.

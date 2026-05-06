@@ -1,48 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Overlay — basic</title>
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <style>
       .floating-tooltip {
-        position: absolute; pointer-events: none;
-        background: #222; color: #fff; padding: 6px 10px;
-        border-radius: 4px; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,.2);
-        opacity: 0; transition: opacity 0.15s; z-index: 1000;
+        position: absolute;
+        pointer-events: none;
+        background: #222;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 1000;
       }
-      .floating-tooltip.show { opacity: 1; }
+      .floating-tooltip.show {
+        opacity: 1;
+      }
     </style>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Overlay</h1>
-        <h2>basic</h2>
-        <p class="demo-description">
-          Click "Show loading" to mount the dashboard's loading overlay; click a node
-          to attach a floating-div tooltip. Both patterns are common needs for external
-          consumers.
-        </p>
-        <div class="demo-controls">
-          <button id="loadingBtn">Show loading (2s)</button>
-          <button id="hideTipBtn">Hide tooltip</button>
-        </div>
+      <h1>Overlay</h1>
+      <h2>basic</h2>
+      <p class="demo-description">
+        Click "Show loading" to mount the dashboard's loading overlay; click a node to attach a
+        floating-div tooltip. Both patterns are common needs for external consumers.
+      </p>
+      <div class="demo-controls">
+        <button id="loadingBtn">Show loading (2s)</button>
+        <button id="hideTipBtn">Hide tooltip</button>
+      </div>
     </header>
     <div class="demo-container" style="position: relative">
-        <svg id="graph" class="canvas"></svg>
-        <div id="tooltip" class="floating-tooltip"></div>
+      <svg id="graph" class="canvas"></svg>
+      <div id="tooltip" class="floating-tooltip"></div>
     </div>
     <footer class="demo-info">
       <div class="demo-metadata">
-        <p><strong>API:</strong> <code>dashboard.showLoading()</code> / <code>dashboard.hideLoading()</code></p>
-        <p><strong>Reference:</strong> <a href="../../dashboard/documentation/overlay.md">/dashboard/documentation/overlay.md</a></p>
+        <p>
+          <strong>API:</strong> <code>dashboard.showLoading()</code> /
+          <code>dashboard.hideLoading()</code>
+        </p>
+        <p>
+          <strong>Reference:</strong>
+          <a href="../../dashboard/documentation/overlay.md">/dashboard/documentation/overlay.md</a>
+        </p>
       </div>
     </footer>
     <script type="module">
@@ -53,8 +69,14 @@
       window.dashboard = dashboard;
 
       document.getElementById('loadingBtn').addEventListener('click', () => {
-        try { dashboard.showLoading?.(); } catch {}
-        setTimeout(() => { try { dashboard.hideLoading?.(); } catch {} }, 2000);
+        try {
+          dashboard.showLoading?.();
+        } catch {}
+        setTimeout(() => {
+          try {
+            dashboard.hideLoading?.();
+          } catch {}
+        }, 2000);
       });
 
       const tooltip = document.getElementById('tooltip');
@@ -63,10 +85,12 @@
         tooltip.textContent = `${node.data?.label ?? node.id} — ${node.data?.code ?? ''}`;
         tooltip.classList.add('show');
         const rect = document.querySelector('.demo-container').getBoundingClientRect();
-        tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
-        tooltip.style.top  = (event.clientY - rect.top + 12) + 'px';
+        tooltip.style.left = event.clientX - rect.left + 12 + 'px';
+        tooltip.style.top = event.clientY - rect.top + 12 + 'px';
       }
-      function hideTooltip() { tooltip.classList.remove('show'); }
+      function hideTooltip() {
+        tooltip.classList.remove('show');
+      }
       document.getElementById('hideTipBtn').addEventListener('click', hideTooltip);
 
       // Wait for init (which constructs main.root) before attaching the click handler.
@@ -77,5 +101,5 @@
         if (event) showTooltip(node, event);
       };
     </script>
-</body>
+  </body>
 </html>

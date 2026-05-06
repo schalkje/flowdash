@@ -24,11 +24,11 @@ export class ZoneManager {
     // Check if setting allows skipping zone calculations
     const skipZoneCalcs = this.node.settings?.prerenderSkipZoneCalculations !== false;
     if (!skipZoneCalcs) return false;
-    
+
     if (!this.node.hasPrerenderData) return false;
     if (!this.node.isContainer) return false;
     if (!this.node.childNodes || this.node.childNodes.length === 0) return true;
-    return this.node.childNodes.every(child => child.hasPrerenderData);
+    return this.node.childNodes.every((child) => child.hasPrerenderData);
   }
 
   /**
@@ -39,28 +39,28 @@ export class ZoneManager {
     this._prerenderMode = true;
     this.zones = new Map();
     this.initialized = true;
-    
+
     // Create minimal zone structure without calculations
     // This allows collapse/expand to still work if needed
     this.createZone('container', new ContainerZone(this.node));
     this.createZone('header', new HeaderZone(this.node));
     this.createZone('margin', new MarginZone(this.node));
-    
+
     // Only create inner container if expanded
     if (!this.node.collapsed) {
       this.createZone('innerContainer', new InnerContainerZone(this.node));
     }
-    
+
     // Initialize zones but they won't do calculations in pre-render mode
-    this.zones.forEach(zone => {
+    this.zones.forEach((zone) => {
       zone._prerenderMode = true;
       zone.init();
     });
-    
+
     // Set zone sizes from pre-render data so zones render correctly
     // Zones will accept the size but skip expensive calculations
     if (this.node.data.width && this.node.data.height) {
-      this.zones.forEach(zone => zone.resize(this.node.data.width, this.node.data.height));
+      this.zones.forEach((zone) => zone.resize(this.node.data.width, this.node.data.height));
     }
   }
 
@@ -86,7 +86,7 @@ export class ZoneManager {
     }
 
     // Initialize zones
-    this.zones.forEach(zone => zone.init());
+    this.zones.forEach((zone) => zone.init());
 
     this.initialized = true;
   }
@@ -117,7 +117,7 @@ export class ZoneManager {
    * Update all zones
    */
   update() {
-    this.zones.forEach(zone => zone.update());
+    this.zones.forEach((zone) => zone.update());
   }
 
   /**
@@ -125,15 +125,19 @@ export class ZoneManager {
    */
   resize(width, height) {
     // Prevent repeated resizes with the same dimensions to avoid infinite loops
-    if (this._lastResize && this._lastResize.width === width && this._lastResize.height === height) {
+    if (
+      this._lastResize &&
+      this._lastResize.width === width &&
+      this._lastResize.height === height
+    ) {
       return;
     }
-    
+
     this._lastResize = { width, height };
-    
+
     // In pre-render mode, still propagate size to zones for rendering
     // but zones will skip expensive calculations internally
-    this.zones.forEach(zone => zone.resize(width, height));
+    this.zones.forEach((zone) => zone.resize(width, height));
   }
 
   /**
@@ -170,7 +174,9 @@ export class ZoneManager {
   calculateTotalSize() {
     const headerSize = this.headerZone.getSize();
     const margins = this.marginZone.getMargins();
-    const innerContainerSize = this.innerContainerZone ? this.innerContainerZone.getSize() : { width: 0, height: 0 };
+    const innerContainerSize = this.innerContainerZone
+      ? this.innerContainerZone.getSize()
+      : { width: 0, height: 0 };
 
     // When collapsed, margins should not contribute to container height
     // Only header height and minimum size constraints should apply
@@ -179,12 +185,13 @@ export class ZoneManager {
       const height = Math.max(headerSize.height, minNodeHeight);
       return {
         width: Math.max(headerSize.width, innerContainerSize.width) + margins.left + margins.right,
-        height
+        height,
       };
     }
 
     // When expanded, include all zone sizes
-    const rawWidth = Math.max(headerSize.width, innerContainerSize.width) + margins.left + margins.right;
+    const rawWidth =
+      Math.max(headerSize.width, innerContainerSize.width) + margins.left + margins.right;
     const rawHeight = headerSize.height + margins.top + innerContainerSize.height + margins.bottom;
 
     // Enforce minimum height constraints consistent with Lane behavior:
@@ -196,7 +203,7 @@ export class ZoneManager {
 
     return {
       width: rawWidth,
-      height: finalHeight
+      height: finalHeight,
     };
   }
 
@@ -204,7 +211,9 @@ export class ZoneManager {
    * Get coordinate system for child positioning
    */
   getChildCoordinateSystem() {
-    return this.innerContainerZone ? this.innerContainerZone.getCoordinateSystem() : { origin: { x: 0, y: 0 }, size: { width: 0, height: 0 }, transform: 'translate(0, 0)' };
+    return this.innerContainerZone
+      ? this.innerContainerZone.getCoordinateSystem()
+      : { origin: { x: 0, y: 0 }, size: { width: 0, height: 0 }, transform: 'translate(0, 0)' };
   }
 
   /**
@@ -218,7 +227,7 @@ export class ZoneManager {
       }
     } else {
       // Propagate to all zones
-      this.zones.forEach(zone => zone.handleEvent(eventType, event));
+      this.zones.forEach((zone) => zone.handleEvent(eventType, event));
     }
   }
 
@@ -226,7 +235,7 @@ export class ZoneManager {
    * Clean up all zones
    */
   destroy() {
-    this.zones.forEach(zone => zone.destroy());
+    this.zones.forEach((zone) => zone.destroy());
     this.zones.clear();
     this.initialized = false;
   }
@@ -272,4 +281,4 @@ export class ZoneManager {
     }
     return this.innerContainerZone;
   }
-} 
+}

@@ -9,12 +9,12 @@
  */
 function resolveLoadingContainer(svgSelection) {
   const svgNode = svgSelection && svgSelection.node ? svgSelection.node() : svgSelection;
-  
+
   if (!svgNode || !svgNode.parentElement) {
     console.error('❌ resolveLoadingContainer() - SVG or its parent element not found');
     throw new Error('Loading overlay requires SVG with a parent element');
   }
-  
+
   console.log('🎯 resolveLoadingContainer() - Using SVG parent element:', svgNode.parentElement);
   return svgNode.parentElement;
 }
@@ -42,7 +42,7 @@ export class LoadingOverlay {
     this.MIN_VISIBLE_MS = 2000; // Updated to 2 seconds as per requirements
     this.containerCreated = false;
   }
-  
+
   /**
    * Create overlay container within the host element
    */
@@ -51,9 +51,12 @@ export class LoadingOverlay {
       console.warn('⚠️ LoadingOverlay.createContainer() - No host element');
       return null;
     }
-    
-    console.log('🔧 LoadingOverlay.createContainer() - Creating overlay container in host:', this.hostElement);
-    
+
+    console.log(
+      '🔧 LoadingOverlay.createContainer() - Creating overlay container in host:',
+      this.hostElement,
+    );
+
     // Ensure host has position: relative for absolute positioning
     try {
       const cs = window.getComputedStyle ? window.getComputedStyle(this.hostElement) : null;
@@ -61,7 +64,7 @@ export class LoadingOverlay {
         this.hostElement.style.position = 'relative';
       }
     } catch {}
-    
+
     // Create overlay container
     const container = document.createElement('div');
     container.className = 'flowdash-loading-container';
@@ -69,13 +72,13 @@ export class LoadingOverlay {
     container.style.inset = '0';
     container.style.pointerEvents = 'none'; // Allow clicks through container
     container.style.zIndex = '20000';
-    
+
     this.hostElement.appendChild(container);
     this.containerCreated = true;
-    
+
     return container;
   }
-  
+
   /**
    * Remove overlay container
    */
@@ -96,12 +99,12 @@ export class LoadingOverlay {
       console.warn('⚠️ LoadingOverlay.ensure() - No host element');
       return null;
     }
-    
+
     // Create container if needed
     if (!this.containerCreated) {
       this.createContainer();
     }
-    
+
     // Create overlay element if needed
     if (!this.el && this.hostElement) {
       const container = this.hostElement.querySelector('.flowdash-loading-container');
@@ -109,7 +112,7 @@ export class LoadingOverlay {
         console.warn('⚠️ LoadingOverlay.ensure() - No container found');
         return null;
       }
-      
+
       const wrapper = document.createElement('div');
       wrapper.id = 'flowdash-loading';
       wrapper.className = 'flowdash-loading';
@@ -136,7 +139,7 @@ export class LoadingOverlay {
       wrapper.appendChild(dots);
       wrapper.appendChild(timer);
       wrapper.appendChild(stageHistory);
-      
+
       container.appendChild(wrapper);
 
       this.el = wrapper;
@@ -144,10 +147,10 @@ export class LoadingOverlay {
       this.textEl = text;
       this.timerEl = timer;
       this.stageHistoryEl = stageHistory;
-      
+
       console.log('🔧 LoadingOverlay.ensure() - Created overlay element');
     }
-    
+
     return this.el;
   }
 
@@ -160,7 +163,12 @@ export class LoadingOverlay {
     this.timer = setInterval(() => {
       if (!this.dotsEl) return;
       i = (i + 1) % 4;
-      this.dotsEl.textContent = i === 0 ? '' : Array.from({ length: i }).map(() => '.').join(' ');
+      this.dotsEl.textContent =
+        i === 0
+          ? ''
+          : Array.from({ length: i })
+              .map(() => '.')
+              .join(' ');
     }, 450);
   }
 
@@ -203,25 +211,25 @@ export class LoadingOverlay {
    */
   updateTimerDisplay() {
     if (!this.timerEl || !this.totalStartTime) return;
-    
+
     const now = Date.now();
     const totalMs = now - this.totalStartTime;
     const stageMs = now - this.stageStartTime;
-    
+
     const formatTime = (ms) => {
       if (ms < 1000) return `${ms}ms`;
       return `${(ms / 1000).toFixed(1)}s`;
     };
-    
+
     let timerText = '';
     if (stageMs === totalMs) {
       timerText = `(${formatTime(totalMs)})`;
     } else {
       timerText = `(${formatTime(stageMs)} / ${formatTime(totalMs)})`;
     }
-    
+
     this.timerEl.textContent = timerText;
-    
+
     // Update ARIA for accessibility
     if (this.el) {
       this.el.setAttribute('aria-label', `Loading: ${this.baseText} ${timerText}`);
@@ -234,32 +242,34 @@ export class LoadingOverlay {
    */
   setLoadingStage(stageName) {
     const now = Date.now();
-    
+
     if (this.currentStage && this.stageStartTime) {
       const stageDuration = now - this.stageStartTime;
       const totalDuration = now - this.totalStartTime;
-      console.log(`⏱️ Stage "${this.currentStage}" completed in ${stageDuration}ms (total: ${totalDuration}ms)`);
-      
+      console.log(
+        `⏱️ Stage "${this.currentStage}" completed in ${stageDuration}ms (total: ${totalDuration}ms)`,
+      );
+
       this.stageHistory.push({
         name: this.currentStage,
         duration: stageDuration,
-        endTime: now
+        endTime: now,
       });
-      
+
       requestAnimationFrame(() => {
         this.updateStageHistoryDisplay();
       });
     }
-    
+
     this.currentStage = stageName;
     this.stageStartTime = now;
     console.log(`⏱️ Starting stage "${stageName}"`);
-    
+
     if (this.textEl) {
       this.textEl.textContent = stageName;
     }
     this.baseText = stageName;
-    
+
     if (this.el) {
       this.el.setAttribute('aria-label', `Loading: ${stageName}`);
     }
@@ -271,14 +281,14 @@ export class LoadingOverlay {
    */
   setProgress(progressMessage) {
     if (!progressMessage) return;
-    
+
     const message = `${this.currentStage} (${progressMessage})`;
     if (this.textEl) {
       this.textEl.textContent = message;
     }
-    
+
     console.log(`📊 Progress: ${progressMessage}`);
-    
+
     if (this.el) {
       this.el.setAttribute('aria-label', `Loading: ${message}`);
     }
@@ -293,7 +303,7 @@ export class LoadingOverlay {
       this.textEl.textContent = message;
     }
     this.baseText = message;
-    
+
     if (this.el) {
       this.el.setAttribute('aria-label', `Loading: ${message}`);
     }
@@ -304,16 +314,18 @@ export class LoadingOverlay {
    */
   updateStageHistoryDisplay() {
     if (!this.stageHistoryEl) return;
-    
+
     const formatTime = (ms) => {
       if (ms < 1000) return `${ms}ms`;
       return `${(ms / 1000).toFixed(1)}s`;
     };
-    
-    const historyHtml = this.stageHistory.map(stage => 
-      `<div class="stage-entry">${stage.name} - ${formatTime(stage.duration)}</div>`
-    ).join('');
-    
+
+    const historyHtml = this.stageHistory
+      .map(
+        (stage) => `<div class="stage-entry">${stage.name} - ${formatTime(stage.duration)}</div>`,
+      )
+      .join('');
+
     this.stageHistoryEl.innerHTML = historyHtml;
   }
 
@@ -322,16 +334,16 @@ export class LoadingOverlay {
    */
   showLoading() {
     console.log('🔵 LoadingOverlay.showLoading() called');
-    
+
     const el = this.ensure();
     if (!el) {
       console.warn('⚠️ LoadingOverlay.showLoading() - No element created');
       return;
     }
-    
+
     const now = Date.now();
     this.shownAt = now;
-    
+
     if (!this.totalStartTime) {
       this.totalStartTime = now;
       this.stageStartTime = now;
@@ -339,27 +351,27 @@ export class LoadingOverlay {
       this.stageHistory = [];
       console.log('⏱️ LoadingOverlay.showLoading() - Starting total timer');
     }
-    
+
     // Show container
     const container = this.hostElement.querySelector('.flowdash-loading-container');
     if (container) {
       container.style.display = 'block';
       container.style.pointerEvents = 'auto'; // Modal mode
     }
-    
+
     el.style.display = 'flex';
-    
+
     if (this.textEl) {
       this.textEl.textContent = this.baseText;
     }
-    
+
     this.startDots();
     this.startDisplayTimer();
-    
+
     if (this.el) {
       this.el.setAttribute('aria-label', `Loading: ${this.baseText}`);
     }
-    
+
     console.log('🔵 LoadingOverlay.showLoading() - Complete');
   }
 
@@ -368,12 +380,12 @@ export class LoadingOverlay {
    */
   hideLoading() {
     console.log('🔴 LoadingOverlay.hideLoading() called');
-    
+
     if (!this.el) {
       console.warn('⚠️ LoadingOverlay.hideLoading() - No element to hide');
       return;
     }
-    
+
     // Calculate total duration and show final message
     let finalMessageDelay = 0;
     if (this.totalStartTime) {
@@ -382,19 +394,19 @@ export class LoadingOverlay {
       const stageDuration = now - this.stageStartTime;
       console.log(`⏱️ Final stage "${this.currentStage}" completed in ${stageDuration}ms`);
       console.log(`⏱️ Total loading duration: ${totalDuration}ms`);
-      
+
       this.stageHistory.push({
         name: this.currentStage,
         duration: stageDuration,
-        endTime: now
+        endTime: now,
       });
-      
+
       // Show final message with duration
       const formatTime = (ms) => {
         if (ms < 1000) return `${ms}ms`;
         return `${(ms / 1000).toFixed(1)}s`;
       };
-      
+
       const finalMessage = `Initialization finished in ${formatTime(totalDuration)}`;
       if (this.textEl) {
         this.textEl.textContent = finalMessage;
@@ -402,52 +414,49 @@ export class LoadingOverlay {
       if (this.el) {
         this.el.setAttribute('aria-label', finalMessage);
       }
-      
+
       // Stop dots and timer display when showing final message
       this.stopDots();
       this.stopDisplayTimer();
-      
+
       console.log(`✅ ${finalMessage}`);
-      
+
       // Ensure final message stays visible for at least 3 seconds
       finalMessageDelay = 3000;
-      
+
       this.totalStartTime = 0;
       this.stageStartTime = 0;
       this.currentStage = 'initializing';
     }
-    
+
     const elapsed = Date.now() - this.shownAt;
     const minDelay = Math.max(0, this.MIN_VISIBLE_MS - elapsed);
     const delay = Math.max(minDelay, finalMessageDelay);
     console.log('🔴 LoadingOverlay.hideLoading() - Elapsed:', elapsed, 'ms, delay:', delay, 'ms');
-    
+
     setTimeout(() => {
       if (!this.el) return;
-      
+
       console.log('🔴 LoadingOverlay.hideLoading() timeout - Hiding overlay');
-      
+
       // Hide container
       const container = this.hostElement.querySelector('.flowdash-loading-container');
       if (container) {
         container.style.display = 'none';
         container.style.pointerEvents = 'none';
       }
-      
+
       this.el.style.display = 'none';
-      
+
       this.stopDots();
       this.stopDisplayTimer();
-      
+
       if (this.timerEl) this.timerEl.textContent = '';
       if (this.stageHistoryEl) this.stageHistoryEl.innerHTML = '';
-      
+
       console.log('🔴 LoadingOverlay.hideLoading() timeout - Complete');
     }, delay);
   }
-
 }
 
 export { resolveLoadingContainer };
-
-

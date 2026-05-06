@@ -1,76 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>01 - All Orientations in a Lane (foundation)</title>
-    
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
-    
+
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
+
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
     <style>
-        .demo-description { max-width: 900px; }
+      .demo-description {
+        max-width: 900px;
+      }
     </style>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>foundation Demos</h1>
-        <h2>01 - All Orientations in a Lane</h2>
-        <p class="demo-description">A single lane containing five foundation nodes, each using a different orientation: horizontal, horizontal_line, vertical, rotate90, rotate270.</p>
-        <div class="demo-controls">
-            <button id="updateBtn" onclick="updateDemo()">Update</button>
-            <button id="resetBtn" onclick="resetDemo()">Reset</button>
-            <button id="testBtn" onclick="runTests()">Run Tests</button>
-        </div>
+      <h1>foundation Demos</h1>
+      <h2>01 - All Orientations in a Lane</h2>
+      <p class="demo-description">
+        A single lane containing five foundation nodes, each using a different orientation:
+        horizontal, horizontal_line, vertical, rotate90, rotate270.
+      </p>
+      <div class="demo-controls">
+        <button id="updateBtn" onclick="updateDemo()">Update</button>
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> lane + foundation</p>
-            <p><strong>Features:</strong> Multiple orientations, Zone-system layout</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> lane + foundation</p>
+        <p><strong>Features:</strong> Multiple orientations, Zone-system layout</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      </div>
     </footer>
 
     <script type="module">
-        import { demoData } from './js/all-orientations-lane.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/all-orientations-lane.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-        function build(dataset) {
-            if (!dataset) return;
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => baseData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(baseData);
-        window.demoData = demoData;
-        window.updateDemo = function() { console.log('Update demo called'); };
-        window.resetDemo = function() { flowdash.reset(); };
-        window.runTests = function() { document.getElementById('testStatus').textContent = 'Manual'; };
+      build(baseData);
+      window.demoData = demoData;
+      window.updateDemo = function () {
+        console.log('Update demo called');
+      };
+      window.resetDemo = function () {
+        flowdash.reset();
+      };
+      window.runTests = function () {
+        document.getElementById('testStatus').textContent = 'Manual';
+      };
     </script>
-</body>
+  </body>
 </html>
-
-

@@ -1,180 +1,176 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auto-Size Labels - Lane Demo</title>
-    
+
     <!-- Standard CSS -->
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
-    
-    
-    
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
+
     <!-- Required Libraries -->
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Demo Header -->
     <header class="demo-header">
-        <h1>Lane Demos</h1>
-        <h2>Auto-Size Labels</h2>
-        <p class="demo-description">Lane with auto-size labels and dynamic changes</p>
-        
-        <!-- Demo Controls -->
-        <div class="demo-controls">
-            <button id="toggleLabelsBtn" onclick="toggleLabels()">Change Labels</button>
-            <button id="resetBtn" onclick="resetDemo()">Reset</button>
-            <button id="testBtn" onclick="runTests()">Run Tests</button>
-        </div>
+      <h1>Lane Demos</h1>
+      <h2>Auto-Size Labels</h2>
+      <p class="demo-description">Lane with auto-size labels and dynamic changes</p>
+
+      <!-- Demo Controls -->
+      <div class="demo-controls">
+        <button id="toggleLabelsBtn" onclick="toggleLabels()">Change Labels</button>
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+      </div>
     </header>
 
     <!-- Demo Container -->
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <!-- Demo Information -->
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> lane</p>
-            <p><strong>Features:</strong> Auto-size labels with dynamic changes</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> lane</p>
+        <p><strong>Features:</strong> Auto-size labels with dynamic changes</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      </div>
     </footer>
 
     <script type="module">
-        // Import demo data
-        import { demoData, labelSets } from './js/graphData.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
+      // Import demo data
+      import { demoData, labelSets } from './js/graphData.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-        function build(dataset) {
-            if (!dataset) return;
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
+
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
+
+      build(baseData);
+
+      // Attach data for debugging
+      window.demoData = demoData;
+
+      // Label change functionality
+      let currentLabelSet = 0;
+
+      window.toggleLabels = function () {
+        currentLabelSet = (currentLabelSet + 1) % labelSets.length;
+        const newLabels = labelSets[currentLabelSet];
+
+        // Get the lane node from the current dashboard instance
+        const laneNode = window.flowdash.main.root;
+        if (laneNode && laneNode.isContainer && laneNode.childNodes) {
+          // Update child node labels
+          laneNode.childNodes.forEach((childNode, index) => {
+            if (newLabels[index] && childNode.data) {
+              // Update the data structure
+              childNode.data.label = newLabels[index];
+              laneNode.data.children[index].label = newLabels[index];
+
+              // Use the proper redrawText method for rect nodes
+              if (childNode.redrawText) {
+                childNode.redrawText(newLabels[index]);
+              } else {
+                // Fallback: trigger update to refresh the visual representation
+                childNode.update();
+              }
+            }
+          });
+
+          // Force layout update to adjust widths and positioning
+          laneNode.updateChildren();
+
+          // Trigger display change to update minimap and zoom
+          if (laneNode.onDisplayChange) {
+            laneNode.onDisplayChange();
+          }
         }
+      };
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => baseData,
-            buildDashboard: (dataset) => build(dataset)
+      // Demo functions
+      window.resetDemo = function () {
+        // Reset to original data structure and label set
+        currentLabelSet = 0;
+
+        // Create a deep copy of the original data to avoid modifying the original
+        const originalData = JSON.parse(JSON.stringify(demoData));
+
+        // Recreate the dashboard with original data
+        flowdash.main.svg.selectAll('*').remove();
+        const newFlowdash = new flowDashboard.Dashboard(originalData);
+        newFlowdash.initialize('#graph');
+
+        // Update global references
+        window.flowdash = newFlowdash;
+      };
+
+      window.runTests = function () {
+        // Implementation for running tests
+        runDemoTests();
+      };
+
+      // Test runner
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
+
+        // Basic validation tests
+        const tests = [testDashboardInitialization, testNodeRendering, testDataStructure];
+
+        let passed = 0;
+        let total = tests.length;
+
+        tests.forEach((test) => {
+          try {
+            if (test()) passed++;
+          } catch (e) {
+            console.error('Test failed:', e);
+          }
         });
 
-        build(baseData);
-        
-        // Attach data for debugging
-        window.demoData = demoData;
-        
-        // Label change functionality
-        let currentLabelSet = 0;
-        
-        window.toggleLabels = function() {
-            currentLabelSet = (currentLabelSet + 1) % labelSets.length;
-            const newLabels = labelSets[currentLabelSet];
-            
-            // Get the lane node from the current dashboard instance
-            const laneNode = window.flowdash.main.root;
-            if (laneNode && laneNode.isContainer && laneNode.childNodes) {
-                // Update child node labels
-                laneNode.childNodes.forEach((childNode, index) => {
-                    if (newLabels[index] && childNode.data) {
-                        // Update the data structure
-                        childNode.data.label = newLabels[index];
-                        laneNode.data.children[index].label = newLabels[index];
-                        
-                        // Use the proper redrawText method for rect nodes
-                        if (childNode.redrawText) {
-                            childNode.redrawText(newLabels[index]);
-                        } else {
-                            // Fallback: trigger update to refresh the visual representation
-                            childNode.update();
-                        }
-                    }
-                });
-                
-                // Force layout update to adjust widths and positioning
-                laneNode.updateChildren();
-                
-                // Trigger display change to update minimap and zoom
-                if (laneNode.onDisplayChange) {
-                    laneNode.onDisplayChange();
-                }
-            }
-        };
-        
-        // Demo functions
-        window.resetDemo = function() {
-            // Reset to original data structure and label set
-            currentLabelSet = 0;
-            
-            // Create a deep copy of the original data to avoid modifying the original
-            const originalData = JSON.parse(JSON.stringify(demoData));
-            
-            // Recreate the dashboard with original data
-            flowdash.main.svg.selectAll("*").remove();
-            const newFlowdash = new flowDashboard.Dashboard(originalData);
-            newFlowdash.initialize('#graph');
-            
-            // Update global references
-            window.flowdash = newFlowdash;
-        };
-        
-        window.runTests = function() {
-            // Implementation for running tests
-            runDemoTests();
-        };
-        
-        // Test runner
-        function runDemoTests() {
-            const testStatus = document.getElementById('testStatus');
-            testStatus.textContent = 'Running...';
-            
-            // Basic validation tests
-            const tests = [
-                testDashboardInitialization,
-                testNodeRendering,
-                testDataStructure
-            ];
-            
-            let passed = 0;
-            let total = tests.length;
-            
-            tests.forEach(test => {
-                try {
-                    if (test()) passed++;
-                } catch (e) {
-                    console.error('Test failed:', e);
-                }
-            });
-            
-            testStatus.textContent = `${passed}/${total} tests passed`;
-            testStatus.className = passed === total ? 'test-pass' : 'test-fail';
-        }
-        
-        // Test functions
-        function testDashboardInitialization() {
-            return flowdash && typeof flowdash.initialize === 'function';
-        }
-        
-        function testNodeRendering() {
-            const nodes = document.querySelectorAll('.node');
-            return nodes.length > 0;
-        }
-        
-        function testDataStructure() {
-            return demoData && demoData.nodes && Array.isArray(demoData.nodes);
-        }
+        testStatus.textContent = `${passed}/${total} tests passed`;
+        testStatus.className = passed === total ? 'test-pass' : 'test-fail';
+      }
+
+      // Test functions
+      function testDashboardInitialization() {
+        return flowdash && typeof flowdash.initialize === 'function';
+      }
+
+      function testNodeRendering() {
+        const nodes = document.querySelectorAll('.node');
+        return nodes.length > 0;
+      }
+
+      function testDataStructure() {
+        return demoData && demoData.nodes && Array.isArray(demoData.nodes);
+      }
     </script>
-</body>
+  </body>
 </html>

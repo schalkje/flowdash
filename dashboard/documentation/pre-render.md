@@ -9,6 +9,7 @@ Pre-rendering is a **performance optimization strategy** that dramatically impro
 ## Problem Statement
 
 Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds due to:
+
 - Synchronous DOM manipulation without batching (40% of time)
 - Cascading layout calculations through deeply nested containers (25% of time)
 - Status-based auto-collapse triggering during initialization (5% of time)
@@ -17,6 +18,7 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 ## Solution: Two-Phase Rendering with Pre-Calculated Positions
 
 ### Phase 1: Pre-Render Generation (One-Time)
+
 1. Load dashboard with ALL nodes forced to expanded state
 2. Bypass status-based auto-collapse (`toggleCollapseOnStatusChange = false`)
 3. Let all layout algorithms complete and stabilize
@@ -24,10 +26,11 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 5. Embed this data directly into the dashboard JSON
 
 ### Phase 2: Fast-Path Loading (Every Time)
+
 1. Check if pre-render data exists in nodes/edges AND settings flag is enabled
 2. If yes: Use pre-calculated positions for instant initial render
 3. Skip layout calculations entirely for initial draw
-4. **After** initial render completes: 
+4. **After** initial render completes:
    - Apply status rules and collapse states
    - **Clear all pre-render data** from node/edge objects
 5. If no: Fall back to standard initialization flow
@@ -37,6 +40,7 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 ## Expected Performance Impact
 
 **With pre-render data (estimated):**
+
 - Current load time: ~40 seconds (885 nodes)
 - Skip layout stabilization: Save ~10 seconds (25%)
 - Skip cascading layout calculations: Save ~5 seconds (12%)
@@ -44,19 +48,23 @@ Current dashboard loading for large dashboards (800+ nodes) takes ~40 seconds du
 - **Estimated with pre-render alone: ~22 seconds (45% improvement)**
 
 **Combined with Phase 2 DOM batching optimizations:**
+
 - **Total estimated load time: ~10-12 seconds (70-75% improvement)** ✅
 
 ## Pre-Render Data Lifecycle
 
 ### Phase 1: Generation (One-Time)
+
 Pre-render data is generated once using the pre-render generator tool and saved to the dashboard JSON file.
 
 ### Phase 2: Initial Load (One-Time Use)
+
 1. Dashboard loads with pre-render data present
 2. Nodes/edges use pre-render positions for instant render
 3. Initial display completes (~10-12 seconds vs ~40 seconds)
 
 ### Phase 3: Post-Load Cleanup (Automatic)
+
 1. Status rules are applied (auto-collapse, status cascade)
 2. **All pre-render data is cleared** from runtime objects
 3. Nodes no longer have `node.data.prerender` or `node._hasPrerenderData`
@@ -64,7 +72,9 @@ Pre-render data is generated once using the pre-render generator tool and saved 
 5. **Zone managers and zones have `_prerenderMode` flags cleared**
 
 ### Phase 4: Normal Operation (Standard Behavior)
+
 From this point forward, the dashboard operates exactly like a non-pre-rendered dashboard:
+
 - Collapse/expand triggers layout recalculation
 - Zoom operations use current node positions
 - Status changes trigger normal update flow
@@ -120,6 +130,7 @@ Pre-render data is embedded directly in the dashboard JSON within each node and 
 ### Node Pre-Render Data
 
 Each node can contain a `prerender` object with:
+
 - `x`: Final x-coordinate (center point)
 - `y`: Final y-coordinate (center point)
 - `width`: Final computed width
@@ -128,6 +139,7 @@ Each node can contain a `prerender` object with:
 ### Edge Pre-Render Data
 
 Each edge can contain a `prerender` object with:
+
 - `path`: SVG path string for the edge
 - `sourcePoint`: Connection point on source node `{ x, y }`
 - `targetPoint`: Connection point on target node `{ x, y }`
@@ -144,6 +156,7 @@ Each edge can contain a `prerender` object with:
 **File:** `dashboard/prerender-generator.html`
 
 A standalone HTML page that:
+
 - ✅ Loads a dashboard JSON file (via file picker or drag-drop)
 - ✅ Initializes dashboard with pre-render mode:
   - Forces all nodes to expanded state
@@ -158,6 +171,7 @@ A standalone HTML page that:
 - ✅ Displays generation statistics
 
 **UI Features:**
+
 - File upload area (drag-drop or click)
 - Progress indicator during generation
 - Preview of pre-rendered dashboard
@@ -168,6 +182,7 @@ A standalone HTML page that:
 ### 2. Dashboard Loading Modifications
 
 **Files to modify:**
+
 - `dashboard/js/dashboard.js` - Add pre-render detection, fast-path loading, and cleanup
 - `dashboard/js/node.js` - Add pre-render position application
 - `dashboard/js/nodeBase.js` - Support pre-render coordinates
@@ -177,6 +192,7 @@ A standalone HTML page that:
 **Key functions to add/modify:**
 
 #### `dashboard.js`
+
 ```javascript
 // Check if pre-render data is available and enabled
 hasPrerenderData(dashboardData) {
@@ -197,20 +213,20 @@ initializeWithPrerender(mainDivSelector) {
 // Clear all pre-render data after initial load completes
 clearPrerenderData() {
   if (!this.main.root) return;
-  
+
   console.log('🧹 Clearing pre-render data after initial load');
-  
+
   // Clear from all nodes recursively
   const clearNodeData = (node) => {
     if (node.data.prerender) {
       delete node.data.prerender;
     }
     node._hasPrerenderData = false;
-    
+
     // Clear pre-render mode from zone manager and zones
     if (node.zoneManager) {
       node.zoneManager._prerenderMode = false;
-      
+
       // Clear from individual zones
       if (node.zoneManager.zones) {
         node.zoneManager.zones.forEach(zone => {
@@ -218,14 +234,14 @@ clearPrerenderData() {
         });
       }
     }
-    
+
     if (node.childNodes) {
       node.childNodes.forEach(clearNodeData);
     }
   };
-  
+
   clearNodeData(this.main.root);
-  
+
   // Clear from all edges
   if (this.data.edges) {
     this.data.edges.forEach(edge => {
@@ -234,12 +250,13 @@ clearPrerenderData() {
       }
     });
   }
-  
+
   console.log('✅ Pre-render data cleared - dashboard now operates in standard mode');
 }
 ```
 
 #### `nodeBase.js`
+
 ```javascript
 // Apply pre-render position if available
 applyPrerenderPosition() {
@@ -255,6 +272,7 @@ applyPrerenderPosition() {
 ```
 
 #### `nodeBaseContainer.js`
+
 ```javascript
 // Skip layout calculations if pre-render available
 updateChildren() {
@@ -270,18 +288,19 @@ updateChildren() {
 ### 3. Two-Pass Rendering Flow
 
 #### First Pass (Fast Render)
+
 ```javascript
 // In dashboard.initialize()
 if (this.hasPrerenderData(this.data)) {
   // Suspend status change handlers
   this._suspendStatusChanges = true;
-  
+
   // Create nodes with pre-render positions
   this.main.root = this.createDashboardWithPrerender(this.data, this.main.container);
-  
+
   // Apply pre-render positions immediately
   this.applyPrerenderPositions(this.main.root);
-  
+
   // Initial render complete - schedule second pass
   requestAnimationFrame(() => this.applyStatusRules());
 } else {
@@ -291,27 +310,28 @@ if (this.hasPrerenderData(this.data)) {
 ```
 
 #### Second Pass (Status Application and Cleanup)
+
 ```javascript
 applyDeferredStatusRules(root) {
   // Re-enable status change handlers
   this._suspendStatusChanges = false;
-  
+
   // Re-enable display change callbacks
   this._suspendDisplayChange = false;
-  
+
   // Determine container statuses based on children
   if (this.data.settings.cascadeOnStatusChange) {
     this.initializeChildrenStatusses(root);
   }
-  
+
   // Apply collapse rules if enabled
   if (this.data.settings.toggleCollapseOnStatusChange) {
     this.applyAutoCollapse(root);
   }
-  
+
   // Final layout adjustments
   this.onMainDisplayChange();
-  
+
   // CRITICAL: Clear all pre-render data after initial render completes
   // From this point on, dashboard behaves as if it never had pre-render data
   this.clearPrerenderData();
@@ -333,6 +353,7 @@ export const DEFAULT_SETTINGS = {
 ## Pre-Render Generator Workflow
 
 ### User Workflow
+
 1. Open `prerender-generator.html` in browser
 2. Load dashboard JSON file (drag-drop or file picker)
 3. Click "Generate Pre-Render Data"
@@ -352,7 +373,7 @@ import { generatePrerenderData } from './js/dashboard.js';
 // Generate pre-render data for a dashboard
 const enhancedDashboardData = await generatePrerenderData(
   originalDashboardData,
-  '#container-selector' // optional, defaults to '#prerender-temp'
+  '#container-selector', // optional, defaults to '#prerender-temp'
 );
 
 // The enhanced data includes:
@@ -363,6 +384,7 @@ const enhancedDashboardData = await generatePrerenderData(
 ```
 
 **What it does:**
+
 1. Creates a temporary hidden dashboard instance
 2. Forces all nodes to expanded state (bypasses status-based collapse)
 3. Renders and waits for layout stabilization (2 seconds)
@@ -372,6 +394,7 @@ const enhancedDashboardData = await generatePrerenderData(
 7. Returns enhanced dashboard data with embedded pre-render information
 
 **Data cleanup:**
+
 - Moves `width` and `height` into `prerender` object (not at node root)
 - Removes `expandedSize` (internal property)
 - Removes default `layout.minimumSize` when all values are defaults
@@ -380,6 +403,7 @@ const enhancedDashboardData = await generatePrerenderData(
 ## Regeneration Strategy
 
 When nodes are added, removed, or modified:
+
 1. Load the modified dashboard
 2. Run pre-render generator again
 3. Generate new pre-render data
@@ -390,6 +414,7 @@ When nodes are added, removed, or modified:
 ## Testing Strategy
 
 ### Generator Testing
+
 1. Test with small dashboard (dwh-1.json, 4 nodes)
 2. Test with medium dashboard (dwh-5.json, 21 nodes)
 3. Test with large dashboard (dwh-6.fixed.json, 885 nodes)
@@ -398,6 +423,7 @@ When nodes are added, removed, or modified:
 6. Verify JSON structure is valid
 
 ### Loading Testing
+
 1. Load pre-rendered dashboard - verify fast render
 2. Load non-pre-rendered dashboard - verify standard flow
 3. Disable pre-render via settings - verify fallback works
@@ -409,6 +435,7 @@ When nodes are added, removed, or modified:
 9. Inspect node objects after load - verify no `node.data.prerender` or `node._hasPrerenderData`
 
 ### Performance Testing
+
 1. Measure load time with pre-render vs without
 2. Verify expected ~45% improvement on large dashboards
 3. Measure time for status application (second pass)
@@ -417,6 +444,7 @@ When nodes are added, removed, or modified:
 ## Implementation Plan
 
 ### Phase 1: Generator Tool (Week 1)
+
 - [ ] Create `prerender-generator.html`
 - [ ] Implement file loading UI
 - [ ] Implement pre-render extraction logic
@@ -425,6 +453,7 @@ When nodes are added, removed, or modified:
 - [ ] Test with sample dashboards
 
 ### Phase 2: Dashboard Loading (Week 1-2)
+
 - [ ] Add `hasPrerenderData()` detection
 - [ ] Implement `applyPrerenderPosition()` in BaseNode
 - [ ] Modify `updateChildren()` to skip layout when pre-render available
@@ -433,12 +462,14 @@ When nodes are added, removed, or modified:
 - [ ] Test fast-path loading
 
 ### Phase 3: Status Application (Week 2)
+
 - [ ] Implement deferred status evaluation
 - [ ] Implement second-pass status application
 - [ ] Test auto-collapse after initial render
 - [ ] Verify visual consistency
 
 ### Phase 4: Testing & Documentation (Week 2)
+
 - [ ] Comprehensive testing
 - [ ] Performance benchmarking
 - [ ] User documentation
@@ -451,15 +482,17 @@ When nodes are added, removed, or modified:
 ✅ Visual output is identical after status rules applied  
 ✅ Settings flag properly controls pre-render usage  
 ✅ Falls back gracefully when pre-render data missing or disabled  
-✅ Combined with DOM batching: achieve 70-75% total improvement  
+✅ Combined with DOM batching: achieve 70-75% total improvement
 
 ## File Size Impact
 
 Pre-render data adds approximately:
+
 - **Per node**: ~60 bytes (`{"prerender":{"x":100.5,"y":200.25,"width":334,"height":74}}`)
 - **Per edge**: ~120 bytes (path data varies by complexity)
 
 For dwh-6.fixed.json (885 nodes, ~600 edges):
+
 - Node pre-render data: ~53 KB
 - Edge pre-render data: ~72 KB
 - **Total increase: ~125 KB** (~7-10% increase for typical dashboard)

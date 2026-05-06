@@ -27,10 +27,12 @@ Every change should pass through the lowest layer that can express the assertion
 **Scope.** Pure functions and pure-class methods inside `/dashboard/js/` that don't need a browser, d3 runtime, or live DOM.
 
 **Layout.**
+
 - Configuration: [`/dashboard/vitest.config.js`](../dashboard/vitest.config.js)
 - Specs: [`/dashboard/tests-unit/`](../dashboard/tests-unit/) — see its [README](../dashboard/tests-unit/README.md) for module-by-module coverage.
 
 **Run.**
+
 ```bash
 cd dashboard
 npm run test:unit
@@ -49,11 +51,13 @@ Or from repo root: `npm run test:unit`, `npm run test:coverage`.
 **Scope.** End-to-end behavior in a real browser: rendering, layout, click handlers, zoom, theme swaps, file selection, the whole dashboard load path.
 
 **Layout.**
+
 - Configuration: [`/playwright.config.cjs`](../playwright.config.cjs) — Chromium + WebKit projects, autostarts `python -m http.server 8000`, ignores `tests/_scratch/`.
 - Specs: [`/tests/`](../tests/) — 19 specs covering every node type and major composed scenario.
 - Helpers: [`/tests/helpers/ready.js`](../tests/helpers/ready.js) — `waitForFlowdashReady` and `gotoAndReady`.
 
 **Run.**
+
 ```bash
 npm test                                              # full suite
 npm run test:adapter | test:foundation | test:lane    # per-node-type subsets
@@ -86,11 +90,13 @@ The dashboard sets `data-flowdash-ready="true"` on its root SVG at the end of `D
 **Scope.** Phase-level timing budgets on canonical fixtures. Guards the pre-render fast-path.
 
 **Layout.**
+
 - Spec: [`/tests/performance.spec.js`](../tests/performance.spec.js)
 - Baselines: [`/tests/perf-baselines.json`](../tests/perf-baselines.json)
 - Underlying instrumentation: [`/dashboard/tests/PERFORMANCE_INSTRUMENTATION.md`](../dashboard/tests/PERFORMANCE_INSTRUMENTATION.md) — the dashboard already collects `performanceMetrics` on every load.
 
 **Run.**
+
 ```bash
 npm run test:perf
 ```
@@ -103,7 +109,7 @@ npm run test:perf
 
 1. Re-run the suite locally to capture new numbers.
 2. Edit `perf-baselines.json` by hand. Tighten budgets where you can.
-3. Commit the baseline update *alongside* the code change. Reviewers should see both.
+3. Commit the baseline update _alongside_ the code change. Reviewers should see both.
 
 **Pre-render assertion.** The `fastPathRatio` block in `perf-baselines.json` asserts that the prerendered version of a fixture is meaningfully faster than the cold version (default: warm/cold ≤ 0.85). This catches "we accidentally broke the pre-render fast path."
 
@@ -112,10 +118,12 @@ npm run test:perf
 **Scope.** Per-pixel guards on canonical demos and the theme grid. Catches subtle rendering changes (spacing, stroke, color, text positioning) that DOM assertions miss.
 
 **Layout.**
+
 - Spec: [`/tests/visual-regression.spec.js`](../tests/visual-regression.spec.js)
 - Baselines: `tests/visual-regression.spec.js-snapshots/` (per-OS / per-browser PNGs, committed)
 
 **Run.**
+
 ```bash
 npm run test:visual                                   # asserts against baselines
 npx playwright test tests/visual-regression.spec.js --update-snapshots
@@ -133,21 +141,21 @@ npx playwright test tests/visual-regression.spec.js --update-snapshots
 
 [`/.github/workflows/test.yml`](../.github/workflows/test.yml) runs three jobs on every push and PR to `main`:
 
-| Job | What |
-|-----|------|
-| `unit` | `npm run test:coverage` from `/dashboard`. Uploads coverage. |
+| Job              | What                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `unit`           | `npm run test:coverage` from `/dashboard`. Uploads coverage.                                                                    |
 | `e2e` (chromium) | `npx playwright test --project=chromium`. Includes perf and visual regression specs. Uploads HTML report and failure artifacts. |
-| `e2e` (webkit) | Same, on WebKit. Visual + perf are skipped via `test.skip`. |
+| `e2e` (webkit)   | Same, on WebKit. Visual + perf are skipped via `test.skip`.                                                                     |
 
 `forbidOnly: !!process.env.CI` is set, so a `.only` slipping into a spec fails CI.
 
 ## Anti-patterns to avoid
 
 - **Adding more `waitForTimeout` calls.** Use `waitForFlowdashReady` or a `locator.waitFor({ state: 'visible' })`. The 110+ existing waits are tracked for migration in [`improvement-plan.md`](./improvement-plan.md).
-- **Asserting "something rendered" only.** That fails as a regression test — almost any breakage still renders something. Assert the *specific* shape of what should be there.
+- **Asserting "something rendered" only.** That fails as a regression test — almost any breakage still renders something. Assert the _specific_ shape of what should be there.
 - **Coupling tests to internal implementation details.** Prefer DOM / behavior assertions over reaching into `window.dashboard.someInternalProperty` — except in performance and unit specs where it's intentional.
 - **Marking flaky tests `.skip` instead of fixing them.** A skipped test is dead; fix the root cause.
-- **Generating fixtures from tests.** Fixtures live in `/dashboard/data/` and are committed. Test data comes *from* the repo, not the test run.
+- **Generating fixtures from tests.** Fixtures live in `/dashboard/data/` and are committed. Test data comes _from_ the repo, not the test run.
 
 ## Roadmap
 

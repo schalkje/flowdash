@@ -1,8 +1,8 @@
 const ConnectorSide = Object.freeze({
-  TOP: "top",
-  RIGHT: "right",
-  BOTTOM: "bottom",
-  LEFT: "left",
+  TOP: 'top',
+  RIGHT: 'right',
+  BOTTOM: 'bottom',
+  LEFT: 'left',
 });
 
 export function computeConnectionPoints(x, y, width, height) {
@@ -31,14 +31,14 @@ export function generateEdgePath(edge) {
     edge.x1,
     edge.y1,
     sourceNode.data.width,
-    sourceNode.data.height
+    sourceNode.data.height,
   );
 
   const targetConnectionPoints = targetNode.computeConnectionPoints(
     edge.x2,
     edge.y2,
     targetNode.data.width,
-    targetNode.data.height
+    targetNode.data.height,
   );
 
   let sourcePoint, targetPoint;
@@ -91,7 +91,7 @@ export function generateEdgePath(edge) {
   // console.log("    Source Point:", sourcePoint);
   // console.log("    Target Point:", targetPoint);
   const midX = (targetPoint.x - sourcePoint.x) / 2;
-  var midY = (targetPoint.y - sourcePoint.y) / 2;
+  const midY = (targetPoint.y - sourcePoint.y) / 2;
   const curveMargin = edge.settings.curveMargin || 0;
   if (
     (sourcePoint.side == ConnectorSide.LEFT && targetPoint.side == ConnectorSide.RIGHT) ||
@@ -99,27 +99,24 @@ export function generateEdgePath(edge) {
   ) {
     // left to right or right to left
     // console.log("    Generating Edge Path: Left to Right or Right to Left");
-      waypoints = [
-        // // for a curve
-        [sourcePoint.x + midX * (1 - curveMargin), sourcePoint.y + midY * curveMargin], // Move horizontally to half the distance
-        [sourcePoint.x + midX * (1 + curveMargin), targetPoint.y - midY * curveMargin], // Stay on x and move vertically
-      ];
+    waypoints = [
+      // // for a curve
+      [sourcePoint.x + midX * (1 - curveMargin), sourcePoint.y + midY * curveMargin], // Move horizontally to half the distance
+      [sourcePoint.x + midX * (1 + curveMargin), targetPoint.y - midY * curveMargin], // Stay on x and move vertically
+    ];
   } else if (
     (sourcePoint.side == ConnectorSide.BOTTOM && targetPoint.side == ConnectorSide.TOP) ||
     (sourcePoint.side == ConnectorSide.TOP && targetPoint.side == ConnectorSide.BOTTOM)
   ) {
     // bottom to top or top to bottom
     // console.log("    Generating Edge Path: Bottom to Top or Top to Bottom", midX, midY);
-    if (Math.abs(midY) < 20 && edge.settings.curved)
-    {
+    if (Math.abs(midY) < 20 && edge.settings.curved) {
       waypoints = [
         // // for a curve
-        [sourcePoint.x + midX * curveMargin, targetPoint.y ], // Move vertically to half the distance
-        [targetPoint.x , sourcePoint.y ], // Stay on y and move horizontal
+        [sourcePoint.x + midX * curveMargin, targetPoint.y], // Move vertically to half the distance
+        [targetPoint.x, sourcePoint.y], // Stay on y and move horizontal
       ];
-
-    }
-    else{
+    } else {
       waypoints = [
         // // for a curve
         [sourcePoint.x + midX * curveMargin, sourcePoint.y + midY * (1 - curveMargin)], // Move vertically to half the distance
@@ -131,29 +128,27 @@ export function generateEdgePath(edge) {
     (targetPoint.side == ConnectorSide.LEFT || targetPoint.side == ConnectorSide.RIGHT)
   ) {
     // bottom to top or top to bottom
-      waypoints = [
-        // // for a curve
-        [sourcePoint.x + midX * curveMargin, targetPoint.y - midY * curveMargin], // Stay on y and move horizontal
-      ];
-  } else if (
-    (sourcePoint.side == ConnectorSide.TOP && targetPoint.side == ConnectorSide.TOP)
-  ) {
+    waypoints = [
+      // // for a curve
+      [sourcePoint.x + midX * curveMargin, targetPoint.y - midY * curveMargin], // Stay on y and move horizontal
+    ];
+  } else if (sourcePoint.side == ConnectorSide.TOP && targetPoint.side == ConnectorSide.TOP) {
     // bottom to top or top to bottom
-      waypoints = [
-        // // for a curve
-        [sourcePoint.x + midX * curveMargin, targetPoint.y - midY * curveMargin], // Stay on y and move horizontal
-      ];
+    waypoints = [
+      // // for a curve
+      [sourcePoint.x + midX * curveMargin, targetPoint.y - midY * curveMargin], // Stay on y and move horizontal
+    ];
   } else if (
     (sourcePoint.side == ConnectorSide.LEFT || sourcePoint.side == ConnectorSide.RIGHT) &&
     (targetPoint.side == ConnectorSide.TOP || targetPoint.side == ConnectorSide.BOTTOM)
   ) {
     // bottom to top or top to bottom
-      waypoints = [
-        // // for a curve
-        [targetPoint.x - midX * curveMargin, sourcePoint.y + midY * curveMargin], // Stay on y and move horizontal
-      ];
+    waypoints = [
+      // // for a curve
+      [targetPoint.x - midX * curveMargin, sourcePoint.y + midY * curveMargin], // Stay on y and move horizontal
+    ];
   } else {
-    console.error("    ERROR: Unsupported edge connection:", sourcePoint.side, targetPoint.side);
+    console.error('    ERROR: Unsupported edge connection:', sourcePoint.side, targetPoint.side);
   }
 
   //   const result = [edge.sourcePoint, toPoint(sourcePoint), ...waypoints, toPoint(targetPoint)];
@@ -179,26 +174,37 @@ export function generateGhostEdge(edge) {
 
 // getNodeMidpoint no longer used – edge.x1/y1 and edge.x2/y2 compute global centers reliably
 
-// Helper function to get zone transforms for a node
+// Helper function to get zone transforms for a node. Called from the four
+// edge coordinate getters (x1/y1/x2/y2) on every read, so it must be cheap.
+// InnerContainerZone caches the numeric offset as `transformOffset` when it
+// builds the coordinate system; we read that directly and only fall back to
+// regex-parsing the `translate(…)` string on legacy zones that haven't been
+// upgraded yet.
 export function getZoneTransforms(node) {
   if (!node || !node.parentNode || !node.parentNode.zoneManager) {
     return { x: 0, y: 0 };
   }
-  
+
   const innerContainerZone = node.parentNode.zoneManager.innerContainerZone;
   if (!innerContainerZone || !innerContainerZone.coordinateSystem) {
     return { x: 0, y: 0 };
   }
-  
-  // Parse the transform to get the offset
+
+  const cached = innerContainerZone.coordinateSystem.transformOffset;
+  if (cached && typeof cached.x === 'number' && typeof cached.y === 'number') {
+    return cached;
+  }
+
+  // Fallback for legacy code paths that build coordinateSystem without
+  // populating transformOffset.
   const transform = innerContainerZone.coordinateSystem.transform;
-  const transformMatch = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-  
+  const transformMatch = transform && transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+
   if (transformMatch) {
     const offsetX = parseFloat(transformMatch[1]);
     const offsetY = parseFloat(transformMatch[2]);
     return { x: offsetX, y: offsetY };
   }
-  
+
   return { x: 0, y: 0 };
 }

@@ -1,38 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Status — basic</title>
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <style>
-      .status-controls { display: flex; gap: 8px; flex-wrap: wrap; padding: 6px 12px; background: #fff; border-bottom: 1px solid #ddd; }
-      .status-controls button { padding: 4px 10px; font-size: 13px; }
-      .legend { font-size: 12px; padding: 6px 12px; background: #f8f8f8; border-bottom: 1px solid #ddd; }
-      .legend code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+      .status-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+      }
+      .status-controls button {
+        padding: 4px 10px;
+        font-size: 13px;
+      }
+      .legend {
+        font-size: 12px;
+        padding: 6px 12px;
+        background: #f8f8f8;
+        border-bottom: 1px solid #ddd;
+      }
+      .legend code {
+        background: #eee;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
     </style>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Status</h1>
-        <h2>basic — drive the state machine</h2>
-        <p class="demo-description">
-          Cycle individual nodes through the <code>NodeStatus</code> states and
-          observe the cascade onto the parent container. Toggle cascade and
-          auto-collapse from the controls below.
-        </p>
+      <h1>Status</h1>
+      <h2>basic — drive the state machine</h2>
+      <p class="demo-description">
+        Cycle individual nodes through the <code>NodeStatus</code> states and observe the cascade
+        onto the parent container. Toggle cascade and auto-collapse from the controls below.
+      </p>
     </header>
     <div class="legend">
-      States: <code>UNDETERMINED</code> · <code>UNKNOWN</code> · <code>READY</code> · <code>UPDATING</code> · <code>DELAYED</code> · <code>ERROR</code> · <code>UPDATED</code> · <code>SKIPPED</code> · <code>WARNING</code> · <code>DISABLED</code>
+      States: <code>UNDETERMINED</code> · <code>UNKNOWN</code> · <code>READY</code> ·
+      <code>UPDATING</code> · <code>DELAYED</code> · <code>ERROR</code> · <code>UPDATED</code> ·
+      <code>SKIPPED</code> · <code>WARNING</code> · <code>DISABLED</code>
     </div>
     <div class="status-controls">
-      <span style="font-size:13px">Set <strong>Extract</strong>:</span>
+      <span style="font-size: 13px">Set <strong>Extract</strong>:</span>
       <button data-target="extract" data-status="Ready">Ready</button>
       <button data-target="extract" data-status="Updating">Updating</button>
       <button data-target="extract" data-status="Updated">Updated</button>
@@ -40,7 +62,7 @@
       <button data-target="extract" data-status="Warning">Warning</button>
     </div>
     <div class="status-controls">
-      <span style="font-size:13px">Set <strong>Transform</strong>:</span>
+      <span style="font-size: 13px">Set <strong>Transform</strong>:</span>
       <button data-target="transform" data-status="Ready">Ready</button>
       <button data-target="transform" data-status="Updating">Updating</button>
       <button data-target="transform" data-status="Updated">Updated</button>
@@ -48,24 +70,30 @@
       <button data-target="transform" data-status="Disabled">Disabled</button>
     </div>
     <div class="status-controls">
-      <span style="font-size:13px">Set <strong>Load</strong>:</span>
+      <span style="font-size: 13px">Set <strong>Load</strong>:</span>
       <button data-target="load" data-status="Ready">Ready</button>
       <button data-target="load" data-status="Delayed">Delayed</button>
       <button data-target="load" data-status="Updated">Updated</button>
       <button data-target="load" data-status="Error">Error</button>
     </div>
     <div class="status-controls">
-      <label><input id="cascade" type="checkbox" checked> cascade to parent</label>
-      <label><input id="autoCollapse" type="checkbox"> auto-collapse on status</label>
+      <label><input id="cascade" type="checkbox" checked /> cascade to parent</label>
+      <label><input id="autoCollapse" type="checkbox" /> auto-collapse on status</label>
       <button id="randomBtn">Randomize</button>
     </div>
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
     <footer class="demo-info">
       <div class="demo-metadata">
-        <p><strong>Settings:</strong> <code>cascadeOnStatusChange</code>, <code>toggleCollapseOnStatusChange</code></p>
-        <p><strong>Reference:</strong> <a href="../../dashboard/documentation/state.md">/dashboard/documentation/state.md</a></p>
+        <p>
+          <strong>Settings:</strong> <code>cascadeOnStatusChange</code>,
+          <code>toggleCollapseOnStatusChange</code>
+        </p>
+        <p>
+          <strong>Reference:</strong>
+          <a href="../../dashboard/documentation/state.md">/dashboard/documentation/state.md</a>
+        </p>
       </div>
     </footer>
     <script type="module">
@@ -84,7 +112,7 @@
       function findNodeById(id, root = dashboard.main.root) {
         if (!root) return null;
         if (root.data?.id === id) return root;
-        for (const c of (root.childNodes || [])) {
+        for (const c of root.childNodes || []) {
           const found = findNodeById(id, c);
           if (found) return found;
         }
@@ -103,7 +131,8 @@
       document.getElementById('cascade').addEventListener('change', (e) => {
         const next = JSON.parse(JSON.stringify(demoData));
         next.settings.cascadeOnStatusChange = e.target.checked;
-        next.settings.toggleCollapseOnStatusChange = document.getElementById('autoCollapse').checked;
+        next.settings.toggleCollapseOnStatusChange =
+          document.getElementById('autoCollapse').checked;
         build(next);
       });
       document.getElementById('autoCollapse').addEventListener('change', (e) => {
@@ -121,5 +150,5 @@
         });
       });
     </script>
-</body>
+  </body>
 </html>

@@ -1,172 +1,190 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fold/Expand 06 — Big Movie</title>
 
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
-    <link rel="stylesheet" href="../fold-expand.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <link rel="stylesheet" href="../fold-expand.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Fold / Expand</h1>
-        <h2>06 — Big Movie (DWH Tiny)</h2>
-        <p class="demo-description">
-            Autoplay over the bundled <code>dwh-tiny</code> dataset.
-            The script discovers every container at runtime and cycles
-            through a sequence of progressive collapses, full collapse,
-            full expand, and a "wave" that folds one container per
-            frame.
-        </p>
+      <h1>Fold / Expand</h1>
+      <h2>06 — Big Movie (DWH Tiny)</h2>
+      <p class="demo-description">
+        Autoplay over the bundled <code>dwh-tiny</code> dataset. The script discovers every
+        container at runtime and cycles through a sequence of progressive collapses, full collapse,
+        full expand, and a "wave" that folds one container per frame.
+      </p>
     </header>
 
     <div class="fe-toolbar">
-        <button id="btn-play" class="fe-active">Play</button>
-        <button id="btn-pause">Pause</button>
-        <button id="btn-step">Step ▶</button>
-        <button id="btn-reset">Reset</button>
-        <label style="margin-left:12px;">
-            Step duration:
-            <input id="speed" type="range" min="700" max="3000" step="100" value="1500" style="vertical-align:middle;">
-            <span id="speed-out">1500 ms</span>
-        </label>
-        <span class="fe-status" id="fe-status">loading…</span>
+      <button id="btn-play" class="fe-active">Play</button>
+      <button id="btn-pause">Pause</button>
+      <button id="btn-step">Step ▶</button>
+      <button id="btn-reset">Reset</button>
+      <label style="margin-left: 12px">
+        Step duration:
+        <input
+          id="speed"
+          type="range"
+          min="700"
+          max="3000"
+          step="100"
+          value="1500"
+          style="vertical-align: middle"
+        />
+        <span id="speed-out">1500 ms</span>
+      </label>
+      <span class="fe-status" id="fe-status">loading…</span>
     </div>
 
     <div class="fe-canvas-wrapper">
-        <svg id="graph" class="canvas fe-tall"></svg>
+      <svg id="graph" class="canvas fe-tall"></svg>
     </div>
 
     <script type="module">
-        import flowDashboard from '../../dashboard/js/index.js';
+      import flowDashboard from '../../dashboard/js/index.js';
 
-        const response = await fetch('../../dashboard/data/dwh-tiny.json');
-        const data = await response.json();
+      const response = await fetch('../../dashboard/data/dwh-tiny.json');
+      const data = await response.json();
 
-        // Movie should drive folding manually — turn off the auto rule
-        // that would otherwise immediately re-collapse "successful"
-        // nodes after each expand.
-        data.settings = {
-            ...(data.settings || {}),
-            toggleCollapseOnStatusChange: false,
-            cascadeOnStatusChange: false,
-            // Suppress the production-leaning selection bounding box that
-            // dwh-tiny.json enables; the movie drives its own visuals.
-            showBoundingBox: false,
-            zoomToRoot: true,
-            // Disable any baked-in pre-render so first paint matches the
-            // "live" path the spec also exercises.
-            usePrerender: false
-        };
+      // Movie should drive folding manually — turn off the auto rule
+      // that would otherwise immediately re-collapse "successful"
+      // nodes after each expand.
+      data.settings = {
+        ...(data.settings || {}),
+        toggleCollapseOnStatusChange: false,
+        cascadeOnStatusChange: false,
+        // Suppress the production-leaning selection bounding box that
+        // dwh-tiny.json enables; the movie drives its own visuals.
+        showBoundingBox: false,
+        zoomToRoot: true,
+        // Disable any baked-in pre-render so first paint matches the
+        // "live" path the spec also exercises.
+        usePrerender: false,
+      };
 
-        const dashboard = new flowDashboard.Dashboard(data);
-        await dashboard.initialize('#graph');
-        window.flowdash = dashboard;
+      const dashboard = new flowDashboard.Dashboard(data);
+      await dashboard.initialize('#graph');
+      window.flowdash = dashboard;
 
-        // --- Discover containers ---------------------------------------------
-        // A "container" is anything with a non-empty children array. We list
-        // them in DFS order so progressive scripts feel intuitive.
-        function collectContainers(nodeData, acc) {
-            if (Array.isArray(nodeData.children) && nodeData.children.length > 0) {
-                acc.push(nodeData.id);
-                for (const child of nodeData.children) collectContainers(child, acc);
-            }
-            return acc;
+      // --- Discover containers ---------------------------------------------
+      // A "container" is anything with a non-empty children array. We list
+      // them in DFS order so progressive scripts feel intuitive.
+      function collectContainers(nodeData, acc) {
+        if (Array.isArray(nodeData.children) && nodeData.children.length > 0) {
+          acc.push(nodeData.id);
+          for (const child of nodeData.children) collectContainers(child, acc);
         }
-        const containerIds = data.nodes.flatMap(n => collectContainers(n, []));
+        return acc;
+      }
+      const containerIds = data.nodes.flatMap((n) => collectContainers(n, []));
 
-        // --- Build the movie script -----------------------------------------
-        function arrayToggle(a, x) { const s = new Set(a); s.has(x) ? s.delete(x) : s.add(x); return [...s]; }
+      // --- Build the movie script -----------------------------------------
+      function arrayToggle(a, x) {
+        const s = new Set(a);
+        s.has(x) ? s.delete(x) : s.add(x);
+        return [...s];
+      }
 
-        const script = [];
-        script.push({ name: 'All expanded', collapsed: [] });
+      const script = [];
+      script.push({ name: 'All expanded', collapsed: [] });
 
-        // Progressive: collapse the first quarter / half / three-quarters.
-        const quarter = Math.max(1, Math.floor(containerIds.length / 4));
-        script.push({ name: 'Fold a quarter (DFS)', collapsed: containerIds.slice(0, quarter) });
-        script.push({ name: 'Fold the first half', collapsed: containerIds.slice(0, quarter * 2) });
-        script.push({ name: 'Fold three-quarters', collapsed: containerIds.slice(0, quarter * 3) });
-        script.push({ name: 'Fold every container', collapsed: containerIds.slice() });
-        script.push({ name: 'All expanded', collapsed: [] });
+      // Progressive: collapse the first quarter / half / three-quarters.
+      const quarter = Math.max(1, Math.floor(containerIds.length / 4));
+      script.push({ name: 'Fold a quarter (DFS)', collapsed: containerIds.slice(0, quarter) });
+      script.push({ name: 'Fold the first half', collapsed: containerIds.slice(0, quarter * 2) });
+      script.push({ name: 'Fold three-quarters', collapsed: containerIds.slice(0, quarter * 3) });
+      script.push({ name: 'Fold every container', collapsed: containerIds.slice() });
+      script.push({ name: 'All expanded', collapsed: [] });
 
-        // Wave: cycle through, folding one container at a time.
-        const waveSample = containerIds.length <= 12
-            ? containerIds
-            : containerIds.filter((_, i) => i % Math.ceil(containerIds.length / 12) === 0).slice(0, 12);
-        for (const id of waveSample) script.push({ name: `Wave: fold ${id}`, collapsed: [id] });
+      // Wave: cycle through, folding one container at a time.
+      const waveSample =
+        containerIds.length <= 12
+          ? containerIds
+          : containerIds
+              .filter((_, i) => i % Math.ceil(containerIds.length / 12) === 0)
+              .slice(0, 12);
+      for (const id of waveSample) script.push({ name: `Wave: fold ${id}`, collapsed: [id] });
 
-        script.push({ name: 'All expanded', collapsed: [] });
+      script.push({ name: 'All expanded', collapsed: [] });
 
-        window.foldExpandMovie = { script, currentStep: 0, playing: true, containerIds };
+      window.foldExpandMovie = { script, currentStep: 0, playing: true, containerIds };
 
-        function applyStep(step) {
-            const targets = new Set(step.collapsed);
-            for (const id of containerIds) {
-                const node = dashboard.main.root.getNode(id);
-                if (!node) continue;
-                const shouldCollapse = targets.has(id);
-                if (node.collapsed !== shouldCollapse) {
-                    node.collapsed = shouldCollapse;
-                }
-            }
+      function applyStep(step) {
+        const targets = new Set(step.collapsed);
+        for (const id of containerIds) {
+          const node = dashboard.main.root.getNode(id);
+          if (!node) continue;
+          const shouldCollapse = targets.has(id);
+          if (node.collapsed !== shouldCollapse) {
+            node.collapsed = shouldCollapse;
+          }
         }
+      }
 
-        const statusEl = document.getElementById('fe-status');
-        function refreshStatus() {
-            const m = window.foldExpandMovie;
-            const s = m.script[m.currentStep];
-            statusEl.textContent = `step ${m.currentStep + 1} / ${m.script.length}: ${s.name}`;
-        }
+      const statusEl = document.getElementById('fe-status');
+      function refreshStatus() {
+        const m = window.foldExpandMovie;
+        const s = m.script[m.currentStep];
+        statusEl.textContent = `step ${m.currentStep + 1} / ${m.script.length}: ${s.name}`;
+      }
 
-        function next() {
-            const m = window.foldExpandMovie;
-            applyStep(m.script[m.currentStep]);
-            refreshStatus();
-            m.currentStep = (m.currentStep + 1) % m.script.length;
-        }
+      function next() {
+        const m = window.foldExpandMovie;
+        applyStep(m.script[m.currentStep]);
+        refreshStatus();
+        m.currentStep = (m.currentStep + 1) % m.script.length;
+      }
 
+      next();
+
+      let timer = null;
+      function start() {
+        stop();
+        window.foldExpandMovie.playing = true;
+        const speed = parseInt(document.getElementById('speed').value, 10);
+        timer = setInterval(next, speed);
+        document.getElementById('btn-play').classList.add('fe-active');
+        document.getElementById('btn-pause').classList.remove('fe-active');
+      }
+      function stop() {
+        if (timer) clearInterval(timer);
+        timer = null;
+        window.foldExpandMovie.playing = false;
+        document.getElementById('btn-play').classList.remove('fe-active');
+        document.getElementById('btn-pause').classList.add('fe-active');
+      }
+
+      document.getElementById('btn-play').addEventListener('click', start);
+      document.getElementById('btn-pause').addEventListener('click', stop);
+      document.getElementById('btn-step').addEventListener('click', () => {
+        stop();
         next();
+      });
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        stop();
+        window.foldExpandMovie.currentStep = 0;
+        next();
+      });
+      document.getElementById('speed').addEventListener('input', (e) => {
+        document.getElementById('speed-out').textContent = `${e.target.value} ms`;
+        if (window.foldExpandMovie.playing) start();
+      });
 
-        let timer = null;
-        function start() {
-            stop();
-            window.foldExpandMovie.playing = true;
-            const speed = parseInt(document.getElementById('speed').value, 10);
-            timer = setInterval(next, speed);
-            document.getElementById('btn-play').classList.add('fe-active');
-            document.getElementById('btn-pause').classList.remove('fe-active');
-        }
-        function stop() {
-            if (timer) clearInterval(timer);
-            timer = null;
-            window.foldExpandMovie.playing = false;
-            document.getElementById('btn-play').classList.remove('fe-active');
-            document.getElementById('btn-pause').classList.add('fe-active');
-        }
-
-        document.getElementById('btn-play').addEventListener('click', start);
-        document.getElementById('btn-pause').addEventListener('click', stop);
-        document.getElementById('btn-step').addEventListener('click', () => { stop(); next(); });
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            stop();
-            window.foldExpandMovie.currentStep = 0;
-            next();
-        });
-        document.getElementById('speed').addEventListener('input', (e) => {
-            document.getElementById('speed-out').textContent = `${e.target.value} ms`;
-            if (window.foldExpandMovie.playing) start();
-        });
-
-        start();
+      start();
     </script>
-</body>
+  </body>
 </html>

@@ -66,18 +66,18 @@ A candid map of what's working and what isn't, organized by the three primary go
 
 - **Strong Playwright E2E foundation.** Root [`tests/`](../tests/) holds **19 spec files** covering all node types and major composed scenarios. The headline specs by size:
 
-  | Spec | Lines | Tests |
-  |------|-------|-------|
-  | `columns-nodes-comprehensive.spec.js` | 1,100 | 26 |
-  | `lane-nodes.spec.js` | 838 | 23 |
-  | `lane-nodes-comprehensive.spec.js` | 543 | 14 |
-  | `groups.spec.js` | 462 | 22 |
-  | `adapter-nodes.spec.js` | 442 | 7 |
-  | `rectangular-nodes.spec.js` | 437 | 8 |
-  | `integration.spec.js` | 376 | 16 |
-  | `dashboard.spec.js` | 214 | 6 |
-  | `foundation-nodes.spec.js` | 210 | 7 |
-  | `edges.spec.js` | 201 | 10 |
+  | Spec                                  | Lines | Tests |
+  | ------------------------------------- | ----- | ----- |
+  | `columns-nodes-comprehensive.spec.js` | 1,100 | 26    |
+  | `lane-nodes.spec.js`                  | 838   | 23    |
+  | `lane-nodes-comprehensive.spec.js`    | 543   | 14    |
+  | `groups.spec.js`                      | 462   | 22    |
+  | `adapter-nodes.spec.js`               | 442   | 7     |
+  | `rectangular-nodes.spec.js`           | 437   | 8     |
+  | `integration.spec.js`                 | 376   | 16    |
+  | `dashboard.spec.js`                   | 214   | 6     |
+  | `foundation-nodes.spec.js`            | 210   | 7     |
+  | `edges.spec.js`                       | 201   | 10    |
 
 - **Cross-browser by default.** [`playwright.config.cjs`](../playwright.config.cjs) runs Chromium and WebKit projects; auto-starts `python -m http.server 8000` if not already running.
 - **Failure artifacts captured.** `screenshot: 'only-on-failure'`, `video: 'retain-on-failure'`, `trace: 'on-first-retry'`.
@@ -117,10 +117,10 @@ A candid map of what's working and what isn't, organized by the three primary go
 
 ## Summary
 
-| Goal | Status |
-|------|--------|
-| Library | Strong: well-modularised, bundled, versioned, documented. Weak: dual-package versioning, missing release / contribution docs. |
-| Demos | Strong: many, organized, navigable. Weak: missing demos for several core features (selection, zoom, status, minimap, overlay, pre-render); no flagship showcase; scratch files in product folders. |
+| Goal    | Status                                                                                                                                                                                                                                                                            |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Library | Strong: well-modularised, bundled, versioned, documented. Weak: dual-package versioning, missing release / contribution docs.                                                                                                                                                     |
+| Demos   | Strong: many, organized, navigable. Weak: missing demos for several core features (selection, zoom, status, minimap, overlay, pre-render); no flagship showcase; scratch files in product folders.                                                                                |
 | Testing | Strong: rich Playwright suite with cross-browser support and large-dataset fixtures; performance metrics already instrumented. Weak: no unit layer, no visual regression, no CI, no coverage, no asserted perf thresholds, two test-folder ownership confusion, hard-coded waits. |
 
 See [`improvement-plan.md`](./improvement-plan.md) for the path forward.

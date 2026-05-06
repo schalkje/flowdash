@@ -6,7 +6,8 @@
 export const demoData = {
   metadata: {
     name: 'selection-basic',
-    description: 'Click to select a single node. Double-click to select its neighborhood (and zoom). Adjust the depth sliders to widen or narrow the neighborhood.',
+    description:
+      'Click to select a single node. Double-click to select its neighborhood (and zoom). Adjust the depth sliders to widen or narrow the neighborhood.',
     version: '1.0.0',
   },
   settings: {

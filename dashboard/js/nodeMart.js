@@ -1,13 +1,13 @@
-import BaseContainerNode from "./nodeBaseContainer.js";
-import RectangularNode from "./nodeRect.js";
-import { createInternalEdge } from "./edge.js";
-import { getComputedDimensions } from "./utils.js";
+import BaseContainerNode from './nodeBaseContainer.js';
+import RectangularNode from './nodeRect.js';
+import { createInternalEdge } from './edge.js';
+import { getComputedDimensions } from './utils.js';
 
 const roleWidth = 120;
 
 const DisplayMode = Object.freeze({
   FULL: 'full',
-  ROLE: 'role'  
+  ROLE: 'role',
 });
 
 const Orientation = Object.freeze({
@@ -15,14 +15,13 @@ const Orientation = Object.freeze({
   HORIZONTAL_LINE: 'horizontal_line',
   VERTICAL: 'vertical',
   ROTATE_90: 'rotate90',
-  ROTATE_270: 'rotate270'  
+  ROTATE_270: 'rotate270',
 });
 
 const MartMode = Object.freeze({
-  MANUAL: 'manual', 
+  MANUAL: 'manual',
   AUTO: 'auto',
 });
-
 
 export default class MartNode extends BaseContainerNode {
   static initializeNodeDataStatic(nodeData) {
@@ -53,7 +52,11 @@ export default class MartNode extends BaseContainerNode {
           const category = (child.category || '').toLowerCase();
           if (allowedRoles.includes(category)) role = category;
           else if ((child.label || '').toLowerCase().includes('load')) role = 'load';
-          else if ((child.label || '').toLowerCase().includes('report') || (child.label || '').toLowerCase().includes('rprt')) role = 'report';
+          else if (
+            (child.label || '').toLowerCase().includes('report') ||
+            (child.label || '').toLowerCase().includes('rprt')
+          )
+            role = 'report';
         }
         if (!role || !allowedRoles.includes(role)) {
           console.error('MartNode child missing or invalid role', {
@@ -82,10 +85,12 @@ export default class MartNode extends BaseContainerNode {
         const isRoleMode = nodeData.layout.displayMode === DisplayMode.ROLE;
         child = {
           id: `${role}_${nodeData.id}`,
-          label: isRoleMode ? role : `${role.charAt(0).toUpperCase() + role.slice(1)} ${nodeData.label}`,
+          label: isRoleMode
+            ? role
+            : `${role.charAt(0).toUpperCase() + role.slice(1)} ${nodeData.label}`,
           role: role,
           category: role,
-          type: "node",
+          type: 'node',
           width: isRoleMode ? roleWidth : 150,
           height: isRoleMode ? 44 : 44,
         };
@@ -106,15 +111,14 @@ export default class MartNode extends BaseContainerNode {
     this.loadNode = null;
     this.reportNode = null;
     this.nodeSpacing = {
-      horizontal: (this.settings?.nodeSpacing?.horizontal ?? 20),
-      vertical: (this.settings?.nodeSpacing?.vertical ?? 10)
+      horizontal: this.settings?.nodeSpacing?.horizontal ?? 20,
+      vertical: this.settings?.nodeSpacing?.vertical ?? 10,
     };
   }
 
   get nestedCorrection_y() {
     return this.y;
   }
-
 
   initChildren() {
     this.suspenseDisplayChange = true;
@@ -125,20 +129,24 @@ export default class MartNode extends BaseContainerNode {
       this.data.children = [];
     }
 
-    this.loadNode = this.childNodes.find((c) => c?.data?.role === 'load') || this.initializeChildNode("load", ["load"]);
-    this.reportNode = this.childNodes.find((c) => c?.data?.role === 'report') || this.initializeChildNode("report", ["report","rprt"]);
+    this.loadNode =
+      this.childNodes.find((c) => c?.data?.role === 'load') ||
+      this.initializeChildNode('load', ['load']);
+    this.reportNode =
+      this.childNodes.find((c) => c?.data?.role === 'report') ||
+      this.initializeChildNode('report', ['report', 'rprt']);
 
     createInternalEdge(
       {
         source: this.loadNode.data.id,
         target: this.reportNode.data.id,
         isActive: true,
-        type: "SSIS",
-        state: "Ready",
+        type: 'SSIS',
+        state: 'Ready',
       },
       this.loadNode,
       this.reportNode,
-      this.settings
+      this.settings,
     );
 
     this.initEdges();
@@ -150,7 +158,10 @@ export default class MartNode extends BaseContainerNode {
         this.reportNode.data.width +
         this.containerMargin.left +
         this.containerMargin.right,
-      height: Math.max(this.loadNode.data.height, this.reportNode.data.height) + this.containerMargin.top + this.containerMargin.bottom,
+      height:
+        Math.max(this.loadNode.data.height, this.reportNode.data.height) +
+        this.containerMargin.top +
+        this.containerMargin.bottom,
     };
 
     this.resize(this.data.expandedSize, true);
@@ -162,12 +173,19 @@ export default class MartNode extends BaseContainerNode {
   }
 
   initializeChildNode(role, labels) {
-    let node = this.childNodes.find((child) => child.data.category != null && child.data.category.toLowerCase() === role.toLowerCase());
+    let node = this.childNodes.find(
+      (child) =>
+        child.data.category != null && child.data.category.toLowerCase() === role.toLowerCase(),
+    );
     if (!node) {
-      node = this.childNodes.find((child) => labels.some(label => child.data.label.toLowerCase().includes(label.toLowerCase()+'.')));
+      node = this.childNodes.find((child) =>
+        labels.some((label) => child.data.label.toLowerCase().includes(label.toLowerCase() + '.')),
+      );
     }
     if (!node) {
-      node = this.childNodes.find((child) => labels.some(label => child.data.label.toLowerCase().includes(label.toLowerCase())));
+      node = this.childNodes.find((child) =>
+        labels.some((label) => child.data.label.toLowerCase().includes(label.toLowerCase())),
+      );
     }
     if (!node) {
       let childData = this.data.children.find((child) => child.category === role);
@@ -176,20 +194,17 @@ export default class MartNode extends BaseContainerNode {
           id: `${role}_${this.data.id}`,
           label: `${role.charAt(0).toUpperCase() + role.slice(1)} ${this.data.label}`,
           role: role,
-          type: "node",
+          type: 'node',
         };
         this.data.children.push(childData);
       }
       node = this.initChildNode(childData, node);
-    }
-    else
-    {
+    } else {
       if (this.data.layout.displayMode == DisplayMode.ROLE) {
         node.data.role = role;
         node.data.width = roleWidth;
         node.redrawText(node.data.role, node.data.width);
       }
-
     }
     return node;
   }
@@ -238,11 +253,14 @@ export default class MartNode extends BaseContainerNode {
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;
       const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-      const headerMinWidth = (headerZone && typeof headerZone.getMinimumWidthThrottled === 'function')
-        ? headerZone.getMinimumWidthThrottled()
-        : (headerZone && typeof headerZone.getMinimumWidth === 'function')
-          ? headerZone.getMinimumWidth()
-          : (headerZone ? (headerZone.getSize?.().width || 0) : this.data.width);
+      const headerMinWidth =
+        headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
+          ? headerZone.getMinimumWidthThrottled()
+          : headerZone && typeof headerZone.getMinimumWidth === 'function'
+            ? headerZone.getMinimumWidth()
+            : headerZone
+              ? headerZone.getSize?.().width || 0
+              : this.data.width;
       const collapsedWidth = Math.max(this.minimumSize.width, headerMinWidth);
       const collapsedHeight = Math.max(this.minimumSize.height, headerHeight);
       this.resize({ width: collapsedWidth, height: collapsedHeight });
@@ -264,21 +282,31 @@ export default class MartNode extends BaseContainerNode {
         this.updateRoleZone();
         break;
       default:
-        console.warn(`Unknown displayMode "${this.data.layout.displayMode}" using ${DisplayMode.FULL}`);
+        console.warn(
+          `Unknown displayMode "${this.data.layout.displayMode}" using ${DisplayMode.FULL}`,
+        );
         this.updateFullZone();
         break;
     }
   }
 
-   updateFull() {
+  updateFull() {
     // Account for the container transform that's applied in BaseContainerNode.updateChildren()
     // The container is offset by: (containerMargin.left - containerMargin.right, containerMargin.top - containerMargin.bottom)
     const containerOffsetX = this.containerMargin.left - this.containerMargin.right;
     const containerOffsetY = this.containerMargin.top - this.containerMargin.bottom;
-    
+
     if (this.loadNode) {
-      const x = -this.data.width / 2 + this.loadNode.data.width / 2 + this.containerMargin.left - containerOffsetX;
-      const y = -this.data.height / 2 + this.loadNode.data.height / 2 + this.containerMargin.top - containerOffsetY;
+      const x =
+        -this.data.width / 2 +
+        this.loadNode.data.width / 2 +
+        this.containerMargin.left -
+        containerOffsetX;
+      const y =
+        -this.data.height / 2 +
+        this.loadNode.data.height / 2 +
+        this.containerMargin.top -
+        containerOffsetY;
       this.loadNode.move(x, y);
     }
 
@@ -288,22 +316,34 @@ export default class MartNode extends BaseContainerNode {
         this.reportNode.data.width / 2 +
         this.containerMargin.left +
         this.loadNode.data.width +
-        this.nodeSpacing.horizontal - containerOffsetX;
-      const y = -this.data.height / 2 + this.reportNode.data.height / 2 + this.containerMargin.top - containerOffsetY;
+        this.nodeSpacing.horizontal -
+        containerOffsetX;
+      const y =
+        -this.data.height / 2 +
+        this.reportNode.data.height / 2 +
+        this.containerMargin.top -
+        containerOffsetY;
       this.reportNode.move(x, y);
-    }    
+    }
   }
 
-   updateRole() {
-    
+  updateRole() {
     // Account for the container transform that's applied in BaseContainerNode.updateChildren()
     // The container is offset by: (containerMargin.left - containerMargin.right, containerMargin.top - containerMargin.bottom)
     const containerOffsetX = this.containerMargin.left - this.containerMargin.right;
     const containerOffsetY = this.containerMargin.top - this.containerMargin.bottom;
-    
+
     if (this.loadNode) {
-      const x = -this.data.width / 2 + this.loadNode.data.width / 2 + this.containerMargin.left - containerOffsetX;
-      const y = -this.data.height / 2 + this.loadNode.data.height / 2 + this.containerMargin.top - containerOffsetY;
+      const x =
+        -this.data.width / 2 +
+        this.loadNode.data.width / 2 +
+        this.containerMargin.left -
+        containerOffsetX;
+      const y =
+        -this.data.height / 2 +
+        this.loadNode.data.height / 2 +
+        this.containerMargin.top -
+        containerOffsetY;
       this.loadNode.move(x, y);
     }
 
@@ -313,27 +353,32 @@ export default class MartNode extends BaseContainerNode {
         this.reportNode.data.width / 2 +
         this.containerMargin.left +
         this.loadNode.data.width +
-        this.nodeSpacing.horizontal - containerOffsetX;
-      const y = -this.data.height / 2 + this.reportNode.data.height / 2 + this.containerMargin.top - containerOffsetY;
+        this.nodeSpacing.horizontal -
+        containerOffsetX;
+      const y =
+        -this.data.height / 2 +
+        this.reportNode.data.height / 2 +
+        this.containerMargin.top -
+        containerOffsetY;
       this.reportNode.move(x, y);
     }
-
   }
 
   // Zone-based layout methods
   updateFullZone() {
     const innerContainerZone = this.zoneManager.innerContainerZone;
-    
+
     innerContainerZone.setLayoutAlgorithm((childNodes, coordinateSystem) => {
-      const loadNode = childNodes.find(node => node.data.role === 'load');
-      const reportNode = childNodes.find(node => node.data.role === 'report');
-      
+      const loadNode = childNodes.find((node) => node.data.role === 'load');
+      const reportNode = childNodes.find((node) => node.data.role === 'report');
+
       if (loadNode && reportNode) {
         const orientation = (this.data.layout?.orientation || 'horizontal').toLowerCase();
         switch (orientation) {
           case 'vertical':
           case 'rotate90': {
-            const totalHeight = loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
+            const totalHeight =
+              loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
             const loadY = -totalHeight / 2 + loadNode.data.height / 2;
             const reportY = totalHeight / 2 - reportNode.data.height / 2;
             loadNode.move(0, loadY);
@@ -342,7 +387,8 @@ export default class MartNode extends BaseContainerNode {
             break;
           }
           case 'rotate270': {
-            const totalHeight = loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
+            const totalHeight =
+              loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
             const reportY = -totalHeight / 2 + reportNode.data.height / 2;
             const loadY = totalHeight / 2 - loadNode.data.height / 2;
             loadNode.move(0, loadY);
@@ -353,7 +399,8 @@ export default class MartNode extends BaseContainerNode {
           case 'horizontal_line':
           case 'horizontal':
           default: {
-            const totalWidth = loadNode.data.width + this.nodeSpacing.horizontal + reportNode.data.width;
+            const totalWidth =
+              loadNode.data.width + this.nodeSpacing.horizontal + reportNode.data.width;
             const loadX = -totalWidth / 2 + loadNode.data.width / 2;
             const reportX = totalWidth / 2 - reportNode.data.width / 2;
             loadNode.move(loadX, 0);
@@ -364,27 +411,27 @@ export default class MartNode extends BaseContainerNode {
         }
       }
     });
-    
+
     innerContainerZone.updateChildPositions();
   }
 
   updateRoleZone() {
     const innerContainerZone = this.zoneManager.innerContainerZone;
-    
+
     innerContainerZone.setLayoutAlgorithm((childNodes, coordinateSystem) => {
-      const loadNode = childNodes.find(node => node.data.role === 'load');
-      const reportNode = childNodes.find(node => node.data.role === 'report');
-      
+      const loadNode = childNodes.find((node) => node.data.role === 'load');
+      const reportNode = childNodes.find((node) => node.data.role === 'report');
+
       if (loadNode && reportNode) {
         const orientation = (this.data.layout?.orientation || 'horizontal').toLowerCase();
-        
+
         // Ensure role mode sizing and labels
         loadNode.data.width = roleWidth;
         loadNode.data.label = loadNode.data.role || 'load';
         if (loadNode.redrawText) {
           loadNode.redrawText(loadNode.data.label, loadNode.data.width);
         }
-        
+
         reportNode.data.width = roleWidth;
         reportNode.data.label = reportNode.data.role || 'report';
         if (reportNode.redrawText) {
@@ -393,7 +440,8 @@ export default class MartNode extends BaseContainerNode {
         switch (orientation) {
           case 'vertical':
           case 'rotate90': {
-            const totalHeight = loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
+            const totalHeight =
+              loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
             const loadY = -totalHeight / 2 + loadNode.data.height / 2;
             const reportY = totalHeight / 2 - reportNode.data.height / 2;
             loadNode.move(0, loadY);
@@ -402,7 +450,8 @@ export default class MartNode extends BaseContainerNode {
             break;
           }
           case 'rotate270': {
-            const totalHeight = loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
+            const totalHeight =
+              loadNode.data.height + this.nodeSpacing.vertical + reportNode.data.height;
             const reportY = -totalHeight / 2 + reportNode.data.height / 2;
             const loadY = totalHeight / 2 - loadNode.data.height / 2;
             loadNode.move(0, loadY);
@@ -413,7 +462,8 @@ export default class MartNode extends BaseContainerNode {
           case 'horizontal_line':
           case 'horizontal':
           default: {
-            const totalWidth = loadNode.data.width + this.nodeSpacing.horizontal + reportNode.data.width;
+            const totalWidth =
+              loadNode.data.width + this.nodeSpacing.horizontal + reportNode.data.width;
             const loadX = -totalWidth / 2 + loadNode.data.width / 2;
             const reportX = totalWidth / 2 - reportNode.data.width / 2;
             loadNode.move(loadX, 0);
@@ -424,7 +474,7 @@ export default class MartNode extends BaseContainerNode {
         }
       }
     });
-    
+
     innerContainerZone.updateChildPositions();
   }
 
@@ -462,5 +512,4 @@ export default class MartNode extends BaseContainerNode {
       }
     }
   }
-
 }

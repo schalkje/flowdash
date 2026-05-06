@@ -26,20 +26,25 @@ import { test, expect } from '@playwright/test';
 
 const TARGETS = [
   // One demo per node type
-  { name: 'basic-node',           path: '/01_basicNodes/01_basic/basic.html' },
-  { name: 'rectangular-node',     path: '/02_rectangularNodes/01_basic/basic.html' },
-  { name: 'circle-node',          path: '/03_circleNodes/01_basic/basic.html' },
-  { name: 'lane-default',         path: '/04_laneNodes/01_simple-tests/01_default-mode/default-mode.html' },
-  { name: 'columns-default',      path: '/05_columnsNodes/01_basic/basic.html' },
+  { name: 'basic-node', path: '/01_basicNodes/01_basic/basic.html' },
+  { name: 'rectangular-node', path: '/02_rectangularNodes/01_basic/basic.html' },
+  { name: 'circle-node', path: '/03_circleNodes/01_basic/basic.html' },
+  { name: 'lane-default', path: '/04_laneNodes/01_simple-tests/01_default-mode/default-mode.html' },
+  { name: 'columns-default', path: '/05_columnsNodes/01_basic/basic.html' },
 
   // Theme grid renders themed dashboards inside iframes (srcdoc); wait on the iframe grid, not a top-level <svg>.
-  { name: 'themes-grid',          path: '/01_basicNodes/03_states/themes-grid.html', readySelector: 'iframe', settle: 2500 },
+  {
+    name: 'themes-grid',
+    path: '/01_basicNodes/03_states/themes-grid.html',
+    readySelector: 'iframe',
+    settle: 2500,
+  },
 
   // Edge directional flows
-  { name: 'edge-horizontal-ltr',  path: '/10_edges/01_basic/horizontal-ltr.html' },
-  { name: 'edge-horizontal-rtl',  path: '/10_edges/01_basic/horizontal-rtl.html' },
-  { name: 'edge-vertical-ttb',    path: '/10_edges/01_basic/vertical-ttb.html' },
-  { name: 'edge-vertical-btt',    path: '/10_edges/01_basic/vertical-btt.html' },
+  { name: 'edge-horizontal-ltr', path: '/10_edges/01_basic/horizontal-ltr.html' },
+  { name: 'edge-horizontal-rtl', path: '/10_edges/01_basic/horizontal-rtl.html' },
+  { name: 'edge-vertical-ttb', path: '/10_edges/01_basic/vertical-ttb.html' },
+  { name: 'edge-vertical-btt', path: '/10_edges/01_basic/vertical-btt.html' },
 ];
 
 test.describe('Visual regression', () => {

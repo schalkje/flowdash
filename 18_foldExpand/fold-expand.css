@@ -22,9 +22,17 @@
   transition: background 0.15s;
 }
 
-.fe-toolbar button:hover { background: #e3f2fd; }
-.fe-toolbar button:disabled { opacity: 0.5; cursor: not-allowed; }
-.fe-toolbar button.fe-active { background: #1976d2; color: #fff; }
+.fe-toolbar button:hover {
+  background: #e3f2fd;
+}
+.fe-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.fe-toolbar button.fe-active {
+  background: #1976d2;
+  color: #fff;
+}
 
 .fe-toolbar .fe-status {
   margin-left: auto;

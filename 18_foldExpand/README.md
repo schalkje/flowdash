@@ -8,14 +8,14 @@ production code uses — both via the on-node zoom button and via direct
 property assignment — and the auto-collapse path driven by status
 changes (`toggleCollapseOnStatusChange`).
 
-| # | Page | What it covers |
-|---|------|----------------|
-| 01 | `01_simple` | Single container, manual collapse / expand, parent resize |
-| 02 | `02_with-edges` | Sibling containers + an edge — verifies edge re-routing on collapse |
-| 03 | `03_nested` | Three levels of nesting — collapse cascade and parent resize |
-| 04 | `04_status-driven` | `toggleCollapseOnStatusChange = true`; mutate status, observe folding |
-| 05 | `05_movie-small` | Autoplay sequence — small dashboard "movie" |
-| 06 | `06_movie-big` | Autoplay over the bundled `dwh-tiny` dataset — big dashboard "movie" |
+| #   | Page               | What it covers                                                        |
+| --- | ------------------ | --------------------------------------------------------------------- |
+| 01  | `01_simple`        | Single container, manual collapse / expand, parent resize             |
+| 02  | `02_with-edges`    | Sibling containers + an edge — verifies edge re-routing on collapse   |
+| 03  | `03_nested`        | Three levels of nesting — collapse cascade and parent resize          |
+| 04  | `04_status-driven` | `toggleCollapseOnStatusChange = true`; mutate status, observe folding |
+| 05  | `05_movie-small`   | Autoplay sequence — small dashboard "movie"                           |
+| 06  | `06_movie-big`     | Autoplay over the bundled `dwh-tiny` dataset — big dashboard "movie"  |
 
 ## Test coverage
 

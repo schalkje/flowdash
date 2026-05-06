@@ -8,33 +8,33 @@ A phased, prioritized roadmap for closing the gaps identified in [`current-state
 
 The first wave of work has landed and been verified locally. Results:
 
-| Suite | Result |
-|-------|--------|
-| **Vitest unit tests** | 64/64 pass · 6 spec files · 795 ms · coverage 59% statements / 97% branches (all thresholds green) |
-| **Playwright perf benchmarks** | 4/4 pass against `tests/perf-baselines.json` (chromium, serial mode) — observed pre-render fast-path ratio 0.88 (12% faster than cold) |
-| **Playwright visual regression** | 10/10 baselines captured under `tests/visual-regression.spec.js-snapshots/`, asserting clean against the captured PNGs |
-| **Playwright smoke (new demos)** | 7/7 pass — every Phase 3 demo (`12_-17_` + `11_dashboard/01_showcase`) loads with zero console errors |
+| Suite                            | Result                                                                                                                                 |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vitest unit tests**            | 64/64 pass · 6 spec files · 795 ms · coverage 59% statements / 97% branches (all thresholds green)                                     |
+| **Playwright perf benchmarks**   | 4/4 pass against `tests/perf-baselines.json` (chromium, serial mode) — observed pre-render fast-path ratio 0.88 (12% faster than cold) |
+| **Playwright visual regression** | 10/10 baselines captured under `tests/visual-regression.spec.js-snapshots/`, asserting clean against the captured PNGs                 |
+| **Playwright smoke (new demos)** | 7/7 pass — every Phase 3 demo (`12_-17_` + `11_dashboard/01_showcase`) loads with zero console errors                                  |
 
 A small follow-up patch was applied while verifying: `dashboard/flowdash-js.html` now exposes `window.dashboard` so perf specs can read `dashboard.performanceMetrics`, and the perf spec opens the collapsed settings panel before selecting a fixture. Pre-existing dashboard/edge/foundation/rectangular specs that hit `#fileSelect` directly are still red — they need the same panel-opening fix; tracked under Phase 2.4 follow-up.
 
 The list below lets you skip the per-bullet detail and see the shape:
 
-| Phase | Status | Notes |
-|------:|:-------|-------|
-| 1.1 Package versioning | ✅ Shipped | Root renamed `flowdash-harness`, build delegates, `docs/release.md` written. |
-| 1.2 README + broken refs | ✅ Shipped | TEST_PLAN refs replaced; `11_dashboard` showcase entry replaces broken `01_loading`. |
-| 1.3 Scratch / duplicates | ✅ Shipped | Debug specs and HTMLs moved to `_scratch/`; Playwright `testIgnore` added; zone-double-click duplicate resolved. |
-| 1.4 Numbering | ✅ Documented | Scheme codified in `demo-philosophy.md`. d3_basics renumbering deferred (cosmetic, not blocking). |
-| 2.1 Vitest unit layer | ✅ Shipped | `dashboard/tests-unit/` with 6 specs covering utilPath, configManager, geometryManager, nodeRegistry, statusManager, utils. Coverage thresholds set. |
-| 2.2 Visual regression | ✅ Scaffolding | `tests/visual-regression.spec.js` ready; baselines must be captured on first CI run. |
-| 2.3 Performance benchmarks | ✅ Shipped | `tests/performance.spec.js` + `tests/perf-baselines.json`. Generous initial budgets — ratchet after first runs. |
-| 2.4 Readiness signal + waits | ⏳ Partial | `data-flowdash-ready` attribute + `tests/helpers/ready.js` shipped. Migrating the remaining ~110 `waitForTimeout` calls is incremental work. |
-| 2.5 GitHub Actions CI | ✅ Shipped | `.github/workflows/test.yml`: unit + chromium + webkit, artifact upload, badge added. |
-| 3.1 Missing-feature demos | ✅ Shipped | `12_selection`, `13_zoom`, `14_status`, `15_minimap`, `16_overlay`, `17_prerender` all created and registered in the navigator. |
-| 3.2 Flagship showcase | ✅ Shipped | `11_dashboard/01_showcase/showcase.html` combines node types + theme switcher + minimap + dataset selector. |
-| 3.3 Modernize experiments | ⏳ Open | Decision per item, plus CDN-import migration. Low priority. |
-| 3.4 Data-loading demo | ⏳ Open | Pattern is already in the showcase via `fetch()`; a dedicated `18_data-loading/` is still useful. |
-| 4 Repo-level docs | ✅ Shipped | `docs/{README,project-goals,current-state,improvement-plan,release,contributing,testing-strategy,architecture-map,demo-philosophy}.md`. |
+|                        Phase | Status         | Notes                                                                                                                                                |
+| ---------------------------: | :------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+|       1.1 Package versioning | ✅ Shipped     | Root renamed `flowdash-harness`, build delegates, `docs/release.md` written.                                                                         |
+|     1.2 README + broken refs | ✅ Shipped     | TEST_PLAN refs replaced; `11_dashboard` showcase entry replaces broken `01_loading`.                                                                 |
+|     1.3 Scratch / duplicates | ✅ Shipped     | Debug specs and HTMLs moved to `_scratch/`; Playwright `testIgnore` added; zone-double-click duplicate resolved.                                     |
+|                1.4 Numbering | ✅ Documented  | Scheme codified in `demo-philosophy.md`. d3_basics renumbering deferred (cosmetic, not blocking).                                                    |
+|        2.1 Vitest unit layer | ✅ Shipped     | `dashboard/tests-unit/` with 6 specs covering utilPath, configManager, geometryManager, nodeRegistry, statusManager, utils. Coverage thresholds set. |
+|        2.2 Visual regression | ✅ Scaffolding | `tests/visual-regression.spec.js` ready; baselines must be captured on first CI run.                                                                 |
+|   2.3 Performance benchmarks | ✅ Shipped     | `tests/performance.spec.js` + `tests/perf-baselines.json`. Generous initial budgets — ratchet after first runs.                                      |
+| 2.4 Readiness signal + waits | ⏳ Partial     | `data-flowdash-ready` attribute + `tests/helpers/ready.js` shipped. Migrating the remaining ~110 `waitForTimeout` calls is incremental work.         |
+|        2.5 GitHub Actions CI | ✅ Shipped     | `.github/workflows/test.yml`: unit + chromium + webkit, artifact upload, badge added.                                                                |
+|    3.1 Missing-feature demos | ✅ Shipped     | `12_selection`, `13_zoom`, `14_status`, `15_minimap`, `16_overlay`, `17_prerender` all created and registered in the navigator.                      |
+|        3.2 Flagship showcase | ✅ Shipped     | `11_dashboard/01_showcase/showcase.html` combines node types + theme switcher + minimap + dataset selector.                                          |
+|    3.3 Modernize experiments | ⏳ Open        | Decision per item, plus CDN-import migration. Low priority.                                                                                          |
+|        3.4 Data-loading demo | ⏳ Open        | Pattern is already in the showcase via `fetch()`; a dedicated `18_data-loading/` is still useful.                                                    |
+|            4 Repo-level docs | ✅ Shipped     | `docs/{README,project-goals,current-state,improvement-plan,release,contributing,testing-strategy,architecture-map,demo-philosophy}.md`.              |
 
 Items still open are tracked in the per-phase sections below.
 

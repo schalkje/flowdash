@@ -41,28 +41,41 @@ export default class Simulation {
 The simulation uses several D3 forces:
 
 ```javascript
-this.simulation = d3.forceSimulation(this.containerNode.childNodes)
+this.simulation = d3
+  .forceSimulation(this.containerNode.childNodes)
   .force('center', d3.forceCenter(0, 0))
-  .force('link', d3.forceLink(this.links).id(d => d.id).distance(d => 100))
+  .force(
+    'link',
+    d3
+      .forceLink(this.links)
+      .id((d) => d.id)
+      .distance((d) => 100),
+  )
   .force('collision', rectCollide()); // Custom collision force
 ```
 
 #### 1. Center Force
+
 ```javascript
 .force('center', d3.forceCenter(0, 0))
 ```
+
 Centers all nodes around the origin (0, 0).
 
 #### 2. Link Force
+
 ```javascript
 .force('link', d3.forceLink(this.links).id(d => d.id).distance(d => 100))
 ```
+
 Creates attractive forces between connected nodes with a fixed distance of 100 pixels.
 
 #### 3. Collision Force
+
 ```javascript
 .force('collision', rectCollide())
 ```
+
 Custom force that prevents rectangular nodes from overlapping.
 
 ## Custom Collision Force
@@ -100,7 +113,9 @@ export function rectCollide() {
   }
 
   function apply(quad, x0, y0, x1, y1) {
-    let data = quad.data, r = quad.r, r2 = r * r;
+    let data = quad.data,
+      r = quad.r,
+      r2 = r * r;
     if (data) {
       if (data.index > node.index) {
         let x = xi - xCenter(data);
@@ -134,13 +149,13 @@ export function rectCollide() {
 init() {
   return new Promise((resolve) => {
     this.tickCounter = 0;
-    
+
     // Initialize node positions
     this.containerNode.childNodes.forEach(node => {
       node.x = node.x;
       node.y = node.data.y;
       node.width = node.data.width;
-      node.height = node.data.height;      
+      node.height = node.data.height;
     });
 
     // Create simulation
@@ -174,7 +189,7 @@ tick(resolve) {
 ### 3. Container Resizing
 
 ```javascript
-resizeBoundingContainer() {    
+resizeBoundingContainer() {
   if (this.containerNode.container) {
     const boundingBox = getComputedDimensions(this.containerNode.container);
     this.containerNode.resizeContainer(boundingBox);
@@ -204,7 +219,11 @@ export function forceBoundary(width, height, strength = 0.1) {
   let nodes;
 
   function force() {
-    let i, n = nodes.length, node, x, y;
+    let i,
+      n = nodes.length,
+      node,
+      x,
+      y;
     for (i = 0; i < n; ++i) {
       node = nodes[i];
       x = Math.max(0, Math.min(width, node.x));
@@ -216,7 +235,7 @@ export function forceBoundary(width, height, strength = 0.1) {
     }
   }
 
-  force.initialize = function(_) {
+  force.initialize = function (_) {
     nodes = _;
   };
 
@@ -247,7 +266,7 @@ let tree = d3.quadtree(nodes, xCenter, yCenter).visitAfter(prepare);
 Node position updates are batched to minimize DOM manipulation:
 
 ```javascript
-this.containerNode.childNodes.forEach(node => {
+this.containerNode.childNodes.forEach((node) => {
   node.element.attr('transform', `translate(${node.x}, ${node.y})`);
 });
 ```
@@ -269,7 +288,7 @@ The simulation works closely with container nodes:
 
 ```javascript
 // Get child nodes for simulation
-this.containerNode.childNodes
+this.containerNode.childNodes;
 
 // Resize container based on simulation results
 this.containerNode.resizeContainer(boundingBox);
@@ -296,7 +315,7 @@ this.containerNode.resizeContainer(boundingBox);
 ```javascript
 // Customize link distance
 .force('link', d3.forceLink(this.links).distance(d => {
-  return Math.min(d.source.width/2 + d.target.width/2, 
+  return Math.min(d.source.width/2 + d.target.width/2,
                   d.source.height/2 + d.target.height/2);
 }))
 
@@ -351,4 +370,4 @@ const startTime = performance.now();
 // ... simulation code ...
 const endTime = performance.now();
 console.log(`Simulation took ${endTime - startTime}ms`);
-``` 
+```

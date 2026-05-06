@@ -1,49 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>02 - Full Vertical (Explicit Children)</title>
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>FoundationNode Demos - Explicit Children</h1>
-        <h2>02 - Full Vertical (Explicit Children)</h2>
-        <p class="demo-description">FoundationNode with full display mode, vertical orientation, and explicitly defined children</p>
-        <div class="demo-controls">
-            <button onclick="runTests()">Run Tests</button>
-        </div>
+      <h1>FoundationNode Demos - Explicit Children</h1>
+      <h2>02 - Full Vertical (Explicit Children)</h2>
+      <p class="demo-description">
+        FoundationNode with full display mode, vertical orientation, and explicitly defined children
+      </p>
+      <div class="demo-controls">
+        <button onclick="runTests()">Run Tests</button>
+      </div>
     </header>
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
     <footer class="demo-info">
-        <p><strong>Features:</strong> Full display mode, Vertical orientation, Explicit children</p>
-        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      <p><strong>Features:</strong> Full display mode, Vertical orientation, Explicit children</p>
+      <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
     </footer>
     <script type="module">
-        import { demoData } from './js/graphData.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        
-        let flowdash = new flowDashboard.Dashboard(demoData);
-        flowdash.initialize('#graph');
-        window.demoData = demoData;
-        
-        window.runTests = function() {
-            const testStatus = document.getElementById('testStatus');
-            const foundation = demoData.nodes.find(n => n.type === 'foundation');
-            const isValid = foundation && foundation.layout.orientation === 'vertical' && foundation.children.length === 2;
-            testStatus.textContent = isValid ? 'PASS' : 'FAIL';
-            testStatus.className = isValid ? 'test-pass' : 'test-fail';
-        }
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+
+      let flowdash = new flowDashboard.Dashboard(demoData);
+      flowdash.initialize('#graph');
+      window.demoData = demoData;
+
+      window.runTests = function () {
+        const testStatus = document.getElementById('testStatus');
+        const foundation = demoData.nodes.find((n) => n.type === 'foundation');
+        const isValid =
+          foundation &&
+          foundation.layout.orientation === 'vertical' &&
+          foundation.children.length === 2;
+        testStatus.textContent = isValid ? 'PASS' : 'FAIL';
+        testStatus.className = isValid ? 'test-pass' : 'test-fail';
+      };
     </script>
-</body>
+  </body>
 </html>

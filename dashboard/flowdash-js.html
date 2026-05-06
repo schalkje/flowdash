@@ -1,118 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flow Dashboard</title>
     <script src="libs/d3.min.js"></script>
     <script src="libs/d3-shape.min.js"></script>
     <script src="libs/d3-dag.iife.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
-    <link rel="stylesheet" href="flowdash-demo.css">
-    <script>window.FLOWDASH_THEME = { default: 'retro' };</script>
+    <link rel="stylesheet" href="flowdash.css" />
+    <link rel="stylesheet" href="flowdash-demo.css" />
+    <script>
+      window.FLOWDASH_THEME = { default: 'retro' };
+    </script>
     <script src="js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="chromeRoot"></div>
 
     <div class="demo-container">
-        <div id="graph-container">
-            <svg id="graph" class="canvas"></svg>
-        </div>
+      <div id="graph-container">
+        <svg id="graph" class="canvas"></svg>
+      </div>
     </div>
 
     <script type="module">
-        import flowDashboard from './js/index.js';
-        import { mountDemoChrome, mergeSettings } from './js/demoChrome.js';
+      import flowDashboard from './js/index.js';
+      import { mountDemoChrome, mergeSettings } from './js/demoChrome.js';
 
-        const jsonFiles = [
-            "adapter-1.json",
-            "dwh-1.json",
-            "dwh-1.prerender.json",
-            "dwh-small.json",
-            "dwh-2.json",
-            "dwh-3.json",
-            "dwh-4.json",
-            "dwh-5.json",
-            "dwh-5.prerender.json",
-            "dwh-6.json",
-            "dwh-6.fixed.json",
-            "dwh-6.fixed.prerender.json",
-            "lane-small.json",
-            "lane-big.json",
-            "theme_1.json",
-            "theme_2.json"
-        ];
-        const initialFileIndex = 8;
-        let dashboard;
-        let lastSettings = {};
+      const jsonFiles = [
+        'adapter-1.json',
+        'dwh-1.json',
+        'dwh-1.prerender.json',
+        'dwh-small.json',
+        'dwh-2.json',
+        'dwh-3.json',
+        'dwh-4.json',
+        'dwh-5.json',
+        'dwh-5.prerender.json',
+        'dwh-6.json',
+        'dwh-6.fixed.json',
+        'dwh-6.fixed.prerender.json',
+        'lane-small.json',
+        'lane-big.json',
+        'theme_1.json',
+        'theme_2.json',
+        // New fixtures appended so initialFileIndex below stays stable.
+        'dwh-small.prerender.json',
+        'dwh-tiny.json',
+        'dwh-tiny.prerender.json',
+        'dwh-stress.json',
+      ];
+      const initialFileIndex = 8;
+      let dashboard;
+      let lastSettings = {};
 
-        const pageTitle = `${document.title} - ${location.pathname.substring(location.pathname.lastIndexOf('/') + 1) || 'index.html'}`;
+      const pageTitle = `${document.title} - ${location.pathname.substring(location.pathname.lastIndexOf('/') + 1) || 'index.html'}`;
 
-        const chrome = mountDemoChrome({
-            root: document.getElementById('chromeRoot'),
-            title: pageTitle,
-            subtitle: 'Interactive Flow Dashboard',
-            description: 'Visualize datasets with configurable layout, visibility options and zoom controls',
-            controls: ['settings', 'cycleFiles', 'statusReady', 'statusUnknown', 'statusRandom'],
-            settings: ['data', 'layout', 'visibility', 'statusBehavior', 'minimap',
-                       'edges', 'selector', 'nodeSpacing', 'containerMargin'],
-            files: jsonFiles,
-            defaults: {
-                horizontal: false,
-                curved: false,
-                showEdges: true,
-                showGhostlines: false,
-                showBoundingBox: false,
-                showCenterMark: false,
-                showConnectionPoints: false,
-                zoomToRoot: true,
-                showInnerZoneRect: false,
-                toggleCollapseOnStatusChange: false,
-                cascadeOnStatusChange: false,
-                layoutMechanism: 'force',
-                curveMargin: 0,
-                selector: { incomming: 1, outgoing: 1 },
-                nodeSpacing: { horizontal: 20, vertical: 10 },
-                containerMargin: { top: 8, right: 8, bottom: 8, left: 8 },
-                minimap: { mode: 'always', position: 'bottom-right', size: 'm', scaleIndicator: { visible: true } },
-            },
-            onSettingsChange: (patch) => renderDashboard(patch),
-            onFileChange: () => renderDashboard(chrome.getSettings()),
-            getDashboard: () => dashboard,
+      const chrome = mountDemoChrome({
+        root: document.getElementById('chromeRoot'),
+        title: pageTitle,
+        subtitle: 'Interactive Flow Dashboard',
+        description:
+          'Visualize datasets with configurable layout, visibility options and zoom controls',
+        controls: ['settings', 'cycleFiles', 'statusReady', 'statusUnknown', 'statusRandom'],
+        settings: [
+          'data',
+          'layout',
+          'visibility',
+          'statusBehavior',
+          'minimap',
+          'edges',
+          'selector',
+          'nodeSpacing',
+          'containerMargin',
+        ],
+        files: jsonFiles,
+        defaults: {
+          horizontal: false,
+          curved: false,
+          showEdges: true,
+          showGhostlines: false,
+          showBoundingBox: false,
+          showCenterMark: false,
+          showConnectionPoints: false,
+          zoomToRoot: true,
+          showInnerZoneRect: false,
+          toggleCollapseOnStatusChange: false,
+          cascadeOnStatusChange: false,
+          layoutMechanism: 'force',
+          curveMargin: 0,
+          selector: { incomming: 1, outgoing: 1 },
+          nodeSpacing: { horizontal: 20, vertical: 10 },
+          containerMargin: { top: 8, right: 8, bottom: 8, left: 8 },
+          minimap: {
+            mode: 'always',
+            position: 'bottom-right',
+            size: 'm',
+            scaleIndicator: { visible: true },
+          },
+        },
+        onSettingsChange: (patch) => renderDashboard(patch),
+        onFileChange: () => renderDashboard(chrome.getSettings()),
+        getDashboard: () => dashboard,
+      });
+
+      // Set the initial file before the deferred initial settings emit fires.
+      chrome.setFile(jsonFiles[initialFileIndex]);
+
+      function renderDashboard(patch) {
+        const filename = document.getElementById('fileSelect').value || jsonFiles[initialFileIndex];
+        const prevToggleCollapse = lastSettings.toggleCollapseOnStatusChange;
+        lastSettings = patch;
+
+        flowDashboard.fetchDashboardFile(filename).then((dashboardData) => {
+          dashboardData.settings = mergeSettings(dashboardData.settings || {}, patch);
+          dashboardData.settings.minimap = dashboardData.settings.minimap || {};
+          dashboardData.settings.minimap.enabled = dashboardData.settings.minimap.mode !== 'hidden';
+
+          if (!dashboard) {
+            dashboard = new flowDashboard.Dashboard(dashboardData);
+            dashboard.initialize('#graph');
+          } else {
+            dashboard.data = dashboardData;
+          }
+          if (typeof window !== 'undefined') window.dashboard = dashboard;
+
+          if (
+            prevToggleCollapse !== undefined &&
+            prevToggleCollapse !== patch.toggleCollapseOnStatusChange &&
+            typeof dashboard.updateStatusBasedCollapse === 'function'
+          ) {
+            dashboard.updateStatusBasedCollapse();
+          }
         });
-
-        // Set the initial file before the deferred initial settings emit fires.
-        chrome.setFile(jsonFiles[initialFileIndex]);
-
-        function renderDashboard(patch) {
-            const filename = document.getElementById('fileSelect').value || jsonFiles[initialFileIndex];
-            const prevToggleCollapse = lastSettings.toggleCollapseOnStatusChange;
-            lastSettings = patch;
-
-            flowDashboard.fetchDashboardFile(filename).then(dashboardData => {
-                dashboardData.settings = mergeSettings(dashboardData.settings || {}, patch);
-                dashboardData.settings.minimap = dashboardData.settings.minimap || {};
-                dashboardData.settings.minimap.enabled = dashboardData.settings.minimap.mode !== 'hidden';
-
-                if (!dashboard) {
-                    dashboard = new flowDashboard.Dashboard(dashboardData);
-                    dashboard.initialize('#graph');
-                } else {
-                    dashboard.data = dashboardData;
-                }
-                if (typeof window !== 'undefined') window.dashboard = dashboard;
-
-                if (prevToggleCollapse !== undefined
-                    && prevToggleCollapse !== patch.toggleCollapseOnStatusChange
-                    && typeof dashboard.updateStatusBasedCollapse === 'function') {
-                    dashboard.updateStatusBasedCollapse();
-                }
-            });
-        }
+      }
     </script>
-</body>
+  </body>
 </html>

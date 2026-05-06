@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  computeConnectionPoints,
-  computeLocalConnectionPoints,
-} from '../js/utilPath.js';
+import { computeConnectionPoints, computeLocalConnectionPoints } from '../js/utilPath.js';
 
 describe('computeConnectionPoints', () => {
   it('places connection points at the centers of each side around (x, y)', () => {

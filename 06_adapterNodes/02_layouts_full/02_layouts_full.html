@@ -1,94 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Multiple Adapter Layouts - Test Page</title>
 
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="chromeRoot"></div>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <div class="layout-info-panel">
-        <h3>Current Layouts Displayed</h3>
-        <div id="layoutDetails" class="layout-details"></div>
+      <h3>Current Layouts Displayed</h3>
+      <div id="layoutDetails" class="layout-details"></div>
     </div>
 
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> Multiple Adapters</p>
-            <p><strong>Layouts:</strong> All 5 arrangements (1, 2, 3, 4, 5)</p>
-            <p><strong>Modes:</strong> Full, staging-archive, staging-transform, archive-only</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Ready for Testing</span></p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> Multiple Adapters</p>
+        <p><strong>Layouts:</strong> All 5 arrangements (1, 2, 3, 4, 5)</p>
+        <p><strong>Modes:</strong> Full, staging-archive, staging-transform, archive-only</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Ready for Testing</span></p>
+      </div>
     </footer>
 
     <script type="module">
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { mountDemoChrome, mergeSettings } from '../../dashboard/js/demoChrome.js';
-        import { multipleLayoutsData, layoutVariations } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { mountDemoChrome, mergeSettings } from '../../dashboard/js/demoChrome.js';
+      import { multipleLayoutsData, layoutVariations } from './js/graphData.js';
 
-        let flowdash;
-        let currentVariationKey = 'default';
+      let flowdash;
+      let currentVariationKey = 'default';
 
-        const variations = Object.fromEntries(
-            Object.entries(layoutVariations).map(([key, data]) => [key, { label: key, data }])
-        );
+      const variations = Object.fromEntries(
+        Object.entries(layoutVariations).map(([key, data]) => [key, { label: key, data }]),
+      );
 
-        const chrome = mountDemoChrome({
-            root: document.getElementById('chromeRoot'),
-            title: 'Nodes',
-            subtitle: 'Multiple Adapter Layouts Test',
-            description: 'Comprehensive test page showcasing all 5 adapter layout arrangements and different modes',
-            controls: ['settings', 'cycle', 'statusReady', 'statusUnknown', 'statusRandom'],
-            extraControls: [
-                { id: 'testBtn', label: 'Run Tests', onClick: () => runDemoTests() },
-            ],
-            settings: ['variation', 'layout', 'visibility', 'statusBehavior',
-                       'edges', 'selector', 'nodeSpacing', 'containerMargin'],
-            variations,
-            defaults: mergeSettings(multipleLayoutsData.settings, {
-                toggleCollapseOnStatusChange: false,
-                cascadeOnStatusChange: false,
-            }),
-            onSettingsChange: (patch) => rebuild(patch),
-            onVariationChange: (key) => { currentVariationKey = key; rebuild(); },
-            getDashboard: () => flowdash,
-        });
+      const chrome = mountDemoChrome({
+        root: document.getElementById('chromeRoot'),
+        title: 'Nodes',
+        subtitle: 'Multiple Adapter Layouts Test',
+        description:
+          'Comprehensive test page showcasing all 5 adapter layout arrangements and different modes',
+        controls: ['settings', 'cycle', 'statusReady', 'statusUnknown', 'statusRandom'],
+        extraControls: [{ id: 'testBtn', label: 'Run Tests', onClick: () => runDemoTests() }],
+        settings: [
+          'variation',
+          'layout',
+          'visibility',
+          'statusBehavior',
+          'edges',
+          'selector',
+          'nodeSpacing',
+          'containerMargin',
+        ],
+        variations,
+        defaults: mergeSettings(multipleLayoutsData.settings, {
+          toggleCollapseOnStatusChange: false,
+          cascadeOnStatusChange: false,
+        }),
+        onSettingsChange: (patch) => rebuild(patch),
+        onVariationChange: (key) => {
+          currentVariationKey = key;
+          rebuild();
+        },
+        getDashboard: () => flowdash,
+      });
 
-        function rebuild(patch) {
-            const data = layoutVariations[currentVariationKey] || multipleLayoutsData;
-            const settings = mergeSettings(data.settings, patch || chrome.getSettings());
-            const dataset = { ...data, settings };
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-            updateLayoutDetails(dataset);
-        }
+      function rebuild(patch) {
+        const data = layoutVariations[currentVariationKey] || multipleLayoutsData;
+        const settings = mergeSettings(data.settings, patch || chrome.getSettings());
+        const dataset = { ...data, settings };
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+        updateLayoutDetails(dataset);
+      }
 
-        window.multipleLayoutsData = multipleLayoutsData;
-        window.layoutVariations = layoutVariations;
+      window.multipleLayoutsData = multipleLayoutsData;
+      window.layoutVariations = layoutVariations;
 
-        function updateLayoutDetails(data) {
-            const detailsDiv = document.getElementById('layoutDetails');
-            let html = '<div class="layout-grid">';
-            data.nodes.forEach((node) => {
-                const mode = node.layout.mode || 'full';
-                const arrangement = node.layout.arrangement || 1;
-                html += `
+      function updateLayoutDetails(data) {
+        const detailsDiv = document.getElementById('layoutDetails');
+        let html = '<div class="layout-grid">';
+        data.nodes.forEach((node) => {
+          const mode = node.layout.mode || 'full';
+          const arrangement = node.layout.arrangement || 1;
+          html += `
                     <div class="layout-card">
                         <h4>${node.label} (${node.id})</h4>
                         <p><strong>Mode:</strong> ${mode}</p>
@@ -96,137 +108,138 @@
                         <p><strong>Description:</strong> ${getLayoutDescription(mode, arrangement)}</p>
                     </div>
                 `;
-            });
-            html += '</div>';
-            detailsDiv.innerHTML = html;
-        }
+        });
+        html += '</div>';
+        detailsDiv.innerHTML = html;
+      }
 
-        function getLayoutDescription(mode, arrangement) {
-            const descriptions = {
-                'full-1': 'Archive-focused: staging bottom-left, archive top-right, transform bottom-right',
-                'full-2': 'Transform-focused: staging/archive top row, transform bottom spanning',
-                'full-3': 'Staging-focused: staging left spanning, archive/transform stacked right',
-                'staging-archive-4': 'Two-node horizontal: staging left, archive right',
-                'staging-transform-4': 'Two-node horizontal: staging left, transform right',
-                'archive-only-5': 'Single node: archive centered'
-            };
-            return descriptions[`${mode}-${arrangement}`] || 'Standard layout';
-        }
+      function getLayoutDescription(mode, arrangement) {
+        const descriptions = {
+          'full-1':
+            'Archive-focused: staging bottom-left, archive top-right, transform bottom-right',
+          'full-2': 'Transform-focused: staging/archive top row, transform bottom spanning',
+          'full-3': 'Staging-focused: staging left spanning, archive/transform stacked right',
+          'staging-archive-4': 'Two-node horizontal: staging left, archive right',
+          'staging-transform-4': 'Two-node horizontal: staging left, transform right',
+          'archive-only-5': 'Single node: archive centered',
+        };
+        return descriptions[`${mode}-${arrangement}`] || 'Standard layout';
+      }
 
-        function runDemoTests() {
-            const testStatus = document.getElementById('testStatus');
-            testStatus.textContent = 'Running...';
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
 
-            const tests = [
-                testDashboardInitialization,
-                testMultipleAdapterRendering,
-                testAllChildNodesRendering,
-                testDataStructure,
-                testAdapterStructures,
-                testChildPositioning,
-                testTextContainment,
-                testLayoutVariety,
-                testZoneSystemIntegration
-            ];
+        const tests = [
+          testDashboardInitialization,
+          testMultipleAdapterRendering,
+          testAllChildNodesRendering,
+          testDataStructure,
+          testAdapterStructures,
+          testChildPositioning,
+          testTextContainment,
+          testLayoutVariety,
+          testZoneSystemIntegration,
+        ];
 
-            let passed = 0;
-            const total = tests.length;
+        let passed = 0;
+        const total = tests.length;
 
-            tests.forEach((test, index) => {
-                try {
-                    if (test()) {
-                        passed++;
-                        console.log(`✅ Test ${index + 1}: ${test.name} - PASSED`);
-                    } else {
-                        console.log(`❌ Test ${index + 1}: ${test.name} - FAILED`);
-                    }
-                } catch (e) {
-                    console.error(`💥 Test ${index + 1}: ${test.name} - ERROR:`, e);
-                }
-            });
+        tests.forEach((test, index) => {
+          try {
+            if (test()) {
+              passed++;
+              console.log(`✅ Test ${index + 1}: ${test.name} - PASSED`);
+            } else {
+              console.log(`❌ Test ${index + 1}: ${test.name} - FAILED`);
+            }
+          } catch (e) {
+            console.error(`💥 Test ${index + 1}: ${test.name} - ERROR:`, e);
+          }
+        });
 
-            testStatus.textContent = `${passed}/${total} tests passed`;
-            testStatus.className = passed === total ? 'test-pass' : 'test-fail';
-            console.log(`\n📊 Test Summary: ${passed}/${total} tests passed`);
-        }
+        testStatus.textContent = `${passed}/${total} tests passed`;
+        testStatus.className = passed === total ? 'test-pass' : 'test-fail';
+        console.log(`\n📊 Test Summary: ${passed}/${total} tests passed`);
+      }
 
-        function testDashboardInitialization() {
-            return flowdash && typeof flowdash.initialize === 'function';
-        }
-        function testMultipleAdapterRendering() {
-            const adapters = document.querySelectorAll('g.adapter');
-            console.log(`Found ${adapters.length} adapter nodes`);
-            return adapters.length > 1;
-        }
-        function testAllChildNodesRendering() {
-            const adapters = document.querySelectorAll('g.adapter');
-            let totalChildNodes = 0;
-            adapters.forEach(adapter => {
-                totalChildNodes += adapter.querySelectorAll('g.node').length;
-            });
-            console.log(`Found ${totalChildNodes} total child nodes across all adapters`);
-            return totalChildNodes > 0;
-        }
-        function testDataStructure() {
-            const currentData = window.flowdash?.data || multipleLayoutsData;
-            return currentData && currentData.nodes && Array.isArray(currentData.nodes);
-        }
-        function testAdapterStructures() {
-            const adapters = document.querySelectorAll('g.adapter');
-            let validStructures = 0;
-            adapters.forEach(adapter => {
-                const headerBg = adapter.querySelector('rect.header-background');
-                const headerText = adapter.querySelector('text.header-text');
-                const mainShape = adapter.querySelector('rect.adapter.shape');
-                if (headerBg && headerText && mainShape) validStructures++;
-            });
-            console.log(`${validStructures}/${adapters.length} adapters have valid structures`);
-            return validStructures === adapters.length;
-        }
-        function testChildPositioning() {
-            const adapters = document.querySelectorAll('g.adapter');
-            let validPositioning = 0;
-            adapters.forEach(adapter => {
-                const childNodes = adapter.querySelectorAll('g.node');
-                const innerContainer = adapter.querySelector('rect.zone-innerContainer');
-                if (childNodes.length > 0 && innerContainer) validPositioning++;
-            });
-            console.log(`${validPositioning}/${adapters.length} adapters have valid child positioning`);
-            return validPositioning > 0;
-        }
-        function testTextContainment() {
-            const adapters = document.querySelectorAll('g.adapter');
-            let valid = 0;
-            adapters.forEach(adapter => {
-                const childRects = adapter.querySelectorAll('g.node-container rect');
-                const childTexts = adapter.querySelectorAll('g.node-container text');
-                if (childRects.length > 0 && childTexts.length > 0) valid++;
-            });
-            console.log(`${valid}/${adapters.length} adapters have text elements`);
-            return valid > 0;
-        }
-        function testLayoutVariety() {
-            const adapters = document.querySelectorAll('g.adapter');
-            const layoutSet = new Set();
-            adapters.forEach((adapter) => {
-                layoutSet.add(`${adapter.querySelectorAll('g.node').length}`);
-            });
-            console.log(`Found ${layoutSet.size} different layout patterns`);
-            return layoutSet.size >= 1;
-        }
-        function testZoneSystemIntegration() {
-            const adapters = document.querySelectorAll('g.adapter');
-            let valid = 0;
-            adapters.forEach(adapter => {
-                const innerContainerZone = adapter.querySelector('g.zone-innerContainer');
-                const zoneBorder = adapter.querySelector('rect.zone-innerContainer');
-                if (innerContainerZone || zoneBorder) valid++;
-            });
-            console.log(`${valid}/${adapters.length} adapters have zone system integration`);
-            return valid > 0;
-        }
+      function testDashboardInitialization() {
+        return flowdash && typeof flowdash.initialize === 'function';
+      }
+      function testMultipleAdapterRendering() {
+        const adapters = document.querySelectorAll('g.adapter');
+        console.log(`Found ${adapters.length} adapter nodes`);
+        return adapters.length > 1;
+      }
+      function testAllChildNodesRendering() {
+        const adapters = document.querySelectorAll('g.adapter');
+        let totalChildNodes = 0;
+        adapters.forEach((adapter) => {
+          totalChildNodes += adapter.querySelectorAll('g.node').length;
+        });
+        console.log(`Found ${totalChildNodes} total child nodes across all adapters`);
+        return totalChildNodes > 0;
+      }
+      function testDataStructure() {
+        const currentData = window.flowdash?.data || multipleLayoutsData;
+        return currentData && currentData.nodes && Array.isArray(currentData.nodes);
+      }
+      function testAdapterStructures() {
+        const adapters = document.querySelectorAll('g.adapter');
+        let validStructures = 0;
+        adapters.forEach((adapter) => {
+          const headerBg = adapter.querySelector('rect.header-background');
+          const headerText = adapter.querySelector('text.header-text');
+          const mainShape = adapter.querySelector('rect.adapter.shape');
+          if (headerBg && headerText && mainShape) validStructures++;
+        });
+        console.log(`${validStructures}/${adapters.length} adapters have valid structures`);
+        return validStructures === adapters.length;
+      }
+      function testChildPositioning() {
+        const adapters = document.querySelectorAll('g.adapter');
+        let validPositioning = 0;
+        adapters.forEach((adapter) => {
+          const childNodes = adapter.querySelectorAll('g.node');
+          const innerContainer = adapter.querySelector('rect.zone-innerContainer');
+          if (childNodes.length > 0 && innerContainer) validPositioning++;
+        });
+        console.log(`${validPositioning}/${adapters.length} adapters have valid child positioning`);
+        return validPositioning > 0;
+      }
+      function testTextContainment() {
+        const adapters = document.querySelectorAll('g.adapter');
+        let valid = 0;
+        adapters.forEach((adapter) => {
+          const childRects = adapter.querySelectorAll('g.node-container rect');
+          const childTexts = adapter.querySelectorAll('g.node-container text');
+          if (childRects.length > 0 && childTexts.length > 0) valid++;
+        });
+        console.log(`${valid}/${adapters.length} adapters have text elements`);
+        return valid > 0;
+      }
+      function testLayoutVariety() {
+        const adapters = document.querySelectorAll('g.adapter');
+        const layoutSet = new Set();
+        adapters.forEach((adapter) => {
+          layoutSet.add(`${adapter.querySelectorAll('g.node').length}`);
+        });
+        console.log(`Found ${layoutSet.size} different layout patterns`);
+        return layoutSet.size >= 1;
+      }
+      function testZoneSystemIntegration() {
+        const adapters = document.querySelectorAll('g.adapter');
+        let valid = 0;
+        adapters.forEach((adapter) => {
+          const innerContainerZone = adapter.querySelector('g.zone-innerContainer');
+          const zoneBorder = adapter.querySelector('rect.zone-innerContainer');
+          if (innerContainerZone || zoneBorder) valid++;
+        });
+        console.log(`${valid}/${adapters.length} adapters have zone system integration`);
+        return valid > 0;
+      }
 
-        setTimeout(runDemoTests, 3000);
+      setTimeout(runDemoTests, 3000);
     </script>
-</body>
+  </body>
 </html>

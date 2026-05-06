@@ -27,20 +27,20 @@ This demo showcases the new custom click handler functionality in Flowdash, demo
 ```javascript
 // Register the click handler
 flowdash.setNodeClickCallback((node) => {
-    showNodeInfo(node);
+  showNodeInfo(node);
 });
 
 // Function to display node information
 function showNodeInfo(node) {
-    const floatingDiv = document.getElementById('floatingInfo');
-    const nodeDetails = document.getElementById('nodeDetails');
-    
-    // Create status badge HTML
-    const statusClass = `status-${node.status.toLowerCase()}`;
-    const statusBadge = `<span class="status-badge ${statusClass}">${node.status}</span>`;
-    
-    // Update content
-    nodeDetails.innerHTML = `
+  const floatingDiv = document.getElementById('floatingInfo');
+  const nodeDetails = document.getElementById('nodeDetails');
+
+  // Create status badge HTML
+  const statusClass = `status-${node.status.toLowerCase()}`;
+  const statusBadge = `<span class="status-badge ${statusClass}">${node.status}</span>`;
+
+  // Update content
+  nodeDetails.innerHTML = `
         <div><strong>ID:</strong> ${node.id}</div>
         <div><strong>Label:</strong> ${node.label}</div>
         <div><strong>Type:</strong> ${node.type}</div>
@@ -48,17 +48,18 @@ function showNodeInfo(node) {
         <div><strong>Size:</strong> ${node.width} × ${node.height}</div>
         <div><strong>Status:</strong> ${statusBadge}</div>
     `;
-    
-    // Show the floating div with animation
-    floatingDiv.classList.add('show');
+
+  // Show the floating div with animation
+  floatingDiv.classList.add('show');
 }
 ```
 
 ## Test Data
 
 The demo includes 5 test nodes with different statuses:
+
 - **Data Source** (Ready) - Green status
-- **Processing** (Updating) - Orange status  
+- **Processing** (Updating) - Orange status
 - **Storage** (Updated) - Blue status
 - **Error Node** (Error) - Red status
 - **Warning Node** (Warning) - Yellow status
@@ -66,6 +67,7 @@ The demo includes 5 test nodes with different statuses:
 ## Styling
 
 The floating panel uses modern CSS with:
+
 - Gradient background
 - Smooth animations
 - Color-coded status badges
@@ -75,6 +77,7 @@ The floating panel uses modern CSS with:
 ## Browser Compatibility
 
 This demo works in all modern browsers that support:
+
 - ES6 modules
 - CSS Grid and Flexbox
 - CSS transitions and transforms

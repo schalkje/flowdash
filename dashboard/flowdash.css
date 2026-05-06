@@ -13,7 +13,7 @@
   width: 100%;
   height: 800px;
   background-color: var(--fd-bg, white);
-   /* rgba(200, 200, 200, 0.2); */
+  /* rgba(200, 200, 200, 0.2); */
 }
 
 #graph-container {
@@ -35,20 +35,32 @@
   gap: 8px;
   padding: 14px 18px;
   border-radius: 10px;
-  background: var(--fd-surface, rgba(255,255,255,0.92));
+  background: var(--fd-surface, rgba(255, 255, 255, 0.92));
   color: var(--fd-text, #111);
-  border: 1px solid var(--fd-border, rgba(0,0,0,0.2));
-  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  border: 1px solid var(--fd-border, rgba(0, 0, 0, 0.2));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
   z-index: 20001;
   text-align: center;
 }
 
 .flowdash-loading__text {
-  font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font:
+    600 16px/1.2 system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
 }
 
 .flowdash-loading__dots {
-  font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font:
+    600 16px/1.2 system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
   letter-spacing: 2px;
   color: var(--fd-accent, #2f6feb);
   display: inline-block;
@@ -56,7 +68,13 @@
 }
 
 .flowdash-loading__timer {
-  font: 500 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font:
+    500 14px/1.2 system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
   color: var(--fd-text-muted, #656d76);
   margin-top: 4px;
 }
@@ -66,54 +84,64 @@
   overflow-y: auto;
   margin-top: 8px;
   width: 100%;
-  border-top: 1px solid var(--fd-border, rgba(0,0,0,0.1));
+  border-top: 1px solid var(--fd-border, rgba(0, 0, 0, 0.1));
   padding-top: 8px;
 }
 
 .flowdash-loading__history .stage-entry {
-  font: 400 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font:
+    400 12px/1.3 system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
   color: var(--fd-text-muted, #656d76);
   padding: 2px 0;
   text-align: left;
-  border-bottom: 1px solid var(--fd-border-light, rgba(0,0,0,0.05));
+  border-bottom: 1px solid var(--fd-border-light, rgba(0, 0, 0, 0.05));
 }
 
 .flowdash-loading__history .stage-entry:last-child {
   border-bottom: none;
 }
-  .fullscreen-toggle {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      background: rgba(0,0,0,0.15);
-      color: #fff;
-      backdrop-filter: blur(2px);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      z-index: 10000; /* Ensure the button is above the SVG */
-      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
-      opacity: 0.7;
-  }
+.fullscreen-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  z-index: 10000; /* Ensure the button is above the SVG */
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  opacity: 0.7;
+}
 
-  /* While the dashboard is in fullscreen, float button to viewport corner */
-  .fullscreen-toggle.fullscreen-active {
-      position: fixed;
-  }
+/* While the dashboard is in fullscreen, float button to viewport corner */
+.fullscreen-toggle.fullscreen-active {
+  position: fixed;
+}
 
-  .fullscreen-toggle:hover {
-      background: rgba(255,255,255,0.9);
-      color: #111;
-      border-color: rgba(0,0,0,0.2);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      opacity: 1;
-  }
+.fullscreen-toggle:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #111;
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 1;
+}
 
 #graph rect.boundingBox {
   fill: none;
@@ -143,7 +171,9 @@
 }
 
 /* Ensure correct positioning inside demo containers in normal mode */
-.demo-container { position: relative; }
+.demo-container {
+  position: relative;
+}
 .demo-container > .zoom-cockpit {
   right: 12px !important;
   bottom: 12px !important;
@@ -151,37 +181,38 @@
 
 .minimap-svg {
   border: 1px solid var(--fd-border, #2b4b7c);
-  background-color: var(--fd-surface, rgba(255,255,255, 0.7));
+  background-color: var(--fd-surface, rgba(255, 255, 255, 0.7));
 }
-.minimap { }
+.minimap {
+}
 /* No visible header/footer backgrounds; logical rows only */
 .minimap-scale {
   fill: var(--minimap-scale-fg, #333);
   pointer-events: none; /* footer hit-rect takes events; text shouldn’t block hover */
 }
 .minimap-collapsed-icon .collapsed-icon-bg {
-  fill: var(--fd-surface, rgba(255,255,255, 0.85));
-  stroke: var(--fd-border, rgba(0,0,0,0.25));
+  fill: var(--fd-surface, rgba(255, 255, 255, 0.85));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.25));
 }
 .minimap-collapsed-icon .collapsed-icon-mini {
-  fill: var(--fd-border, rgba(0,0,0,0.35));
+  fill: var(--fd-border, rgba(0, 0, 0, 0.35));
 }
 
 .minimap-collapse-button .collapse-btn-bg {
-  fill: var(--fd-surface, rgba(255,255,255, 0.9));
-  stroke: var(--fd-border, rgba(0,0,0,0.25));
+  fill: var(--fd-surface, rgba(255, 255, 255, 0.9));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.25));
 }
 .minimap-collapse-button .collapse-btn-icon {
-  fill: var(--fd-border, rgba(0,0,0,0.6));
+  fill: var(--fd-border, rgba(0, 0, 0, 0.6));
 }
 
 .minimap-pin-button .pin-btn-bg {
-  fill: var(--fd-surface, rgba(255,255,255, 0.9));
-  stroke: var(--fd-border, rgba(0,0,0,0.25));
+  fill: var(--fd-surface, rgba(255, 255, 255, 0.9));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.25));
 }
 .minimap-pin-button .pin-btn-head,
 .minimap-pin-button .pin-btn-stem {
-  fill: var(--fd-border, rgba(0,0,0,0.6));
+  fill: var(--fd-border, rgba(0, 0, 0, 0.6));
 }
 .minimap-pin-button.active .pin-btn-bg {
   stroke: none;
@@ -198,7 +229,6 @@
   stroke-width: 4px;
 }
 
-
 /* Minimap overlays (base defaults; themes override) */
 .minimap-svg .eye {
   fill: var(--fd-bg, #ffffff);
@@ -209,33 +239,33 @@
 
 .minimap-svg .iris {
   fill: none;
-  stroke: var(--fd-border, rgba(0,0,0,0.35));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.35));
   stroke-width: 6px;
 }
 
 /* Minimap control buttons */
 .minimap-controls .btn-bg {
-  fill: var(--fd-surface, rgba(255,255,255, 0.9));
-  stroke: var(--fd-border, rgba(0,0,0,0.25));
+  fill: var(--fd-surface, rgba(255, 255, 255, 0.9));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.25));
 }
 .minimap-size-button .btn-bg {
-  fill: var(--fd-surface, rgba(255,255,255, 0.9));
-  stroke: var(--fd-border, rgba(0,0,0,0.25));
+  fill: var(--fd-surface, rgba(255, 255, 255, 0.9));
+  stroke: var(--fd-border, rgba(0, 0, 0, 0.25));
 }
 .minimap-header-hit,
 .minimap-footer-hit {
   pointer-events: all; /* make entire rows hover sensitive */
 }
 .minimap-controls .icon {
-  fill: var(--fd-border, rgba(0,0,0,0.75));
+  fill: var(--fd-border, rgba(0, 0, 0, 0.75));
 }
 .minimap-size-button .btn-label {
-  fill: var(--fd-border, rgba(0,0,0,0.75));
+  fill: var(--fd-border, rgba(0, 0, 0, 0.75));
 }
 .minimap-controls .minimap-btn:hover .btn-bg,
 .minimap-collapse-button:hover .collapse-btn-bg,
 .minimap-pin-button:hover .pin-btn-bg {
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 /* Minimap Element Styles */
@@ -246,7 +276,6 @@
 .minimap-pupil {
   fill: black;
 }
-
 
 body {
   background-color: var(--fd-bg, white);
@@ -269,18 +298,17 @@ svg.canvas {
   -webkit-box-shadow: 4px 3px 8px 1px #969696;
 }
 
-
 /*
 ------------------------------------------------------------------------------------------------------------------------------------------------
 */
 
-.collapsed .shape{
+.collapsed .shape {
   opacity: 1;
   /* fill-opacity: 0.7 !important; */
 }
-.collapsed .label{
+.collapsed .label {
   /* fill: white; */
-  font-weight: bold  !important;
+  font-weight: bold !important;
   opacity: 1;
   fill-opacity: 1 !important;
 }
@@ -294,51 +322,50 @@ svg.canvas {
   stroke-opacity: 0.3;
 }
 
-.shape[status="Unknown"] {
+.shape[status='Unknown'] {
   fill: #ddc7ff;
   fill-opacity: 0.1;
 }
 
-.shape[status="Ready"] {
+.shape[status='Ready'] {
   fill: lightblue;
-  fill-opacity: 0.3;  
+  fill-opacity: 0.3;
 }
 
-.shape[status="Updating"] {
+.shape[status='Updating'] {
   stroke: green;
   fill: lightgreen;
   fill-opacity: 0.3;
 }
 
-.shape[status="Updated"] {
+.shape[status='Updated'] {
   stroke: none;
   fill: rgb(24, 196, 24);
   fill-opacity: 0.1;
 }
-.collapsed[status="Updated"] .shape{
+.collapsed[status='Updated'] .shape {
   stroke: none;
   fill: rgb(24, 196, 24);
   fill-opacity: 1;
 }
 
-.shape[status="Skipped"] {
+.shape[status='Skipped'] {
   stroke: yellowgreen;
   fill: rgb(255, 252, 208);
   fill-opacity: 1;
 }
 
-
-.shape[status="Delayed"] {
+.shape[status='Delayed'] {
   stroke: orange;
 }
 
-.shape[status="Warning"] {
+.shape[status='Warning'] {
   stroke: orangered;
   fill: orangered;
   fill-opacity: 0.3;
 }
 
-.shape[status="Error"] {
+.shape[status='Error'] {
   stroke: red;
   fill: red;
   fill-opacity: 0.3;
@@ -348,43 +375,42 @@ svg.canvas {
     Node shape statusses
 */
 
-.rect.shape[status="Unknown"] {
+.rect.shape[status='Unknown'] {
   fill: rgb(132, 139, 146);
   fill-opacity: 1;
 }
 
-.rect.shape[status="Ready"] {
+.rect.shape[status='Ready'] {
   fill: lightblue;
   fill-opacity: 1;
 }
 
 @keyframes running-process {
   0% {
-      background: lightgreen;
-      box-shadow: 0px 0px 5px 5px lightgreen;
+    background: lightgreen;
+    box-shadow: 0px 0px 5px 5px lightgreen;
   }
 
   15% {
-      background: lightgreen;
-      box-shadow: none;
+    background: lightgreen;
+    box-shadow: none;
   }
 
   50% {
-      background: transparent;
-      box-shadow: none;
+    background: transparent;
+    box-shadow: none;
   }
 
   85% {
-      background: lightgreen;
-      box-shadow: none;
+    background: lightgreen;
+    box-shadow: none;
   }
 
   100% {
-      background: lightgreen;
-      box-shadow: 0px 0px 5px 5px lightgreen;
+    background: lightgreen;
+    box-shadow: 0px 0px 5px 5px lightgreen;
   }
 }
-
 
 @keyframes dash {
   to {
@@ -392,7 +418,7 @@ svg.canvas {
   }
 }
 
-.rect.shape[status="Updating"] {
+.rect.shape[status='Updating'] {
   fill: lightgreen;
   fill-opacity: 1;
   stroke: green;
@@ -402,32 +428,30 @@ svg.canvas {
   animation: dash 10s forwards linear infinite;
 }
 
-.rect.shape[status="Updated"] {
+.rect.shape[status='Updated'] {
   fill: rgb(24, 196, 24);
   fill-opacity: 1;
 }
 
-.rect.shape[status="Skipped"] {
+.rect.shape[status='Skipped'] {
   fill: rgb(255, 252, 208);
   fill-opacity: 1;
 }
 
-
-.rect.shape[status="Delayed"] {
+.rect.shape[status='Delayed'] {
   fill: orange;
   fill-opacity: 1;
 }
 
-.rect.shape[status="Warning"] {
+.rect.shape[status='Warning'] {
   fill: orangered;
   fill-opacity: 1;
 }
 
-.rect.shape[status="Error"] {
+.rect.shape[status='Error'] {
   fill: red;
   fill-opacity: 1;
 }
-
 
 /*
     Labels
@@ -476,7 +500,6 @@ text {
   stroke-width: 2;
 }
 
-
 /*
 ------------------------------------------------------------------------------------------------------------------------------------------------
 */
@@ -492,8 +515,6 @@ text {
 }
 
 /* default styles */
-
-
 
 .selected .shape {
   stroke: rgb(53, 53, 175);
@@ -512,10 +533,9 @@ text {
   cursor: grabbing;
 }
 
-
 .edge .path {
   stroke-width: 2px;
-  stroke: #7795D1;
+  stroke: #7795d1;
   /* stroke: green; */
   fill: none;
   marker-end: url(#arrow);
@@ -529,7 +549,6 @@ text {
   stroke-opacity: 1;
   opacity: 0.8;
 }
-
 
 .edge.ghostline {
   stroke-width: 1px;
@@ -550,19 +569,12 @@ text {
   marker-start: url(#debugcircle);
 }
 
-
-
-
-
 .collapsed {
   opacity: 1;
 }
 
 .expanded {
-
 }
-
-
 
 .zoom-button circle {
   display: none;
@@ -583,7 +595,9 @@ text {
 
 .zoom-button rect.icon {
   fill: #acace7;
-  transition: fill 0.2s, transform 0.2s;
+  transition:
+    fill 0.2s,
+    transform 0.2s;
 }
 
 .editbox {
@@ -647,7 +661,7 @@ rect.zone-innerContainer {
   fill: none;
   stroke: rgba(135, 206, 250, 0.2); /* Light blue semi-transparent */
   stroke-width: 1;
-  stroke-dasharray: 5,5; /* Dashed border for visual distinction */
+  stroke-dasharray: 5, 5; /* Dashed border for visual distinction */
   pointer-events: none; /* Don't interfere with interactions */
 }
 
@@ -801,45 +815,45 @@ rect.zone-innerContainer {
 }
 
 /* Status-based styling for container shapes */
-.container-shape[status="Unknown"] {
+.container-shape[status='Unknown'] {
   fill: #ddc7ff;
   fill-opacity: 0.1;
 }
 
-.container-shape[status="Ready"] {
+.container-shape[status='Ready'] {
   fill: lightblue;
   fill-opacity: 0.3;
 }
 
-.container-shape[status="Updating"] {
+.container-shape[status='Updating'] {
   stroke: green;
   fill: lightgreen;
   fill-opacity: 0.3;
 }
 
-.container-shape[status="Updated"] {
+.container-shape[status='Updated'] {
   stroke: none;
   fill: rgb(24, 196, 24);
   fill-opacity: 0.1;
 }
 
-.container-shape[status="Skipped"] {
+.container-shape[status='Skipped'] {
   stroke: yellowgreen;
   fill: rgb(255, 252, 208);
   fill-opacity: 1;
 }
 
-.container-shape[status="Delayed"] {
+.container-shape[status='Delayed'] {
   stroke: orange;
 }
 
-.container-shape[status="Warning"] {
+.container-shape[status='Warning'] {
   stroke: orangered;
   fill: orangered;
   fill-opacity: 0.3;
 }
 
-.container-shape[status="Error"] {
+.container-shape[status='Error'] {
   stroke: red;
   fill: red;
   fill-opacity: 0.3;

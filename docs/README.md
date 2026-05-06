@@ -5,24 +5,27 @@ This folder hosts **repo-level** documentation: project goals, current-state ana
 ## Contents
 
 ### Strategy
-| File | Purpose |
-|------|---------|
-| [`project-goals.md`](./project-goals.md) | What the project is trying to be (library, demos, testing) and supporting goals (themability, performance, discoverability). |
-| [`current-state.md`](./current-state.md) | Honest inventory of strengths and gaps, organized by goal. Every claim cites a concrete path or count. |
-| [`improvement-plan.md`](./improvement-plan.md) | Phased, prioritized roadmap: hygiene → testing pyramid → demo coverage → documentation surfacing. |
+
+| File                                           | Purpose                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`project-goals.md`](./project-goals.md)       | What the project is trying to be (library, demos, testing) and supporting goals (themability, performance, discoverability). |
+| [`current-state.md`](./current-state.md)       | Honest inventory of strengths and gaps, organized by goal. Every claim cites a concrete path or count.                       |
+| [`improvement-plan.md`](./improvement-plan.md) | Phased, prioritized roadmap: hygiene → testing pyramid → demo coverage → documentation surfacing.                            |
 
 ### Practice
-| File | Purpose |
-|------|---------|
-| [`contributing.md`](./contributing.md) | Practical guide: how to add a node type, demo, test, or theme. |
+
+| File                                           | Purpose                                                                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [`contributing.md`](./contributing.md)         | Practical guide: how to add a node type, demo, test, or theme.                                                         |
 | [`testing-strategy.md`](./testing-strategy.md) | Canonical strategy across unit, integration, e2e, visual regression, and performance. Replaces the older strategy doc. |
-| [`demo-philosophy.md`](./demo-philosophy.md) | Conventions every demo should follow — keep the demo set coherent. |
-| [`release.md`](./release.md) | Versioning policy, dual-package model, distribution scripts. |
-| [`architecture-map.md`](./architecture-map.md) | One-page navigator into the codebase, links into `/dashboard/documentation/`. |
+| [`demo-philosophy.md`](./demo-philosophy.md)   | Conventions every demo should follow — keep the demo set coherent.                                                     |
+| [`release.md`](./release.md)                   | Versioning policy, dual-package model, distribution scripts.                                                           |
+| [`architecture-map.md`](./architecture-map.md) | One-page navigator into the codebase, links into `/dashboard/documentation/`.                                          |
 
 ### Reference
-| File | Purpose |
-|------|---------|
+
+| File                                             | Purpose                                              |
+| ------------------------------------------------ | ---------------------------------------------------- |
 | [`layout-properties.md`](./layout-properties.md) | (Pre-existing) reference notes on layout properties. |
 
 ## How this folder relates to `/dashboard/documentation/`

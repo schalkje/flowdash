@@ -15,13 +15,14 @@ Calculates the width of text elements for layout purposes:
 ```javascript
 export function getTextWidth(text) {
   // Create a temporary SVG element
-  const svg = d3.select("body").append("svg").attr("class", "temp-svg");
+  const svg = d3.select('body').append('svg').attr('class', 'temp-svg');
 
   // Append a text element to the SVG
-  const textElement = svg.append("text")
-      .attr("x", -9999) // Position it off-screen
-      .attr("y", -9999)
-      .text(text);
+  const textElement = svg
+    .append('text')
+    .attr('x', -9999) // Position it off-screen
+    .attr('y', -9999)
+    .text(text);
 
   // Get the width of the text element
   const width = textElement.node().getBBox().width;
@@ -34,8 +35,9 @@ export function getTextWidth(text) {
 ```
 
 **Usage:**
+
 ```javascript
-const labelWidth = getTextWidth("node Label");
+const labelWidth = getTextWidth('node Label');
 ```
 
 **Performance Note:** Creates and removes DOM elements, so use sparingly in performance-critical code.
@@ -53,7 +55,7 @@ export function computeBoundingBox(nodes, horizontal = false) {
   const padding = 0;
   let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity];
 
-  const updateBounds = (x, y, dimension1, dimension2) => {      
+  const updateBounds = (x, y, dimension1, dimension2) => {
     minX = Math.min(minX, x - dimension1 / 2);
     minY = Math.min(minY, y - dimension2 / 2);
     maxX = Math.max(maxX, x + dimension1 / 2);
@@ -80,12 +82,14 @@ export function computeBoundingBox(nodes, horizontal = false) {
 ```
 
 **Parameters:**
+
 - `nodes` - Array of nodes with x, y, width, height properties
 - `horizontal` - Optional flag for horizontal layout (default: false)
 
 **Returns:** Object with x, y, width, height properties
 
 **Usage:**
+
 ```javascript
 const boundingBox = computeBoundingBox(container.childNodes);
 ```
@@ -107,6 +111,7 @@ export function getComputedDimensions(element) {
 **Performance Note:** Uses `getBBox()` instead of `getBoundingClientRect()` to avoid forcing a reflow.
 
 **Usage:**
+
 ```javascript
 const dimensions = getComputedDimensions(container);
 // Returns: { x, y, width, height }
@@ -132,6 +137,7 @@ export function getRelativeBBox(element) {
 ```
 
 **Usage:**
+
 ```javascript
 const relativeBounds = getRelativeBBox(nodeElement);
 ```
@@ -158,10 +164,10 @@ export function getBoundingBoxRelativeToParent(element, parentElement) {
 
   // Calculate the bounding box coordinates relative to the specified parent
   const relativeDimensions = {
-      x: relativeCTM.e + bbox.x * relativeCTM.a + bbox.y * relativeCTM.c,
-      y: relativeCTM.f + bbox.x * relativeCTM.b + bbox.y * relativeCTM.d,
-      width: bbox.width,
-      height: bbox.height
+    x: relativeCTM.e + bbox.x * relativeCTM.a + bbox.y * relativeCTM.c,
+    y: relativeCTM.f + bbox.x * relativeCTM.b + bbox.y * relativeCTM.d,
+    width: bbox.width,
+    height: bbox.height,
   };
 
   return relativeDimensions;
@@ -169,6 +175,7 @@ export function getBoundingBoxRelativeToParent(element, parentElement) {
 ```
 
 **Usage:**
+
 ```javascript
 const relativeBounds = getBoundingBoxRelativeToParent(childElement, parentElement);
 ```
@@ -184,15 +191,16 @@ Calculates connection points on the boundaries of rectangular nodes:
 ```javascript
 export function computeConnectionPoints(x, y, width, height) {
   return {
-    top: { x: x, y: y - height/2, side: 'top' },
-    right: { x: x + width/2, y: y, side: 'right' },
-    bottom: { x: x, y: y + height/2, side: 'bottom' },
-    left: { x: x - width/2, y: y, side: 'left' }
+    top: { x: x, y: y - height / 2, side: 'top' },
+    right: { x: x + width / 2, y: y, side: 'right' },
+    bottom: { x: x, y: y + height / 2, side: 'bottom' },
+    left: { x: x - width / 2, y: y, side: 'left' },
   };
 }
 ```
 
 **Usage:**
+
 ```javascript
 const connectionPoints = computeConnectionPoints(node.x, node.y, node.width, node.height);
 ```
@@ -202,6 +210,7 @@ const connectionPoints = computeConnectionPoints(node.x, node.y, node.width, nod
 Various functions for calculating different types of paths between connection points:
 
 #### Straight Path
+
 ```javascript
 function calculateStraightPath(sourcePoint, targetPoint) {
   return `M ${sourcePoint.x} ${sourcePoint.y} L ${targetPoint.x} ${targetPoint.y}`;
@@ -209,22 +218,24 @@ function calculateStraightPath(sourcePoint, targetPoint) {
 ```
 
 #### Curved Path
+
 ```javascript
 function calculateCurvedPath(sourcePoint, targetPoint) {
   const dx = targetPoint.x - sourcePoint.x;
   const dy = targetPoint.y - sourcePoint.y;
   const controlPoint1 = { x: sourcePoint.x + dx * 0.5, y: sourcePoint.y };
   const controlPoint2 = { x: targetPoint.x - dx * 0.5, y: targetPoint.y };
-  
+
   return `M ${sourcePoint.x} ${sourcePoint.y} C ${controlPoint1.x} ${controlPoint1.y} ${controlPoint2.x} ${controlPoint2.y} ${targetPoint.x} ${targetPoint.y}`;
 }
 ```
 
 #### Orthogonal Path
+
 ```javascript
 function calculateOrthogonalPath(sourcePoint, targetPoint) {
   const midX = (sourcePoint.x + targetPoint.x) / 2;
-  
+
   return `M ${sourcePoint.x} ${sourcePoint.y} L ${midX} ${sourcePoint.y} L ${midX} ${targetPoint.y} L ${targetPoint.x} ${targetPoint.y}`;
 }
 ```
@@ -239,26 +250,28 @@ Creates SVG marker definitions for arrow heads and other symbols:
 
 ```javascript
 export function createMarkers(svg) {
-  const defs = svg.append("defs");
-  
+  const defs = svg.append('defs');
+
   // Arrow head marker
-  defs.append("marker")
-    .attr("id", "arrowhead")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 8)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-    .append("path")
-    .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "#999");
-    
+  defs
+    .append('marker')
+    .attr('id', 'arrowhead')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 8)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#999');
+
   // Add more marker types as needed
 }
 ```
 
 **Usage:**
+
 ```javascript
 createMarkers(mainSvg);
 ```
@@ -279,6 +292,7 @@ export function fetchDashboardFile(selectedFile) {
 ```
 
 **Usage:**
+
 ```javascript
 const data = await fetchDashboardFile('dwh-1.json');
 ```
@@ -299,21 +313,20 @@ export default class ZoomButton {
     this.element = null;
     this.init();
   }
-  
+
   init() {
     this.element = this.container
-      .append("g")
-      .attr("class", "zoom-button")
-      .on("click", this.onClick);
-      
+      .append('g')
+      .attr('class', 'zoom-button')
+      .on('click', this.onClick);
+
     // Create button visual elements
     this.createButtonElements();
   }
-  
+
   toggle(collapsed) {
     // Toggle between plus and minus icons
-    this.element.select(".icon")
-      .text(collapsed ? "+" : "-");
+    this.element.select('.icon').text(collapsed ? '+' : '-');
   }
 }
 ```
@@ -331,7 +344,11 @@ export function forceBoundary(width, height, strength = 0.1) {
   let nodes;
 
   function force() {
-    let i, n = nodes.length, node, x, y;
+    let i,
+      n = nodes.length,
+      node,
+      x,
+      y;
     for (i = 0; i < n; ++i) {
       node = nodes[i];
       x = Math.max(0, Math.min(width, node.x));
@@ -343,7 +360,7 @@ export function forceBoundary(width, height, strength = 0.1) {
     }
   }
 
-  force.initialize = function(_) {
+  force.initialize = function (_) {
     nodes = _;
   };
 
@@ -424,13 +441,13 @@ Utilities include error handling for edge cases:
 ```javascript
 // Check for valid elements
 if (!element || !element.node()) {
-  console.error("Invalid element provided");
+  console.error('Invalid element provided');
   return null;
 }
 
 // Validate dimensions
 if (width <= 0 || height <= 0) {
-  console.warn("Invalid dimensions provided");
+  console.warn('Invalid dimensions provided');
   return { x: 0, y: 0, width: 0, height: 0 };
 }
 ```
@@ -448,15 +465,15 @@ const mockNode = {
   y: 200,
   width: 80,
   height: 60,
-  data: { width: 80, height: 60 }
+  data: { width: 80, height: 60 },
 };
 
 // Mock element for testing
 const mockElement = {
   node: () => ({
     getBBox: () => ({ x: 0, y: 0, width: 100, height: 50 }),
-    getCTM: () => ({ e: 0, f: 0, a: 1, b: 0, c: 0, d: 1 })
-  })
+    getCTM: () => ({ e: 0, f: 0, a: 1, b: 0, c: 0, d: 1 }),
+  }),
 };
 ```
 
@@ -488,4 +505,4 @@ function batchUpdate(elements, updateFn) {
     elements.forEach(updateFn);
   });
 }
-``` 
+```

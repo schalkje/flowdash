@@ -1,38 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Minimap — basic</title>
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <style>
-      .mm-controls { display: flex; gap: 12px; flex-wrap: wrap; padding: 6px 12px; background: #fff; border-bottom: 1px solid #ddd; font-size: 13px; }
+      .mm-controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        font-size: 13px;
+      }
     </style>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Minimap</h1>
-        <h2>basic</h2>
-        <p class="demo-description">
-          Drag the minimap viewport rectangle to pan, click outside the viewport to jump,
-          and toggle the minimap's mode and position via the controls.
-        </p>
+      <h1>Minimap</h1>
+      <h2>basic</h2>
+      <p class="demo-description">
+        Drag the minimap viewport rectangle to pan, click outside the viewport to jump, and toggle
+        the minimap's mode and position via the controls.
+      </p>
     </header>
     <div class="mm-controls">
-      <label>Mode:
+      <label
+        >Mode:
         <select id="modeSel">
           <option value="always" selected>always</option>
           <option value="hover">hover</option>
           <option value="hidden">hidden</option>
         </select>
       </label>
-      <label>Position:
+      <label
+        >Position:
         <select id="posSel">
           <option value="bottom-right" selected>bottom-right</option>
           <option value="bottom-left">bottom-left</option>
@@ -40,7 +52,8 @@
           <option value="top-left">top-left</option>
         </select>
       </label>
-      <label>Size:
+      <label
+        >Size:
         <select id="sizeSel">
           <option value="s">small</option>
           <option value="m" selected>medium</option>
@@ -50,12 +63,18 @@
       <button id="rebuildBtn">Apply</button>
     </div>
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
     <footer class="demo-info">
       <div class="demo-metadata">
-        <p><strong>Settings:</strong> <code>minimap.mode</code>, <code>minimap.position</code>, <code>minimap.size</code></p>
-        <p><strong>Reference:</strong> <a href="../../dashboard/documentation/minimap.md">/dashboard/documentation/minimap.md</a></p>
+        <p>
+          <strong>Settings:</strong> <code>minimap.mode</code>, <code>minimap.position</code>,
+          <code>minimap.size</code>
+        </p>
+        <p>
+          <strong>Reference:</strong>
+          <a href="../../dashboard/documentation/minimap.md">/dashboard/documentation/minimap.md</a>
+        </p>
       </div>
     </footer>
     <script type="module">
@@ -78,5 +97,5 @@
         build(next);
       });
     </script>
-</body>
+  </body>
 </html>

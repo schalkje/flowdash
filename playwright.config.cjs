@@ -25,10 +25,10 @@ module.exports = defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
+
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
-    
+
     /* Record video on failure */
     video: 'retain-on-failure',
   },
@@ -38,11 +38,26 @@ module.exports = defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      /* Perf specs run only in the dedicated `perf` project (workers: 1) so
+       * they don't compete for CPU with parallel suites and produce noisy
+       * timings. Visual-regression also stays out for the same reason. */
+      testIgnore: ['**/performance.spec.js', '**/perf-*.spec.js'],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: ['**/performance.spec.js', '**/perf-*.spec.js'],
+    },
+
+    {
+      /* Performance benchmarks. Single-worker, chromium-only, isolated from
+       * other projects so timings stay stable. Run via `npm run test:perf`. */
+      name: 'perf',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: ['**/performance.spec.js', '**/perf-*.spec.js'],
+      fullyParallel: false,
+      workers: 1,
     },
 
     /* Test against mobile viewports. */
@@ -73,4 +88,4 @@ module.exports = defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
-}); 
+});

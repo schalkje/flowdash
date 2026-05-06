@@ -3,96 +3,96 @@ export const demoData = {
   settings: {
     demoMode: true,
     zoomToRoot: true,
-    selector: { incoming: 1, outgoing: 1 }
+    selector: { incoming: 1, outgoing: 1 },
   },
   nodes: [
     {
-      id: "node1",
-      type: "rect",
-      label: "Data Source",
+      id: 'node1',
+      type: 'rect',
+      label: 'Data Source',
       x: 0,
       y: 0,
       width: 120,
       height: 60,
-      status: "Ready"
+      status: 'Ready',
     },
     {
-      id: "node2", 
-      type: "rect",
-      label: "Processing",
+      id: 'node2',
+      type: 'rect',
+      label: 'Processing',
       x: 200,
       y: 0,
       width: 120,
       height: 60,
-      status: "Updating"
+      status: 'Updating',
     },
     {
-    id: "adapter1",
-    label: "adapter Node",
-    type: "adapter",
-    // Node-specific properties
-    code: "N1",
-    status: "Ready",
-    // Layout properties
-    layout: {
-        mode: "full", // or "role", "code"
+      id: 'adapter1',
+      label: 'adapter Node',
+      type: 'adapter',
+      // Node-specific properties
+      code: 'N1',
+      status: 'Ready',
+      // Layout properties
+      layout: {
+        mode: 'full', // or "role", "code"
+      },
+      // Child nodes (for container nodes)
+      children: [],
+      // Parent reference
+      parentId: null,
     },
-    // Child nodes (for container nodes)
-    children: [],
-    // Parent reference
-    parentId: null
-},
     {
-      id: "node3",
-      type: "rect", 
-      label: "Storage",
+      id: 'node3',
+      type: 'rect',
+      label: 'Storage',
       x: 400,
       y: 0,
       width: 120,
       height: 60,
-      status: "Updated"
+      status: 'Updated',
     },
     {
-      id: "node4",
-      type: "rect",
-      label: "Error Node",
+      id: 'node4',
+      type: 'rect',
+      label: 'Error Node',
       x: 200,
       y: 150,
       width: 120,
       height: 60,
-      status: "Error"
+      status: 'Error',
     },
     {
-      id: "node5",
-      type: "rect",
-      label: "Warning Node", 
+      id: 'node5',
+      type: 'rect',
+      label: 'Warning Node',
       x: 0,
       y: 150,
       width: 120,
       height: 60,
-      status: "Warning"
-    }
+      status: 'Warning',
+    },
   ],
   edges: [
     {
-      id: "edge1",
-      source: "node1",
-      target: "node2"
+      id: 'edge1',
+      source: 'node1',
+      target: 'node2',
     },
     {
-      id: "edge2", 
-      source: "node2",
-      target: "node3"
+      id: 'edge2',
+      source: 'node2',
+      target: 'node3',
     },
     {
-      id: "edge3",
-      source: "node2", 
-      target: "node4"
+      id: 'edge3',
+      source: 'node2',
+      target: 'node4',
     },
     {
-      id: "edge4",
-      source: "node1",
-      target: "node5"
-    }
-  ]
+      id: 'edge4',
+      source: 'node1',
+      target: 'node5',
+    },
+  ],
 };

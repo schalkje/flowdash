@@ -1,69 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extended 04 - Mart → Columns → Foundation</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edges – Extended</h1>
-        <h2>04 - Mart → Columns → Foundation</h2>
-        <div class="demo-controls">
-            <button id="collapseMart">Collapse Mart</button>
-            <button id="expandMart">Expand Mart</button>
-            <button id="collapseCols">Collapse Columns</button>
-            <button id="expandCols">Expand Columns</button>
-            <button id="collapseFound">Collapse Foundation</button>
-            <button id="expandFound">Expand Foundation</button>
-        </div>
+      <h1>Edges – Extended</h1>
+      <h2>04 - Mart → Columns → Foundation</h2>
+      <div class="demo-controls">
+        <button id="collapseMart">Collapse Mart</button>
+        <button id="expandMart">Expand Mart</button>
+        <button id="collapseCols">Collapse Columns</button>
+        <button id="expandCols">Expand Columns</button>
+        <button id="collapseFound">Collapse Foundation</button>
+        <button id="expandFound">Expand Foundation</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <script type="module">
-        import { demoData } from './js/extended-04.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/extended-04.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        function build(dataset) {
-            const ds = dataset || demoData;
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      let flowdash;
+      function build(dataset) {
+        const ds = dataset || demoData;
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => demoData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => demoData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(demoData);
+      build(demoData);
 
-        function getNode(id) { return flowdash?.main?.root?.getNode(id); }
-        document.getElementById('collapseMart').addEventListener('click', () => getNode('martA')?.collapse());
-        document.getElementById('expandMart').addEventListener('click', () => getNode('martA')?.expand());
-        document.getElementById('collapseCols').addEventListener('click', () => getNode('colsB')?.collapse());
-        document.getElementById('expandCols').addEventListener('click', () => getNode('colsB')?.expand());
-        document.getElementById('collapseFound').addEventListener('click', () => getNode('foundationC')?.collapse());
-        document.getElementById('expandFound').addEventListener('click', () => getNode('foundationC')?.expand());
+      function getNode(id) {
+        return flowdash?.main?.root?.getNode(id);
+      }
+      document
+        .getElementById('collapseMart')
+        .addEventListener('click', () => getNode('martA')?.collapse());
+      document
+        .getElementById('expandMart')
+        .addEventListener('click', () => getNode('martA')?.expand());
+      document
+        .getElementById('collapseCols')
+        .addEventListener('click', () => getNode('colsB')?.collapse());
+      document
+        .getElementById('expandCols')
+        .addEventListener('click', () => getNode('colsB')?.expand());
+      document
+        .getElementById('collapseFound')
+        .addEventListener('click', () => getNode('foundationC')?.collapse());
+      document
+        .getElementById('expandFound')
+        .addEventListener('click', () => getNode('foundationC')?.expand());
     </script>
-</body>
+  </body>
 </html>
-
-

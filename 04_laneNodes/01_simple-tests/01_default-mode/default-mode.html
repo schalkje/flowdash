@@ -1,388 +1,409 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Default Mode - Lane Demo</title>
-    
+
     <!-- Standard CSS -->
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
-    
-    
-    
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
+
     <!-- Required Libraries -->
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Demo Header -->
     <header class="demo-header">
-        <h1>Lane Demos</h1>
-        <h2>Default Mode</h2>
-        <p class="demo-description">Lane with 3 rectangles in default mode</p>
-        
-        <!-- Demo Controls -->
-        <div class="demo-controls">
-            <button id="updateBtn" onclick="updateDemo()">Update</button>
-            <button id="resetBtn" onclick="resetDemo()">Reset</button>
-            <button id="testBtn" onclick="runTests()">Run Tests</button>
-            <button id="dblClickTestBtn" onclick="testDoubleClickFunctionality()">Test Double-Click</button>
-            <button id="manualTestBtn" onclick="testManualDoubleClick()">Manual Test</button>
-            <button id="inspectBtn" onclick="inspectDOM()">Inspect DOM</button>
-        </div>
+      <h1>Lane Demos</h1>
+      <h2>Default Mode</h2>
+      <p class="demo-description">Lane with 3 rectangles in default mode</p>
+
+      <!-- Demo Controls -->
+      <div class="demo-controls">
+        <button id="updateBtn" onclick="updateDemo()">Update</button>
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+        <button id="dblClickTestBtn" onclick="testDoubleClickFunctionality()">
+          Test Double-Click
+        </button>
+        <button id="manualTestBtn" onclick="testManualDoubleClick()">Manual Test</button>
+        <button id="inspectBtn" onclick="inspectDOM()">Inspect DOM</button>
+      </div>
     </header>
 
     <!-- Demo Container -->
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <!-- Demo Information -->
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> lane</p>
-            <p><strong>Features:</strong> Default mode with 3 rectangles</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-            <p><strong>Manual Test:</strong> Double-click on different parts of the lane node (header, container, inner area) to test zoom functionality</p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> lane</p>
+        <p><strong>Features:</strong> Default mode with 3 rectangles</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+        <p>
+          <strong>Manual Test:</strong> Double-click on different parts of the lane node (header,
+          container, inner area) to test zoom functionality
+        </p>
+      </div>
     </footer>
 
     <script type="module">
-        // Import demo data
-        import { demoData } from './js/graphData.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
+      // Import demo data
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-        function build(dataset) {
-            if (!dataset) return;
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => baseData,
-            buildDashboard: (dataset) => build(dataset)
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
+
+      build(baseData);
+
+      // Attach data for debugging
+      window.demoData = demoData;
+
+      // Demo functions
+      window.updateDemo = function () {
+        // Implementation for update functionality
+        console.log('Update demo called');
+      };
+
+      window.resetDemo = function () {
+        // Implementation for reset functionality
+        flowdash.reset();
+      };
+
+      window.runTests = function () {
+        // Implementation for running tests
+        runDemoTests();
+      };
+
+      // Test runner
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
+
+        // Basic validation tests
+        const tests = [
+          testDashboardInitialization,
+          testNodeRendering,
+          testDataStructure,
+          testDoubleClickFunctionality,
+        ];
+
+        let passed = 0;
+        let total = tests.length;
+
+        tests.forEach((test) => {
+          try {
+            if (test()) passed++;
+          } catch (e) {
+            console.error('Test failed:', e);
+          }
         });
 
-        build(baseData);
-        
-        // Attach data for debugging
-        window.demoData = demoData;
-        
-        // Demo functions
-        window.updateDemo = function() {
-            // Implementation for update functionality
-            console.log('Update demo called');
-        };
-        
-        window.resetDemo = function() {
-            // Implementation for reset functionality
-            flowdash.reset();
-        };
-        
-        window.runTests = function() {
-            // Implementation for running tests
-            runDemoTests();
-        };
-        
-        // Test runner
-        function runDemoTests() {
-            const testStatus = document.getElementById('testStatus');
-            testStatus.textContent = 'Running...';
-            
-            // Basic validation tests
-            const tests = [
-                testDashboardInitialization,
-                testNodeRendering,
-                testDataStructure,
-                testDoubleClickFunctionality
-            ];
-            
-            let passed = 0;
-            let total = tests.length;
-            
-            tests.forEach(test => {
-                try {
-                    if (test()) passed++;
-                } catch (e) {
-                    console.error('Test failed:', e);
-                }
-            });
-            
-            testStatus.textContent = `${passed}/${total} tests passed`;
-            testStatus.className = passed === total ? 'test-pass' : 'test-fail';
-        }
-        
-        // Test functions
-        function testDashboardInitialization() {
-            return flowdash && typeof flowdash.initialize === 'function';
-        }
-        
-        function testNodeRendering() {
-            const nodes = document.querySelectorAll('.node');
-            return nodes.length > 0;
-        }
-        
-        function testDataStructure() {
-            return demoData && demoData.nodes && Array.isArray(demoData.nodes);
-        }
-        
-        // Test double-click functionality
-        function testDoubleClickFunctionality() {
-            console.log('Testing double-click functionality...');
-            
-            // Wait a bit for the dashboard to fully load
-            setTimeout(() => {
-                // Find the lane node (container) - it's a g element with id "lane1"
-                let laneNode = document.querySelector('g#lane1');
-                if (!laneNode) {
-                    // Try finding by class
-                    laneNode = document.querySelector('g.lane');
-                }
-                if (!laneNode) {
-                    console.error('Lane node not found. Available elements:');
-                    console.log('All .node elements:', document.querySelectorAll('.node'));
-                    console.log('All g elements:', document.querySelectorAll('g'));
-                    return false;
-                }
-                
-                console.log('Found lane node:', laneNode);
-                console.log('Lane node __node:', laneNode.__node);
-                console.log('Lane node classes:', laneNode.className);
-                console.log('Lane node attributes:', Array.from(laneNode.attributes).map(attr => `${attr.name}="${attr.value}"`));
-                
-                // Check for zones
-                const zones = laneNode.querySelectorAll('g[class*="zone-"]');
-                console.log(`Found ${zones.length} zones in lane node`);
-                
-                zones.forEach((zone, index) => {
-                    console.log(`Zone ${index}: ${zone.className}`);
-                    
-                    // Check if zone has __node property
-                    if (zone.__node) {
-                        console.log(`  - Has __node property: ${zone.__node.constructor.name}`);
-                        console.log(`  - Zone __node === Lane __node:`, zone.__node === laneNode.__node);
-                    } else {
-                        console.log(`  - Missing __node property`);
-                    }
-                    
-                    // Check for D3 event handlers
-                    const d3Data = zone.__data__;
-                    if (d3Data && d3Data.on) {
-                        console.log(`  - Has D3 event handlers:`, Object.keys(d3Data.on));
-                    } else {
-                        console.log(`  - No D3 event handlers found`);
-                    }
-                });
-                
-                // Test the isFromChildNode logic
-                console.log('\n--- Testing isFromChildNode logic ---');
-                zones.forEach((zone, index) => {
-                    const mockEvent = { target: zone };
-                    console.log(`Zone ${index} (${zone.className}):`);
-                    console.log(`  - zone.__node:`, zone.__node);
-                    console.log(`  - laneNode.__node:`, laneNode.__node);
-                    console.log(`  - zone.__node === laneNode.__node:`, zone.__node === laneNode.__node);
-                    console.log(`  - zone.__node !== laneNode.__node:`, zone.__node !== laneNode.__node);
-                });
-                
-                // Test double-click on different areas
-                testDoubleClickOnZone(laneNode, 'header');
-                testDoubleClickOnZone(laneNode, 'container');
-                testDoubleClickOnZone(laneNode, 'innerContainer');
-                
-                // Also test clicking on the actual elements
-                console.log('\n--- Testing actual element clicks ---');
-                const headerZone = laneNode.querySelector('g.zone-header');
-                const containerZone = laneNode.querySelector('g.zone-container');
-                const innerContainerZone = laneNode.querySelector('g.zone-innerContainer');
-                
-                // Test rect elements (which are clickable)
-                const containerShape = laneNode.querySelector('rect.container-shape');
-                const headerBackground = laneNode.querySelector('rect.header-background');
-                
-                console.log('Container shape:', containerShape);
-                console.log('Header background:', headerBackground);
-                
-                // Check if the rect elements have D3 event handlers
-                if (containerShape) {
-                    const d3Data = containerShape.__data__;
-                    console.log('Container shape D3 data:', d3Data);
-                    if (d3Data && d3Data.on) {
-                        console.log('Container shape has D3 event handlers:', Object.keys(d3Data.on));
-                    } else {
-                        console.log('Container shape has NO D3 event handlers');
-                    }
-                }
-                
-                if (headerBackground) {
-                    const d3Data = headerBackground.__data__;
-                    console.log('Header background D3 data:', d3Data);
-                    if (d3Data && d3Data.on) {
-                        console.log('Header background has D3 event handlers:', Object.keys(d3Data.on));
-                    } else {
-                        console.log('Header background has NO D3 event handlers');
-                    }
-                }
-                
-                if (headerZone) {
-                    console.log('Header zone found, testing click...');
-                    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
-                    headerZone.dispatchEvent(event);
-                }
-                
-                if (containerZone) {
-                    console.log('Container zone found, testing click...');
-                    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
-                    containerZone.dispatchEvent(event);
-                }
-                
-                if (containerShape) {
-                    console.log('Container shape found, testing double-click...');
-                    const event = new MouseEvent('dblclick', { bubbles: true, cancelable: true });
-                    containerShape.dispatchEvent(event);
-                    
-                    // Also test if the D3 event handler works directly
-                    console.log('Testing D3 event handler directly on container shape...');
-                    if (containerShape.__data__ && containerShape.__data__.on && containerShape.__data__.on.dblclick) {
-                        console.log('Calling D3 dblclick handler directly');
-                        containerShape.__data__.on.dblclick.call(containerShape, event);
-                    } else {
-                        console.log('No D3 dblclick handler found on container shape');
-                    }
-                }
-                
-                if (headerBackground) {
-                    console.log('Header background found, testing double-click...');
-                    const event = new MouseEvent('dblclick', { bubbles: true, cancelable: true });
-                    headerBackground.dispatchEvent(event);
-                    
-                    // Also test if the D3 event handler works directly
-                    console.log('Testing D3 event handler directly on header background...');
-                    if (headerBackground.__data__ && headerBackground.__data__.on && headerBackground.__data__.on.dblclick) {
-                        console.log('Calling D3 dblclick handler directly');
-                        headerBackground.__data__.on.dblclick.call(headerBackground, event);
-                    } else {
-                        console.log('No D3 dblclick handler found on header background');
-                    }
-                }
-                
-            }, 2000);
-            
-            return true;
-        }
-        
-        // Make the function globally available
-        window.testDoubleClickFunctionality = testDoubleClickFunctionality;
-        
-        // Simple DOM inspection function
-        window.inspectDOM = function() {
-            console.log('=== DOM Inspection ===');
-            console.log('All elements with "node" class:', document.querySelectorAll('.node'));
-            console.log('All elements with "zone" in class:', document.querySelectorAll('[class*="zone"]'));
+        testStatus.textContent = `${passed}/${total} tests passed`;
+        testStatus.className = passed === total ? 'test-pass' : 'test-fail';
+      }
+
+      // Test functions
+      function testDashboardInitialization() {
+        return flowdash && typeof flowdash.initialize === 'function';
+      }
+
+      function testNodeRendering() {
+        const nodes = document.querySelectorAll('.node');
+        return nodes.length > 0;
+      }
+
+      function testDataStructure() {
+        return demoData && demoData.nodes && Array.isArray(demoData.nodes);
+      }
+
+      // Test double-click functionality
+      function testDoubleClickFunctionality() {
+        console.log('Testing double-click functionality...');
+
+        // Wait a bit for the dashboard to fully load
+        setTimeout(() => {
+          // Find the lane node (container) - it's a g element with id "lane1"
+          let laneNode = document.querySelector('g#lane1');
+          if (!laneNode) {
+            // Try finding by class
+            laneNode = document.querySelector('g.lane');
+          }
+          if (!laneNode) {
+            console.error('Lane node not found. Available elements:');
+            console.log('All .node elements:', document.querySelectorAll('.node'));
             console.log('All g elements:', document.querySelectorAll('g'));
-            console.log('SVG element:', document.querySelector('svg'));
-            
-            const svg = document.querySelector('svg');
-            if (svg) {
-                console.log('SVG children:', Array.from(svg.children).map(child => ({
-                    tagName: child.tagName,
-                    className: child.className,
-                    id: child.id
-                })));
-            }
-        };
-        
-        // Manual test function for double-click
-        window.testManualDoubleClick = function() {
-            console.log('Manual double-click test...');
-            
-            // Find the lane node (container) - it's a g element with id "lane1"
-            let laneNode = document.querySelector('g#lane1');
-            if (!laneNode) {
-                laneNode = document.querySelector('g.lane');
-            }
-            if (!laneNode) {
-                console.error('Lane node not found');
-                return;
-            }
-            
-            // Test double-click on the container element directly
-            console.log('Testing double-click on container element...');
-            const containerElement = laneNode.querySelector('g.zone-container');
-            if (containerElement) {
-                console.log('Found container element, dispatching double-click...');
-                const event = new MouseEvent('dblclick', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                containerElement.dispatchEvent(event);
+            return false;
+          }
+
+          console.log('Found lane node:', laneNode);
+          console.log('Lane node __node:', laneNode.__node);
+          console.log('Lane node classes:', laneNode.className);
+          console.log(
+            'Lane node attributes:',
+            Array.from(laneNode.attributes).map((attr) => `${attr.name}="${attr.value}"`),
+          );
+
+          // Check for zones
+          const zones = laneNode.querySelectorAll('g[class*="zone-"]');
+          console.log(`Found ${zones.length} zones in lane node`);
+
+          zones.forEach((zone, index) => {
+            console.log(`Zone ${index}: ${zone.className}`);
+
+            // Check if zone has __node property
+            if (zone.__node) {
+              console.log(`  - Has __node property: ${zone.__node.constructor.name}`);
+              console.log(`  - Zone __node === Lane __node:`, zone.__node === laneNode.__node);
             } else {
-                console.log('Container element not found');
+              console.log(`  - Missing __node property`);
             }
-            
-            // Test double-click on header element
-            console.log('Testing double-click on header element...');
-            const headerElement = laneNode.querySelector('g.zone-header');
-            if (headerElement) {
-                console.log('Found header element, dispatching double-click...');
-                const event = new MouseEvent('dblclick', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                headerElement.dispatchEvent(event);
+
+            // Check for D3 event handlers
+            const d3Data = zone.__data__;
+            if (d3Data && d3Data.on) {
+              console.log(`  - Has D3 event handlers:`, Object.keys(d3Data.on));
             } else {
-                console.log('Header element not found');
+              console.log(`  - No D3 event handlers found`);
             }
-        };
-        
-        function testDoubleClickOnZone(node, zoneType) {
-            const zone = node.querySelector(`g.zone-${zoneType}`);
-            if (zone) {
-                console.log(`Testing double-click on ${zoneType} zone...`);
-                
-                // Get initial zoom level
-                const svg = document.querySelector('svg');
-                const initialTransform = svg.getAttribute('transform');
-                console.log(`Initial transform: ${initialTransform}`);
-                
-                // Simulate double-click
-                const event = new MouseEvent('dblclick', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                
-                zone.dispatchEvent(event);
-                
-                // Check if zoom changed
-                setTimeout(() => {
-                    const newTransform = svg.getAttribute('transform');
-                    console.log(`New transform after double-click on ${zoneType}: ${newTransform}`);
-                    
-                    if (newTransform !== initialTransform) {
-                        console.log(`✅ Double-click on ${zoneType} zone WORKED!`);
-                    } else {
-                        console.log(`❌ Double-click on ${zoneType} zone did NOT work`);
-                    }
-                }, 100);
+          });
+
+          // Test the isFromChildNode logic
+          console.log('\n--- Testing isFromChildNode logic ---');
+          zones.forEach((zone, index) => {
+            const mockEvent = { target: zone };
+            console.log(`Zone ${index} (${zone.className}):`);
+            console.log(`  - zone.__node:`, zone.__node);
+            console.log(`  - laneNode.__node:`, laneNode.__node);
+            console.log(`  - zone.__node === laneNode.__node:`, zone.__node === laneNode.__node);
+            console.log(`  - zone.__node !== laneNode.__node:`, zone.__node !== laneNode.__node);
+          });
+
+          // Test double-click on different areas
+          testDoubleClickOnZone(laneNode, 'header');
+          testDoubleClickOnZone(laneNode, 'container');
+          testDoubleClickOnZone(laneNode, 'innerContainer');
+
+          // Also test clicking on the actual elements
+          console.log('\n--- Testing actual element clicks ---');
+          const headerZone = laneNode.querySelector('g.zone-header');
+          const containerZone = laneNode.querySelector('g.zone-container');
+          const innerContainerZone = laneNode.querySelector('g.zone-innerContainer');
+
+          // Test rect elements (which are clickable)
+          const containerShape = laneNode.querySelector('rect.container-shape');
+          const headerBackground = laneNode.querySelector('rect.header-background');
+
+          console.log('Container shape:', containerShape);
+          console.log('Header background:', headerBackground);
+
+          // Check if the rect elements have D3 event handlers
+          if (containerShape) {
+            const d3Data = containerShape.__data__;
+            console.log('Container shape D3 data:', d3Data);
+            if (d3Data && d3Data.on) {
+              console.log('Container shape has D3 event handlers:', Object.keys(d3Data.on));
             } else {
-                console.log(`Zone ${zoneType} not found`);
+              console.log('Container shape has NO D3 event handlers');
             }
+          }
+
+          if (headerBackground) {
+            const d3Data = headerBackground.__data__;
+            console.log('Header background D3 data:', d3Data);
+            if (d3Data && d3Data.on) {
+              console.log('Header background has D3 event handlers:', Object.keys(d3Data.on));
+            } else {
+              console.log('Header background has NO D3 event handlers');
+            }
+          }
+
+          if (headerZone) {
+            console.log('Header zone found, testing click...');
+            const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+            headerZone.dispatchEvent(event);
+          }
+
+          if (containerZone) {
+            console.log('Container zone found, testing click...');
+            const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+            containerZone.dispatchEvent(event);
+          }
+
+          if (containerShape) {
+            console.log('Container shape found, testing double-click...');
+            const event = new MouseEvent('dblclick', { bubbles: true, cancelable: true });
+            containerShape.dispatchEvent(event);
+
+            // Also test if the D3 event handler works directly
+            console.log('Testing D3 event handler directly on container shape...');
+            if (
+              containerShape.__data__ &&
+              containerShape.__data__.on &&
+              containerShape.__data__.on.dblclick
+            ) {
+              console.log('Calling D3 dblclick handler directly');
+              containerShape.__data__.on.dblclick.call(containerShape, event);
+            } else {
+              console.log('No D3 dblclick handler found on container shape');
+            }
+          }
+
+          if (headerBackground) {
+            console.log('Header background found, testing double-click...');
+            const event = new MouseEvent('dblclick', { bubbles: true, cancelable: true });
+            headerBackground.dispatchEvent(event);
+
+            // Also test if the D3 event handler works directly
+            console.log('Testing D3 event handler directly on header background...');
+            if (
+              headerBackground.__data__ &&
+              headerBackground.__data__.on &&
+              headerBackground.__data__.on.dblclick
+            ) {
+              console.log('Calling D3 dblclick handler directly');
+              headerBackground.__data__.on.dblclick.call(headerBackground, event);
+            } else {
+              console.log('No D3 dblclick handler found on header background');
+            }
+          }
+        }, 2000);
+
+        return true;
+      }
+
+      // Make the function globally available
+      window.testDoubleClickFunctionality = testDoubleClickFunctionality;
+
+      // Simple DOM inspection function
+      window.inspectDOM = function () {
+        console.log('=== DOM Inspection ===');
+        console.log('All elements with "node" class:', document.querySelectorAll('.node'));
+        console.log(
+          'All elements with "zone" in class:',
+          document.querySelectorAll('[class*="zone"]'),
+        );
+        console.log('All g elements:', document.querySelectorAll('g'));
+        console.log('SVG element:', document.querySelector('svg'));
+
+        const svg = document.querySelector('svg');
+        if (svg) {
+          console.log(
+            'SVG children:',
+            Array.from(svg.children).map((child) => ({
+              tagName: child.tagName,
+              className: child.className,
+              id: child.id,
+            })),
+          );
         }
+      };
+
+      // Manual test function for double-click
+      window.testManualDoubleClick = function () {
+        console.log('Manual double-click test...');
+
+        // Find the lane node (container) - it's a g element with id "lane1"
+        let laneNode = document.querySelector('g#lane1');
+        if (!laneNode) {
+          laneNode = document.querySelector('g.lane');
+        }
+        if (!laneNode) {
+          console.error('Lane node not found');
+          return;
+        }
+
+        // Test double-click on the container element directly
+        console.log('Testing double-click on container element...');
+        const containerElement = laneNode.querySelector('g.zone-container');
+        if (containerElement) {
+          console.log('Found container element, dispatching double-click...');
+          const event = new MouseEvent('dblclick', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+          containerElement.dispatchEvent(event);
+        } else {
+          console.log('Container element not found');
+        }
+
+        // Test double-click on header element
+        console.log('Testing double-click on header element...');
+        const headerElement = laneNode.querySelector('g.zone-header');
+        if (headerElement) {
+          console.log('Found header element, dispatching double-click...');
+          const event = new MouseEvent('dblclick', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+          headerElement.dispatchEvent(event);
+        } else {
+          console.log('Header element not found');
+        }
+      };
+
+      function testDoubleClickOnZone(node, zoneType) {
+        const zone = node.querySelector(`g.zone-${zoneType}`);
+        if (zone) {
+          console.log(`Testing double-click on ${zoneType} zone...`);
+
+          // Get initial zoom level
+          const svg = document.querySelector('svg');
+          const initialTransform = svg.getAttribute('transform');
+          console.log(`Initial transform: ${initialTransform}`);
+
+          // Simulate double-click
+          const event = new MouseEvent('dblclick', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          });
+
+          zone.dispatchEvent(event);
+
+          // Check if zoom changed
+          setTimeout(() => {
+            const newTransform = svg.getAttribute('transform');
+            console.log(`New transform after double-click on ${zoneType}: ${newTransform}`);
+
+            if (newTransform !== initialTransform) {
+              console.log(`✅ Double-click on ${zoneType} zone WORKED!`);
+            } else {
+              console.log(`❌ Double-click on ${zoneType} zone did NOT work`);
+            }
+          }, 100);
+        } else {
+          console.log(`Zone ${zoneType} not found`);
+        }
+      }
     </script>
-</body>
+  </body>
 </html>

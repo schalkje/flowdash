@@ -1,39 +1,77 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Pre-render — basic</title>
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
     <style>
-      .pr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
-      .pr-cell { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; }
-      .pr-cell h3 { margin: 0 0 8px; font-size: 14px; }
-      .pr-cell svg { width: 100%; height: 280px; background: #fafafa; }
-      .pr-metrics { font-family: ui-monospace, monospace; font-size: 12px; padding: 6px 0; }
-      .pr-controls { padding: 8px 12px; background: #fff; border-bottom: 1px solid #ddd; }
-      .pr-controls button { padding: 4px 12px; font-size: 13px; }
-      .pr-summary { padding: 6px 12px; background: #f8f8f8; border-bottom: 1px solid #ddd; font-size: 13px; }
-      .pr-summary .ratio { font-weight: 600; }
+      .pr-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+      }
+      .pr-cell {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px;
+      }
+      .pr-cell h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .pr-cell svg {
+        width: 100%;
+        height: 280px;
+        background: #fafafa;
+      }
+      .pr-metrics {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        padding: 6px 0;
+      }
+      .pr-controls {
+        padding: 8px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+      }
+      .pr-controls button {
+        padding: 4px 12px;
+        font-size: 13px;
+      }
+      .pr-summary {
+        padding: 6px 12px;
+        background: #f8f8f8;
+        border-bottom: 1px solid #ddd;
+        font-size: 13px;
+      }
+      .pr-summary .ratio {
+        font-weight: 600;
+      }
     </style>
     <script defer src="/dashboard/demo-nav.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Pre-render</h1>
-        <h2>cold vs warm side-by-side</h2>
-        <p class="demo-description">
-          Loads the same dataset twice — once without pre-render data and once with.
-          Compares the phase timings reported by the dashboard's instrumentation.
-        </p>
+      <h1>Pre-render</h1>
+      <h2>cold vs warm side-by-side</h2>
+      <p class="demo-description">
+        Loads the same dataset twice — once without pre-render data and once with. Compares the
+        phase timings reported by the dashboard's instrumentation.
+      </p>
     </header>
     <div class="pr-controls">
-      <label>Fixture:
+      <label
+        >Fixture:
         <select id="fixSel">
           <option value="dwh-1">dwh-1 (small)</option>
           <option value="dwh-5">dwh-5 (medium)</option>
@@ -43,7 +81,9 @@
       </label>
       <button id="loadBtn">Load both</button>
     </div>
-    <div class="pr-summary" id="summary">Click "Load both" to time the cold and prerendered loads.</div>
+    <div class="pr-summary" id="summary">
+      Click "Load both" to time the cold and prerendered loads.
+    </div>
     <div class="pr-grid">
       <div class="pr-cell">
         <h3>Cold load (no prerender)</h3>
@@ -59,7 +99,12 @@
     <footer class="demo-info">
       <div class="demo-metadata">
         <p><strong>Settings:</strong> <code>usePrerender</code></p>
-        <p><strong>Reference:</strong> <a href="../../dashboard/documentation/pre-render.md">/dashboard/documentation/pre-render.md</a>, <a href="../../dashboard/documentation/PRERENDER_USAGE.md">PRERENDER_USAGE.md</a></p>
+        <p>
+          <strong>Reference:</strong>
+          <a href="../../dashboard/documentation/pre-render.md"
+            >/dashboard/documentation/pre-render.md</a
+          >, <a href="../../dashboard/documentation/PRERENDER_USAGE.md">PRERENDER_USAGE.md</a>
+        </p>
       </div>
     </footer>
     <script type="module">
@@ -72,7 +117,10 @@
       }
 
       function renderMetrics(el, m) {
-        if (!m) { el.textContent = '(no metrics)'; return; }
+        if (!m) {
+          el.textContent = '(no metrics)';
+          return;
+        }
         const phases = m.phases || {};
         el.textContent = Object.entries(phases)
           .map(([k, v]) => `${k.padEnd(22)} ${Number(v).toFixed(1)} ms`)
@@ -93,7 +141,8 @@
 
         const coldEl = document.getElementById('metricsCold');
         const warmEl = document.getElementById('metricsWarm');
-        coldEl.textContent = '…'; warmEl.textContent = '…';
+        coldEl.textContent = '…';
+        warmEl.textContent = '…';
 
         try {
           const cold = await fetchJson(`../../dashboard/data/${fix}.json`);
@@ -116,5 +165,5 @@
         }
       });
     </script>
-</body>
+  </body>
 </html>

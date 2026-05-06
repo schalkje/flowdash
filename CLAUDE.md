@@ -90,7 +90,7 @@ Every container node delegates layout to a `ZoneManager` (`js/zones/`) composed 
 - **Edges** — `edge.js` factory + `edgeBase.js`; path math in `utilPath.js`; arrow markers in `markers.js`.
 - **Simulation** — `simulation.js` runs the force layout, with custom forces in `forceBoundary.js` (keep nodes inside parent) and `forceRectCollide.js` (rectangle collision instead of D3's circle default).
 - **Interaction managers** — `eventManager.js`, `zoomManager.js` (with `buttonZoom.js`), `geometryManager.js`, `layoutManager.js`, `themeManager.js`, `statusManager.js`, `loadingOverlay.js`, `minimap.js`. Each is single-responsibility and owned by the `Dashboard`.
-- **Selection model** — single click selects exclusively; double-click computes a *Selection Neighborhood* (using `settings.selector.incomming`/`outgoing` traversal depths) and zooms to its bounding box. Override via `dashboard.main.root.onClick` / `onDblClick` after init.
+- **Selection model** — single click selects exclusively; double-click computes a _Selection Neighborhood_ (using `settings.selector.incomming`/`outgoing` traversal depths) and zooms to its bounding box. Override via `dashboard.main.root.onClick` / `onDblClick` after init.
 
 ### Status system
 

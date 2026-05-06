@@ -8,11 +8,16 @@ export const demoData = {
     cascadeOnStatusChange: true,
   },
   nodes: [
-    { id: 'pipe', label: 'Pipeline', type: 'lane', children: [
-      { id: 'extract',  label: 'Extract',  type: 'rect', code: 'E', status: 'Ready' },
-      { id: 'transform',label: 'Transform',type: 'rect', code: 'T', status: 'Ready' },
-      { id: 'load',     label: 'Load',     type: 'rect', code: 'L', status: 'Ready' },
-    ] },
+    {
+      id: 'pipe',
+      label: 'Pipeline',
+      type: 'lane',
+      children: [
+        { id: 'extract', label: 'Extract', type: 'rect', code: 'E', status: 'Ready' },
+        { id: 'transform', label: 'Transform', type: 'rect', code: 'T', status: 'Ready' },
+        { id: 'load', label: 'Load', type: 'rect', code: 'L', status: 'Ready' },
+      ],
+    },
   ],
   edges: [
     { source: 'extract', target: 'transform' },

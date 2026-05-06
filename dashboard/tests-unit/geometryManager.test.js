@@ -9,23 +9,20 @@ const node = (x, y, w, h) => ({ x, y, data: { width: w, height: h } });
 describe('GeometryManager.calculateBoundingBox', () => {
   it('returns a zero box for an empty array', () => {
     expect(GeometryManager.calculateBoundingBox([])).toEqual({
-      x: 0, y: 0, width: 0, height: 0,
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
     });
   });
 
   it('returns a tight bounding box around centered nodes', () => {
-    const bb = GeometryManager.calculateBoundingBox([
-      node(0, 0, 10, 10),
-      node(20, 0, 10, 10),
-    ]);
+    const bb = GeometryManager.calculateBoundingBox([node(0, 0, 10, 10), node(20, 0, 10, 10)]);
     expect(bb).toEqual({ x: -5, y: -5, width: 30, height: 10 });
   });
 
   it('expands the box by 2*padding on each axis when padding is given', () => {
-    const bb = GeometryManager.calculateBoundingBox(
-      [node(0, 0, 10, 10)],
-      5,
-    );
+    const bb = GeometryManager.calculateBoundingBox([node(0, 0, 10, 10)], 5);
     expect(bb).toEqual({ x: -10, y: -10, width: 20, height: 20 });
   });
 
@@ -54,19 +51,19 @@ describe('GeometryManager.calculateMinimumSize', () => {
   });
 
   it('returns the bounding box when it exceeds the default', () => {
-    const size = GeometryManager.calculateMinimumSize(
-      [node(0, 0, 200, 50)],
-      { width: 100, height: 100 },
-    );
+    const size = GeometryManager.calculateMinimumSize([node(0, 0, 200, 50)], {
+      width: 100,
+      height: 100,
+    });
     expect(size.width).toBe(200);
     expect(size.height).toBe(100);
   });
 
   it('honors the default for any axis the bounding box does not exceed', () => {
-    const size = GeometryManager.calculateMinimumSize(
-      [node(0, 0, 50, 200)],
-      { width: 100, height: 100 },
-    );
+    const size = GeometryManager.calculateMinimumSize([node(0, 0, 50, 200)], {
+      width: 100,
+      height: 100,
+    });
     expect(size.width).toBe(100);
     expect(size.height).toBe(200);
   });
@@ -74,10 +71,7 @@ describe('GeometryManager.calculateMinimumSize', () => {
 
 describe('GeometryManager.adjustPositionForContainer', () => {
   it('translates a node by the container origin', () => {
-    const adjusted = GeometryManager.adjustPositionForContainer(
-      { x: 5, y: 5 },
-      { x: 10, y: 20 },
-    );
+    const adjusted = GeometryManager.adjustPositionForContainer({ x: 5, y: 5 }, { x: 10, y: 20 });
     expect(adjusted).toEqual({ x: 15, y: 25 });
   });
 });

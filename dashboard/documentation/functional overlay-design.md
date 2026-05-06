@@ -23,6 +23,7 @@ Define the functional requirements and user-facing design for the dashboard load
 ## 2. Functional Requirements
 
 ### 2.1 Overlay Visibility & Lifecycle
+
 - The overlay must appear when a dashboard file is being loaded, parsed, or rendered fully.
 - The overlay must remain hidden at all other times.
 - The overlay must enforce a minimum visible time (e.g., 2 seconds) to prevent flicker.
@@ -30,6 +31,7 @@ Define the functional requirements and user-facing design for the dashboard load
 - The overlay must start showing before loading commences
 
 ### 2.2 Progress & Stage Indication
+
 - The overlay must display a short, descriptive message indicating the current stage (e.g., "Loading file", "Parsing", "Rendering nodes").
 - The overlay must allow updating the stage/message as loading progresses.
 - The overlay must show animated dots or a timer to indicate ongoing activity directly after the text
@@ -37,6 +39,7 @@ Define the functional requirements and user-facing design for the dashboard load
 - The overlay must optionally display a compact history of completed stages and their durations.
 
 ### 2.3 Placement & DOM Integration
+
 - The overlay must be attached to a suitable container that is created when necessary and deleted again when finished
 - Each dashboard on a page has its own overlay container
 - The overlay must block user events on the dashboards
@@ -44,11 +47,13 @@ Define the functional requirements and user-facing design for the dashboard load
 - The overlay does not support a provided container
 
 ### 2.4 Accessibility
+
 - The overlay must use `role="status"` and `aria-live="polite"` for status announcements.
 - The overlay must be readable by screen readers and update announcements on stage/message changes.
 - The overlay must use sufficient color contrast and readable fonts (via CSS).
 
 ### 2.5 API & Integration
+
 - The overlay must provide functions for:
   - Showing the overlay (`showLoading(containerOrSelector)`)
   - Hiding the overlay (`hideLoading()`)

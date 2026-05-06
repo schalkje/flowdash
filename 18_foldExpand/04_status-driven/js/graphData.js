@@ -13,66 +13,94 @@
 // lane container can be observed reacting to its children.
 
 export const demoData = {
-    metadata: {
-        name: "fold-expand-status-driven",
-        description: "Auto-collapse driven by leaf node status changes",
-        version: "1.0.0"
-    },
+  metadata: {
+    name: 'fold-expand-status-driven',
+    description: 'Auto-collapse driven by leaf node status changes',
+    version: '1.0.0',
+  },
 
-    settings: {
-        showCenterMark: false,
-        showGrid: false,
-        showGhostlines: false,
-        showConnectionPoints: false,
-        zoomToRoot: true,
-        toggleCollapseOnStatusChange: true,
-        cascadeOnStatusChange: false,
-        demoMode: true
-    },
+  settings: {
+    showCenterMark: false,
+    showGrid: false,
+    showGhostlines: false,
+    showConnectionPoints: false,
+    zoomToRoot: true,
+    toggleCollapseOnStatusChange: true,
+    cascadeOnStatusChange: false,
+    demoMode: true,
+  },
 
-    nodes: [
+  nodes: [
+    {
+      id: 'root',
+      label: 'Run',
+      type: 'columns',
+      code: 'RUN',
+      // Field name is `state` (see nodeBase.js — initial status reads
+      // from nodeData.state, not nodeData.status)
+      state: 'Updating',
+      collapsed: false,
+      children: [
         {
-            id: "root",
-            label: "Run",
-            type: "columns",
-            code: "RUN",
-            // Field name is `state` (see nodeBase.js — initial status reads
-            // from nodeData.state, not nodeData.status)
-            state: "Updating",
-            collapsed: false,
-            children: [
-                {
-                    // Two leaves with the *same* status → starts collapsed.
-                    id: "ok-lane",
-                    label: "OK Lane",
-                    type: "lane",
-                    code: "OK",
-                    state: "Ready",
-                    collapsed: false,
-                    children: [
-                        { id: "ok1", label: "OK Step 1", type: "rect", code: "OK1", state: "Ready", parentId: "ok-lane" },
-                        { id: "ok2", label: "OK Step 2", type: "rect", code: "OK2", state: "Ready", parentId: "ok-lane" }
-                    ],
-                    parentId: "root"
-                },
-                {
-                    // Mixed leaf statuses → starts expanded.
-                    id: "bad-lane",
-                    label: "Problem Lane",
-                    type: "lane",
-                    code: "BAD",
-                    state: "Error",
-                    collapsed: false,
-                    children: [
-                        { id: "bad1", label: "Failing Step", type: "rect", code: "BD1", state: "Error", parentId: "bad-lane" },
-                        { id: "bad2", label: "Healthy Step", type: "rect", code: "BD2", state: "Ready", parentId: "bad-lane" }
-                    ],
-                    parentId: "root"
-                }
-            ],
-            parentId: null
-        }
-    ],
+          // Two leaves with the *same* status → starts collapsed.
+          id: 'ok-lane',
+          label: 'OK Lane',
+          type: 'lane',
+          code: 'OK',
+          state: 'Ready',
+          collapsed: false,
+          children: [
+            {
+              id: 'ok1',
+              label: 'OK Step 1',
+              type: 'rect',
+              code: 'OK1',
+              state: 'Ready',
+              parentId: 'ok-lane',
+            },
+            {
+              id: 'ok2',
+              label: 'OK Step 2',
+              type: 'rect',
+              code: 'OK2',
+              state: 'Ready',
+              parentId: 'ok-lane',
+            },
+          ],
+          parentId: 'root',
+        },
+        {
+          // Mixed leaf statuses → starts expanded.
+          id: 'bad-lane',
+          label: 'Problem Lane',
+          type: 'lane',
+          code: 'BAD',
+          state: 'Error',
+          collapsed: false,
+          children: [
+            {
+              id: 'bad1',
+              label: 'Failing Step',
+              type: 'rect',
+              code: 'BD1',
+              state: 'Error',
+              parentId: 'bad-lane',
+            },
+            {
+              id: 'bad2',
+              label: 'Healthy Step',
+              type: 'rect',
+              code: 'BD2',
+              state: 'Ready',
+              parentId: 'bad-lane',
+            },
+          ],
+          parentId: 'root',
+        },
+      ],
+      parentId: null,
+    },
+  ],
 
-    edges: []
+  edges: [],
 };

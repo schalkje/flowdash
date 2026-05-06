@@ -49,12 +49,15 @@ function childRectsSel(parentId) {
 async function nodeBox(page, id) {
   // Each node renders as a top-level <g class="<type> [collapsed]" id="...">.
   // getBBox() reflects the rendered geometry of the whole subtree.
-  return page.evaluate(({ scope, nodeId }) => {
-    const g = document.querySelector(`${scope} g[id="${nodeId}"]`);
-    if (!g) return null;
-    const bbox = g.getBBox();
-    return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
-  }, { scope: SCOPE, nodeId: id });
+  return page.evaluate(
+    ({ scope, nodeId }) => {
+      const g = document.querySelector(`${scope} g[id="${nodeId}"]`);
+      if (!g) return null;
+      const bbox = g.getBBox();
+      return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+    },
+    { scope: SCOPE, nodeId: id },
+  );
 }
 
 async function setCollapsed(page, id, value) {
@@ -63,7 +66,7 @@ async function setCollapsed(page, id, value) {
       const node = window.flowdash.main.root.getNode(id);
       node.collapsed = value;
     },
-    { id, value }
+    { id, value },
   );
   await page.waitForTimeout(250);
 }
@@ -78,10 +81,13 @@ async function getCollapsed(page, id) {
 async function edgeD(page, edgeId) {
   // Scope to the dashboard's g.edges container — the minimap can carry
   // a mirrored copy.
-  return page.evaluate(({ scope, id }) => {
-    const path = document.querySelector(`${scope} g.edge[id="${id}"] path.path`);
-    return path ? path.getAttribute('d') : null;
-  }, { scope: SCOPE, id: edgeId });
+  return page.evaluate(
+    ({ scope, id }) => {
+      const path = document.querySelector(`${scope} g.edge[id="${id}"] path.path`);
+      return path ? path.getAttribute('d') : null;
+    },
+    { scope: SCOPE, id: edgeId },
+  );
 }
 
 async function setLeafState(page, leafId, value) {
@@ -93,9 +99,11 @@ async function setLeafState(page, leafId, value) {
       window.flowdash.updateNodeStatus(leafId, value);
       const leaf = window.flowdash.main.root.getNode(leafId);
       const parent = leaf?.parentNode;
+      // Re-assignment is the test: the setter retriggers the cascade rule.
+      // eslint-disable-next-line no-self-assign
       if (parent) parent.status = parent.status;
     },
-    { leafId, value }
+    { leafId, value },
   );
   await page.waitForTimeout(250);
 }
@@ -165,7 +173,9 @@ test.describe('fold / expand — simple', () => {
 });
 
 test.describe('fold / expand — with edges', () => {
-  test('cross-lane edges re-route when an endpoint collapses; intra-lane edges are detached', async ({ page }) => {
+  test('cross-lane edges re-route when an endpoint collapses; intra-lane edges are detached', async ({
+    page,
+  }) => {
     const errors = await gotoDemo(page, '/18_foldExpand/02_with-edges/with-edges.html');
 
     // Cross-lane edges hang off the deepest common ancestor (root) and
@@ -265,7 +275,10 @@ test.describe('fold / expand — nested', () => {
 
     await setCollapsed(page, 'root', true);
     for (const id of allLeafIds) {
-      expect(await page.locator(`${SCOPE} g[id="${id}"]`).count(), `${id} hidden after root collapse`).toBe(0);
+      expect(
+        await page.locator(`${SCOPE} g[id="${id}"]`).count(),
+        `${id} hidden after root collapse`,
+      ).toBe(0);
     }
     expect(await page.locator(`${SCOPE} g[id="wing-a"]`).count()).toBe(0);
     expect(await page.locator(`${SCOPE} g[id="wing-b"]`).count()).toBe(0);
@@ -284,11 +297,14 @@ test.describe('fold / expand — nested', () => {
     await setCollapsed(page, 'wing-a', false);
 
     for (const childId of ['rect-a1', 'rect-a2']) {
-      const bounds = await page.evaluate(({ scope, id }) => {
-        const el = document.querySelector(`${scope} g[id="${id}"]`);
-        const r = el?.getBoundingClientRect();
-        return r ? { left: r.left, right: r.right, top: r.top, bottom: r.bottom } : null;
-      }, { scope: SCOPE, id: childId });
+      const bounds = await page.evaluate(
+        ({ scope, id }) => {
+          const el = document.querySelector(`${scope} g[id="${id}"]`);
+          const r = el?.getBoundingClientRect();
+          return r ? { left: r.left, right: r.right, top: r.top, bottom: r.bottom } : null;
+        },
+        { scope: SCOPE, id: childId },
+      );
       const parentBounds = await page.evaluate((scope) => {
         const el = document.querySelector(`${scope} g[id="wing-a"]`);
         const r = el?.getBoundingClientRect();
@@ -345,7 +361,9 @@ test.describe('fold / expand — status driven', () => {
 });
 
 test.describe('fold / expand — movie pages', () => {
-  test('small movie page initialises and runs at least one frame without errors', async ({ page }) => {
+  test('small movie page initialises and runs at least one frame without errors', async ({
+    page,
+  }) => {
     const errors = await gotoDemo(page, '/18_foldExpand/05_movie-small/movie-small.html');
 
     // Pause autoplay so the assertions don't race the next frame.
@@ -370,7 +388,9 @@ test.describe('fold / expand — movie pages', () => {
     expect(errors, `unexpected runtime errors:\n${errors.join('\n')}`).toEqual([]);
   });
 
-  test('big movie page loads dwh-tiny, discovers containers, and steps without errors', async ({ page }) => {
+  test('big movie page loads dwh-tiny, discovers containers, and steps without errors', async ({
+    page,
+  }) => {
     const errors = await gotoDemo(page, '/18_foldExpand/06_movie-big/movie-big.html');
 
     await page.click('#btn-pause');
@@ -381,7 +401,7 @@ test.describe('fold / expand — movie pages', () => {
     const info = await page.evaluate(() => ({
       scriptLen: window.foldExpandMovie.script.length,
       containers: window.foldExpandMovie.containerIds.length,
-      hasNodes: !!document.querySelector('#graph g[id]')
+      hasNodes: !!document.querySelector('#graph g[id]'),
     }));
     expect(info.containers).toBeGreaterThan(5);
     expect(info.scriptLen).toBeGreaterThan(6);

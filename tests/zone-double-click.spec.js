@@ -40,7 +40,9 @@ test.describe('Zone Double-Click Tests', () => {
     });
   }
 
-  test('zone elements expose __node and double-click-capable inner containers exist', async ({ page }) => {
+  test('zone elements expose __node and double-click-capable inner containers exist', async ({
+    page,
+  }) => {
     const nodePropertyInfo = await page.evaluate(() => {
       const zones = document.querySelectorAll('g[class*="zone-"]');
       const withNode = Array.from(zones).filter((zone) => zone.__node !== undefined);

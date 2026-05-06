@@ -22,9 +22,7 @@ import { gotoAndReady } from './helpers/ready.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const baselines = JSON.parse(
-  readFileSync(join(__dirname, 'perf-baselines.json'), 'utf8'),
-);
+const baselines = JSON.parse(readFileSync(join(__dirname, 'perf-baselines.json'), 'utf8'));
 const TOLERANCE = baselines._tolerance ?? 1.5;
 
 async function loadFixtureAndCollectMetrics(page, fixtureName) {
@@ -49,17 +47,22 @@ async function loadFixtureAndCollectMetrics(page, fixtureName) {
 }
 
 function assertPhaseBudgets(metrics, fixture, fixtureName) {
-  expect(metrics, `dashboard exposed performanceMetrics on window for ${fixtureName}`).not.toBeNull();
+  expect(
+    metrics,
+    `dashboard exposed performanceMetrics on window for ${fixtureName}`,
+  ).not.toBeNull();
   const phases = fixture.phases ?? {};
   for (const [phase, budget] of Object.entries(phases)) {
     if (budget === null || budget === undefined) continue;
     const actual = metrics.phases?.[phase];
     expect(actual, `phase ${phase} reported for ${fixtureName}`).toBeDefined();
     const allowed = budget * TOLERANCE;
-    expect.soft(
-      actual,
-      `${fixtureName}.${phase}: ${actual.toFixed(0)}ms exceeds ${allowed.toFixed(0)}ms (budget ${budget}ms × tolerance ${TOLERANCE})`,
-    ).toBeLessThanOrEqual(allowed);
+    expect
+      .soft(
+        actual,
+        `${fixtureName}.${phase}: ${actual.toFixed(0)}ms exceeds ${allowed.toFixed(0)}ms (budget ${budget}ms × tolerance ${TOLERANCE})`,
+      )
+      .toBeLessThanOrEqual(allowed);
   }
 }
 
@@ -94,10 +97,9 @@ test.describe('Performance benchmarks', () => {
       expect(coldMetrics, `cold metrics for ${cold}`).not.toBeNull();
       expect(warmMetrics, `warm metrics for ${warm}`).not.toBeNull();
       const ratio = warmMetrics.phases.total / coldMetrics.phases.total;
-      expect.soft(
-        ratio,
-        `${pair}: warm/cold ratio ${ratio.toFixed(2)} should be <= ${cfg.max}`,
-      ).toBeLessThanOrEqual(cfg.max);
+      expect
+        .soft(ratio, `${pair}: warm/cold ratio ${ratio.toFixed(2)} should be <= ${cfg.max}`)
+        .toBeLessThanOrEqual(cfg.max);
     }
   });
 });

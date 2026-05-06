@@ -8,19 +8,19 @@ See also: [Minimap](minimap.md)
 
 ## Getting Started
 
-1) Add container to your page:
+1. Add container to your page:
 
 ```html
 <div id="graph"></div>
 ```
 
-2) Initialize the dashboard:
+2. Initialize the dashboard:
 
 ```javascript
-import { createAndInitDashboard } from "../js/dashboard.js";
+import { createAndInitDashboard } from '../js/dashboard.js';
 
 // Simple initialization with just the main graph container
-const dashboard = createAndInitDashboard(data, "#graph");
+const dashboard = createAndInitDashboard(data, '#graph');
 ```
 
 If you are using the bundled build, initialize according to your bundling setup (examples in `flowdash-bundle.html`).
@@ -76,9 +76,9 @@ dashboard.setNodeClickCallback((node) => {
     id: node.id,
     label: node.label,
     status: node.status,
-    position: { x: node.x, y: node.y }
+    position: { x: node.x, y: node.y },
   });
-  
+
   // Your custom logic here
   if (node.status === 'Error') {
     showErrorDetails(node);
@@ -87,12 +87,14 @@ dashboard.setNodeClickCallback((node) => {
 ```
 
 **Key Features:**
+
 - **Non-intrusive**: Your callback runs after the normal selection, so all default behavior is preserved
 - **Node Parameter**: Receives the selected node object with all its properties
 - **Easy Registration**: Simple method call to register/unregister handlers
 - **Error Handling**: Built-in validation ensures only functions are accepted
 
 **Callback Parameters:**
+
 - `node` - The node object that was clicked and selected
 
 ## Zoom and Pan System
@@ -143,14 +145,14 @@ resizeMinimap() {
   // 1. Get target monitor pixel dimensions
   const targetWidthPx = getMinimapTargetWidth(sizeToken);
   const targetHeightPx = Math.round(targetWidthPx / graphAspectRatio);
-  
+
   // 2. Calculate SVG scaling factor
   const svgScale = svgRect.width / this.main.width;
-  
+
   // 3. Convert to SVG coordinate space
   const svgCoordWidth = targetWidthPx / svgScale;
   const svgCoordHeight = targetHeightPx / svgScale;
-  
+
   // 4. Apply dimensions and update content
   this.minimap.svg.attr('width', svgCoordWidth).attr('height', svgCoordHeight);
 }
@@ -222,7 +224,7 @@ When the dashboard initializes, it establishes a complete coordinate system and 
 ```javascript
 // The dashboard automatically detects container size on initialization
 const { width, height } = svg.node().getBoundingClientRect();
-svg.attr("viewBox", [-width / 2, -height / 2, width, height]);
+svg.attr('viewBox', [-width / 2, -height / 2, width, height]);
 
 // Store dimensions for future reference
 this.main.width = width;
@@ -248,7 +250,7 @@ The dashboard implements a dual-coordinate scaling system that maintains visual 
 const { width, height } = containerDiv.getBoundingClientRect();
 
 // 2. Establish SVG coordinate system (centered origin)
-svg.attr('viewBox', [-width/2, -height/2, width, height]);
+svg.attr('viewBox', [-width / 2, -height / 2, width, height]);
 
 // 3. Base scale: 1 SVG unit = 1 screen pixel (at 100% zoom)
 const baseScale = 1.0;
@@ -292,23 +294,23 @@ applyResizePreserveZoom() {
   const newRect = this.main.svg.node().getBoundingClientRect();
   const newWidth = newRect.width;
   const newHeight = newRect.height;
-  
+
   // 2. Calculate scale adjustment factors
   const widthRatio = newWidth / this.main.width;
   const heightRatio = newHeight / this.main.height;
-  
+
   // 3. Update SVG coordinate system
   this.main.svg.attr('viewBox', [-newWidth/2, -newHeight/2, newWidth, newHeight]);
-  
+
   // 4. Preserve user's zoom level by adjusting transform
   const newK = this.main.transform.k; // Keep same zoom level
   const newTransform = d3.zoomIdentity
     .translate(this.main.transform.x * widthRatio, this.main.transform.y * heightRatio)
     .scale(newK);
-    
+
   // 5. Apply the preserved transform
   this.main.svg.call(this.main.zoom.transform, newTransform);
-  
+
   // 6. Update stored dimensions
   this.main.width = newWidth;
   this.main.height = newHeight;
@@ -359,7 +361,7 @@ The dashboard implements several optimizations to ensure smooth resize operation
 ## Usage Tips
 
 - **Container Sizing**: Provide stable sizes for the `#graph` container to avoid resize thrash
-- **CSS Dimensions**: Set explicit width/height on the `#graph` container via CSS for predictable behavior  
+- **CSS Dimensions**: Set explicit width/height on the `#graph` container via CSS for predictable behavior
 - **Responsive Design**: The dashboard adapts to container size changes, making it suitable for responsive layouts
 - **Minimap Integration**: The minimap automatically adapts to container size changes and maintains consistent visual size
 - **Performance**: Resize operations are optimized to preserve user context and avoid jarring transitions
@@ -370,5 +372,3 @@ The dashboard implements several optimizations to ensure smooth resize operation
 - Back to docs index: [Documentation Home](README.md)
 - Related: [Minimap](minimap.md)
 - Settings: [Complete Settings Reference](settings.md)
-
-
