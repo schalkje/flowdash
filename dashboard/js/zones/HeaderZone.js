@@ -383,6 +383,28 @@ export class HeaderZone extends BaseZone {
   }
 
   /**
+   * Resolve the header's effective minimum width using the cheapest
+   * available signal:
+   *   1. throttled (returns cached value during rapid updates),
+   *   2. authoritative measurement,
+   *   3. current rendered size,
+   *   4. zero.
+   *
+   * Encapsulates the fallback chain that container layout code (LaneNode,
+   * ColumnsNode, AdapterNode, etc.) needs and used to spell out inline at
+   * every call site. Call as `node.zoneManager?.headerZone?.getMinWidth() ?? 0`.
+   */
+  getMinWidth() {
+    if (typeof this.getMinimumWidthThrottled === 'function') {
+      return this.getMinimumWidthThrottled();
+    }
+    if (typeof this.getMinimumWidth === 'function') {
+      return this.getMinimumWidth();
+    }
+    return this.getSize?.()?.width || 0;
+  }
+
+  /**
    * Throttled version of getMinimumWidth for use during rapid updates
    * Returns cached value immediately if available, schedules update if not
    */

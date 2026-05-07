@@ -253,14 +253,7 @@ export default class MartNode extends BaseContainerNode {
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;
       const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-      const headerMinWidth =
-        headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-          ? headerZone.getMinimumWidthThrottled()
-          : headerZone && typeof headerZone.getMinimumWidth === 'function'
-            ? headerZone.getMinimumWidth()
-            : headerZone
-              ? headerZone.getSize?.().width || 0
-              : this.data.width;
+      const headerMinWidth = headerZone?.getMinWidth?.() ?? this.data.width;
       const collapsedWidth = Math.max(this.minimumSize.width, headerMinWidth);
       const collapsedHeight = Math.max(this.minimumSize.height, headerHeight);
       this.resize({ width: collapsedWidth, height: collapsedHeight });

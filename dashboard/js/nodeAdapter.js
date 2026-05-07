@@ -477,14 +477,7 @@ export default class AdapterNode extends BaseContainerNode {
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;
       const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-      const headerMinWidth =
-        headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-          ? headerZone.getMinimumWidthThrottled()
-          : headerZone && typeof headerZone.getMinimumWidth === 'function'
-            ? headerZone.getMinimumWidth()
-            : headerZone
-              ? headerZone.getSize?.().width || 0
-              : this.data.width;
+      const headerMinWidth = headerZone?.getMinWidth?.() ?? this.data.width;
       const collapsedWidth = Math.max(this.minimumSize.width, headerMinWidth);
       const collapsedHeight = Math.max(this.minimumSize.height, headerHeight);
       this.resize({ width: collapsedWidth, height: collapsedHeight });
@@ -628,14 +621,7 @@ export default class AdapterNode extends BaseContainerNode {
     const marginZone = this.zoneManager.marginZone;
     const headerZone = this.zoneManager.headerZone;
     const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-    const headerMinWidth =
-      headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-        ? headerZone.getMinimumWidthThrottled()
-        : headerZone && typeof headerZone.getMinimumWidth === 'function'
-          ? headerZone.getMinimumWidth()
-          : headerZone
-            ? headerZone.getSize?.().width || 0
-            : 0;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
     if (marginZone) {
       const margins = marginZone.getMargins();
@@ -851,14 +837,7 @@ export default class AdapterNode extends BaseContainerNode {
     const marginZone = this.zoneManager.marginZone;
     const headerZone = this.zoneManager.headerZone;
     const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-    const headerMinWidth =
-      headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-        ? headerZone.getMinimumWidthThrottled()
-        : headerZone && typeof headerZone.getMinimumWidth === 'function'
-          ? headerZone.getMinimumWidth()
-          : headerZone
-            ? headerZone.getSize?.().width || 0
-            : 0;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
     if (marginZone) {
       const margins = marginZone.getMargins();
@@ -906,14 +885,7 @@ export default class AdapterNode extends BaseContainerNode {
     const marginZone = this.zoneManager.marginZone;
     const headerZone = this.zoneManager.headerZone;
     const headerHeight = headerZone ? headerZone.getHeaderHeight() : 10;
-    const headerMinWidth =
-      headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-        ? headerZone.getMinimumWidthThrottled()
-        : headerZone && typeof headerZone.getMinimumWidth === 'function'
-          ? headerZone.getMinimumWidth()
-          : headerZone
-            ? headerZone.getSize?.().width || 0
-            : 0;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
     if (marginZone) {
       const margins = marginZone.getMargins();
@@ -983,14 +955,7 @@ export default class AdapterNode extends BaseContainerNode {
       // Get header height
       const headerZone = this.zoneManager?.headerZone;
       const headerHeight = headerZone ? headerZone.getHeaderHeight() : 20;
-      const headerMinWidth =
-        headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-          ? headerZone.getMinimumWidthThrottled()
-          : headerZone && typeof headerZone.getMinimumWidth === 'function'
-            ? headerZone.getMinimumWidth()
-            : headerZone
-              ? headerZone.getSize?.().width || 0
-              : 0;
+      const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
       // Get margins
       const marginZone = this.zoneManager?.marginZone;
@@ -1068,14 +1033,7 @@ export default class AdapterNode extends BaseContainerNode {
     // Get header height
     const headerZone = this.zoneManager?.headerZone;
     const headerHeight = headerZone ? headerZone.getHeaderHeight() : 20;
-    const headerMinWidth =
-      headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-        ? headerZone.getMinimumWidthThrottled()
-        : headerZone && typeof headerZone.getMinimumWidth === 'function'
-          ? headerZone.getMinimumWidth()
-          : headerZone
-            ? headerZone.getSize?.().width || 0
-            : 0;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
     // Get margin zone for proper sizing
     const marginZone = this.zoneManager?.marginZone;

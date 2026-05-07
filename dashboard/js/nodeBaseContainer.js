@@ -271,14 +271,7 @@ export default class BaseContainerNode extends BaseNode {
             : { top: 8, right: 8, bottom: 8, left: 8 };
           const contentSize = innerZone.calculateChildContentSize();
           const widthFromContent = contentSize.width + margins.left + margins.right;
-          const headerMinWidth =
-            headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-              ? headerZone.getMinimumWidthThrottled()
-              : headerZone && typeof headerZone.getMinimumWidth === 'function'
-                ? headerZone.getMinimumWidth()
-                : headerZone
-                  ? headerZone.getSize?.().width || 0
-                  : 0;
+          const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
           const headerBuffer = 2; // small extra to avoid tight fit
           const newWidth = Math.max(
             this.data.width,
@@ -402,24 +395,10 @@ export default class BaseContainerNode extends BaseNode {
     this.update();
 
     // Compute collapsed size based on header's intrinsic minimum (text + controls) and user minimums
-    let headerMinWidth = 0;
-    let headerHeight = this.minimumSize.height;
-    if (this.zoneManager?.headerZone) {
-      // Prefer precise header minimum width calculation when available
-      if (typeof this.zoneManager.headerZone.getMinimumWidthThrottled === 'function') {
-        headerMinWidth = this.zoneManager.headerZone.getMinimumWidthThrottled();
-      } else if (typeof this.zoneManager.headerZone.getMinimumWidth === 'function') {
-        headerMinWidth = this.zoneManager.headerZone.getMinimumWidth();
-      } else {
-        // Fallback to current header size width (may be larger than minimum)
-        headerMinWidth = this.zoneManager.headerZone.getSize().width || 0;
-      }
-      // Use header's measured height if available
-      headerHeight =
-        this.zoneManager.headerZone.getHeaderHeight?.() ??
-        this.zoneManager.headerZone.getSize().height ??
-        headerHeight;
-    }
+    const headerZone = this.zoneManager?.headerZone;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
+    const headerHeight =
+      headerZone?.getHeaderHeight?.() ?? headerZone?.getSize?.().height ?? this.minimumSize.height;
 
     // Final collapsed dimensions (clamp to minimums)
     const collapsedWidth = Math.max(headerMinWidth, this.minimumSize.width);
@@ -601,31 +580,16 @@ export default class BaseContainerNode extends BaseNode {
         height: this.data.prerender.minimumSize.height || 0,
       };
     } else {
-      // Normal mode: calculate minimum size from header zone
+      // Normal mode: calculate minimum size from header zone.
       const labelText = this.data.label || '';
-      const fallbackLabelWidth = labelText.length * 8 + 36; // Fallback approximation
-
+      const fallbackLabelWidth = labelText.length * 8 + 36;
+      const headerZone = this.zoneManager?.headerZone;
       let minHeaderWidth = fallbackLabelWidth;
-      let headerHeight = 20; // Default fallback
-      if (this.zoneManager?.headerZone) {
-        const headerZone = this.zoneManager.headerZone;
-        // Prefer precise header minimum width (text + indicator + button + paddings)
-        if (typeof headerZone.getMinimumWidthThrottled === 'function') {
-          try {
-            minHeaderWidth = headerZone.getMinimumWidthThrottled();
-          } catch {}
-        } else if (typeof headerZone.getMinimumWidth === 'function') {
-          try {
-            minHeaderWidth = headerZone.getMinimumWidth();
-          } catch {}
-        } else {
-          // Fallback to current header size width (may be larger than minimum)
-          const headerSize = headerZone.getSize?.();
-          if (headerSize?.width) minHeaderWidth = headerSize.width;
-        }
-        // Use header's measured height if available
-        headerHeight = headerZone.getHeaderHeight?.() ?? headerHeight;
-      }
+      try {
+        const measured = headerZone?.getMinWidth?.();
+        if (measured > 0) minHeaderWidth = measured;
+      } catch {}
+      const headerHeight = headerZone?.getHeaderHeight?.() ?? 20;
 
       const defaultSize = { width: minHeaderWidth, height: headerHeight };
       this.minimumSize = GeometryManager.calculateMinimumSize([], defaultSize);
@@ -692,18 +656,11 @@ export default class BaseContainerNode extends BaseNode {
       this._didPostInitMeasure = true;
       setTimeout(() => {
         try {
-          const headerZone = this.zoneManager?.headerZone;
-          if (!headerZone) return;
-          const headerMinWidth =
-            typeof headerZone.getMinimumWidthThrottled === 'function'
-              ? headerZone.getMinimumWidthThrottled()
-              : typeof headerZone.getMinimumWidth === 'function'
-                ? headerZone.getMinimumWidth()
-                : headerZone.getSize?.().width || 0;
+          const headerMinWidth = this.zoneManager?.headerZone?.getMinWidth?.() ?? 0;
           const width = Math.max(
             this.data.width || 0,
             this.minimumSize?.width || 0,
-            headerMinWidth || 0,
+            headerMinWidth,
           );
           if (width > (this.data.width || 0)) {
             const size = { width, height: this.data.height };
@@ -923,14 +880,7 @@ export default class BaseContainerNode extends BaseNode {
         // Now calculate the bounding box of the repositioned children
         const contentSize = innerZone.calculateChildContentSize();
         const widthFromContent = contentSize.width + margins.left + margins.right;
-        const headerMinWidth =
-          headerZone && typeof headerZone.getMinimumWidthThrottled === 'function'
-            ? headerZone.getMinimumWidthThrottled()
-            : headerZone && typeof headerZone.getMinimumWidth === 'function'
-              ? headerZone.getMinimumWidth()
-              : headerZone
-                ? headerZone.getSize?.().width || 0
-                : 0;
+        const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
 
         const newWidth = Math.max(this.minimumSize.width, widthFromContent, headerMinWidth);
         const newHeight = Math.max(
