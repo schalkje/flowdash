@@ -11,7 +11,9 @@
       "Bash(xargs '-I{}' sh -c 'echo -n \"{}: \"; python3 -c \"import json,sys; d=json.load\\(open\\(\\\\\"{}\\\\\"\\)\\) *)",
       "Bash(sort -t: -k2 -n -r)",
       "Read(//home/jeroen/.claude/plans/**)",
-      "Read(//home/jeroen/.claude/**)"
+      "Read(//home/jeroen/.claude/**)",
+      "Bash(export PATH=\"$HOME/.local/node/bin:$PATH\")",
+      "Bash(PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 node scripts/generate-prerender.mjs dashboard/data/All-randomState.json)"
     ]
   }
 }

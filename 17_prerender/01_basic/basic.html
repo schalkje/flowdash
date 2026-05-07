@@ -136,10 +136,29 @@
         return dashboard;
       }
 
+      // Drain a previous dashboard's tail work (deferred zoom-to-root setTimeout,
+      // d3 force ticks, minimap init) before starting the next render. Without this
+      // the next dashboard's t0 is captured while the main thread is still busy,
+      // and its `_yieldToMain` calls (setTimeout 0) get queued behind that work —
+      // inflating phases.total without inflating the individual phases.
+      async function settleMainThread(svgSel, idleMs = 800) {
+        const el = document.querySelector(svgSel);
+        for (let i = 0; i < 50 && el && el.getAttribute('data-flowdash-ready') !== 'true'; i++) {
+          await new Promise((r) => setTimeout(r, 20));
+        }
+        await new Promise((r) => requestAnimationFrame(r));
+        await new Promise((r) => requestAnimationFrame(r));
+        if (typeof requestIdleCallback === 'function') {
+          await new Promise((r) => requestIdleCallback(r, { timeout: idleMs }));
+        }
+        // Absorb the dashboard's own setTimeout(100) zoom-to-root + minimap init.
+        await new Promise((r) => setTimeout(r, idleMs));
+      }
+
       document.getElementById('loadBtn').addEventListener('click', async () => {
         const fix = document.getElementById('fixSel').value;
         const summary = document.getElementById('summary');
-        summary.textContent = 'Loading…';
+        summary.textContent = 'Loading cold…';
 
         const coldEl = document.getElementById('metricsCold');
         const warmEl = document.getElementById('metricsWarm');
@@ -153,6 +172,9 @@
           coldCopy.settings = { ...(coldCopy.settings || {}), usePrerender: false };
           const dashCold = await loadInto('#graphCold', coldCopy);
           renderMetrics(coldEl, dashCold.performanceMetrics);
+
+          summary.textContent = 'Cold done — settling main thread before warm…';
+          await settleMainThread('#graphCold');
 
           const warm = await fetchJson(`../../dashboard/data/${fix}.prerender.json`);
           const dashWarm = await loadInto('#graphWarm', warm);
