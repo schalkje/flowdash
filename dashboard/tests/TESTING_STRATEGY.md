@@ -1,5 +1,7 @@
 # Playwright Testing Strategy for D3 Dashboard
 
+> ⚠️ **Superseded.** The current canonical testing strategy lives at [`/docs/testing-strategy.md`](../../docs/testing-strategy.md). This document references the old `4_edges/`, `5_nodes/`, `6_groups/`, `7_dashboard/` folder names that no longer exist. It is kept here for historical reference only and should not be relied on for current decisions.
+
 ## Overview
 
 This document outlines the testing strategy for the D3 dashboard project using [Playwright](https://playwright.dev/). The goal is to ensure robust, reliable, and maintainable end-to-end (E2E) tests that verify user-visible behavior across supported browsers, with a focus on Chromium and WebKit.
@@ -58,7 +60,7 @@ This document outlines the testing strategy for the D3 dashboard project using [
 - **Test Pages:**
   Individual test scenarios are available as HTML pages in:
   - `4_edges/` - Edge rendering scenarios
-  - `5_nodes/` - Node layout scenarios  
+  - `5_nodes/` - Node layout scenarios
   - `6_groups/` - Grouping scenarios
 - **Initialization:**
   Tests ensure the dashboard is loaded with a known dataset by selecting a file from the dropdown before running assertions.
@@ -74,68 +76,69 @@ This document outlines the testing strategy for the D3 dashboard project using [
 
 ### 5.1 Edge Test Cases
 
-| Test Case | Description | Covered By | Status |
-|-----------|-------------|------------|---------|
-| **Simple Edge** | Basic edge between two nodes | `4_edges/40_edges/1_simple.html` | ✅ |
-| **Node-to-Node Edge** | Edge connecting different node types | `4_edges/40_edges/2_nodes.html` | ✅ |
-| **Edge Demo Layouts** | Various edge layout patterns (grid, shifted, stairs) | `4_edges/40_edges/3_demo.html` | ✅ |
-| **Curved Edges** | Curved edge rendering with different layouts | `4_edges/40_edges/4_curved.html` | ✅ |
-| **Column Layout Edges** | Edges in column-based layouts | `4_edges/40_edges/5_columns.html` | ✅ |
-| **Adapter Column Edges** | Edges connecting adapter nodes in columns | `4_edges/40_edges/6_adapterColumns.html` | ✅ |
-| **Columns with Lane Edges** | Edges in mixed column-lane layouts | `4_edges/40_edges/7_columnsWithLane.html` | ✅ |
-| **Adapter Columns with Lane** | Complex edge scenarios with adapters and lanes | `4_edges/40_edges/8_adapterColumnsWithLane.html` | ✅ |
-| **Grouped Edges** | Edges within grouped node structures | `4_edges/40_edges/9_grouped.html` | ✅ |
-| **Edge Curves** | Basic curve rendering techniques | `4_edges/20_curves/curve.html` | ✅ |
-| **Edge Markers** | Endpoint markers and styling | `4_edges/30_endpoints/markers.js` | ✅ |
-| **Edge Crossing** | Edges that cross over each other | ❌ | 🔄 |
-| **Edge States** | Different edge states (active, inactive, error) | ❌ | 🔄 |
-| **Edge Types** | Different edge types (SSIS, API, etc.) | ❌ | 🔄 |
-| **Edge Labels** | Edge labels and annotations | ❌ | 🔄 |
+| Test Case                     | Description                                          | Covered By                                       | Status |
+| ----------------------------- | ---------------------------------------------------- | ------------------------------------------------ | ------ |
+| **Simple Edge**               | Basic edge between two nodes                         | `4_edges/40_edges/1_simple.html`                 | ✅     |
+| **Node-to-Node Edge**         | Edge connecting different node types                 | `4_edges/40_edges/2_nodes.html`                  | ✅     |
+| **Edge Demo Layouts**         | Various edge layout patterns (grid, shifted, stairs) | `4_edges/40_edges/3_demo.html`                   | ✅     |
+| **Curved Edges**              | Curved edge rendering with different layouts         | `4_edges/40_edges/4_curved.html`                 | ✅     |
+| **Column Layout Edges**       | Edges in column-based layouts                        | `4_edges/40_edges/5_columns.html`                | ✅     |
+| **Adapter Column Edges**      | Edges connecting adapter nodes in columns            | `4_edges/40_edges/6_adapterColumns.html`         | ✅     |
+| **Columns with Lane Edges**   | Edges in mixed column-lane layouts                   | `4_edges/40_edges/7_columnsWithLane.html`        | ✅     |
+| **Adapter Columns with Lane** | Complex edge scenarios with adapters and lanes       | `4_edges/40_edges/8_adapterColumnsWithLane.html` | ✅     |
+| **Grouped Edges**             | Edges within grouped node structures                 | `4_edges/40_edges/9_grouped.html`                | ✅     |
+| **Edge Curves**               | Basic curve rendering techniques                     | `4_edges/20_curves/curve.html`                   | ✅     |
+| **Edge Markers**              | Endpoint markers and styling                         | `4_edges/30_endpoints/markers.js`                | ✅     |
+| **Edge Crossing**             | Edges that cross over each other                     | ❌                                               | 🔄     |
+| **Edge States**               | Different edge states (active, inactive, error)      | ❌                                               | 🔄     |
+| **Edge Types**                | Different edge types (SSIS, API, etc.)               | ❌                                               | 🔄     |
+| **Edge Labels**               | Edge labels and annotations                          | ❌                                               | 🔄     |
 
 ### 5.2 Node Test Cases
 
-| Test Case | Description | Covered By | Status |
-|-----------|-------------|------------|---------|
-| **Rectangle Node Basic** | Basic rectangular node rendering | `5_nodes/01_rectNode/node.html` | ✅ |
-| **Rectangle Node Layout** | Rectangle node with different layouts | `5_nodes/01_rectNode/rectangleNode.html` | ✅ |
-| **Single Adapter Node** | Basic adapter node rendering | `06_adapterNodes/01_single/01_single.html` | ✅ |
-| **Adapter Full Layouts** | All adapter layout variations | `06_adapterNodes/02_layouts_full/02_layouts_full.html` | ✅ |
-| **Adapter Long Text** | Adapter nodes with long text content | `5_nodes/10_adapter/02_layouts_full_long_text.html` | ✅ |
-| **Adapter Role Layouts** | Adapter nodes with role-based layouts | `5_nodes/10_adapter/03_layouts_role.html` | ✅ |
-| **Adapter in Columns** | Adapter nodes in column layouts | `5_nodes/10_adapter/04_columns.html` | ✅ |
-| **Adapter with Curved Edges** | Adapter nodes with curved connections | `5_nodes/10_adapter/05_curved.html` | ✅ |
-| **Single Foundation Node** | Basic foundation node rendering | `5_nodes/11_foundation/01_single.html` | ✅ |
-| **Multiple Foundation Nodes** | Multiple foundation nodes together | `5_nodes/11_foundation/02_three.html` | ✅ |
-| **Foundation in Columns** | Foundation nodes in column layouts | `5_nodes/11_foundation/03_columns.html` | ✅ |
-| **Foundation Full Layout** | Foundation nodes with full layout options | `5_nodes/11_foundation/04_full.html` | ✅ |
-| **CSS Theming** | Node styling and theming | `5_nodes/12_css/01_default_theme.html` | ✅ |
-| **Node Interaction** | Click, hover, drag interactions | ❌ | 🔄 |
-| **Node States** | Different node states (ready, error, processing) | ❌ | 🔄 |
-| **Node Sizing** | Dynamic node sizing based on content | ❌ | 🔄 |
-| **Node Tooltips** | Node tooltips and information display | ❌ | 🔄 |
+| Test Case                     | Description                                      | Covered By                                             | Status |
+| ----------------------------- | ------------------------------------------------ | ------------------------------------------------------ | ------ |
+| **Rectangle Node Basic**      | Basic rectangular node rendering                 | `5_nodes/01_rectNode/node.html`                        | ✅     |
+| **Rectangle Node Layout**     | Rectangle node with different layouts            | `5_nodes/01_rectNode/rectangleNode.html`               | ✅     |
+| **Single Adapter Node**       | Basic adapter node rendering                     | `06_adapterNodes/01_single/01_single.html`             | ✅     |
+| **Adapter Full Layouts**      | All adapter layout variations                    | `06_adapterNodes/02_layouts_full/02_layouts_full.html` | ✅     |
+| **Adapter Long Text**         | Adapter nodes with long text content             | `5_nodes/10_adapter/02_layouts_full_long_text.html`    | ✅     |
+| **Adapter Role Layouts**      | Adapter nodes with role-based layouts            | `5_nodes/10_adapter/03_layouts_role.html`              | ✅     |
+| **Adapter in Columns**        | Adapter nodes in column layouts                  | `5_nodes/10_adapter/04_columns.html`                   | ✅     |
+| **Adapter with Curved Edges** | Adapter nodes with curved connections            | `5_nodes/10_adapter/05_curved.html`                    | ✅     |
+| **Single Foundation Node**    | Basic foundation node rendering                  | `5_nodes/11_foundation/01_single.html`                 | ✅     |
+| **Multiple Foundation Nodes** | Multiple foundation nodes together               | `5_nodes/11_foundation/02_three.html`                  | ✅     |
+| **Foundation in Columns**     | Foundation nodes in column layouts               | `5_nodes/11_foundation/03_columns.html`                | ✅     |
+| **Foundation Full Layout**    | Foundation nodes with full layout options        | `5_nodes/11_foundation/04_full.html`                   | ✅     |
+| **CSS Theming**               | Node styling and theming                         | `5_nodes/12_css/01_default_theme.html`                 | ✅     |
+| **Node Interaction**          | Click, hover, drag interactions                  | ❌                                                     | 🔄     |
+| **Node States**               | Different node states (ready, error, processing) | ❌                                                     | 🔄     |
+| **Node Sizing**               | Dynamic node sizing based on content             | ❌                                                     | 🔄     |
+| **Node Tooltips**             | Node tooltips and information display            | ❌                                                     | 🔄     |
 
 ### 5.3 Group Test Cases
 
-| Test Case | Description | Covered By | Status |
-|-----------|-------------|------------|---------|
-| **Simple Group** | Basic group with multiple nodes | `6_groups/60_grouping/01_simple_group.html` | ✅ |
-| **Nested Groups** | Groups within groups | `6_groups/60_grouping/02_nested_group.html` | ✅ |
-| **Simple Lane** | Basic lane layout | `6_groups/61_lane/01_simple_lane.html` | ✅ |
-| **Three Adapters in Lane** | Multiple adapters in lane layout | `6_groups/61_lane/02_threeAdapters.html` | ✅ |
-| **Nested Lanes** | Lanes within lanes | `6_groups/61_lane/03_nested.html` | ✅ |
-| **Complex Lane Layout** | Complex lane scenarios | `6_groups/61_lane/04_complex.html` | ✅ |
-| **Simple Columns** | Basic column layout | `6_groups/62_columns/01_simple_columns.html` | ✅ |
-| **Adapters in Columns** | Adapter nodes in column layout | `6_groups/62_columns/02_adapters.html` | ✅ |
-| **Nested Columns** | Columns within columns | `6_groups/62_columns/03_nested.html` | ✅ |
-| **Columns with Lane** | Mixed column and lane layouts | `6_groups/62_columns/04_lane.html` | ✅ |
-| **Multiple Lanes** | Multiple lane layouts | `6_groups/62_columns/04_lanes.html` | ✅ |
-| **Advanced Lanes** | Advanced lane and group layouts | `6_groups/63_lanes/lanes.html` | ✅ |
-| **Group Collapse/Expand** | Group interaction behaviors | ❌ | 🔄 |
-| **Group Drag** | Dragging entire groups | ❌ | 🔄 |
-| **Group Resize** | Dynamic group sizing | ❌ | 🔄 |
-| **Group Labels** | Group title and label rendering | ❌ | 🔄 |
+| Test Case                  | Description                      | Covered By                                   | Status |
+| -------------------------- | -------------------------------- | -------------------------------------------- | ------ |
+| **Simple Group**           | Basic group with multiple nodes  | `6_groups/60_grouping/01_simple_group.html`  | ✅     |
+| **Nested Groups**          | Groups within groups             | `6_groups/60_grouping/02_nested_group.html`  | ✅     |
+| **Simple Lane**            | Basic lane layout                | `6_groups/61_lane/01_simple_lane.html`       | ✅     |
+| **Three Adapters in Lane** | Multiple adapters in lane layout | `6_groups/61_lane/02_threeAdapters.html`     | ✅     |
+| **Nested Lanes**           | Lanes within lanes               | `6_groups/61_lane/03_nested.html`            | ✅     |
+| **Complex Lane Layout**    | Complex lane scenarios           | `6_groups/61_lane/04_complex.html`           | ✅     |
+| **Simple Columns**         | Basic column layout              | `6_groups/62_columns/01_simple_columns.html` | ✅     |
+| **Adapters in Columns**    | Adapter nodes in column layout   | `6_groups/62_columns/02_adapters.html`       | ✅     |
+| **Nested Columns**         | Columns within columns           | `6_groups/62_columns/03_nested.html`         | ✅     |
+| **Columns with Lane**      | Mixed column and lane layouts    | `6_groups/62_columns/04_lane.html`           | ✅     |
+| **Multiple Lanes**         | Multiple lane layouts            | `6_groups/62_columns/04_lanes.html`          | ✅     |
+| **Advanced Lanes**         | Advanced lane and group layouts  | `6_groups/63_lanes/lanes.html`               | ✅     |
+| **Group Collapse/Expand**  | Group interaction behaviors      | ❌                                           | 🔄     |
+| **Group Drag**             | Dragging entire groups           | ❌                                           | 🔄     |
+| **Group Resize**           | Dynamic group sizing             | ❌                                           | 🔄     |
+| **Group Labels**           | Group title and label rendering  | ❌                                           | 🔄     |
 
 **Legend:**
+
 - ✅ **Covered** - Test page exists and can be automated
 - 🔄 **Missing** - Test case identified but no page exists yet
 - ❌ **Not Covered** - Test case not yet identified
@@ -160,11 +163,11 @@ test.describe('Edge Rendering Tests', () => {
       // Load specific test data
       await page.selectOption('#fileSelect', { label: 'edge-simple.json' });
       await page.waitForSelector('g.node-container');
-      
+
       // Verify edge rendering
       const edges = page.locator('path.edge');
       await expect(edges).toHaveCount(1);
-      
+
       // Verify edge connects correct nodes
       const sourceNode = page.locator('g.node-container[data-id="source"]');
       const targetNode = page.locator('g.node-container[data-id="target"]');
@@ -211,7 +214,7 @@ Implement visual regression tests for critical scenarios:
 test('edge rendering should match baseline', async ({ page }) => {
   await page.goto('/4_edges/40_edges/1_simple.html');
   await page.waitForSelector('svg');
-  
+
   // Take screenshot and compare with baseline
   await expect(page.locator('svg')).toHaveScreenshot('simple-edge.png');
 });
@@ -276,18 +279,21 @@ test('edge rendering should match baseline', async ({ page }) => {
 ## 11. Test Implementation Priority
 
 ### Phase 1: Core Functionality (High Priority)
+
 1. **Edge Rendering Tests** - All existing edge scenarios
-2. **Node Rendering Tests** - All existing node scenarios  
+2. **Node Rendering Tests** - All existing node scenarios
 3. **Group Rendering Tests** - All existing group scenarios
 4. **Basic Interactions** - Click, hover, basic drag
 
 ### Phase 2: Advanced Features (Medium Priority)
+
 1. **Complex Layouts** - Mixed scenarios combining multiple components
 2. **State Management** - Node/edge states, loading states
 3. **Performance Tests** - Large datasets, rendering performance
 4. **Accessibility Tests** - Keyboard navigation, screen reader support
 
 ### Phase 3: Edge Cases (Lower Priority)
+
 1. **Error Handling** - Invalid data, network errors
 2. **Browser Compatibility** - Cross-browser specific issues
 3. **Visual Regression** - Automated visual testing
@@ -309,10 +315,10 @@ test.describe('Dashboard Component Tests', () => {
     test('simple edge between two nodes', async ({ page }) => {
       await page.selectOption('#fileSelect', { label: 'edge-simple.json' });
       await page.waitForSelector('g.node-container');
-      
+
       const edges = page.locator('path.edge');
       const nodes = page.locator('g.node-container');
-      
+
       await expect(edges).toHaveCount(1);
       await expect(nodes).toHaveCount(2);
     });
@@ -320,7 +326,7 @@ test.describe('Dashboard Component Tests', () => {
     test('curved edges render correctly', async ({ page }) => {
       await page.selectOption('#fileSelect', { label: 'edge-curved.json' });
       await page.waitForSelector('path.edge');
-      
+
       const curvedEdges = page.locator('path.edge[d*="C"]'); // Curved paths
       await expect(curvedEdges).toHaveCount.greaterThan(0);
     });
@@ -330,10 +336,10 @@ test.describe('Dashboard Component Tests', () => {
     test('adapter nodes render with correct layout', async ({ page }) => {
       await page.selectOption('#fileSelect', { label: 'node-adapter.json' });
       await page.waitForSelector('g.node-container');
-      
+
       const adapterNodes = page.locator('g.node-container[data-type="adapter"]');
       await expect(adapterNodes).toHaveCount.greaterThan(0);
-      
+
       // Verify layout elements
       const layoutElements = adapterNodes.locator('.layout-element');
       await expect(layoutElements).toBeVisible();
@@ -344,10 +350,10 @@ test.describe('Dashboard Component Tests', () => {
     test('simple group contains child nodes', async ({ page }) => {
       await page.selectOption('#fileSelect', { label: 'group-simple.json' });
       await page.waitForSelector('g.node-container');
-      
+
       const groupNodes = page.locator('g.node-container[data-type="group"]');
       const childNodes = page.locator('g.node-container[data-parent]');
-      
+
       await expect(groupNodes).toHaveCount(1);
       await expect(childNodes).toHaveCount.greaterThan(0);
     });
@@ -390,4 +396,4 @@ test.describe('Dashboard Component Tests', () => {
 
 ---
 
-This extended strategy ensures comprehensive coverage of your dashboard library's functionality while maintaining the user-centric testing philosophy and providing a clear roadmap for implementation. 
+This extended strategy ensures comprehensive coverage of your dashboard library's functionality while maintaining the user-centric testing philosophy and providing a clear roadmap for implementation.

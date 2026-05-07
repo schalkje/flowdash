@@ -1,79 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edge Demo - H-Shifted</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edge Demo</h1>
-        <h2>H-Shifted</h2>
-        <div class="demo-controls">
-            <label>Variation
-                <select id="variationSelect">
-                    <option value="grid">grid</option>
-                    <option value="h-shifted">h-shifted</option>
-                    <option value="v-shifted">v-shifted</option>
-                    <option value="v-shifted2">v-shifted2</option>
-                    <option value="stair-up">stair-up</option>
-                    <option value="stair-down">stair-down</option>
-                </select>
-            </label>
-            <button id="cycleBtn">Cycle</button>
-        </div>
+      <h1>Edge Demo</h1>
+      <h2>H-Shifted</h2>
+      <div class="demo-controls">
+        <label
+          >Variation
+          <select id="variationSelect">
+            <option value="grid">grid</option>
+            <option value="h-shifted">h-shifted</option>
+            <option value="v-shifted">v-shifted</option>
+            <option value="v-shifted2">v-shifted2</option>
+            <option value="stair-up">stair-up</option>
+            <option value="stair-down">stair-down</option>
+          </select>
+        </label>
+        <button id="cycleBtn">Cycle</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <script type="module">
-        import { makeData } from './js/edge-demo.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { makeData } from './js/edge-demo.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
+      let flowdash;
 
-        function build(dataset) {
-            const ds = dataset || makeData({ mode: currentMode() });
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      function build(dataset) {
+        const ds = dataset || makeData({ mode: currentMode() });
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => makeData({ mode: currentMode() }),
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => makeData({ mode: currentMode() }),
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        const variations = ['grid','h-shifted','v-shifted','v-shifted2','stair-up','stair-down'];
-        const sel = document.getElementById('variationSelect');
-        sel.value = 'h-shifted';
-        sel.addEventListener('change', () => build(makeData({ mode: sel.value })));
-        document.getElementById('cycleBtn').addEventListener('click', () => {
-            const idx = variations.indexOf(sel.value);
-            const next = variations[(idx + 1) % variations.length];
-            sel.value = next;
-            build(makeData({ mode: next }));
-        });
+      const variations = ['grid', 'h-shifted', 'v-shifted', 'v-shifted2', 'stair-up', 'stair-down'];
+      const sel = document.getElementById('variationSelect');
+      sel.value = 'h-shifted';
+      sel.addEventListener('change', () => build(makeData({ mode: sel.value })));
+      document.getElementById('cycleBtn').addEventListener('click', () => {
+        const idx = variations.indexOf(sel.value);
+        const next = variations[(idx + 1) % variations.length];
+        sel.value = next;
+        build(makeData({ mode: next }));
+      });
 
-        function currentMode() { return sel?.value || 'h-shifted'; }
+      function currentMode() {
+        return sel?.value || 'h-shifted';
+      }
 
-        build(makeData({ mode: currentMode() }));
+      build(makeData({ mode: currentMode() }));
     </script>
-</body>
+  </body>
 </html>
-
-

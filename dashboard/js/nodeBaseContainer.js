@@ -1,9 +1,9 @@
-import BaseNode, { NodeStatus } from "./nodeBase.js";
-import { getComputedDimensions } from "./utils.js";
-import { StatusManager } from "./statusManager.js";
-import { GeometryManager } from "./geometryManager.js";
-import { ConfigManager } from "./configManager.js";
-import { ZoneManager } from "./zones/index.js";
+import BaseNode, { NodeStatus } from './nodeBase.js';
+import { getComputedDimensions } from './utils.js';
+import { StatusManager } from './statusManager.js';
+import { GeometryManager } from './geometryManager.js';
+import { ConfigManager } from './configManager.js';
+import { ZoneManager } from './zones/index.js';
 
 export default class BaseContainerNode extends BaseNode {
   constructor(nodeData, parentElement, createNode, settings, parentNode = null) {
@@ -21,7 +21,7 @@ export default class BaseContainerNode extends BaseNode {
     nodeData.layout.minimumSize.useRootRatio ??= false;
 
     super(nodeData, parentElement, settings, parentNode);
-    this.data.type ??= "container";
+    this.data.type ??= 'container';
 
     this.isContainer = true;
 
@@ -32,11 +32,11 @@ export default class BaseContainerNode extends BaseNode {
     // Initialize layout-related properties from settings with sensible defaults
     this.containerMargin = {
       ...ConfigManager.getDefaultContainerMargin(),
-      ...(this.settings?.containerMargin || {})
+      ...(this.settings?.containerMargin || {}),
     };
     this.nodeSpacing = {
       ...ConfigManager.getDefaultNodeSpacing(),
-      ...(this.settings?.nodeSpacing || {})
+      ...(this.settings?.nodeSpacing || {}),
     };
     this.childNodes = [];
     this.zoneManager = null;
@@ -47,10 +47,16 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   get nestedCorrection_y() {
-    // Prefer zone-system derived offset when available (offset from container center to inner content origin)
+    // Prefer zone-system derived offset when available (offset from container center to inner content origin).
+    // InnerContainerZone caches the numeric transform offset as `transformOffset`;
+    // we read that directly. Fall back to regex-parsing the `translate(…)`
+    // string on legacy zones that haven't populated the cache yet.
     try {
-      const innerZone = this.zoneManager?.innerContainerZone;
-      const transform = innerZone?.coordinateSystem?.transform;
+      const cs = this.zoneManager?.innerContainerZone?.coordinateSystem;
+      if (cs?.transformOffset && typeof cs.transformOffset.y === 'number') {
+        return cs.transformOffset.y;
+      }
+      const transform = cs?.transform;
       if (transform && typeof transform === 'string') {
         const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
         if (match) return parseFloat(match[2]);
@@ -62,10 +68,14 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   get nestedCorrection_x() {
-    // Prefer zone-system derived offset when available (offset from container center to inner content origin)
+    // Prefer zone-system derived offset when available (offset from container center to inner content origin).
+    // See nestedCorrection_y for the cache rationale.
     try {
-      const innerZone = this.zoneManager?.innerContainerZone;
-      const transform = innerZone?.coordinateSystem?.transform;
+      const cs = this.zoneManager?.innerContainerZone?.coordinateSystem;
+      if (cs?.transformOffset && typeof cs.transformOffset.x === 'number') {
+        return cs.transformOffset.x;
+      }
+      const transform = cs?.transform;
       if (transform && typeof transform === 'string') {
         const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
         if (match) return parseFloat(match[1]);
@@ -82,7 +92,7 @@ export default class BaseContainerNode extends BaseNode {
 
   set collapsed(value) {
     if (value === this._collapsed) return;
-    
+
     super.collapsed = value;
 
     if (this.collapsed) {
@@ -98,7 +108,7 @@ export default class BaseContainerNode extends BaseNode {
   propagateVisibility(visible) {
     this.childNodes.forEach((childNode) => {
       childNode.visible = visible;
-      
+
       // Only propagate to nested containers if they are not collapsed
       // Collapsed containers should become visible themselves, but their children should remain hidden
       if (childNode instanceof BaseContainerNode && !childNode.collapsed) {
@@ -114,7 +124,6 @@ export default class BaseContainerNode extends BaseNode {
   set visible(value) {
     if (value === this._visible) return;
     super.visible = value;
-
   }
 
   get status() {
@@ -144,17 +153,19 @@ export default class BaseContainerNode extends BaseNode {
     if (this.suspenseDisplayChange) {
       return;
     }
-    
+
     if (this.onDisplayChange) {
       this.onDisplayChange();
-    } else if (propagate && this.parentNode && typeof this.parentNode.handleDisplayChange === 'function') {
+    } else if (
+      propagate &&
+      this.parentNode &&
+      typeof this.parentNode.handleDisplayChange === 'function'
+    ) {
       this.parentNode.handleDisplayChange();
     }
   }
 
   resize(size, forced = false) {
-
-
     // make sure the size of the element doesn't go below minimum size
     size.width = Math.max(size.width, this.minimumSize.width);
     size.height = Math.max(size.height, this.minimumSize.height);
@@ -167,14 +178,15 @@ export default class BaseContainerNode extends BaseNode {
     size.width += this.containerMargin.left + this.containerMargin.right;
     size.height += this.containerMargin.top + this.containerMargin.bottom;
 
-
     this.resize(size, forced);
   }
 
   expand() {
     // Safety check: if element is already null, don't proceed with expand
     if (!this.element) {
-      console.warn('Attempting to expand node with null element:', this.id);
+      if (this.settings?.isDebug) {
+        console.warn('Attempting to expand node with null element:', this.id);
+      }
       return;
     }
 
@@ -186,8 +198,10 @@ export default class BaseContainerNode extends BaseNode {
       // Recreate inner container zone DOM and re-attach child nodes to the DOM when expanding
       if (this.zoneManager) {
         // Lazily ensure the inner zone exists only when expanding
-        const innerZone = this.zoneManager.ensureInnerContainerZone ? this.zoneManager.ensureInnerContainerZone() : this.zoneManager.innerContainerZone;
-        
+        const innerZone = this.zoneManager.ensureInnerContainerZone
+          ? this.zoneManager.ensureInnerContainerZone()
+          : this.zoneManager.innerContainerZone;
+
         // Force re-initialization of the inner container zone if its DOM was destroyed
         if (!innerZone.element || !innerZone.initialized) {
           innerZone.init();
@@ -199,14 +213,14 @@ export default class BaseContainerNode extends BaseNode {
           }
           innerZone.update(); // Ensure coordinate system is updated
         }
-        
+
         // Show zones first so the child container exists
         this.zoneManager.updateZoneVisibility();
-        
+
         // CRITICAL: Restore the layout algorithm BEFORE reattaching children
         // This ensures the zone knows how to position children correctly
         if (!innerZone.layoutAlgorithm) {
-          // If no layout algorithm exists (was lost during zone destruction), 
+          // If no layout algorithm exists (was lost during zone destruction),
           // call the specific node type's layout method to restore it
           if (typeof this.layoutLane === 'function') {
             this.layoutLane();
@@ -221,7 +235,7 @@ export default class BaseContainerNode extends BaseNode {
             }
           }
         }
-        
+
         // CRITICAL: Update children BEFORE reattaching to ensure proper sizing
         // This ensures the container knows its proper dimensions before positioning children
         if (typeof this.updateChildren === 'function' && !this._updating) {
@@ -232,18 +246,18 @@ export default class BaseContainerNode extends BaseNode {
             this._updating = false;
           }
         }
-        
+
         // Ensure zones reflect current size and coordinate systems
         this.zoneManager.update();
-        
+
         // Re-attach children and make them visible
         this.attachChildrenToDOM();
-        
+
         // Now that children are attached and layout algorithm is restored, position them
         if (innerZone.layoutAlgorithm) {
           innerZone.updateChildPositions();
         }
-        
+
         // Ensure the inner zone is properly updated after children are attached
         innerZone.update();
         innerZone.updateChildVisibility(true);
@@ -252,17 +266,23 @@ export default class BaseContainerNode extends BaseNode {
         if (!this.collapsed) {
           const headerZone = this.zoneManager?.headerZone;
           const headerHeight = headerZone ? headerZone.getHeaderHeight() : 20;
-          const margins = this.zoneManager?.marginZone ? this.zoneManager.marginZone.getMargins() : { top: 8, right: 8, bottom: 8, left: 8 };
+          const margins = this.zoneManager?.marginZone
+            ? this.zoneManager.marginZone.getMargins()
+            : { top: 8, right: 8, bottom: 8, left: 8 };
           const contentSize = innerZone.calculateChildContentSize();
           const widthFromContent = contentSize.width + margins.left + margins.right;
-          const headerMinWidth = (headerZone && typeof headerZone.getMinimumWidthThrottled === 'function')
-            ? headerZone.getMinimumWidthThrottled()
-            : (headerZone && typeof headerZone.getMinimumWidth === 'function')
-              ? headerZone.getMinimumWidth()
-              : (headerZone ? (headerZone.getSize?.().width || 0) : 0);
+          const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
           const headerBuffer = 2; // small extra to avoid tight fit
-          const newWidth = Math.max(this.data.width, this.minimumSize.width, widthFromContent, headerMinWidth + headerBuffer);
-          const newHeight = Math.max(this.minimumSize.height, headerHeight + margins.top + contentSize.height + margins.bottom);
+          const newWidth = Math.max(
+            this.data.width,
+            this.minimumSize.width,
+            widthFromContent,
+            headerMinWidth + headerBuffer,
+          );
+          const newHeight = Math.max(
+            this.minimumSize.height,
+            headerHeight + margins.top + contentSize.height + margins.bottom,
+          );
           this.resize({ width: newWidth, height: newHeight }, true);
           // Ensure zones reflect final size
           if (this.zoneManager && !this.zoneManager._resizing) {
@@ -288,7 +308,7 @@ export default class BaseContainerNode extends BaseNode {
         this.ghostContainer.style('display', null);
       }
 
-      // Store current collapsed size before expanding  
+      // Store current collapsed size before expanding
       const collapsedSize = { width: this.data.width, height: this.data.height };
 
       // Recalculate container size based on current child content
@@ -296,44 +316,23 @@ export default class BaseContainerNode extends BaseNode {
       // 1. Containers that were expanded before (recalculates current content)
       // 2. Containers that started collapsed (calculates proper expanded size)
       // Note: We already called updateChildren above, so this is just for final sizing
-      if (this.data.height > collapsedSize.height + 5 || this.data.width > collapsedSize.width + 5) {
+      if (
+        this.data.height > collapsedSize.height + 5 ||
+        this.data.width > collapsedSize.width + 5
+      ) {
         this.data.expandedSize = { width: this.data.width, height: this.data.height };
       }
-      
+
       // Update parent container if this container's size changed
-      // Disable pre-render mode for this layout pass since user manually changed layout
       if (this.parentNode && !this.parentNode._updating) {
-        const parentZone = this.parentNode.zoneManager?.innerContainerZone;
-        const wasPrerenderMode = parentZone?._prerenderMode;
-        
-        // Invalidate parent's pre-render data since child size changed
-        if (this.parentNode.data.prerender) {
-          delete this.parentNode.data.prerender;
-        }
-        
-        // Temporarily disable pre-render mode so parent can recalculate layout
-        if (parentZone) {
-          parentZone._prerenderMode = false;
-        }
-        
-        // Also disable the ZoneManager's prerender mode
-        if (this.parentNode.zoneManager) {
-          this.parentNode.zoneManager._prerenderMode = false;
-        }
-        
         this.parentNode._updating = true;
         try {
           this.parentNode.updateChildren();
         } finally {
           this.parentNode._updating = false;
-          // Restore pre-render mode flag (but don't re-enable it, manual edits invalidate pre-render)
-          if (parentZone && wasPrerenderMode) {
-            // Keep it disabled - manual interaction invalidated the pre-render data
-            // parentZone._prerenderMode = wasPrerenderMode;
-          }
         }
       }
-      
+
       this.initEdges();
     }
   }
@@ -341,13 +340,18 @@ export default class BaseContainerNode extends BaseNode {
   collapse() {
     // Safety check: if element is already null, don't proceed with collapse
     if (!this.element) {
-      console.warn('Attempting to collapse node with null element:', this.id);
+      if (this.settings?.isDebug) {
+        console.warn('Attempting to collapse node with null element:', this.id);
+      }
       return;
     }
-    
+
     this.suspenseDisplayChange = true;
     // store the expanded size before collapsing
-    if (this.data.height > this.minimumSize.height + 5 || this.data.width > this.minimumSize.width + 5)
+    if (
+      this.data.height > this.minimumSize.height + 5 ||
+      this.data.width > this.minimumSize.width + 5
+    )
       // Js: + 5, because of a strange bug, where the size differs slightly between renders, depending on the zoom level
       this.data.expandedSize = { height: this.data.height, width: this.data.width };
 
@@ -391,21 +395,10 @@ export default class BaseContainerNode extends BaseNode {
     this.update();
 
     // Compute collapsed size based on header's intrinsic minimum (text + controls) and user minimums
-    let headerMinWidth = 0;
-    let headerHeight = this.minimumSize.height;
-    if (this.zoneManager?.headerZone) {
-      // Prefer precise header minimum width calculation when available
-      if (typeof this.zoneManager.headerZone.getMinimumWidthThrottled === 'function') {
-        headerMinWidth = this.zoneManager.headerZone.getMinimumWidthThrottled();
-      } else if (typeof this.zoneManager.headerZone.getMinimumWidth === 'function') {
-        headerMinWidth = this.zoneManager.headerZone.getMinimumWidth();
-      } else {
-        // Fallback to current header size width (may be larger than minimum)
-        headerMinWidth = this.zoneManager.headerZone.getSize().width || 0;
-      }
-      // Use header's measured height if available
-      headerHeight = this.zoneManager.headerZone.getHeaderHeight?.() ?? this.zoneManager.headerZone.getSize().height ?? headerHeight;
-    }
+    const headerZone = this.zoneManager?.headerZone;
+    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
+    const headerHeight =
+      headerZone?.getHeaderHeight?.() ?? headerZone?.getSize?.().height ?? this.minimumSize.height;
 
     // Final collapsed dimensions (clamp to minimums)
     const collapsedWidth = Math.max(headerMinWidth, this.minimumSize.width);
@@ -415,31 +408,33 @@ export default class BaseContainerNode extends BaseNode {
     this.resize({ width: collapsedWidth, height: collapsedHeight }, true);
     // Ensure zones reflect the new collapsed dimensions so header/background match text
     if (this.zoneManager) {
-      try { this.zoneManager.resize(collapsedWidth, collapsedHeight); } catch {}
+      try {
+        this.zoneManager.resize(collapsedWidth, collapsedHeight);
+      } catch {}
     }
 
     // Update parent and disable pre-render mode since user manually changed layout
     if (this.parentNode) {
       const parentZone = this.parentNode.zoneManager?.innerContainerZone;
       const wasPrerenderMode = parentZone?._prerenderMode;
-      
+
       // Invalidate parent's pre-render data since child size changed
       if (this.parentNode.data.prerender) {
         delete this.parentNode.data.prerender;
       }
-      
+
       // Temporarily disable pre-render mode so parent can recalculate layout
       if (parentZone) {
         parentZone._prerenderMode = false;
       }
-      
+
       // Also disable the ZoneManager's prerender mode
       if (this.parentNode.zoneManager) {
         this.parentNode.zoneManager._prerenderMode = false;
       }
-      
+
       this.parentNode.update();
-      
+
       // Keep pre-render disabled - manual interaction invalidated the pre-render data
       // if (parentZone && wasPrerenderMode) {
       //   parentZone._prerenderMode = wasPrerenderMode;
@@ -453,11 +448,14 @@ export default class BaseContainerNode extends BaseNode {
         this.childNodes.forEach((child) => {
           const childEl = child?.element?.node?.();
           if (childEl && childEl.parentNode !== elNode) {
-            try { elNode.appendChild(childEl); } catch {}
+            try {
+              elNode.appendChild(childEl);
+            } catch {}
           }
         });
       }
     } catch {}
+
     this.suspenseDisplayChange = false;
   }
 
@@ -475,7 +473,7 @@ export default class BaseContainerNode extends BaseNode {
   }
 
   getNodesByDatasetId(datasetId) {
-    var nodes = [];
+    const nodes = [];
     if (this.data.datasetId == datasetId) {
       nodes.push(this);
     }
@@ -493,11 +491,11 @@ export default class BaseContainerNode extends BaseNode {
       return;
     }
     // Legacy fallback (non-zone system)
-    var containerDimensions = getComputedDimensions(this.element);
-    var elementDimensions = getComputedDimensions(this.element);
+    const containerDimensions = getComputedDimensions(this.element);
+    const elementDimensions = getComputedDimensions(this.element);
     const containerX = 0;
-    var containerY = elementDimensions.y - containerDimensions.y + this.containerMargin.top;
-    this.element.attr("transform", `translate(${containerX}, ${containerY})`);
+    const containerY = elementDimensions.y - containerDimensions.y + this.containerMargin.top;
+    this.element.attr('transform', `translate(${containerX}, ${containerY})`);
   }
 
   initEdges(propagate = false) {
@@ -505,24 +503,16 @@ export default class BaseContainerNode extends BaseNode {
 
     if (this.childEdges.length > 0) {
       // create container for ghost lines first (so they appear behind edges)
-      if (this.settings.showGhostlines)
-      {
-            if (this.ghostContainer)
-              this.ghostContainer.selectAll("*").remove();
-            else
-              this.ghostContainer = this.element
-                .append("g")
-                .attr("class", (d) => `ghostlines`);
+      if (this.settings.showGhostlines) {
+        if (this.ghostContainer) this.ghostContainer.selectAll('*').remove();
+        else this.ghostContainer = this.element.append('g').attr('class', (d) => `ghostlines`);
       }
 
       // create container for edges (after ghost lines, so edges appear on top)
-      if (this.edgesContainer == null) 
-      {
-        this.edgesContainer = this.element.append("g").attr("class", (d) => `edges`);
-      }
-      else
-      {
-        this.edgesContainer.selectAll("*").remove();
+      if (this.edgesContainer == null) {
+        this.edgesContainer = this.element.append('g').attr('class', (d) => `edges`);
+      } else {
+        this.edgesContainer.selectAll('*').remove();
       }
 
       this.childEdges.forEach((edge) => edge.init());
@@ -574,38 +564,12 @@ export default class BaseContainerNode extends BaseNode {
 
     // Zone manager is already initialized in BaseNode.init()
 
-    // Ensure containers are selectable when clicking their background:
-    // - Remove default bubble-phase handlers to avoid double toggles
-    // - Add capture-phase handlers that select this container when the click
-    //   is not originating from a child node element
-    if (this.element) {
-      // Remove default bubble listeners attached in BaseNode.init
-      this.element.on('click', null);
-      this.element.on('dblclick', null);
-
-      const isFromChildNode = (evt) => {
-        const rootEl = this.element.node();
-        let el = evt?.target;
-        while (el && el !== rootEl) {
-          const n = el.__node;
-          if (n && n !== this) return true; // clicked inside a different child node
-          el = el.parentNode;
-        }
-        return false;
-      };
-
-      // Capture-phase click: select this container on background clicks
-      this.element.on('click.container-capture', (event) => {
-        if (isFromChildNode(event)) return; // let child node handle it
-        this.handleClicked(event, this);
-      }, true);
-
-      // Capture-phase dblclick: forward to this container (zoom to container)
-      this.element.on('dblclick.container-capture', (event) => {
-        if (isFromChildNode(event)) return; // let child node handle it
-        this.handleDblClicked(event, this);
-      }, true);
-    }
+    // Container event handling strategy:
+    // - Keep the bubble-phase handlers from BaseNode.init (they already call stopPropagation)
+    // - Child nodes naturally prevent events from bubbling to parent due to stopPropagation
+    // - No special logic needed - DOM event flow handles this correctly
+    // - When clicking on container background (not on a child), the container's handler runs
+    // - When clicking on a child node, the child's handler runs and stops propagation
 
     // Calculate minimum size using header zone metrics when available
     // In pre-render mode, use the pre-calculated minimum size to avoid recalculation
@@ -613,41 +577,28 @@ export default class BaseContainerNode extends BaseNode {
       // Use pre-rendered minimum size (avoids text measurement and ensures consistency)
       this.minimumSize = {
         width: this.data.prerender.minimumSize.width || 0,
-        height: this.data.prerender.minimumSize.height || 0
+        height: this.data.prerender.minimumSize.height || 0,
       };
     } else {
-      // Normal mode: calculate minimum size from header zone
+      // Normal mode: calculate minimum size from header zone.
       const labelText = this.data.label || '';
-      const fallbackLabelWidth = labelText.length * 8 + 36; // Fallback approximation
-
+      const fallbackLabelWidth = labelText.length * 8 + 36;
+      const headerZone = this.zoneManager?.headerZone;
       let minHeaderWidth = fallbackLabelWidth;
-      let headerHeight = 20; // Default fallback
-      if (this.zoneManager?.headerZone) {
-        const headerZone = this.zoneManager.headerZone;
-        // Prefer precise header minimum width (text + indicator + button + paddings)
-        if (typeof headerZone.getMinimumWidthThrottled === 'function') {
-          try {
-            minHeaderWidth = headerZone.getMinimumWidthThrottled();
-          } catch {}
-        } else if (typeof headerZone.getMinimumWidth === 'function') {
-          try {
-            minHeaderWidth = headerZone.getMinimumWidth();
-          } catch {}
-        } else {
-          // Fallback to current header size width (may be larger than minimum)
-          const headerSize = headerZone.getSize?.();
-          if (headerSize?.width) minHeaderWidth = headerSize.width;
-        }
-        // Use header's measured height if available
-        headerHeight = headerZone.getHeaderHeight?.() ?? headerHeight;
-      }
+      try {
+        const measured = headerZone?.getMinWidth?.();
+        if (measured > 0) minHeaderWidth = measured;
+      } catch {}
+      const headerHeight = headerZone?.getHeaderHeight?.() ?? 20;
 
       const defaultSize = { width: minHeaderWidth, height: headerHeight };
       this.minimumSize = GeometryManager.calculateMinimumSize([], defaultSize);
     }
-    
-    if (this.data.layout.minimumSize.width > this.minimumSize.width) this.minimumSize.width = this.data.layout.minimumSize.width;
-    if (this.data.layout.minimumSize.height > this.minimumSize.height) this.minimumSize.height = this.data.layout.minimumSize.height;
+
+    if (this.data.layout.minimumSize.width > this.minimumSize.width)
+      this.minimumSize.width = this.data.layout.minimumSize.width;
+    if (this.data.layout.minimumSize.height > this.minimumSize.height)
+      this.minimumSize.height = this.data.layout.minimumSize.height;
     if (this.data.layout.minimumSize.useRootRatio) this.applyMinimumSize();
 
     if (this.data.width < this.minimumSize.width || this.data.height < this.minimumSize.height) {
@@ -656,7 +607,7 @@ export default class BaseContainerNode extends BaseNode {
           width: Math.max(this.minimumSize.width, this.data.width),
           height: Math.max(this.minimumSize.height, this.data.height),
         },
-        true
+        true,
       );
     }
 
@@ -666,16 +617,38 @@ export default class BaseContainerNode extends BaseNode {
     if (this.data.children && this.data.children.length > 0) {
       this.initChildren();
     }
-    
-    // Apply collapsed state after children are initialized
+
+    // Apply collapsed state after children are initialized.
+    //
+    // For containers that start in *collapsed* state we still need the
+    // collapse() transition (it detaches children from the DOM and recomputes
+    // header size).
+    //
+    // For already-expanded containers we used to call expand() unconditionally
+    // here, but expand() is designed to transition FROM collapsed: it
+    // re-initialises the inner-container zone, re-attaches every child's DOM
+    // element, re-runs the layout algorithm, and does a multi-pass size
+    // recompute (calculateChildContentSize → getMinimumWidth → resize →
+    // zoneManager.resize → zoneManager.update). Almost none of that is
+    // needed during init — super.init() + initChildren() already set up the
+    // zones, attached the children, and ran updateChildPositions via
+    // forceUpdateChildPositions. Calling expand() afterwards repeats every
+    // step.
+    //
+    // Profiling on themes/02_theme-overview.html (57 expanded containers)
+    // showed phases.nodeInitialization at ~7.4 s; the per-node init marks
+    // only summed to ~50 ms, so the remaining ~7.3 s lived in expand()
+    // running for every container. The lean post-init pass below does the
+    // one thing expand() needed to do that initChildren did NOT: a single
+    // updateChildren() call to size the container against its children.
     if (this.collapsed) {
       this.collapse();
     } else {
-      this.expand();
+      this._postInitLayout();
     }
 
     // you cannot move the g node,, move the child elements in stead
-    this.element.attr("transform", `translate(${this.x}, ${this.y})`);
+    this.element.attr('transform', `translate(${this.x}, ${this.y})`);
 
     // Post-initialization: defer one re-measure to stabilize header width after fonts/styles
     // Skip this in pre-render mode since we already have the correct minimum size
@@ -683,14 +656,12 @@ export default class BaseContainerNode extends BaseNode {
       this._didPostInitMeasure = true;
       setTimeout(() => {
         try {
-          const headerZone = this.zoneManager?.headerZone;
-          if (!headerZone) return;
-          const headerMinWidth = (typeof headerZone.getMinimumWidthThrottled === 'function')
-            ? headerZone.getMinimumWidthThrottled()
-            : (typeof headerZone.getMinimumWidth === 'function')
-              ? headerZone.getMinimumWidth()
-              : (headerZone.getSize?.().width || 0);
-          const width = Math.max(this.data.width || 0, this.minimumSize?.width || 0, headerMinWidth || 0);
+          const headerMinWidth = this.zoneManager?.headerZone?.getMinWidth?.() ?? 0;
+          const width = Math.max(
+            this.data.width || 0,
+            this.minimumSize?.width || 0,
+            headerMinWidth,
+          );
           if (width > (this.data.width || 0)) {
             const size = { width, height: this.data.height };
             this.resize(size, true);
@@ -702,62 +673,20 @@ export default class BaseContainerNode extends BaseNode {
     }
   }
 
-  initChildren() {
-    if (!this.data.children || this.data.children.length === 0) {
-      return;
-    }
-
-    
-
-    if (this.data.children.length == 0) {
-      // no rendering of the children, but this renders a placeholder rect
-      const containerWidth = this.data.width - this.containerMargin.left - this.containerMargin.right;
-      const containerHeight = this.data.height - this.containerMargin.top - this.containerMargin.bottom;
-      this.element
-        .append("rect")
-        .attr("class", `${this.data.type} placeholder`)
-        .attr("width", containerWidth)
-        .attr("height", containerHeight)
-        .attr("x", -containerWidth / 2)
-        .attr("y", -containerHeight / 2);
-    }
-    else
-    {
-      // Ensure inner container zone exists before creating children so we never fall back to the root element
-      let innerZone = this.zoneManager?.innerContainerZone;
-      if (!innerZone && this.zoneManager?.ensureInnerContainerZone) {
-        innerZone = this.zoneManager.ensureInnerContainerZone();
-      }
-      // Get child container from zone system (prefer inner container)
-      const childContainer = innerZone?.getChildContainer() || this.element;
-      
-      for (const node of this.data.children) {
-        // Create the childComponent instance based on node type
-        var childComponent = this.getNode(node.id);
-        if (childComponent == null) {
-          
-          childComponent = this.createNode(node, childContainer, this.settings, this);
-          this.childNodes.push(childComponent);
-
-          // Add child to zone system
-          if (innerZone) {
-            innerZone.addChild(childComponent);
-          } else {
-            console.warn("Zone system not available for child:", node.id);
-          }
-        }
-
-        childComponent.init(childContainer);
-      }
-      
-      // Trigger child positioning after all children are initialized
-      if (innerZone) {
-        innerZone.forceUpdateChildPositions();
-      }
-    }
-
-    // Only call updateChildren if we're not already in an update cycle
-    if (!this._updating) {
+  /**
+   * Lean alternative to expand() for the init() code path. Handles only the
+   * post-init layout work that was actually missing after super.init() +
+   * initChildren(): size the container against its children once, then run
+   * the standard child-positioning pass. Avoids the expensive zone re-init
+   * + DOM reattach + multi-pass size recompute that a real collapse→expand
+   * transition does.
+   *
+   * Safe to call even when this.zoneManager is null (degrades to a no-op).
+   * @private
+   */
+  _postInitLayout() {
+    if (!this.zoneManager) return;
+    if (typeof this.updateChildren === 'function' && !this._updating) {
       this._updating = true;
       try {
         this.updateChildren();
@@ -765,6 +694,102 @@ export default class BaseContainerNode extends BaseNode {
         this._updating = false;
       }
     }
+    const innerZone = this.zoneManager.innerContainerZone;
+    if (innerZone) {
+      innerZone.update();
+      if (typeof innerZone.updateChildVisibility === 'function') {
+        innerZone.updateChildVisibility(true);
+      }
+    }
+  }
+
+  initChildren() {
+    if (!this.data.children || this.data.children.length === 0) {
+      return;
+    }
+
+    if (this.data.children.length == 0) {
+      // no rendering of the children, but this renders a placeholder rect
+      const containerWidth =
+        this.data.width - this.containerMargin.left - this.containerMargin.right;
+      const containerHeight =
+        this.data.height - this.containerMargin.top - this.containerMargin.bottom;
+      this.element
+        .append('rect')
+        .attr('class', `${this.data.type} placeholder`)
+        .attr('width', containerWidth)
+        .attr('height', containerHeight)
+        .attr('x', -containerWidth / 2)
+        .attr('y', -containerHeight / 2);
+    } else {
+      // Ensure inner container zone exists before creating children so we never fall back to the root element
+      let innerZone = this.zoneManager?.innerContainerZone;
+      if (!innerZone && this.zoneManager?.ensureInnerContainerZone) {
+        innerZone = this.zoneManager.ensureInnerContainerZone();
+      }
+      // Get child container from zone system (prefer inner container)
+      const childContainer = innerZone?.getChildContainer() || this.element;
+
+      if (this.settings?.isDebug) {
+        console.log(
+          `🔍 initChildren for node ${this.id}: data.children count = ${this.data.children?.length}, child IDs = ${this.data.children?.map((c) => c.id).join(',')}`,
+        );
+      }
+
+      for (const node of this.data.children) {
+        // Create the childComponent instance based on node type
+        let childComponent = this.getNode(node.id);
+        if (childComponent == null) {
+          childComponent = this.createNode(node, childContainer, this.settings, this);
+          this.childNodes.push(childComponent);
+
+          // Add child to zone system
+          if (innerZone) {
+            innerZone.addChild(childComponent);
+          } else {
+            console.warn('Zone system not available for child:', node.id);
+          }
+
+          // Only initialize newly created children
+          childComponent.init(childContainer);
+        } else {
+          // Child already exists - ensure it's attached to the parent's DOM
+          if (childComponent.element && childContainer) {
+            try {
+              const currentParent = childComponent.element.node()?.parentNode;
+              const desiredParent = childContainer.node?.();
+              if (desiredParent && currentParent !== desiredParent) {
+                console.log(
+                  `initChildren: Reattaching existing child ${childComponent.id} to parent ${this.id}`,
+                );
+                desiredParent.appendChild(childComponent.element.node());
+              }
+            } catch (e) {
+              console.warn(`Failed to reattach child ${childComponent.id}:`, e);
+            }
+          }
+
+          // Re-register with zone system
+          if (innerZone && childComponent) {
+            innerZone.addChild(childComponent);
+          }
+        }
+        // Don't call init() on existing children - they're already initialized
+      }
+
+      if (this.settings?.isDebug) {
+        console.log(
+          `🔍 After initChildren for node ${this.id}: childNodes count = ${this.childNodes?.length}, child IDs = ${this.childNodes?.map((c) => c.id).join(',')}`,
+        );
+      }
+    }
+
+    // Note: child positioning (forceUpdateChildPositions) and the
+    // post-children updateChildren() pass used to live here, but both are
+    // redundant during init (the caller does updateChildren() in
+    // _postInitLayout) and during expand (which runs updateChildren itself).
+    // Re-attachment paths call updateChildren above through the existing
+    // child-already-exists branch, which is the only legitimate use case.
   }
 
   update() {
@@ -800,7 +825,10 @@ export default class BaseContainerNode extends BaseNode {
       if (!this.collapsed && !innerZone && this.zoneManager?.ensureInnerContainerZone) {
         innerZone = this.zoneManager.ensureInnerContainerZone();
       }
-      const parentGroup = (innerZone && !this.collapsed) ? (innerZone.getChildContainer?.() || this.element) : this.element;
+      const parentGroup =
+        innerZone && !this.collapsed
+          ? innerZone.getChildContainer?.() || this.element
+          : this.element;
       const parentNode = parentGroup?.node?.() || null;
       if (!parentNode) return;
       this.childNodes.forEach((childNode) => {
@@ -808,7 +836,9 @@ export default class BaseContainerNode extends BaseNode {
         if (!el) return;
         if (el.parentNode !== parentNode) {
           // Move element under the correct parent group
-          try { parentNode.appendChild(el); } catch {}
+          try {
+            parentNode.appendChild(el);
+          } catch {}
         }
       });
     } catch {}
@@ -818,13 +848,13 @@ export default class BaseContainerNode extends BaseNode {
     // If we have pre-render data, skip layout calculations
     if (this.hasPrerenderData && this.allChildrenHavePrerender()) {
       // console.log(`📊 Pre-render: Skipping layout for ${this.id}`);
-      
+
       // Apply pre-render positions to children
       this.applyPrerenderToChildren();
-      
+
       // Update container size based on pre-render data
       this.updateContainerSize();
-      
+
       return; // Skip normal layout algorithm
     }
 
@@ -832,31 +862,32 @@ export default class BaseContainerNode extends BaseNode {
     if (this.zoneManager) {
       // Ensure DOM parent is correct even when status toggles cause collapse/expand
       this.ensureChildrenDomParent();
-      
+
       // If not using pre-render, recalculate container size from actual children
       if (!this.collapsed && this.zoneManager.innerContainerZone) {
         const innerZone = this.zoneManager.innerContainerZone;
         const headerZone = this.zoneManager.headerZone;
         const marginZone = this.zoneManager.marginZone;
-        
+
         const headerHeight = headerZone ? headerZone.getHeaderHeight() : 20;
-        const margins = marginZone ? marginZone.getMargins() : { top: 8, right: 8, bottom: 8, left: 8 };
-        
+        const margins = marginZone
+          ? marginZone.getMargins()
+          : { top: 8, right: 8, bottom: 8, left: 8 };
+
         // CRITICAL: First reposition children, THEN calculate size from their positions
         innerZone.updateChildPositions();
-        
+
         // Now calculate the bounding box of the repositioned children
         const contentSize = innerZone.calculateChildContentSize();
         const widthFromContent = contentSize.width + margins.left + margins.right;
-        const headerMinWidth = (headerZone && typeof headerZone.getMinimumWidthThrottled === 'function')
-          ? headerZone.getMinimumWidthThrottled()
-          : (headerZone && typeof headerZone.getMinimumWidth === 'function')
-            ? headerZone.getMinimumWidth()
-            : (headerZone ? (headerZone.getSize?.().width || 0) : 0);
-        
+        const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
+
         const newWidth = Math.max(this.minimumSize.width, widthFromContent, headerMinWidth);
-        const newHeight = Math.max(this.minimumSize.height, headerHeight + margins.top + contentSize.height + margins.bottom);
-        
+        const newHeight = Math.max(
+          this.minimumSize.height,
+          headerHeight + margins.top + contentSize.height + margins.bottom,
+        );
+
         // Only resize if size actually changed to avoid infinite loops
         const widthDiff = Math.abs(this.data.width - newWidth);
         const heightDiff = Math.abs(this.data.height - newHeight);
@@ -870,23 +901,25 @@ export default class BaseContainerNode extends BaseNode {
               this.zoneManager._resizing = false;
             }
           }
-          
+
           // After resizing parent, reposition children again to adjust to new parent size
           innerZone.updateChildPositions();
         }
+        // Note: Children were already repositioned at the start of this block,
+        // so they have correct positions even if parent size didn't change
       }
-      
+
       // Zone system handles positioning
       return;
     }
 
     // Fallback to legacy positioning
     this.element.attr(
-      "transform",
+      'transform',
       `translate(
             ${this.containerMargin.left - this.containerMargin.right}, 
             ${this.containerMargin.top - this.containerMargin.bottom}
-          )`
+          )`,
     );
   }
 
@@ -894,7 +927,7 @@ export default class BaseContainerNode extends BaseNode {
   cleanContainer(propagate = true) {
     // Only clean if element exists
     if (this.element) {
-      this.element.selectAll("*").remove();
+      this.element.selectAll('*').remove();
     }
     this.edgesContainer = null;
     for (const childNode of this.childNodes) {
@@ -928,110 +961,162 @@ export default class BaseContainerNode extends BaseNode {
   // Re-create child DOM nodes and add them back into the inner container zone
   attachChildrenToDOM() {
     if (!this.childNodes || this.childNodes.length === 0) return;
-    
-    // Ensure inner container exists only when the parent is expanded
-    const innerZone = this.zoneManager?.ensureInnerContainerZone ? this.zoneManager.ensureInnerContainerZone() : this.zoneManager?.innerContainerZone;
-    const childContainer = innerZone?.getChildContainer() || this.element;
 
-    this.childNodes.forEach((childNode) => {
-      try {
-        // console.log(`attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`);
-        
-        // If DOM does not exist, re-init the child into the current child container
-        if (!childNode.element) {
-          // console.log(`attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`);
-          childNode.init(childContainer);
-        } else {
-          // Ensure DOM is attached to the correct container group
-          try {
-            const currentParent = childNode.element.node()?.parentNode || null;
-            const desiredParent = childContainer.node?.() || null;
-            if (desiredParent && currentParent !== desiredParent) {
-              desiredParent.appendChild(childNode.element.node());
+    console.log(
+      `🔍 attachChildrenToDOM START for node ${this.id}: childNodes = [${this.childNodes.map((c) => c.id).join(',')}]`,
+    );
+
+    // Set flag to prevent recursive updateChildren calls during reinitialization
+    this._attachingChildren = true;
+
+    // Track which children were reinitialized so we don't call updateChildren on them
+    // Needs to be accessible in setTimeout, so declare outside try block
+    const reinitializedChildren = new Set();
+
+    try {
+      // Ensure inner container exists only when the parent is expanded
+      const innerZone = this.zoneManager?.ensureInnerContainerZone
+        ? this.zoneManager.ensureInnerContainerZone()
+        : this.zoneManager?.innerContainerZone;
+      const childContainer = innerZone?.getChildContainer() || this.element;
+
+      this.childNodes.forEach((childNode) => {
+        try {
+          console.log(
+            `attachChildrenToDOM: Processing child ${childNode.id}, has element: ${!!childNode.element}, visible: ${childNode.visible}`,
+          );
+
+          // If DOM does not exist, re-init the child into the current child container
+          if (!childNode.element) {
+            console.log(
+              `attachChildrenToDOM: Reinitializing child ${childNode.id} in container ${this.id}`,
+            );
+
+            // CRITICAL: Determine collapsed state BEFORE reinitializing if needed
+            // This is necessary because initializeChildrenStatusses skipped this node when it had null element
+            // Only recalculate if: (1) never been initialized, OR (2) still has default collapsed state from constructor
+            // We detect "never auto-collapsed" by checking if collapsed is still the default false value
+            // and the node has never been manually toggled (we assume first reinitialization means it was skipped)
+            if (
+              childNode.isContainer &&
+              this.settings?.toggleCollapseOnStatusChange &&
+              childNode.childNodes?.length > 0
+            ) {
+              // Only recalculate if this is likely the first time (was skipped during initializeChildrenStatusses)
+              // Check if node has the default collapsed value and no prior status-based collapse was applied
+              const likelySkippedDuringInit =
+                childNode.collapsed === false && !childNode._statusCollapseApplied;
+
+              if (likelySkippedDuringInit) {
+                try {
+                  // Calculate what the collapsed state should be based on children
+                  const collectLeafStatuses = (nodes, out) => {
+                    for (const n of nodes) {
+                      if (n.isContainer && Array.isArray(n.childNodes) && n.childNodes.length > 0) {
+                        collectLeafStatuses(n.childNodes, out);
+                      } else {
+                        out.push(n.status);
+                      }
+                    }
+                  };
+                  const childStatuses = [];
+                  collectLeafStatuses(childNode.childNodes, childStatuses);
+                  const shouldCollapse = StatusManager.shouldContainerCollapse(
+                    childStatuses,
+                    this.settings,
+                  );
+                  // Set collapsed state directly without triggering setters
+                  childNode.collapsed = shouldCollapse;
+                  childNode._statusCollapseApplied = true; // Mark that status-based collapse was applied
+                } catch (e) {
+                  console.warn(
+                    'Failed to determine collapse state for reinitialized node:',
+                    childNode.id,
+                    e,
+                  );
+                }
+              }
             }
-          } catch {}
-        }
-        // Ensure the zone knows about this child (always re-register after zone recreation)
-        if (innerZone) {
-          innerZone.addChild(childNode);
-        }
-        // Make the child visible again (containers will manage their own collapsed children)
-        childNode.visible = true;
-        // console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
-        
-        // For nested containers, ensure their zones and layout are refreshed
-        if (childNode.isContainer) {
-          // console.log(`attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`);
-          
-          // Ensure descendants are visible unless they are collapsed containers
-          if (typeof childNode.propagateVisibility === 'function') {
-            childNode.propagateVisibility(true);
-          }
-          
-          // Force re-initialization of nested container zones if their DOM was destroyed
-          if (childNode.zoneManager?.innerContainerZone && (!childNode.zoneManager.innerContainerZone.element || !childNode.zoneManager.innerContainerZone.initialized)) {
-            // Only initialize nested inner zones if the nested container is expanded
-            if (!childNode.collapsed) {
-              // console.log(`attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`);
-              childNode.zoneManager.innerContainerZone.init();
-                        // Ensure nested zones have correct size from child node
-          if (childNode.zoneManager && !childNode.zoneManager._resizing) {
-            childNode.zoneManager._resizing = true;
+
+            // Mark child as being attached to prevent recursive updateChildren
+            childNode._attachingChildren = true;
+            childNode.init(childContainer);
+            childNode._attachingChildren = false;
+            // Track that this child was reinitialized
+            reinitializedChildren.add(childNode.id);
+          } else {
+            // Ensure DOM is attached to the correct container group
             try {
-              childNode.zoneManager.resize(childNode.data.width, childNode.data.height);
-            } finally {
-              childNode.zoneManager._resizing = false;
-            }
+              const currentParent = childNode.element.node()?.parentNode || null;
+              const desiredParent = childContainer.node?.() || null;
+              if (desiredParent && currentParent !== desiredParent) {
+                console.log(
+                  `attachChildrenToDOM: Moving child ${childNode.id} from ${currentParent?.id || 'unknown'} to ${desiredParent?.id || 'unknown'}`,
+                );
+                desiredParent.appendChild(childNode.element.node());
+              }
+            } catch {}
           }
-              childNode.zoneManager.innerContainerZone.update();
-            }
+          // Ensure the zone knows about this child (always re-register after zone recreation)
+          if (innerZone) {
+            innerZone.addChild(childNode);
           }
-          
-          if (childNode.zoneManager) {
-            childNode.zoneManager.update();
-          }
-          
-          // CRITICAL: Update children BEFORE calling updateChildPositions
-          // This ensures the nested container has proper dimensions
-          if (!childNode.collapsed && typeof childNode.updateChildren === 'function' && !childNode._updating) {
-            // console.log(`attachChildrenToDOM: Updating children for nested container ${childNode.id}`);
-            childNode._updating = true;
-            try {
-              childNode.updateChildren();
-            } finally {
-              childNode._updating = false;
-            }
-          }
-          
-          // Now that children are updated, position them
-          if (!childNode.collapsed && childNode.zoneManager?.innerContainerZone) {
-            childNode.zoneManager.innerContainerZone.updateChildPositions();
-          }
-        }
-      } catch (e) {
-        console.warn('Failed attaching child to DOM:', childNode?.id, e);
-      }
-    });
+          // Make the child visible again (containers will manage their own collapsed children)
+          childNode.visible = true;
+          console.log(`attachChildrenToDOM: Set child ${childNode.id} visible to true`);
 
-    // After re-attaching, update positions via the zone system
-    if (innerZone) {
-      innerZone.forceUpdateChildPositions();
-    }
-
-    // Finally, ensure this container recomputes its own sizing/zone metrics
-    if (this.zoneManager) {
-      this.zoneManager.update();
-    }
-
-    // Defer an additional layout pass to ensure nested containers complete init cycles
-    setTimeout(() => {
-      try {
-        this.childNodes.forEach((childNode) => {
+          // For nested containers, ensure their zones and layout are refreshed
           if (childNode.isContainer) {
-            if (childNode.zoneManager) childNode.zoneManager.update();
-            
-            // CRITICAL: Update children BEFORE positioning them
-            if (!childNode.collapsed && typeof childNode.updateChildren === 'function' && !childNode._updating) {
+            console.log(
+              `attachChildrenToDOM: Child ${childNode.id} is a container, refreshing its zones`,
+            );
+
+            // Ensure descendants are visible unless they are collapsed containers
+            if (typeof childNode.propagateVisibility === 'function') {
+              childNode.propagateVisibility(true);
+            }
+
+            // Force re-initialization of nested container zones if their DOM was destroyed
+            if (
+              childNode.zoneManager?.innerContainerZone &&
+              (!childNode.zoneManager.innerContainerZone.element ||
+                !childNode.zoneManager.innerContainerZone.initialized)
+            ) {
+              // Only initialize nested inner zones if the nested container is expanded
+              if (!childNode.collapsed) {
+                console.log(
+                  `attachChildrenToDOM: Reinitializing nested inner zone for child ${childNode.id}`,
+                );
+                childNode.zoneManager.innerContainerZone.init();
+                // Ensure nested zones have correct size from child node
+                if (childNode.zoneManager && !childNode.zoneManager._resizing) {
+                  childNode.zoneManager._resizing = true;
+                  try {
+                    childNode.zoneManager.resize(childNode.data.width, childNode.data.height);
+                  } finally {
+                    childNode.zoneManager._resizing = false;
+                  }
+                }
+                childNode.zoneManager.innerContainerZone.update();
+              }
+            }
+
+            if (childNode.zoneManager) {
+              childNode.zoneManager.update();
+            }
+
+            // CRITICAL: Update children BEFORE calling updateChildPositions
+            // This ensures the nested container has proper dimensions
+            // Skip if this child was just reinitialized (init already called updateChildren)
+            if (
+              !childNode.collapsed &&
+              typeof childNode.updateChildren === 'function' &&
+              !childNode._updating &&
+              !reinitializedChildren.has(childNode.id)
+            ) {
+              console.log(
+                `attachChildrenToDOM: Updating children for nested container ${childNode.id}`,
+              );
               childNode._updating = true;
               try {
                 childNode.updateChildren();
@@ -1039,31 +1124,81 @@ export default class BaseContainerNode extends BaseNode {
                 childNode._updating = false;
               }
             }
-            
+
             // Now that children are updated, position them
             if (!childNode.collapsed && childNode.zoneManager?.innerContainerZone) {
               childNode.zoneManager.innerContainerZone.updateChildPositions();
             }
           }
-        });
-      } catch (e) {
-        console.warn('Failed deferred layout update:', e);
-      }
-    }, 0);
+        } catch (e) {
+          console.warn('Failed attaching child to DOM:', childNode?.id, e);
+        }
+      });
 
-    // console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
+      // After re-attaching, update positions via the zone system
+      if (innerZone) {
+        innerZone.forceUpdateChildPositions();
+      }
+
+      // Finally, ensure this container recomputes its own sizing/zone metrics
+      if (this.zoneManager) {
+        this.zoneManager.update();
+      }
+
+      // Defer an additional layout pass to ensure nested containers complete init cycles
+      setTimeout(() => {
+        try {
+          this.childNodes.forEach((childNode) => {
+            if (childNode.isContainer) {
+              if (childNode.zoneManager) childNode.zoneManager.update();
+
+              // CRITICAL: Update children BEFORE positioning them
+              // Skip if this child was reinitialized (init already called updateChildren)
+              if (
+                !childNode.collapsed &&
+                typeof childNode.updateChildren === 'function' &&
+                !childNode._updating &&
+                !reinitializedChildren.has(childNode.id)
+              ) {
+                childNode._updating = true;
+                try {
+                  childNode.updateChildren();
+                } finally {
+                  childNode._updating = false;
+                }
+              }
+
+              // Now that children are updated, position them
+              if (!childNode.collapsed && childNode.zoneManager?.innerContainerZone) {
+                childNode.zoneManager.innerContainerZone.updateChildPositions();
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('Failed deferred layout update:', e);
+        }
+      }, 0);
+
+      console.log(`attachChildrenToDOM: Finished reattaching children for node ${this.id}`);
+    } finally {
+      // Clear the flag after DOM attachment is complete
+      this._attachingChildren = false;
+    }
   }
 
   applyMinimumSize() {
-    if (this.minimumSize.width < this.data.layout.minimumSize.width) this.minimumSize.width = this.data.layout.minimumSize.width;
-    if (this.minimumSize.height < this.data.layout.minimumSize.height) this.minimumSize.height = this.data.layout.minimumSize.height;
+    if (this.minimumSize.width < this.data.layout.minimumSize.width)
+      this.minimumSize.width = this.data.layout.minimumSize.width;
+    if (this.minimumSize.height < this.data.layout.minimumSize.height)
+      this.minimumSize.height = this.data.layout.minimumSize.height;
 
     if (!this.data.layout.minimumSize.useRootRatio) return;
 
     // Guard: ensure we have a valid ratio to avoid NaN during early layout passes
-    const ratio = (this.settings && this.settings.divRatio && this.settings.divRatio > 0)
-      ? this.settings.divRatio
-      : 16 / 9;
+    const ratio =
+      this.settings && this.settings.divRatio && this.settings.divRatio > 0
+        ? this.settings.divRatio
+        : 16 / 9;
 
     // Use current node data.height as reference; avoid undefined "this.height"
     const currentHeight = this.data.height || this.minimumSize.height || 1;
@@ -1081,18 +1216,18 @@ export default class BaseContainerNode extends BaseNode {
    */
   allChildrenHavePrerender() {
     if (!this.childNodes || this.childNodes.length === 0) return false;
-    return this.childNodes.every(child => child.hasPrerenderData);
+    return this.childNodes.every((child) => child.hasPrerenderData);
   }
 
   /**
    * Apply pre-render positions to all children
    */
   applyPrerenderToChildren() {
-    this.childNodes.forEach(child => {
+    this.childNodes.forEach((child) => {
       // Position is already set in constructor
       // Just need to apply the transform
       child.element.attr('transform', `translate(${child.x}, ${child.y})`);
-      
+
       // If child is a container, recursively apply to its children
       if (child.isContainer && typeof child.applyPrerenderToChildren === 'function') {
         child.applyPrerenderToChildren();

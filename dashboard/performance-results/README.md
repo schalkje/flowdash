@@ -45,14 +45,20 @@ Each JSON file contains:
           "maxDepth": 3
         }
       },
-      "targets": { /* target thresholds */ },
-      "results": { /* pass/fail for each phase */ },
+      "targets": {
+        /* target thresholds */
+      },
+      "results": {
+        /* pass/fail for each phase */
+      },
       "summary": {
         "passed": 6,
         "failed": 0,
         "overallPass": true
       },
-      "bottlenecks": [ /* phases >20% of total time */ ]
+      "bottlenecks": [
+        /* phases >20% of total time */
+      ]
     }
     // ... more test results
   ]
@@ -72,6 +78,7 @@ Each JSON file contains:
 ### Comparing Results
 
 Use `compare-results.html` to:
+
 - Load multiple result files
 - Compare metrics side-by-side
 - Calculate improvement percentages

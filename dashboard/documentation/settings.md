@@ -14,7 +14,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // ============================================================
     // NEIGHBOR SELECTION
     // ============================================================
-    selector: { 
+    selector: {
       // Type: number (integer)
       // Range: 0 to unlimited (practical range: 0-10)
       // Default: 1
@@ -22,7 +22,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       // Description: Controls how many levels of incoming edges to traverse when selecting neighbors.
       //              0 = no incoming neighbors, 1 = direct parents, 2 = parents + grandparents, etc.
       incomming: 1,
-      
+
       // Type: number (integer)
       // Range: 0 to unlimited (practical range: 0-10)
       // Default: 1
@@ -31,67 +31,67 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       //              0 = no outgoing neighbors, 1 = direct children, 2 = children + grandchildren, etc.
       outgoing: 1
     },
-    
+
     // ============================================================
     // DISPLAY OPTIONS
     // ============================================================
-    
+
     // Type: boolean
     // Values: true | false
     // Default: true
     // UI: Toggle / Checkbox
-    // Description: Shows or hides the bounding box around selected nodes. The bounding box is a 
+    // Description: Shows or hides the bounding box around selected nodes. The bounding box is a
     //              visual indicator that highlights the area containing all currently selected nodes.
     showBoundingBox: true,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: false
     // UI: Toggle / Checkbox
-    // Description: Shows or hides a center mark indicator on the canvas. Useful for debugging 
+    // Description: Shows or hides a center mark indicator on the canvas. Useful for debugging
     //              and understanding the canvas coordinate system and zoom center point.
     showCenterMark: false,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: false
     // UI: Toggle / Checkbox
-    // Description: Shows or hides connection points on nodes where edges attach. Useful for 
+    // Description: Shows or hides connection points on nodes where edges attach. Useful for
     //              debugging edge routing and understanding how edges connect to node boundaries.
     showConnectionPoints: false,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: false
     // UI: Toggle / Checkbox
-    // Description: Shows or hides the inner zone rectangles of container nodes. Inner zones 
+    // Description: Shows or hides the inner zone rectangles of container nodes. Inner zones
     //              define the content area inside containers. Useful for debugging layout issues.
     showInnerZoneRect: false,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: false
     // UI: Toggle / Checkbox
-    // Description: Shows or hides ghostlines for edges. Ghostlines are subtle visual guides that 
+    // Description: Shows or hides ghostlines for edges. Ghostlines are subtle visual guides that
     //              help trace edge paths, especially useful for complex diagrams with many edges.
     showGhostlines: false,
-    
+
     // ============================================================
     // ZOOM BEHAVIOR
     // ============================================================
-    
+
     // Type: boolean
     // Values: true | false
     // Default: true
     // UI: Toggle / Checkbox
-    // Description: When enabled, automatically fits all nodes into view when the diagram is first 
+    // Description: When enabled, automatically fits all nodes into view when the diagram is first
     //              loaded. When disabled, the diagram loads at 100% zoom at position (0,0).
     zoomToRoot: true,
-    
+
     // ============================================================
     // STATUS & COLLAPSE BEHAVIOR
     // ============================================================
-    
+
     // Type: boolean
     // Values: true | false
     // Default: true (flowdash-js/bundle), false (demos)
@@ -99,7 +99,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // Description: When enabled, automatically collapses container nodes when their status changes.
     //              This helps keep the diagram clean by hiding details of nodes that change state.
     toggleCollapseOnStatusChange: true,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: true (flowdash-js/bundle), false (demos)
@@ -107,11 +107,11 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // Description: When enabled, status changes cascade down to all child nodes within containers.
     //              When disabled, only the clicked node's status changes, preserving child states.
     cascadeOnStatusChange: true,
-    
+
     // ============================================================
     // EDGE RENDERING
     // ============================================================
-    
+
     // Type: boolean
     // Values: true | false
     // Default: false
@@ -119,7 +119,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // Description: Controls edge path rendering style. When true, edges are drawn with smooth curves.
     //              When false, edges are drawn as straight line segments with right angles.
     curved: false,
-    
+
     // Type: number (float)
     // Range: 0.0 to 1.0 (practical range)
     // Default: 0.1 (when curved=true), 0 (when curved=false)
@@ -128,7 +128,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     //              curves. Only applicable when curved=true. Value represents the control point offset
     //              as a fraction of the edge length.
     curveMargin: 0.1,
-    
+
     // Type: boolean
     // Values: true | false
     // Default: true
@@ -136,11 +136,11 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // Description: Master switch to show or hide all edges in the diagram. When false, only nodes
     //              are visible, which can be useful for focusing on node layout and hierarchy.
     showEdges: true,
-    
+
     // ============================================================
     // LAYOUT
     // ============================================================
-    
+
     // Type: object {top, right, bottom, left}
     // Each property type: number (integer)
     // Range: 0 to 100 (pixels, practical range)
@@ -154,7 +154,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       bottom: 8,   // Bottom margin in pixels
       left: 8      // Left margin in pixels
     },
-    
+
     // Type: object {horizontal, vertical}
     // Each property type: number (integer)
     // Range: 0 to 200 (pixels, practical range)
@@ -167,17 +167,17 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       vertical: 10     // Vertical spacing between nodes (in pixels)
     },
     divRatio: null,                     // Aspect ratio (auto-calculated from container if not specified)
-    
+
     // Styling (optional overrides)
     containerFill: null,                // Container fill color (null = use theme)
     containerStroke: null,              // Container stroke color (null = use theme)
     containerStrokeWidth: null,         // Container stroke width (null = use theme)
     fontFamily: null,                   // Font family (null = use theme)
     fontSize: null,                     // Font size (null = use theme)
-    
+
     // Debug Options
     isDebug: false,                     // Enable debug visualizations (default: false)
-    
+
     // ============================================================
     // MINIMAP CONFIGURATION
     // ============================================================
@@ -189,24 +189,24 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       // Description: Master switch to enable or disable the minimap feature entirely. When disabled,
       //              no minimap will be shown regardless of other minimap settings.
       enabled: true,
-      
+
       // Type: string (enum)
       // Values: "hidden" | "always" | "hover"
       // Default: "always"
       // UI: Dropdown / Radio buttons
-      // Description: Controls minimap visibility behavior. 
+      // Description: Controls minimap visibility behavior.
       //              - "hidden": minimap is never shown
       //              - "always": minimap is always visible
       //              - "hover": minimap appears only when hovering over its area
       mode: "always",
-      
+
       // Type: string (enum)
       // Values: "bottom-right" | "bottom-left" | "top-right" | "top-left"
       // Default: "bottom-right"
       // UI: Dropdown / Position picker (4-quadrant selector)
       // Description: Controls the corner position where the minimap is anchored on the canvas.
       position: "bottom-right",
-      
+
       // Type: string (enum) | object {width: number}
       // Values: "s" (180px) | "m" (240px) | "l" (400px) | {width: number}
       // Default: "m"
@@ -214,15 +214,15 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       // Description: Controls the minimap dimensions. Use size tokens for standard sizes, or provide
       //              a custom object with width in pixels for custom sizing. Height is auto-calculated.
       size: "m",
-      
+
       // Type: number (float)
       // Range: 0.0 to 1.0
       // Default: 1
       // UI: Slider / Number input
-      // Description: Controls the opacity/transparency of the minimap. 1.0 is fully opaque, 0.0 is 
+      // Description: Controls the opacity/transparency of the minimap. 1.0 is fully opaque, 0.0 is
       //              fully transparent (invisible). Useful for reducing visual clutter.
       opacity: 1,
-      
+
       // Type: boolean
       // Values: true | false
       // Default: false
@@ -230,7 +230,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       // Description: Controls the initial state of the minimap. When true, minimap starts in collapsed
       //              state (showing only the collapsed icon). User can click to expand.
       collapsed: false,
-      
+
       // Type: boolean
       // Values: true | false
       // Default: false
@@ -238,7 +238,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       // Description: When enabled, the minimap remains visible and cannot be auto-hidden (if mode="hover").
       //              Acts as a "lock open" feature to keep the minimap permanently visible.
       pinned: false,
-      
+
       collapsedIcon: {
         // Type: string (enum)
         // Values: "bottom-right" | "bottom-left" | "top-right" | "top-left"
@@ -248,23 +248,23 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
         //              Typically matches the main minimap position for consistent placement.
         position: "bottom-right"
       },
-      
+
       hover: {
         showDelayMs: 120,               // Delay before showing on hover (ms)
         hideDelayMs: 300,               // Delay before hiding after hover out (ms)
         zoomFitThreshold: 1.0           // Zoom threshold for auto-hiding
       },
-      
+
       touch: {
         autoHideAfterMs: 2500           // Auto-hide delay after touch interaction (ms)
       },
-      
+
       scaleIndicator: {
         visible: true,                  // Show scale indicator (default: true)
         type: "percent",                // Display type: "percent" | "ratio"
         decimals: 0                     // Decimal places to show
       },
-      
+
       icons: {
         zoomIn: "plus",
         zoomOut: "minus",
@@ -273,15 +273,15 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
         collapse: "triangle-down",
         expand: "minimap"
       },
-      
+
       persistence: {
         persistCollapsedState: true,    // Remember collapsed state in localStorage
         storageKey: "flowdash:minimap:collapsed"
       },
-      
+
       theme: {}                         // Theme overrides for minimap
     },
-    
+
     // Zoom Configuration
     zoom: {
       scaleExtent: [0.1, 40],           // Min and max zoom levels
@@ -292,7 +292,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
       }
     }
   },
-  
+
   nodes: [...],                         // Array of node definitions
   edges: [...]                          // Array of edge definitions
 }
@@ -305,7 +305,7 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
 **`selector`** - Controls how many levels of connected nodes are included when selecting a node.
 
 ```javascript
-selector: { 
+selector: {
   incomming: 1,  // Include 1 level of incoming edges
   outgoing: 1    // Include 1 level of outgoing edges
 }
@@ -407,7 +407,9 @@ The minimap provides a bird's-eye view with synchronized navigation. See [Minima
 **`scaleExtent`** - Minimum and maximum zoom levels `[min, max]`:
 
 ```javascript
-zoom: { scaleExtent: [0.1, 40] }  // 10% to 4000%
+zoom: {
+  scaleExtent: [0.1, 40];
+} // 10% to 4000%
 ```
 
 **`epsilonPct`** - Precision threshold for zoom calculations (0.005 = 0.5%).
@@ -427,6 +429,7 @@ zoom: { scaleExtent: [0.1, 40] }  // 10% to 4000%
   edges: [...]
 }
 ```
+
 All other settings use defaults from `ConfigManager`.
 
 ### Typical Production Configuration
@@ -474,7 +477,7 @@ All other settings use defaults from `ConfigManager`.
 ```javascript
 {
   settings: {
-    zoomToRoot: false,
+    zoomToRoot: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
     curved: false,

@@ -1,60 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>01 - Horizontal LTR (edges)</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edges Demos</h1>
-        <h2>01 - Horizontal LTR</h2>
-        <p class="demo-description">Edges flowing left-to-right inside a <code>columns</code> container.</p>
-        <div class="demo-controls">
-            <button id="collapseBtn">Collapse</button>
-            <button id="expandBtn">Expand</button>
-        </div>
+      <h1>Edges Demos</h1>
+      <h2>01 - Horizontal LTR</h2>
+      <p class="demo-description">
+        Edges flowing left-to-right inside a <code>columns</code> container.
+      </p>
+      <div class="demo-controls">
+        <button id="collapseBtn">Collapse</button>
+        <button id="expandBtn">Expand</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <script type="module">
-        import { demoData } from './js/horizontal-ltr.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/horizontal-ltr.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        function build(dataset) {
-            const ds = dataset || demoData;
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      let flowdash;
+      function build(dataset) {
+        const ds = dataset || demoData;
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => demoData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => demoData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(demoData);
+      build(demoData);
 
-        document.getElementById('collapseBtn').addEventListener('click', () => flowdash.main.root?.collapse());
-        document.getElementById('expandBtn').addEventListener('click', () => flowdash.main.root?.expand());
+      document
+        .getElementById('collapseBtn')
+        .addEventListener('click', () => flowdash.main.root?.collapse());
+      document
+        .getElementById('expandBtn')
+        .addEventListener('click', () => flowdash.main.root?.expand());
     </script>
-</body>
+  </body>
 </html>
-
-

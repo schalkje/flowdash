@@ -1,0 +1,98 @@
+{
+  "_doc": "Performance ratchets for tests/performance.spec.js. Each fixture has a budget (ms) per phase. Specs assert metrics <= budget * tolerance. Update with `npm run test:perf -- --update-snapshots` after a justified change, then commit.",
+  "_tolerance": 2.0,
+  "_toleranceNote": "2.0× absorbs parallel-test CPU contention. For tighter signal, run `npm run test:perf` in isolation (no visual-regression / smoke running concurrently).",
+  "_recordedOn": "2026-05-04 (initial generous baselines — ratchet downward after first CI run)",
+  "fixtures": {
+    "dwh-1.json": {
+      "phases": {
+        "nodeCreation": 800,
+        "nodeInitialization": 400,
+        "edgeCreation": 600,
+        "zoomSetup": 200,
+        "total": 2500
+      },
+      "nodeStats": {
+        "totalNodes": null,
+        "minDepth": 1
+      }
+    },
+    "dwh-6.fixed.json": {
+      "phases": {
+        "nodeCreation": 2500,
+        "nodeInitialization": 1200,
+        "edgeCreation": 1800,
+        "zoomSetup": 400,
+        "total": 6500
+      },
+      "nodeStats": {
+        "totalNodes": null,
+        "minDepth": 1
+      }
+    },
+    "dwh-6.fixed.prerender.json": {
+      "phases": {
+        "nodeCreation": 1500,
+        "nodeInitialization": 700,
+        "edgeCreation": 1100,
+        "zoomSetup": 400,
+        "total": 4000
+      },
+      "_note": "Pre-render fast-path target — should be substantially faster than dwh-6.fixed.json"
+    },
+    "dwh-stress.json": {
+      "phases": {
+        "nodeCreation": 4000,
+        "nodeInitialization": 2000,
+        "edgeCreation": 2500,
+        "zoomSetup": 600,
+        "total": 10000
+      },
+      "_note": "Synthetic 1,296-node stress fixture, generated via tests/generate-stress-fixture.js. Initial generous budgets — ratchet downward after Workstream C hot-path fixes land."
+    },
+    "All.json": {
+      "phases": {
+        "nodeCreation": 4000,
+        "nodeInitialization": 2000,
+        "edgeCreation": 2500,
+        "zoomSetup": 600,
+        "total": 10000
+      },
+      "_note": "Real production export from a consumer dashboard (1017 nodes, 0 edges). Live perf-test target — when timings here regress it actually matters. Initial generous budgets; ratchet after observing one stable CI run."
+    },
+    "All.prerender.json": {
+      "phases": {
+        "nodeCreation": 3000,
+        "nodeInitialization": 1500,
+        "edgeCreation": 2000,
+        "zoomSetup": 500,
+        "total": 7500
+      },
+      "_note": "Pre-render of All.json. Regenerate via `node scripts/generate-prerender.mjs dashboard/data/All.json` whenever the source changes."
+    }
+  },
+  "directPages": {
+    "_doc": "Pages that mount their own dataset (no fileSelect path). Same metrics shape as `fixtures`; loaded via direct navigation in tests/performance.spec.js.",
+    "/themes/02_theme-overview.html": {
+      "phases": {
+        "nodeCreation": 100,
+        "nodeInitialization": 2600,
+        "edgeCreation": 200,
+        "zoomSetup": 400,
+        "total": 2700
+      },
+      "_note": "Showcase page: 6 sections × 10 statuses + role children = 177 nodes (57 containers, 120 leaves, depth 3). Six Workstream C optimizations brought nodeInitialization from ~7.7-13.5s down to a stable ~2.5s (~5× faster than baseline): (1) replaced the redundant expand() call during init with a lean _postInitLayout pass; (2) removed the redundant updateChildren() pass at the end of initChildren; (3) removed the per-container forceUpdateChildPositions setTimeout; (4) ConfigManager.mergeWithDefaults is idempotent so the DEFAULT_SETTINGS deep-merge only runs once per dashboard; (5) nestedCorrection_x/y getters read the cached transformOffset; (6) HeaderZone.getMinWidth() encapsulates the throttled→non-throttled→getSize fallback chain, replacing 12+ duplicated typeof-guarded ternaries across 6 node-type files."
+    }
+  },
+  "fastPathRatio": {
+    "_doc": "Ratio of pre-rendered total to cold total. fastPathRatio < 1 means pre-render is genuinely faster.",
+    "dwh-6.fixed": {
+      "max": 2.5,
+      "_note": "Pre-rendered SHOULD be faster than cold but on this fixture currently varies ~0.7-2.3× across consecutive runs. The dwh-6.fixed.prerender.json was generated before the fingerprint validator existed, so hasPrerenderData accepts it via the 'no-fingerprint' branch — but the warm-path tree walks (per-node prerender read + clearPrerenderData) cost more than they save vs. a 885-node cold layout that's already fast. Regenerating dwh-6.fixed.prerender.json with the current generator (scripts/generate-prerender.mjs) may close the gap. Threshold 2.5 catches a fast-path that has actively regressed without being noisy. See tests/perf-prerender-comparison.spec.js for per-phase visibility; the dwh-1 and dwh-5 pairs consistently show 0.6-0.7× as the prerender benefit they were designed to deliver."
+    },
+    "All": {
+      "max": 1.5,
+      "_note": "Production-fixture warm/cold ratio. Same caveat as dwh-6.fixed — first-paint variance on fresh-page loads sometimes makes warm slower than cold. Threshold loosened until Workstream C edge/zone caches reduce variance."
+    }
+  }
+}

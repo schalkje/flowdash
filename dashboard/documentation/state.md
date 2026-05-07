@@ -6,18 +6,18 @@ Node states are defined in the `NodeStatus` object and represent the current sta
 
 ### State Definitions
 
-| State | Category | Description |
-|-------|:----------:|-------------|
-| `UNDETERMINED` | Initial | Node state has not been determined yet, there never has been any information about the dataset |
-| `UNKNOWN` | Initial | Node state is unknown or not set |
-| `READY` | Process | Node is ready to be processed |
-| `UPDATING` | Process | Node is currently being updated/processed |
-| `DELAYED` | Process | Node processing is delayed |
-| `ERROR` | Process / End state | Node has encountered an error |
-| `UPDATED` | End state | Node has been successfully updated |
-| `SKIPPED` | End state | Node was skipped during processing |
-| `WARNING` | End state | Node has a warning state |
-| `DISABLED` | Inactive | Node is disabled and will not process |
+| State          |      Category       | Description                                                                                    |
+| -------------- | :-----------------: | ---------------------------------------------------------------------------------------------- |
+| `UNDETERMINED` |       Initial       | Node state has not been determined yet, there never has been any information about the dataset |
+| `UNKNOWN`      |       Initial       | Node state is unknown or not set                                                               |
+| `READY`        |       Process       | Node is ready to be processed                                                                  |
+| `UPDATING`     |       Process       | Node is currently being updated/processed                                                      |
+| `DELAYED`      |       Process       | Node processing is delayed                                                                     |
+| `ERROR`        | Process / End state | Node has encountered an error                                                                  |
+| `UPDATED`      |      End state      | Node has been successfully updated                                                             |
+| `SKIPPED`      |      End state      | Node was skipped during processing                                                             |
+| `WARNING`      |      End state      | Node has a warning state                                                                       |
+| `DISABLED`     |      Inactive       | Node is disabled and will not process                                                          |
 
 ### State Transitions
 
@@ -63,7 +63,9 @@ flowchart TD
 ### State Behavior
 
 #### Status Cascading
+
 When `cascadeOnStatusChange` is enabled in settings:
+
 - Status changes propagate up to parent containers
 - Container nodes recalculate their status based on child node states
 
@@ -73,13 +75,13 @@ Edge states represent the current status of connections between nodes in the flo
 
 ### State Definitions
 
-| State | Category | Description |
-|-------|:----------:|-------------|
-| `INACTIVE` | Initial | Edge is not active, connection exists but no data flow |
-| `ACTIVE` | Process | Edge is actively transferring data between nodes |
-| `COMPLETED` | End state | Data transfer completed successfully |
-| `FAILED` | End state | Data transfer failed or connection error |
-| `BLOCKED` | Process | Edge is blocked, waiting for conditions to be met |
+| State       | Category  | Description                                            |
+| ----------- | :-------: | ------------------------------------------------------ |
+| `INACTIVE`  |  Initial  | Edge is not active, connection exists but no data flow |
+| `ACTIVE`    |  Process  | Edge is actively transferring data between nodes       |
+| `COMPLETED` | End state | Data transfer completed successfully                   |
+| `FAILED`    | End state | Data transfer failed or connection error               |
+| `BLOCKED`   |  Process  | Edge is blocked, waiting for conditions to be met      |
 
 ### State Transitions
 
@@ -87,19 +89,19 @@ Edge states represent the current status of connections between nodes in the flo
 flowchart TD
     A[INACTIVE] --> B[ACTIVE]
     A --> E[BLOCKED]
-    
+
     subgraph Active Processing
     B -- Data transfer successful --> C[COMPLETED]
     B -- Data transfer failed --> D[FAILED]
     B -- Conditions not met --> E
     end
-    
+
     E -- Conditions met --> B
     E -- Timeout/Cancel --> D
-    
+
     C --> A
     D --> A
-    
+
     %% Coloring and styling
     style A fill:#e0e0e0,stroke:#888
     style B fill:#66ff66,stroke:#0b0,stroke-width:4px,stroke-dasharray: 6 2
@@ -111,14 +113,18 @@ flowchart TD
 ### State Behavior
 
 #### Edge Status Based on Connected Nodes
+
 Edge states are typically derived from the states of their connected nodes:
+
 - If source node is `UPDATING` and target node is `READY`, edge becomes `ACTIVE`
 - If source node is `UPDATED` and data successfully transferred, edge becomes `COMPLETED`
 - If either source or target node has `ERROR` state, edge may become `FAILED`
 - If source node is `DELAYED`, edge may become `BLOCKED`
 
 #### Visual Representation
+
 Edge states affect their visual appearance:
+
 - `INACTIVE`: Dashed or gray line
 - `ACTIVE`: Solid, animated line with flow indicators
 - `COMPLETED`: Solid line with completion marker
@@ -126,7 +132,9 @@ Edge states affect their visual appearance:
 - `BLOCKED`: Orange or warning-colored line
 
 #### Edge State Propagation
+
 Edge states can influence connected nodes:
+
 - Multiple `FAILED` edges may trigger source node to enter `ERROR` state
 - `BLOCKED` edges may cause target node to remain in `READY` state
 - `ACTIVE` edges indicate data flow in progress between `UPDATING` nodes

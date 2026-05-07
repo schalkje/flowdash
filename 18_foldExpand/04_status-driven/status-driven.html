@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fold/Expand 04 — Status Driven</title>
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <link rel="stylesheet" href="../fold-expand.css" />
+
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Fold / Expand</h1>
+      <h2>04 — Status Driven</h2>
+      <p class="demo-description">
+        <code>toggleCollapseOnStatusChange = true</code>. The lane's collapsed state is derived from
+        its leaves: all-same-status ⇒ collapse; mixed ⇒ expand. Flip a child's status and watch the
+        parent react.
+      </p>
+    </header>
+
+    <div class="fe-toolbar">
+      <span class="fe-step-label">OK · Step 1:</span>
+      <button data-target="ok1" data-state="Ready">Ready</button>
+      <button data-target="ok1" data-state="Updated">Updated</button>
+      <button data-target="ok1" data-state="Error">Error</button>
+      <button data-target="ok1" data-state="Warning">Warning</button>
+
+      <span class="fe-step-label" style="margin-left: 18px">Problem · Step 1:</span>
+      <button data-target="bad1" data-state="Ready">Ready</button>
+      <button data-target="bad1" data-state="Updated">Updated</button>
+      <button data-target="bad1" data-state="Error">Error</button>
+      <span class="fe-status" id="fe-status">…</span>
+    </div>
+
+    <div class="fe-canvas-wrapper">
+      <svg id="graph" class="canvas fe-tall"></svg>
+    </div>
+
+    <script type="module">
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+
+      const dashboard = new flowDashboard.Dashboard(demoData);
+      await dashboard.initialize('#graph');
+      window.flowdash = dashboard;
+
+      const lanes = ['ok-lane', 'bad-lane'];
+      const leaves = ['ok1', 'ok2', 'bad1', 'bad2'];
+
+      const statusEl = document.getElementById('fe-status');
+      function refresh() {
+        const laneSummaries = lanes.map((id) => {
+          const n = dashboard.main.root.getNode(id);
+          return `${id} collapsed=${n?.collapsed}`;
+        });
+        const leafSummaries = leaves.map((id) => {
+          const n = dashboard.main.root.getNode(id);
+          return `${id}=${n?.status}`;
+        });
+        statusEl.textContent = [...laneSummaries, ...leafSummaries].join('  |  ');
+      }
+      refresh();
+
+      // Setting a leaf node's status updates the leaf's _status field
+      // but does NOT re-run the parent container's auto-collapse rule
+      // (the rule lives in the container's status setter). To force a
+      // re-evaluation we re-assign the parent's own status, which
+      // triggers the setter and re-reads all leaf states.
+      function kickParent(leafId) {
+        const leaf = dashboard.main.root.getNode(leafId);
+        const parent = leaf?.parentNode;
+        if (parent) parent.status = parent.status;
+      }
+
+      document.querySelectorAll('.fe-toolbar button[data-state]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          dashboard.updateNodeStatus(btn.dataset.target, btn.dataset.state);
+          kickParent(btn.dataset.target);
+          refresh();
+        });
+      });
+
+      // Kick once on load so the auto-collapse rule reflects the
+      // initial leaf statuses (the constructor doesn't run setters).
+      for (const id of lanes) {
+        const n = dashboard.main.root.getNode(id);
+        if (n) n.status = n.status;
+      }
+      refresh();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FlowDash — Showcase</title>
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <link id="themeLink" rel="stylesheet" href="../../dashboard/themes/light/flowdash.css" />
+
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+
+    <style>
+      .showcase-bar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 8px 14px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+      }
+      .showcase-bar label,
+      .showcase-bar select {
+        font-size: 13px;
+      }
+      .showcase-bar .legend {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+      }
+      .showcase-bar .legend-swatch {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        border: 1px solid #999;
+      }
+      .swatch-ready {
+        background: #b8e0a8;
+      }
+      .swatch-updating {
+        background: #f7d878;
+      }
+      .swatch-updated {
+        background: #88c5e8;
+      }
+      .swatch-error {
+        background: #e89898;
+      }
+      .swatch-warning {
+        background: #f0c478;
+      }
+      .swatch-disabled {
+        background: #ddd;
+      }
+      .demo-container {
+        height: calc(100vh - 220px);
+        min-height: 500px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>FlowDash Showcase</h1>
+      <h2>All the parts, in one dashboard</h2>
+      <p class="demo-description">
+        Combines node types, edges, themes, minimap, and status into a single live dashboard. Use
+        this page as the headline target for visual regression and performance benchmarks.
+      </p>
+    </header>
+
+    <div class="showcase-bar">
+      <label
+        >Theme:
+        <select id="themeSel">
+          <option value="light" selected>light</option>
+          <option value="dark">dark</option>
+          <option value="flat">flat</option>
+          <option value="cyberpunk">cyberpunk</option>
+          <option value="brutalism">brutalism</option>
+          <option value="glassmorphism">glassmorphism</option>
+          <option value="neumorphism">neumorphism</option>
+          <option value="retro">retro</option>
+          <option value="high-contrast-light">high-contrast-light</option>
+          <option value="high-contrast-dark">high-contrast-dark</option>
+        </select>
+      </label>
+      <label
+        >Dataset:
+        <select id="dataSel">
+          <option value="dwh-tiny" selected>dwh-tiny</option>
+          <option value="dwh-small">dwh-small</option>
+          <option value="dwh-1">dwh-1</option>
+        </select>
+      </label>
+      <button id="reloadBtn">Reload</button>
+      <span class="legend">
+        <span class="legend-swatch swatch-ready"></span>Ready
+        <span class="legend-swatch swatch-updating"></span>Updating
+        <span class="legend-swatch swatch-updated"></span>Updated
+        <span class="legend-swatch swatch-error"></span>Error
+        <span class="legend-swatch swatch-warning"></span>Warning
+        <span class="legend-swatch swatch-disabled"></span>Disabled
+      </span>
+    </div>
+
+    <div class="demo-container">
+      <svg id="graph" class="canvas"></svg>
+    </div>
+
+    <footer class="demo-info">
+      <div class="demo-metadata">
+        <p>
+          <strong>Reference:</strong>
+          <a href="../../docs/architecture-map.md">/docs/architecture-map.md</a> ·
+          <a href="../../docs/demo-philosophy.md">/docs/demo-philosophy.md</a>
+        </p>
+      </div>
+    </footer>
+
+    <script type="module">
+      import flowDashboard from '../../dashboard/js/index.js';
+
+      function setTheme(name) {
+        const link = document.getElementById('themeLink');
+        link.setAttribute('href', `../../dashboard/themes/${name}/flowdash.css`);
+        if (typeof window.flowdashThemeManager?.setTheme === 'function') {
+          try {
+            window.flowdashThemeManager.setTheme(name);
+          } catch {}
+        }
+      }
+
+      let dashboard;
+      async function load(datasetName) {
+        document.querySelector('#graph').replaceChildren();
+        const r = await fetch(`../../dashboard/data/${datasetName}.json`);
+        const data = await r.json();
+        // Force demo-friendly settings: keep the minimap on, and disable the
+        // production-leaning auto-collapse + selection bounding box that some
+        // dwh-* fixtures inherit.
+        data.settings = {
+          ...(data.settings || {}),
+          demoMode: true,
+          showBoundingBox: false,
+          toggleCollapseOnStatusChange: false,
+          cascadeOnStatusChange: false,
+          minimap: { ...((data.settings || {}).minimap || {}), enabled: true, mode: 'always' },
+        };
+        dashboard = new flowDashboard.Dashboard(data);
+        await dashboard.initialize('#graph');
+        window.dashboard = dashboard;
+      }
+
+      document
+        .getElementById('themeSel')
+        .addEventListener('change', (e) => setTheme(e.target.value));
+      document.getElementById('dataSel').addEventListener('change', (e) => load(e.target.value));
+      document
+        .getElementById('reloadBtn')
+        .addEventListener('click', () => load(document.getElementById('dataSel').value));
+
+      load('dwh-tiny');
+    </script>
+  </body>
+</html>

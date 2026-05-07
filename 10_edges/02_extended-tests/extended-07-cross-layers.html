@@ -1,64 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extended 07 - Cross-Layer Edges</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edges – Extended</h1>
-        <h2>07 - Cross-Layer Edges</h2>
-        <div class="demo-controls">
-            <button id="collapseTop">Collapse Top</button>
-            <button id="expandTop">Expand Top</button>
-            <button id="collapseBottom">Collapse Bottom</button>
-            <button id="expandBottom">Expand Bottom</button>
-        </div>
+      <h1>Edges – Extended</h1>
+      <h2>07 - Cross-Layer Edges</h2>
+      <div class="demo-controls">
+        <button id="collapseTop">Collapse Top</button>
+        <button id="expandTop">Expand Top</button>
+        <button id="collapseBottom">Collapse Bottom</button>
+        <button id="expandBottom">Expand Bottom</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <script type="module">
-        import { demoData } from './js/extended-07.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/extended-07.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        function build(dataset) {
-            const ds = dataset || demoData;
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      let flowdash;
+      function build(dataset) {
+        const ds = dataset || demoData;
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => demoData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => demoData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(demoData);
+      build(demoData);
 
-        function getNode(id) { return flowdash?.main?.root?.getNode(id); }
-        document.getElementById('collapseTop').addEventListener('click', () => getNode('topLane')?.collapse());
-        document.getElementById('expandTop').addEventListener('click', () => getNode('topLane')?.expand());
-        document.getElementById('collapseBottom').addEventListener('click', () => getNode('bottomCols')?.collapse());
-        document.getElementById('expandBottom').addEventListener('click', () => getNode('bottomCols')?.expand());
+      function getNode(id) {
+        return flowdash?.main?.root?.getNode(id);
+      }
+      document
+        .getElementById('collapseTop')
+        .addEventListener('click', () => getNode('topLane')?.collapse());
+      document
+        .getElementById('expandTop')
+        .addEventListener('click', () => getNode('topLane')?.expand());
+      document
+        .getElementById('collapseBottom')
+        .addEventListener('click', () => getNode('bottomCols')?.collapse());
+      document
+        .getElementById('expandBottom')
+        .addEventListener('click', () => getNode('bottomCols')?.expand());
     </script>
-</body>
+  </body>
 </html>
-
-

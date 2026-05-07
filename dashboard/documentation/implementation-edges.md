@@ -23,6 +23,7 @@ The factory handles edge creation and parent resolution. The real code uses defe
 ### Key Functions
 
 #### `createEdges(rootNode, edges, settings)`
+
 Main entry point for creating multiple edges:
 
 ```javascript
@@ -35,6 +36,7 @@ export function createEdges(rootNode, edges, settings) {
 ```
 
 #### `createEdge(rootNode, edgeData, settings)`
+
 Creates a single edge by finding source and target nodes (IDs or objects are accepted):
 
 ```javascript
@@ -43,25 +45,38 @@ export function createEdge(rootNode, edgeData, settings) {
   var targetId = typeof edgeData.target === 'string' ? edgeData.target : edgeData.target.id;
 
   const source = rootNode.getNode(sourceId);
-  if (!source) { console.error(`Creating Edge - Source node ${sourceId} not found`, edgeData); return; }
+  if (!source) {
+    console.error(`Creating Edge - Source node ${sourceId} not found`, edgeData);
+    return;
+  }
 
   const target = rootNode.getNode(targetId);
-  if (!target) { console.error(`Creating Edge - Target node ${targetId} not found`); return; }
+  if (!target) {
+    console.error(`Creating Edge - Target node ${targetId} not found`);
+    return;
+  }
 
-  createInternalEdge(edgeData, source, target, settings)
+  createInternalEdge(edgeData, source, target, settings);
 }
 ```
 
 #### `createInternalEdge(edgeData, source, target, settings)`
+
 Creates the actual edge instance using the common parent container:
 
 ```javascript
 export function createInternalEdge(edgeData, source, target, settings) {
-  if (source === target) { console.error('createInternalEdge - Source and Target are the same node', source); return; }
+  if (source === target) {
+    console.error('createInternalEdge - Source and Target are the same node', source);
+    return;
+  }
 
   const parents = buildEdgeParents(source, target);
   const parent = parents.container;
-  if (!parent || !parent.childEdges) { console.error('createInternalEdge: invalid parent container', { parent }); return; }
+  if (!parent || !parent.childEdges) {
+    console.error('createInternalEdge: invalid parent container', { parent });
+    return;
+  }
 
   // Avoid duplicate edges between the same nodes
   if (source.edges.outgoing.find((edge) => edge.target === target)) return;
@@ -77,6 +92,7 @@ export function createInternalEdge(edgeData, source, target, settings) {
 ### Parent Resolution
 
 #### `buildEdgeParents(sourceNode, targetNode)`
+
 Determines the common parent container and builds parent hierarchies (closest shared ancestor). Only the chain up to (but excluding) the container is kept for both sides:
 
 ```javascript
@@ -87,7 +103,10 @@ export function buildEdgeParents(sourceNode, targetNode) {
   let container = null;
   const targetParentSet = new Set(targetParents);
   for (let i = 0; i < sourceParents.length; i++) {
-    if (targetParentSet.has(sourceParents[i])) { container = sourceParents[i]; break; }
+    if (targetParentSet.has(sourceParents[i])) {
+      container = sourceParents[i];
+      break;
+    }
   }
 
   const prunedSourceParents = sourceParents.slice(0, sourceParents.indexOf(container));
@@ -115,12 +134,15 @@ The base class for all edge implementations. It renders into the common parent c
 ### Key Methods
 
 #### `init(parentElement)`
+
 Initializes ghostline and edge groups under the container’s dedicated layers and wires click handlers. The path is rendered using a D3 line generator (curved when `settings.curved` is true).
 
 #### `update()`
+
 Recomputes the points via `generateEdgePath(this)` from `utilPath.js` and sets the `d` attribute with the configured line generator. Ghostlines use `generateGhostEdge(this)`.
 
 #### Coordinates and Zone System
+
 `x1`, `y1`, `x2`, `y2` apply hierarchical nesting corrections and `getZoneTransforms(node)` to produce global coordinates, ensuring accurate rendering within the zone system.
 
 ## Path Calculation
@@ -132,26 +154,30 @@ Path routing returns an array of point pairs consumed by a D3 line generator. Co
 ### Key Functions
 
 #### `computeConnectionPoints(x, y, width, height)`
+
 Boundary connection points for a node center at `(x,y)`:
 
 ```javascript
 export function computeConnectionPoints(x, y, width, height) {
   return {
-    top:    { side: 'top',    x: x,           y: y - height/2 },
-    bottom: { side: 'bottom', x: x,           y: y + height/2 },
-    left:   { side: 'left',   x: x - width/2, y: y },
-    right:  { side: 'right',  x: x + width/2, y: y },
+    top: { side: 'top', x: x, y: y - height / 2 },
+    bottom: { side: 'bottom', x: x, y: y + height / 2 },
+    left: { side: 'left', x: x - width / 2, y: y },
+    right: { side: 'right', x: x + width / 2, y: y },
   };
 }
 ```
 
 #### `generateEdgePath(edge)`
+
 Returns an array of `[x,y]` points. The caller applies `d3.line()` or `d3.line().curve(d3.curveBasis)` depending on `settings.curved`.
 
 #### `generateGhostEdge(edge)`
+
 Returns two points between node midpoints, accounting for zone transforms.
 
 #### `getZoneTransforms(node)`
+
 Extracts the current container inner zone translation to convert local coordinates to global.
 
 ## Markers
@@ -206,8 +232,14 @@ Style edges via CSS classes emitted by `BaseEdge`:
 
 ```javascript
 this.element
-  .on('click', (event) => { event.stopPropagation(); this.handleClicked(event); })
-  .on('dblclick', (event) => { event.stopPropagation(); this.handleDblClicked(event); });
+  .on('click', (event) => {
+    event.stopPropagation();
+    this.handleClicked(event);
+  })
+  .on('dblclick', (event) => {
+    event.stopPropagation();
+    this.handleDblClicked(event);
+  });
 ```
 
 ## Integration with Node System

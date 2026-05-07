@@ -20,11 +20,11 @@ export class BaseZone {
    */
   init() {
     if (this.initialized) return;
-    
+
     this.createElement();
     this.setupStyling();
     this.setupInteractions();
-    
+
     this.initialized = true;
   }
 
@@ -34,9 +34,8 @@ export class BaseZone {
    */
   createElement() {
     // Base implementation - subclasses should override
-    this.element = this.node.element.append('g')
-      .attr('class', `zone-${this.name}`);
-    
+    this.element = this.node.element.append('g').attr('class', `zone-${this.name}`);
+
     // Attach the node instance to the zone element for event handling
     if (this.element) {
       const domNode = this.element.node();
@@ -68,7 +67,7 @@ export class BaseZone {
    */
   update() {
     if (!this.initialized) return;
-    
+
     this.updatePosition();
     this.updateSize();
     this.updateStyling();
@@ -139,7 +138,7 @@ export class BaseZone {
     return {
       origin: { x: this.position.x, y: this.position.y },
       size: this.getSize(),
-      transform: `translate(${this.position.x}, ${this.position.y})`
+      transform: `translate(${this.position.x}, ${this.position.y})`,
     };
   }
 
@@ -178,7 +177,7 @@ export class BaseZone {
       right: this.position.x + this.size.width,
       bottom: this.position.y + this.size.height,
       width: this.size.width,
-      height: this.size.height
+      height: this.size.height,
     };
   }
 
@@ -187,8 +186,7 @@ export class BaseZone {
    */
   containsPoint(x, y) {
     const bounds = this.getBounds();
-    return x >= bounds.left && x <= bounds.right && 
-           y >= bounds.top && y <= bounds.bottom;
+    return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
   }
 
   /**
@@ -201,4 +199,4 @@ export class BaseZone {
     }
     this.initialized = false;
   }
-} 
+}

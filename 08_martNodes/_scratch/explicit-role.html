@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Explicit Role Mode</title>
+
+    <!-- Standard CSS -->
+    <link rel="stylesheet" href="../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../dashboard/flowdash-demo.css" />
+
+    <!-- Required Libraries -->
+    <script src="../dashboard/libs/d3.min.js"></script>
+    <script src="../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../dashboard/js/themeManager.js"></script>
+
+    <style>
+      .comparison-container {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+      }
+      .comparison-item {
+        flex: 1;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .comparison-item h3 {
+        margin-top: 0;
+        text-align: center;
+      }
+      .canvas {
+        width: 100%;
+        height: 300px;
+        border: 1px solid #eee;
+        background-color: #fafafa;
+      }
+      .debug-info {
+        margin-top: 10px;
+        font-size: 12px;
+        font-family: monospace;
+        background: #f5f5f5;
+        padding: 8px;
+        border-radius: 3px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Debug Explicit Role Mode</h1>
+      <p class="demo-description">
+        Testing explicit children in role mode vs auto-generated children.
+      </p>
+    </header>
+
+    <div class="comparison-container">
+      <div class="comparison-item">
+        <h3>Auto Role Mode</h3>
+        <svg id="graph-auto" class="canvas"></svg>
+        <div id="auto-debug" class="debug-info"></div>
+      </div>
+      <div class="comparison-item">
+        <h3>Explicit Role Mode</h3>
+        <svg id="graph-explicit" class="canvas"></svg>
+        <div id="explicit-debug" class="debug-info"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import flowDashboard from '../dashboard/js/index.js';
+
+      const autoRoleData = {
+        settings: {
+          showCenterMark: false,
+          showGrid: false,
+          showGroupLabels: true,
+          showGroupTitles: true,
+          showGhostlines: false,
+          curved: false,
+          showConnectionPoints: true,
+          demoMode: true,
+          enableTesting: true,
+          debugMode: false,
+        },
+        nodes: [
+          {
+            id: 'mart-auto-role',
+            label: 'Auto Role Mart',
+            code: 'AUTO-ROLE',
+            type: 'mart',
+            x: 160,
+            y: 150,
+            layout: {
+              mode: 'auto',
+              displayMode: 'role',
+              orientation: 'horizontal',
+            },
+            status: 'active',
+            state: 'ready',
+            children: [],
+          },
+        ],
+        edges: [],
+      };
+
+      const explicitRoleData = {
+        settings: {
+          showCenterMark: false,
+          showGrid: false,
+          showGroupLabels: true,
+          showGroupTitles: true,
+          showGhostlines: false,
+          curved: false,
+          showConnectionPoints: true,
+          demoMode: true,
+          enableTesting: true,
+          debugMode: false,
+        },
+        nodes: [
+          {
+            id: 'mart-explicit-role',
+            label: 'Explicit Role Mart',
+            code: 'EXPLICIT-ROLE',
+            type: 'mart',
+            x: 160,
+            y: 150,
+            layout: {
+              mode: 'auto',
+              displayMode: 'role',
+              orientation: 'horizontal',
+            },
+            status: 'active',
+            state: 'ready',
+            children: [
+              {
+                id: 'load-explicit',
+                label: 'load',
+                type: 'node',
+                role: 'load',
+                category: 'load',
+                width: 60,
+                height: 32,
+                state: 'Active',
+              },
+              {
+                id: 'report-explicit',
+                label: 'report',
+                type: 'node',
+                role: 'report',
+                category: 'report',
+                width: 60,
+                height: 32,
+                state: 'Ready',
+              },
+            ],
+          },
+        ],
+        edges: [],
+      };
+
+      // Build auto mode dashboard
+      const autoDash = new flowDashboard.Dashboard(autoRoleData);
+      autoDash.initialize('#graph-auto');
+
+      // Build explicit mode dashboard
+      const explicitDash = new flowDashboard.Dashboard(explicitRoleData);
+      explicitDash.initialize('#graph-explicit');
+
+      // Attach to window for debugging
+      window.autoDash = autoDash;
+      window.explicitDash = explicitDash;
+
+      // Add debug information
+      setTimeout(() => {
+        const autoNode = autoDash.nodes.find((n) => n.id === 'mart-auto-role');
+        const explicitNode = explicitDash.nodes.find((n) => n.id === 'mart-explicit-role');
+
+        if (autoNode) {
+          document.getElementById('auto-debug').innerHTML = `
+                    Container: ${autoNode.data.width}x${autoNode.data.height}<br>
+                    Load: ${autoNode.loadNode?.data.width || 'N/A'}x${autoNode.loadNode?.data.height || 'N/A'}<br>
+                    Report: ${autoNode.reportNode?.data.width || 'N/A'}x${autoNode.reportNode?.data.height || 'N/A'}<br>
+                    Load Label: "${autoNode.loadNode?.data.label || 'N/A'}"<br>
+                    Report Label: "${autoNode.reportNode?.data.label || 'N/A'}"<br>
+                    Children Count: ${autoNode.childNodes?.length || 0}
+                `;
+        }
+
+        if (explicitNode) {
+          document.getElementById('explicit-debug').innerHTML = `
+                    Container: ${explicitNode.data.width}x${explicitNode.data.height}<br>
+                    Load: ${explicitNode.loadNode?.data.width || 'N/A'}x${explicitNode.loadNode?.data.height || 'N/A'}<br>
+                    Report: ${explicitNode.reportNode?.data.width || 'N/A'}x${explicitNode.reportNode?.data.height || 'N/A'}<br>
+                    Load Label: "${explicitNode.loadNode?.data.label || 'N/A'}"<br>
+                    Report Label: "${explicitNode.reportNode?.data.label || 'N/A'}"<br>
+                    Children Count: ${explicitNode.childNodes?.length || 0}
+                `;
+        }
+      }, 1000);
+
+      console.log(
+        'Debug dashboards initialized. Check window.autoDash and window.explicitDash for debugging.',
+      );
+    </script>
+  </body>
+</html>

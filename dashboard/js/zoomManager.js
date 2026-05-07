@@ -1,4 +1,4 @@
-import { ConfigManager } from "./configManager.js";
+import { ConfigManager } from './configManager.js';
 
 export class ZoomManager {
   constructor(dashboard) {
@@ -83,8 +83,8 @@ export class ZoomManager {
       .zoom()
       .filter((event) => event?.type !== 'dblclick')
       .scaleExtent([minK, maxK])
-      .wheelDelta(event => -event.deltaY * (event.deltaMode ? 120 : 1) * 0.002)
-      .on("zoom", (event) => this.onMainZoom(event));
+      .wheelDelta((event) => -event.deltaY * (event.deltaMode ? 120 : 1) * 0.002)
+      .on('zoom', (event) => this.onMainZoom(event));
     return zoom;
   }
 
@@ -94,7 +94,7 @@ export class ZoomManager {
     this.dashboard.main.transform.k = event.transform.k;
     this.dashboard.main.transform.x = event.transform.x;
     this.dashboard.main.transform.y = event.transform.y;
-    this.dashboard.main.container.attr("transform", event.transform);
+    this.dashboard.main.container.attr('transform', event.transform);
     if (this.dashboard.minimap?.active) {
       this.dashboard.minimap.scheduleUpdate(event.transform);
     }
@@ -107,7 +107,7 @@ export class ZoomManager {
     this.dashboard.main.transform.k = event.transform.k;
     this.dashboard.main.transform.x = event.transform.x;
     this.dashboard.main.transform.y = event.transform.y;
-    this.dashboard.main.container.attr("transform", event.transform);
+    this.dashboard.main.container.attr('transform', event.transform);
     this.dashboard.main.svg.call(this.dashboard.main.zoom.transform, event.transform);
     if (this.dashboard.minimap?.active) {
       this.dashboard.minimap.scheduleUpdate(event.transform);
@@ -118,29 +118,58 @@ export class ZoomManager {
   handleLayoutChange() {
     const isInitial = !this.lastContentBounds;
     const initialPhase = (this.dashboard?._displayChangeCount || 0) < 3;
-    const oldFitK = this.lastFitK || this.dashboard.main.fitK || 1;
     const oldBounds = this.lastContentBounds || this.dashboard.getContentBBox();
     const oldTransform = { ...(this.dashboard.main.transform || { k: 1, x: 0, y: 0 }) };
     const { fitK, fitTransform, bounds } = this.recomputeBaselineFit();
 
+    // Detect significant content size changes (e.g., collapse/expand)
+    const boundsChanged =
+      oldBounds &&
+      bounds &&
+      (Math.abs(bounds.width - oldBounds.width) > oldBounds.width * 0.3 ||
+        Math.abs(bounds.height - oldBounds.height) > oldBounds.height * 0.3);
+
     let target;
     if (isInitial || initialPhase) {
-      // Initial load and early stabilization: always snap to baseline fit
-      target = fitTransform;
-    } else if (this.approximatelyEqual(oldTransform.k, oldFitK)) {
-      // User was at 100% → snap to new baseline
+      if (boundsChanged && !isInitial) {
+        target = fitTransform;
+      } else if (
+        isInitial &&
+        this.dashboard.data?.settings?.zoomToRoot &&
+        this.dashboard.main?.root
+      ) {
+        this.dashboard._shouldZoomToRootOnInit = true;
+        target = fitTransform;
+      } else {
+        target = fitTransform;
+      }
+    } else if (boundsChanged) {
       target = fitTransform;
     } else {
       target = this.preserveKAndRecenter(oldTransform, oldBounds, bounds);
     }
+
     this.applyTransform(target, { animate: false });
+
+    if (this.dashboard._shouldZoomToRootOnInit) {
+      this.dashboard._shouldZoomToRootOnInit = false;
+      setTimeout(() => {
+        if (this.dashboard.main?.root) {
+          this.dashboard.handleNodeDblClick(this.dashboard.main.root, null);
+        }
+      }, 100);
+    }
   }
 
   zoomReset() {
     const target = this.dashboard.main.fitTransform || d3.zoomIdentity;
     this.applyTransform(target, { animate: true, duration: 750 });
     this.dashboard.main.scale = 1;
-    if (this.dashboard.minimap?.active && this.dashboard.minimap?.zoom && this.dashboard.minimap?.svg) {
+    if (
+      this.dashboard.minimap?.active &&
+      this.dashboard.minimap?.zoom &&
+      this.dashboard.minimap?.svg
+    ) {
       this.dashboard.minimap.svg
         .transition()
         .duration(750)
@@ -182,5 +211,3 @@ export class ZoomManager {
 }
 
 export default ZoomManager;
-
-

@@ -49,11 +49,13 @@ Defines the minimum dimensions for a container node.
 **Type:** `Object`
 
 **Properties:**
+
 - `width` (number): Minimum width in pixels. Default: `0`
 - `height` (number): Minimum height in pixels. Default: `0`
 - `useRootRatio` (boolean): Whether to maintain aspect ratio from root settings. Default: `false`
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -81,6 +83,7 @@ Controls how the node's width is calculated based on its text content.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'default'` - Uses provided width or default (150px) as the **initial** width, then expands to fit text with padding. The node will never be smaller than the specified width, but will grow to accommodate longer text.
 - `'auto-size'` - Calculates width dynamically based on text content. Uses `layout.minimumWidth` (default: 60px) as the minimum width. The node size adjusts automatically as the text changes.
 - `'fixed-size'` - Uses exact dimensions specified in `layout.width` and `layout.height` without any expansion based on text. Text will be truncated with ellipsis and tooltip if it doesn't fit.
@@ -88,12 +91,14 @@ Controls how the node's width is calculated based on its text content.
 **Default:** `'default'`
 
 **Related Properties:**
+
 - `layout.minimumWidth` (number): For `auto-size` mode, sets the minimum width in pixels. Default: `60`
 - `layout.minimumHeight` (number): For `auto-size` mode, sets the minimum height in pixels. Default: node's `height` property
 - `layout.width` (number): For `fixed-size` mode, sets the exact width in pixels. Default: `150`
 - `layout.height` (number): For `fixed-size` mode, sets the exact height in pixels. Default: `20`
 
 **Example - Auto-size with custom minimum:**
+
 ```javascript
 {
   layout: {
@@ -105,6 +110,7 @@ Controls how the node's width is calculated based on its text content.
 ```
 
 **Example - Fixed size:**
+
 ```javascript
 {
   layout: {
@@ -116,6 +122,7 @@ Controls how the node's width is calculated based on its text content.
 ```
 
 **Example - Default mode with initial width:**
+
 ```javascript
 {
   width: 180,            // Initial width (will expand if text is longer)
@@ -141,9 +148,10 @@ Circular nodes with radius-based sizing.
 **No specific layout properties.** Circle nodes use `radius` property directly on the node data, not in the layout object.
 
 **Example:**
+
 ```javascript
 {
-  radius: 30  // Not in layout object
+  radius: 30; // Not in layout object
 }
 ```
 
@@ -159,7 +167,7 @@ See [Common Layout Properties](#common-layout-properties) above.
 
 #### `minimumColumnWidth`
 
-*(Used by ColumnsNode)* Minimum width for each column.
+_(Used by ColumnsNode)_ Minimum width for each column.
 
 **Type:** `number`
 
@@ -178,12 +186,14 @@ Controls how child nodes (staging/archive/transform) are displayed.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'full'` - Shows full labels with descriptive text (e.g., "Staging MyAdapter")
 - `'role'` - Shows only role names (e.g., "staging", "archive", "transform")
 
 **Default:** `'full'`
 
 **Child Node Width:**
+
 - Role mode: `80px` per child
 - Full mode: `150px` per child
 
@@ -194,6 +204,7 @@ Determines which child components are created and displayed.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'manual'` - No automatic child creation
 - `'full'` - Creates staging, archive, and transform nodes
 - `'archive-only'` - Creates only archive node
@@ -209,6 +220,7 @@ Controls the visual layout of child components.
 **Type:** `number` (integer 1-5)
 
 **Possible Values:**
+
 1. **Arrangement 1** - Full Archive Layout
    - Archive on top row (aligned with 2/3 of staging width)
    - Staging bottom left, Transform bottom right
@@ -235,12 +247,14 @@ Controls the visual layout of child components.
 **Default:** `1` (validated and defaults to 1 if invalid)
 
 **Size Impact:**
+
 - Arrangements 4-5: Height = 44px
 - Arrangement 5 (archive-only):
   - Role mode: Width = 96px (80 + margins)
   - Full mode: Width = 166px (150 + margins)
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -264,12 +278,14 @@ Controls how child nodes (load/report) are displayed.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'full'` - Shows full descriptive labels
 - `'role'` - Shows only role names ("load", "report")
 
 **Default:** `'role'`
 
 **Child Node Width:**
+
 - Role mode: `120px` per child
 - Full mode: `150px` per child
 
@@ -280,6 +296,7 @@ Controls the arrangement direction of load and report nodes.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'horizontal'` - Load left, report right (default)
 - `'horizontal_line'` - Same as horizontal
 - `'vertical'` - Load top, report bottom
@@ -295,18 +312,21 @@ Determines child component creation behavior.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'manual'` - No automatic child creation
 - `'auto'` - Automatically creates load and report nodes
 
 **Default:** `'auto'`
 
 **Size Impact (Role Mode):**
+
 - Horizontal spacing: `20px`
 - Vertical margins: `16px` (8px left + 8px right)
 - Height: `60px`
 - Width: `roleWidth + roleWidth + spacing + margins` = `120 + 120 + 20 + 16 = 276px`
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -330,12 +350,14 @@ Controls how child nodes (raw/base) are displayed.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'full'` - Shows full descriptive labels
 - `'role'` - Shows only role names ("raw", "base")
 
 **Default:** `'role'`
 
 **Child Node Width:**
+
 - Role mode: `80px` per child
 - Full mode: `150px` per child
 
@@ -346,6 +368,7 @@ Controls the arrangement direction of raw and base nodes.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'horizontal'` - Raw left, base right (default)
 - `'horizontal_line'` - Same as horizontal
 - `'vertical'` - Raw top, base bottom
@@ -361,16 +384,19 @@ Determines child component creation behavior.
 **Type:** `string`
 
 **Possible Values:**
+
 - `'manual'` - No automatic child creation
 - `'auto'` - Automatically creates raw and base nodes
 
 **Default:** `'auto'`
 
 **Size Impact (Role Mode):**
+
 - Width: `80 + 80 + 20 + 16 = 196px` (two roles + spacing + margins)
 - Height: `44px`
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -398,6 +424,7 @@ Minimum width for each column/child node.
 **Note:** This property is defined in the base class but primarily used by ColumnsNode for horizontal layouts.
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -411,6 +438,7 @@ Minimum width for each column/child node.
 ```
 
 **Layout Behavior:**
+
 - Children are arranged horizontally (left to right)
 - Horizontal spacing between children: `20px` (from settings)
 - Container width = sum of child widths + spacing + margins
@@ -427,12 +455,14 @@ Container that arranges children in a vertical stack (lanes).
 Uses `minimumSize` from BaseContainerNode.
 
 **Layout Behavior:**
+
 - Children are stacked vertically (top to bottom)
 - Vertical spacing between children: `10px` (from settings)
 - Container width = max child width + margins
 - Container height = sum of child heights + spacing + header + margins
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -456,11 +486,13 @@ General-purpose container that maintains relative positions of children.
 Uses `minimumSize` from BaseContainerNode.
 
 **Layout Behavior:**
+
 - Preserves existing relative positions of children
 - Normalizes positions to be centered around (0,0)
 - Sizes container to fit all children with margins
 
 **Example:**
+
 ```javascript
 {
   layout: {
@@ -486,6 +518,7 @@ Contains cached position and size information from a previous render.
 **Type:** `Object`
 
 **Properties:**
+
 - `x` (number): Pre-calculated x position
 - `y` (number): Pre-calculated y position
 - `width` (number): Pre-calculated width
@@ -495,6 +528,7 @@ Contains cached position and size information from a previous render.
   - `height` (number): Minimum height
 
 **Example:**
+
 ```javascript
 {
   prerender: {
@@ -516,25 +550,25 @@ Contains cached position and size information from a previous render.
 
 ## Summary Table
 
-| Node Type | Layout Properties | Possible Values |
-|-----------|------------------|----------------|
-| **RectangularNode** | `layoutMode` | `'default'`, `'auto-size'`, `'fixed-size'` |
-| **CircleNode** | *(none)* | Uses `radius` on node data |
-| **AdapterNode** | `displayMode` | `'full'`, `'role'` |
-|  | `mode` | `'manual'`, `'full'`, `'archive-only'`, `'staging-archive'`, `'staging-transform'` |
-|  | `arrangement` | `1`, `2`, `3`, `4`, `5` |
-| **MartNode** | `displayMode` | `'full'`, `'role'` |
-|  | `orientation` | `'horizontal'`, `'horizontal_line'`, `'vertical'`, `'rotate90'`, `'rotate270'` |
-|  | `mode` | `'manual'`, `'auto'` |
-| **FoundationNode** | `displayMode` | `'full'`, `'role'` |
-|  | `orientation` | `'horizontal'`, `'horizontal_line'`, `'vertical'`, `'rotate90'`, `'rotate270'` |
-|  | `mode` | `'manual'`, `'auto'` |
-| **ColumnsNode** | `minimumColumnWidth` | Any number >= 0 |
-| **LaneNode** | *(none specific)* | Uses base container properties |
-| **GroupNode** | *(none specific)* | Uses base container properties |
-| **All Containers** | `minimumSize.width` | Any number >= 0 |
-|  | `minimumSize.height` | Any number >= 0 |
-|  | `minimumSize.useRootRatio` | `true`, `false` |
+| Node Type           | Layout Properties          | Possible Values                                                                    |
+| ------------------- | -------------------------- | ---------------------------------------------------------------------------------- |
+| **RectangularNode** | `layoutMode`               | `'default'`, `'auto-size'`, `'fixed-size'`                                         |
+| **CircleNode**      | _(none)_                   | Uses `radius` on node data                                                         |
+| **AdapterNode**     | `displayMode`              | `'full'`, `'role'`                                                                 |
+|                     | `mode`                     | `'manual'`, `'full'`, `'archive-only'`, `'staging-archive'`, `'staging-transform'` |
+|                     | `arrangement`              | `1`, `2`, `3`, `4`, `5`                                                            |
+| **MartNode**        | `displayMode`              | `'full'`, `'role'`                                                                 |
+|                     | `orientation`              | `'horizontal'`, `'horizontal_line'`, `'vertical'`, `'rotate90'`, `'rotate270'`     |
+|                     | `mode`                     | `'manual'`, `'auto'`                                                               |
+| **FoundationNode**  | `displayMode`              | `'full'`, `'role'`                                                                 |
+|                     | `orientation`              | `'horizontal'`, `'horizontal_line'`, `'vertical'`, `'rotate90'`, `'rotate270'`     |
+|                     | `mode`                     | `'manual'`, `'auto'`                                                               |
+| **ColumnsNode**     | `minimumColumnWidth`       | Any number >= 0                                                                    |
+| **LaneNode**        | _(none specific)_          | Uses base container properties                                                     |
+| **GroupNode**       | _(none specific)_          | Uses base container properties                                                     |
+| **All Containers**  | `minimumSize.width`        | Any number >= 0                                                                    |
+|                     | `minimumSize.height`       | Any number >= 0                                                                    |
+|                     | `minimumSize.useRootRatio` | `true`, `false`                                                                    |
 
 ---
 
@@ -546,4 +580,4 @@ Contains cached position and size information from a previous render.
 
 ---
 
-*Last Updated: 2024*
+_Last Updated: 2024_

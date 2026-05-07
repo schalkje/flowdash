@@ -16,7 +16,7 @@ export class InnerContainerZone extends BaseZone {
     this.coordinateSystem = {
       origin: { x: 0, y: 0 },
       size: { width: 0, height: 0 },
-      transform: 'translate(0, 0)'
+      transform: 'translate(0, 0)',
     };
   }
 
@@ -25,10 +25,11 @@ export class InnerContainerZone extends BaseZone {
    */
   createElement() {
     super.createElement();
-    
+
     // Create visual border for the inner container zone (optional)
     if (this.node?.settings?.showInnerZoneRect) {
-      this.borderElement = this.element.append('rect')
+      this.borderElement = this.element
+        .append('rect')
         .attr('class', 'zone-innerContainer')
         .attr('x', 0)
         .attr('y', 0)
@@ -60,7 +61,7 @@ export class InnerContainerZone extends BaseZone {
           this.node.handleDblClicked(event, this.node);
         }
       });
-      
+
       // Also add click handler for consistency
       this.element.on('click', (event) => {
         event.stopPropagation();
@@ -78,11 +79,12 @@ export class InnerContainerZone extends BaseZone {
   updateSize() {
     // Update coordinate system
     this.updateCoordinateSystem();
-    
+
     // Ensure border element presence matches current setting
-    const shouldShowBorder = !!(this.node?.settings?.showInnerZoneRect);
+    const shouldShowBorder = !!this.node?.settings?.showInnerZoneRect;
     if (shouldShowBorder && !this.borderElement && this.element) {
-      this.borderElement = this.element.append('rect')
+      this.borderElement = this.element
+        .append('rect')
         .attr('class', 'zone-innerContainer')
         .attr('x', 0)
         .attr('y', 0)
@@ -96,28 +98,28 @@ export class InnerContainerZone extends BaseZone {
     // Update border element dimensions
     // Calculate actual size needed for children
     const childContentSize = this.calculateChildContentSize();
-    
+
     if (this.borderElement) {
       // Use actual child content size instead of hardcoded values
       const rectWidth = Math.max(childContentSize.width, this.coordinateSystem.size.width);
       const rectHeight = Math.max(childContentSize.height, 1); // Minimum height of 1 to ensure visibility
-      
+
       // Position the rect to encompass all children
       // Since children are positioned relative to (0,0) in this zone's coordinate system,
       // and the zone is positioned below the header, the rect should be positioned
       // so that it properly contains the children within the zone's coordinate space
       const rectX = -rectWidth / 2; // Center horizontally
       const rectY = -rectHeight / 2; // Center vertically around (0,0) in zone coordinates
-      
+
       // Debug logs removed for performance
-      
+
       this.borderElement
         .attr('width', rectWidth)
         .attr('height', rectHeight)
         .attr('x', rectX)
         .attr('y', rectY);
     }
-    
+
     // Apply transform to the zone element itself (which contains child nodes)
     this.element.attr('transform', this.coordinateSystem.transform);
   }
@@ -128,31 +130,35 @@ export class InnerContainerZone extends BaseZone {
   updateCoordinateSystem() {
     const headerHeight = this.getHeaderHeight();
     const marginZone = this.manager.getZone('margin');
-    
+
     if (marginZone) {
       const margins = marginZone.getMargins();
-      
+
       // Use the larger of zone size and node size to derive available content area
       const baseWidth = Math.max(this.size.width, this.node.data.width || 0);
       const baseHeight = Math.max(this.size.height, this.node.data.height || 0);
-      
+
       // Calculate inner container position relative to node center
       const containerTop = -this.node.data.height / 2;
       const availableWidth = Math.max(0, baseWidth - margins.left - margins.right);
       const availableHeight = Math.max(0, baseHeight - headerHeight - margins.top - margins.bottom);
       const innerX = 0; // Center horizontally
-      const innerY = containerTop + headerHeight + margins.top + (availableHeight / 2);
-      
+      const innerY = containerTop + headerHeight + margins.top + availableHeight / 2;
+
       this.coordinateSystem = {
         origin: {
           x: 0, // Children are positioned relative to (0,0) in this zone
-          y: 0  // Children are positioned relative to (0,0) in this zone
+          y: 0, // Children are positioned relative to (0,0) in this zone
         },
         size: {
           width: availableWidth,
-          height: availableHeight
+          height: availableHeight,
         },
-        transform: `translate(${innerX}, ${innerY})` // Transform moves the zone to the correct position (centered)
+        transform: `translate(${innerX}, ${innerY})`, // Transform moves the zone to the correct position (centered)
+        // Numeric copy of the translate offset. utilPath.getZoneTransforms()
+        // uses this instead of regex-parsing the transform string on every
+        // edge getter access.
+        transformOffset: { x: innerX, y: innerY },
       };
     } else {
       // Fallback if margin zone is not available
@@ -162,12 +168,14 @@ export class InnerContainerZone extends BaseZone {
       const availableWidth = Math.max(0, baseWidth - defaultMargin * 2);
       const availableHeight = Math.max(0, baseHeight - headerHeight - defaultMargin * 2);
       const innerX = 0; // Center horizontally
-      const innerY = -this.node.data.height / 2 + headerHeight + defaultMargin + (availableHeight / 2);
-      
+      const innerY =
+        -this.node.data.height / 2 + headerHeight + defaultMargin + availableHeight / 2;
+
       this.coordinateSystem = {
         origin: { x: 0, y: 0 }, // Children are positioned relative to (0,0) in this zone
         size: { width: availableWidth, height: availableHeight },
-        transform: `translate(${innerX}, ${innerY})` // Transform moves the zone to the correct position (centered)
+        transform: `translate(${innerX}, ${innerY})`, // Transform moves the zone to the correct position (centered)
+        transformOffset: { x: innerX, y: innerY },
       };
     }
   }
@@ -188,10 +196,10 @@ export class InnerContainerZone extends BaseZone {
     if (this.node.collapsed) {
       return {
         width: this.size.width,
-        height: 0
+        height: 0,
       };
     }
-    
+
     // When expanded, return actual size
     return super.getSize();
   }
@@ -209,7 +217,7 @@ export class InnerContainerZone extends BaseZone {
   addChild(childNode) {
     if (!this.childNodes.includes(childNode)) {
       this.childNodes.push(childNode);
-      
+
       // Only update positions if the child node has been initialized
       if (childNode.element) {
         this.updateChildPositions();
@@ -254,20 +262,22 @@ export class InnerContainerZone extends BaseZone {
       // console.log(`📊 Pre-render: Skipping child positioning for ${this.node.id}`);
       return;
     }
-    
+
     // Only update if we have initialized child nodes
-    const initializedChildren = this.childNodes.filter(child => child.element);
-    
+    const initializedChildren = this.childNodes.filter((child) => child.element);
+
     if (initializedChildren.length === 0) return;
-    
+
     // As a defensive measure, move any child under the inner container group before layout
     try {
       const tgt = this.getChildContainer()?.node?.();
       if (tgt) {
-        initializedChildren.forEach(child => {
+        initializedChildren.forEach((child) => {
           const el = child?.element?.node?.();
           if (el && el.parentNode !== tgt) {
-            try { tgt.appendChild(el); } catch {}
+            try {
+              tgt.appendChild(el);
+            } catch {}
           }
         });
       }
@@ -284,20 +294,20 @@ export class InnerContainerZone extends BaseZone {
    * Apply default layout algorithm
    */
   applyDefaultLayout() {
-    const initializedChildren = this.childNodes.filter(child => child.element);
+    const initializedChildren = this.childNodes.filter((child) => child.element);
     if (initializedChildren.length === 0) return;
-    
+
     // Default vertical stacking layout
     let currentY = 0;
     const spacing = this.node.nodeSpacing?.vertical || 10;
-    
+
     initializedChildren.forEach((childNode, index) => {
       // Position children relative to the inner container origin (top-left)
       // Center horizontally within the available width
       const availableWidth = this.coordinateSystem.size.width;
       const x = (availableWidth - childNode.data.width) / 2; // Center horizontally
       const y = currentY;
-      
+
       // Position children relative to the inner container's coordinate system
       // The inner container transform handles the offset from the lane node
       childNode.move(x, y);
@@ -324,42 +334,44 @@ export class InnerContainerZone extends BaseZone {
    * Calculate size needed for all children
    */
   calculateChildContentSize() {
-    const initializedChildren = this.childNodes.filter(child => child.element);
+    const initializedChildren = this.childNodes.filter((child) => child.element);
     if (initializedChildren.length === 0) {
       return { width: 0, height: 0 };
     }
-    
+
     const spacing = this.node.nodeSpacing || { horizontal: 20, vertical: 10 };
-    
+
     // Calculate bounding box of all children
     // Children are positioned relative to the inner container zone's coordinate system (0,0)
     // We need to calculate the bounding box based on their relative positions
-    let minX = Infinity, minY = Infinity;
-    let maxX = -Infinity, maxY = -Infinity;
-    
-    initializedChildren.forEach(childNode => {
+    let minX = Infinity,
+      minY = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity;
+
+    initializedChildren.forEach((childNode) => {
       // Get the child's position relative to the inner container zone
       // This should be the position set by the layout algorithm
       const childX = childNode.x || 0;
       const childY = childNode.y || 0;
       const childWidth = childNode.data.width;
       const childHeight = childNode.data.height;
-      
+
       // Calculate the bounding box
       const childLeft = childX - childWidth / 2; // Children are positioned by center
       const childRight = childX + childWidth / 2;
       const childTop = childY - childHeight / 2; // Children are positioned by center
       const childBottom = childY + childHeight / 2;
-      
+
       minX = Math.min(minX, childLeft);
       minY = Math.min(minY, childTop);
       maxX = Math.max(maxX, childRight);
       maxY = Math.max(maxY, childBottom);
     });
-    
+
     return {
       width: maxX - minX,
-      height: maxY - minY
+      height: maxY - minY,
     };
   }
 
@@ -367,18 +379,18 @@ export class InnerContainerZone extends BaseZone {
    * Position child nodes using vertical stacking layout
    */
   layoutVerticalStack() {
-    const initializedChildren = this.childNodes.filter(child => child.element);
+    const initializedChildren = this.childNodes.filter((child) => child.element);
     if (initializedChildren.length === 0) return;
-    
+
     const spacing = this.node.nodeSpacing?.vertical || 10;
     let currentY = 0;
-    
-    initializedChildren.forEach(childNode => {
+
+    initializedChildren.forEach((childNode) => {
       // Center horizontally within the available width
       const availableWidth = this.coordinateSystem.size.width;
       const x = (availableWidth - childNode.data.width) / 2; // Center horizontally
       const y = currentY;
-      
+
       // Position children relative to the inner container's coordinate system
       childNode.move(x, y);
       currentY += childNode.data.height + spacing;
@@ -389,18 +401,18 @@ export class InnerContainerZone extends BaseZone {
    * Position child nodes using horizontal row layout
    */
   layoutHorizontalRow() {
-    const initializedChildren = this.childNodes.filter(child => child.element);
+    const initializedChildren = this.childNodes.filter((child) => child.element);
     if (initializedChildren.length === 0) return;
-    
+
     const spacing = this.node.nodeSpacing?.horizontal || 20;
     let currentX = 0;
-    
-    initializedChildren.forEach(childNode => {
+
+    initializedChildren.forEach((childNode) => {
       const x = currentX;
       // Center vertically within the available height
       const availableHeight = this.coordinateSystem.size.height;
       const y = (availableHeight - childNode.data.height) / 2; // Center vertically
-      
+
       // Position children relative to the inner container's coordinate system
       childNode.move(x, y);
       currentX += childNode.data.width + spacing;
@@ -411,20 +423,20 @@ export class InnerContainerZone extends BaseZone {
    * Position child nodes using bounding box layout
    */
   layoutBoundingBox() {
-    const initializedChildren = this.childNodes.filter(child => child.element);
+    const initializedChildren = this.childNodes.filter((child) => child.element);
     if (initializedChildren.length === 0) return;
-    
+
     // Calculate bounding box
     const contentSize = this.calculateChildContentSize();
-    
+
     // Center children within the container
     const centerX = this.coordinateSystem.size.width / 2;
     const centerY = this.coordinateSystem.size.height / 2;
-    
-    initializedChildren.forEach(childNode => {
+
+    initializedChildren.forEach((childNode) => {
       const x = centerX - contentSize.width / 2 + childNode.x;
       const y = centerY - contentSize.height / 2 + childNode.y;
-      
+
       // Position children relative to the inner container's coordinate system
       childNode.move(x, y);
     });
@@ -441,10 +453,12 @@ export class InnerContainerZone extends BaseZone {
    * Check if a position is within the inner container bounds
    */
   isWithinBounds(x, y) {
-    return x >= this.coordinateSystem.origin.x &&
-           x <= this.coordinateSystem.origin.x + this.coordinateSystem.size.width &&
-           y >= this.coordinateSystem.origin.y &&
-           y <= this.coordinateSystem.origin.y + this.coordinateSystem.size.height;
+    return (
+      x >= this.coordinateSystem.origin.x &&
+      x <= this.coordinateSystem.origin.x + this.coordinateSystem.size.width &&
+      y >= this.coordinateSystem.origin.y &&
+      y <= this.coordinateSystem.origin.y + this.coordinateSystem.size.height
+    );
   }
 
   /**
@@ -457,7 +471,7 @@ export class InnerContainerZone extends BaseZone {
       right: this.coordinateSystem.origin.x + this.coordinateSystem.size.width,
       bottom: this.coordinateSystem.origin.y + this.coordinateSystem.size.height,
       width: this.coordinateSystem.size.width,
-      height: this.coordinateSystem.size.height
+      height: this.coordinateSystem.size.height,
     };
   }
 
@@ -465,10 +479,9 @@ export class InnerContainerZone extends BaseZone {
    * Update child visibility based on container state
    */
   updateChildVisibility(visible) {
-    this.childNodes.forEach(childNode => {
+    this.childNodes.forEach((childNode) => {
       childNode.visible = visible;
-      
-      
+
       // For container children, only propagate visibility if the container is not collapsed
       // When making containers visible, their children should only become visible if the container is expanded
       if (childNode.isContainer && visible && !childNode.collapsed) {
@@ -484,7 +497,7 @@ export class InnerContainerZone extends BaseZone {
    * Clean up child nodes
    */
   cleanupChildren() {
-    this.childNodes.forEach(childNode => {
+    this.childNodes.forEach((childNode) => {
       if (childNode.destroy) {
         childNode.destroy();
       }
@@ -496,13 +509,13 @@ export class InnerContainerZone extends BaseZone {
    * Get child node by ID
    */
   getChildById(id) {
-    return this.childNodes.find(child => child.id === id);
+    return this.childNodes.find((child) => child.id === id);
   }
 
   /**
    * Get child nodes by dataset ID
    */
   getChildrenByDatasetId(datasetId) {
-    return this.childNodes.filter(child => child.data.datasetId === datasetId);
+    return this.childNodes.filter((child) => child.data.datasetId === datasetId);
   }
-} 
+}

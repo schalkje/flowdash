@@ -1,200 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dynamic Addition - Lane Demo</title>
-    
+
     <!-- Standard CSS -->
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
-    
-    
-    
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
+
     <!-- Required Libraries -->
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <!-- Demo Header -->
     <header class="demo-header">
-        <h1>Lane Demos</h1>
-        <h2>Dynamic Addition</h2>
-        <p class="demo-description">Lane with dynamic node addition functionality</p>
-        
-        <!-- Demo Controls -->
-        <div class="demo-controls">
-            <button id="addNodeBtn" onclick="addNode()">Add Node</button>
+      <h1>Lane Demos</h1>
+      <h2>Dynamic Addition</h2>
+      <p class="demo-description">Lane with dynamic node addition functionality</p>
 
-            <button id="resetBtn" onclick="resetDemo()">Reset</button>
-            <button id="testBtn" onclick="runTests()">Run Tests</button>
-        </div>
+      <!-- Demo Controls -->
+      <div class="demo-controls">
+        <button id="addNodeBtn" onclick="addNode()">Add Node</button>
+
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+      </div>
     </header>
 
     <!-- Demo Container -->
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <!-- Demo Information -->
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> lane</p>
-            <p><strong>Features:</strong> Dynamic node addition</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> lane</p>
+        <p><strong>Features:</strong> Dynamic node addition</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      </div>
     </footer>
 
     <script type="module">
-        // Import demo data
-        import { demoData } from './js/graphData.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
+      // Import demo data
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-        function build(dataset) {
-            if (!dataset) return;
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
+
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
+
+      build(baseData);
+
+      // Attach data for debugging
+      window.demoData = demoData;
+
+      // Node counter for unique IDs
+      let nodeCounter = 1;
+
+      window.addNode = function () {
+        nodeCounter++;
+        const newNodeId = `rect${nodeCounter}`;
+        const newLabel = `Step ${nodeCounter}`;
+
+        // Create new node data
+        const newNodeData = {
+          id: newNodeId,
+          label: newLabel,
+          type: 'rect',
+          code: `R${nodeCounter}`,
+          status: 'Ready',
+          layout: {
+            displayMode: 'full',
+            arrangement: 'default',
+          },
+          parentId: 'lane1',
+        };
+
+        // Get the lane node from the current dashboard instance
+        const laneNode = window.flowdash.main.root;
+        if (laneNode && laneNode.isContainer) {
+          // Add new node to the data structure
+          laneNode.data.children.push(newNodeData);
+
+          // Create only the new child node instead of reinitializing all children
+          const childContainer =
+            laneNode.zoneManager?.innerContainerZone?.getChildContainer() || laneNode.element;
+          const newChildComponent = laneNode.createNode(
+            newNodeData,
+            childContainer,
+            laneNode.settings,
+            laneNode,
+          );
+          laneNode.childNodes.push(newChildComponent);
+
+          // Add child to zone system
+          if (laneNode.zoneManager?.innerContainerZone) {
+            laneNode.zoneManager.innerContainerZone.addChild(newChildComponent);
+          }
+
+          // Initialize only the new child
+          newChildComponent.init(childContainer);
+
+          // Update the layout
+          laneNode.update();
+
+          // Trigger display change to update minimap and zoom
+          if (laneNode.onDisplayChange) {
+            laneNode.onDisplayChange();
+          }
         }
+      };
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => baseData,
-            buildDashboard: (dataset) => build(dataset)
+      // Demo functions
+
+      window.resetDemo = function () {
+        // Reset to original data structure
+        const originalData = {
+          ...demoData,
+          nodes: [
+            {
+              ...demoData.nodes[0],
+              children: [demoData.nodes[0].children[0]], // Keep only the first child
+            },
+          ],
+        };
+
+        // Recreate the dashboard with original data
+        flowdash.main.svg.selectAll('*').remove();
+        const newFlowdash = new flowDashboard.Dashboard(originalData);
+        newFlowdash.initialize('#graph');
+
+        // Update global references
+        window.flowdash = newFlowdash;
+        window.demoData = originalData;
+        nodeCounter = 1;
+      };
+
+      window.runTests = function () {
+        // Implementation for running tests
+        runDemoTests();
+      };
+
+      // Test runner
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
+
+        // Basic validation tests
+        const tests = [testDashboardInitialization, testNodeRendering, testDataStructure];
+
+        let passed = 0;
+        let total = tests.length;
+
+        tests.forEach((test) => {
+          try {
+            if (test()) passed++;
+          } catch (e) {
+            console.error('Test failed:', e);
+          }
         });
 
-        build(baseData);
-        
-        // Attach data for debugging
-        window.demoData = demoData;
-        
-        // Node counter for unique IDs
-        let nodeCounter = 1;
-        
-        window.addNode = function() {
-            nodeCounter++;
-            const newNodeId = `rect${nodeCounter}`;
-            const newLabel = `Step ${nodeCounter}`;
-            
-            // Create new node data
-            const newNodeData = {
-                id: newNodeId,
-                label: newLabel,
-                type: "rect",
-                code: `R${nodeCounter}`,
-                status: "Ready",
-                layout: {
-                    displayMode: "full",
-                    arrangement: "default"
-                },
-                parentId: "lane1"
-            };
-            
-            // Get the lane node from the current dashboard instance
-            const laneNode = window.flowdash.main.root;
-            if (laneNode && laneNode.isContainer) {
-                // Add new node to the data structure
-                laneNode.data.children.push(newNodeData);
-                
-                // Create only the new child node instead of reinitializing all children
-                const childContainer = laneNode.zoneManager?.innerContainerZone?.getChildContainer() || laneNode.element;
-                const newChildComponent = laneNode.createNode(newNodeData, childContainer, laneNode.settings, laneNode);
-                laneNode.childNodes.push(newChildComponent);
-                
-                // Add child to zone system
-                if (laneNode.zoneManager?.innerContainerZone) {
-                    laneNode.zoneManager.innerContainerZone.addChild(newChildComponent);
-                }
-                
-                // Initialize only the new child
-                newChildComponent.init(childContainer);
-                
-                // Update the layout
-                laneNode.update();
-                
-                // Trigger display change to update minimap and zoom
-                if (laneNode.onDisplayChange) {
-                    laneNode.onDisplayChange();
-                }
-            }
-        };
-        
-        // Demo functions
-        
-        window.resetDemo = function() {
-            // Reset to original data structure
-            const originalData = {
-                ...demoData,
-                nodes: [{
-                    ...demoData.nodes[0],
-                    children: [demoData.nodes[0].children[0]] // Keep only the first child
-                }]
-            };
-            
-            // Recreate the dashboard with original data
-            flowdash.main.svg.selectAll("*").remove();
-            const newFlowdash = new flowDashboard.Dashboard(originalData);
-            newFlowdash.initialize('#graph');
-            
-            // Update global references
-            window.flowdash = newFlowdash;
-            window.demoData = originalData;
-            nodeCounter = 1;
-        };
-        
-        window.runTests = function() {
-            // Implementation for running tests
-            runDemoTests();
-        };
-        
-        // Test runner
-        function runDemoTests() {
-            const testStatus = document.getElementById('testStatus');
-            testStatus.textContent = 'Running...';
-            
-            // Basic validation tests
-            const tests = [
-                testDashboardInitialization,
-                testNodeRendering,
-                testDataStructure
-            ];
-            
-            let passed = 0;
-            let total = tests.length;
-            
-            tests.forEach(test => {
-                try {
-                    if (test()) passed++;
-                } catch (e) {
-                    console.error('Test failed:', e);
-                }
-            });
-            
-            testStatus.textContent = `${passed}/${total} tests passed`;
-            testStatus.className = passed === total ? 'test-pass' : 'test-fail';
-        }
-        
-        // Test functions
-        function testDashboardInitialization() {
-            return flowdash && typeof flowdash.initialize === 'function';
-        }
-        
-        function testNodeRendering() {
-            const nodes = document.querySelectorAll('.node');
-            return nodes.length > 0;
-        }
-        
-        function testDataStructure() {
-            return demoData && demoData.nodes && Array.isArray(demoData.nodes);
-        }
+        testStatus.textContent = `${passed}/${total} tests passed`;
+        testStatus.className = passed === total ? 'test-pass' : 'test-fail';
+      }
+
+      // Test functions
+      function testDashboardInitialization() {
+        return flowdash && typeof flowdash.initialize === 'function';
+      }
+
+      function testNodeRendering() {
+        const nodes = document.querySelectorAll('.node');
+        return nodes.length > 0;
+      }
+
+      function testDataStructure() {
+        return demoData && demoData.nodes && Array.isArray(demoData.nodes);
+      }
     </script>
-</body>
+  </body>
 </html>

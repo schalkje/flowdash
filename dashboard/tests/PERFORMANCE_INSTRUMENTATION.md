@@ -17,6 +17,7 @@ Open: dashboard/test-performance.html
 ```
 
 This provides a visual interface to:
+
 - Select test files (dwh-1.json or dwh-6.fixed.json)
 - Run individual performance tests
 - Run comparison tests between baseline and target files
@@ -63,16 +64,17 @@ You can access metrics programmatically in the browser console:
 
 ```javascript
 // After loading a dashboard
-dashboard.performanceMetrics
+dashboard.performanceMetrics;
 // Returns object with phases, nodeStats, domStats
 
-dashboard.reportPerformanceMetrics()
+dashboard.reportPerformanceMetrics();
 // Logs formatted metrics to console
 ```
 
 ## Performance Targets
 
 ### dwh-1.json (Baseline - ~4 nodes)
+
 - **Total**: < 1 second
 - Node Creation: < 300ms
 - Node Initialization: < 300ms
@@ -81,6 +83,7 @@ dashboard.reportPerformanceMetrics()
 - Zoom Setup: < 100ms
 
 ### dwh-6.fixed.json (Target - 885 nodes)
+
 - **Total**: < 15 seconds (after optimization)
 - Node Creation: < 5 seconds
 - Node Initialization: < 3 seconds
@@ -141,6 +144,7 @@ With instrumentation in place, you can now:
 ## Testing Workflow
 
 ### Baseline Measurement
+
 ```
 1. Open test-performance.html
 2. Click "Run Comparison Test"
@@ -149,6 +153,7 @@ With instrumentation in place, you can now:
 ```
 
 ### After Each Optimization
+
 ```
 1. Implement optimization
 2. Open test-performance.html
@@ -161,16 +166,19 @@ With instrumentation in place, you can now:
 ## Troubleshooting
 
 ### Metrics show 0ms for some phases
+
 - Check that the dashboard is loading completely
 - Verify that initialize() is being called (not setData())
 - Look for JavaScript errors in console
 
 ### Test harness doesn't load
+
 - Verify you're accessing via HTTP server (not file://)
 - Check that data files exist: data/dwh-1.json, data/dwh-6.fixed.json
 - Verify ES6 modules are supported by your browser
 
 ### Performance varies between runs
+
 - Close other tabs/applications
 - Disable browser extensions
 - Run multiple tests and take average
@@ -216,6 +224,7 @@ A: Instrumentation overhead is minimal (~1-2ms). You can optionally wrap with en
 ## Contact
 
 For questions or issues with the performance instrumentation:
+
 - Check PERFORMANCE_IMPLEMENTATION_PLAN.md for context
 - Review DASHBOARD_LOADING_ANALYSIS.md for technical details
 - Check browser console for error messages

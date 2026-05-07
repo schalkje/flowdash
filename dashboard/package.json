@@ -1,6 +1,6 @@
 {
   "name": "flowdash",
-  "version": "1.2.27",
+  "version": "1.4.0",
   "description": "Visualize data flow processes",
   "homepage": "https://schalken.net",
   "main": "index.js",
@@ -16,20 +16,35 @@
     "canvas"
   ],
   "scripts": {
-    "prebuild": "npm version patch --no-git-tag-version",
     "build": "webpack --mode production",
     "build:analyze": "webpack --mode production --env analyze",
-    "start": "webpack serve --open --mode development"
+    "start": "webpack serve --open --mode development",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "Jeroen Schalken",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/schalkje/flowdash.git",
+    "directory": "dashboard"
+  },
+  "files": [
+    "dist/",
+    "flowdash.css",
+    "themes/"
+  ],
   "devDependencies": {
     "@babel/core": "^7",
     "@babel/preset-env": "^7",
     "@playwright/test": "^1.54.1",
     "@types/node": "^24.0.14",
+    "@vitest/coverage-v8": "^2.1.0",
     "babel-loader": "^9",
     "core-js": "^3.45.1",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0",
     "webpack": "^5",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5"

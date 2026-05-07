@@ -13,7 +13,7 @@ export class MarginZone extends BaseZone {
       top: 8,
       right: 8,
       bottom: 8,
-      left: 8
+      left: 8,
     };
     this.visualElements = [];
   }
@@ -36,7 +36,7 @@ export class MarginZone extends BaseZone {
       top: fromSettings.top ?? 8,
       right: fromSettings.right ?? 8,
       bottom: fromSettings.bottom ?? 8,
-      left: fromSettings.left ?? 8
+      left: fromSettings.left ?? 8,
     };
   }
 
@@ -67,7 +67,7 @@ export class MarginZone extends BaseZone {
    */
   update() {
     if (!this.initialized) return;
-    
+
     // Margins are layout-only, no visual updates needed
     this.updateSize();
   }
@@ -99,12 +99,12 @@ export class MarginZone extends BaseZone {
    */
   validateMargins() {
     const errors = [];
-    
+
     if (this.margins.top < 0) errors.push('Top margin must be non-negative');
     if (this.margins.right < 0) errors.push('Right margin must be non-negative');
     if (this.margins.bottom < 0) errors.push('Bottom margin must be non-negative');
     if (this.margins.left < 0) errors.push('Left margin must be non-negative');
-    
+
     if (errors.length > 0) {
       console.warn('Margin validation errors:', errors);
     }
@@ -120,7 +120,7 @@ export class MarginZone extends BaseZone {
       left: this.margins.left,
       right: this.margins.right,
       top: this.margins.top,
-      bottom: this.margins.bottom
+      bottom: this.margins.bottom,
     };
   }
 
@@ -132,7 +132,7 @@ export class MarginZone extends BaseZone {
       x: this.margins.left,
       y: this.margins.top,
       width: containerWidth - this.margins.left - this.margins.right,
-      height: containerHeight - this.margins.top - this.margins.bottom
+      height: containerHeight - this.margins.top - this.margins.bottom,
     };
   }
 
@@ -142,7 +142,7 @@ export class MarginZone extends BaseZone {
   getInnerContainerPosition(headerHeight) {
     return {
       x: this.margins.left,
-      y: headerHeight + this.margins.top
+      y: headerHeight + this.margins.top,
     };
   }
 
@@ -152,7 +152,7 @@ export class MarginZone extends BaseZone {
   getTransformOffset() {
     return {
       x: this.margins.left - this.margins.right,
-      y: this.margins.top - this.margins.bottom
+      y: this.margins.top - this.margins.bottom,
     };
   }
 
@@ -162,7 +162,7 @@ export class MarginZone extends BaseZone {
   calculateContainerSize(contentWidth, contentHeight, headerHeight = 0) {
     return {
       width: contentWidth + this.margins.left + this.margins.right,
-      height: headerHeight + this.margins.top + contentHeight + this.margins.bottom
+      height: headerHeight + this.margins.top + contentHeight + this.margins.bottom,
     };
   }
 
@@ -172,7 +172,7 @@ export class MarginZone extends BaseZone {
   applyMarginsToPosition(x, y, headerHeight = 0) {
     return {
       x: x + this.margins.left,
-      y: y + headerHeight + this.margins.top
+      y: y + headerHeight + this.margins.top,
     };
   }
 
@@ -182,7 +182,7 @@ export class MarginZone extends BaseZone {
   removeMarginsFromPosition(x, y, headerHeight = 0) {
     return {
       x: x - this.margins.left,
-      y: y - headerHeight - this.margins.top
+      y: y - headerHeight - this.margins.top,
     };
   }
 
@@ -190,10 +190,12 @@ export class MarginZone extends BaseZone {
    * Check if a position is within margin boundaries
    */
   isWithinMargins(x, y, containerWidth, containerHeight, headerHeight = 0) {
-    return x >= this.margins.left &&
-           x <= containerWidth - this.margins.right &&
-           y >= headerHeight + this.margins.top &&
-           y <= containerHeight - this.margins.bottom;
+    return (
+      x >= this.margins.left &&
+      x <= containerWidth - this.margins.right &&
+      y >= headerHeight + this.margins.top &&
+      y <= containerHeight - this.margins.bottom
+    );
   }
 
   /**
@@ -204,7 +206,7 @@ export class MarginZone extends BaseZone {
       minX: this.margins.left,
       maxX: containerWidth - this.margins.right,
       minY: headerHeight + this.margins.top,
-      maxY: containerHeight - this.margins.bottom
+      maxY: containerHeight - this.margins.bottom,
     };
   }
 
@@ -213,13 +215,13 @@ export class MarginZone extends BaseZone {
    */
   calculateSpacing(elementCount, elementSize, spacing, isHorizontal = true) {
     if (elementCount <= 1) return 0;
-    
+
     const totalElementSize = elementCount * elementSize;
     const totalSpacing = (elementCount - 1) * spacing;
-    const availableSpace = isHorizontal ? 
-      this.margins.left + this.margins.right : 
-      this.margins.top + this.margins.bottom;
-    
+    const availableSpace = isHorizontal
+      ? this.margins.left + this.margins.right
+      : this.margins.top + this.margins.bottom;
+
     return Math.max(0, availableSpace - totalElementSize - totalSpacing);
   }
 
@@ -229,23 +231,23 @@ export class MarginZone extends BaseZone {
   getCoordinateSystem(containerWidth, containerHeight, headerHeight = 0) {
     const contentArea = this.getContentArea(containerWidth, containerHeight);
     const transformOffset = this.getTransformOffset();
-    
+
     return {
       origin: {
         x: contentArea.x,
-        y: headerHeight + contentArea.y
+        y: headerHeight + contentArea.y,
       },
       size: {
         width: contentArea.width,
-        height: contentArea.height
+        height: contentArea.height,
       },
       transform: `translate(${transformOffset.x}, ${transformOffset.y})`,
       bounds: {
         left: this.margins.left,
         right: containerWidth - this.margins.right,
         top: headerHeight + this.margins.top,
-        bottom: containerHeight - this.margins.bottom
-      }
+        bottom: containerHeight - this.margins.bottom,
+      },
     };
   }
 
@@ -264,7 +266,7 @@ export class MarginZone extends BaseZone {
     return {
       margins: this.getMargins(),
       size: this.getSize(),
-      validation: this.validateMargins()
+      validation: this.validateMargins(),
     };
   }
-} 
+}

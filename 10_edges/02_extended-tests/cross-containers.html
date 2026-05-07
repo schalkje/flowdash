@@ -1,82 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>02 - Cross Containers & Layering (edges)</title>
-    
-    <link rel="stylesheet" href="../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css">
+
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
 
     <script src="../../dashboard/libs/d3.min.js"></script>
     <script src="../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <header class="demo-header">
-        <h1>Edges Demos</h1>
-        <h2>02 - Cross Containers & Layering</h2>
-        <p class="demo-description">Edges between nodes in different containers (lane → columns) to demonstrate layering, and dynamic edge updates when collapsing/expanding containers.</p>
-        <div class="demo-controls">
-            <button id="collapseLane">Collapse Lane</button>
-            <button id="expandLane">Expand Lane</button>
-            <button id="collapseCols">Collapse Columns</button>
-            <button id="expandCols">Expand Columns</button>
-            <button id="testBtn">Run Tests</button>
-        </div>
+      <h1>Edges Demos</h1>
+      <h2>02 - Cross Containers & Layering</h2>
+      <p class="demo-description">
+        Edges between nodes in different containers (lane → columns) to demonstrate layering, and
+        dynamic edge updates when collapsing/expanding containers.
+      </p>
+      <div class="demo-controls">
+        <button id="collapseLane">Collapse Lane</button>
+        <button id="expandLane">Expand Lane</button>
+        <button id="collapseCols">Collapse Columns</button>
+        <button id="expandCols">Expand Columns</button>
+        <button id="testBtn">Run Tests</button>
+      </div>
     </header>
 
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Containers:</strong> lane + columns</p>
-            <p><strong>Edges:</strong> across containers</p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Containers:</strong> lane + columns</p>
+        <p><strong>Edges:</strong> across containers</p>
+      </div>
     </footer>
 
     <script type="module">
-        import { demoData } from './js/cross-containers.js';
-        import flowDashboard from '../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
+      import { demoData } from './js/cross-containers.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../dashboard/js/demoSettings.js';
 
-        let flowdash;
+      let flowdash;
 
-        function build(dataset) {
-            const ds = dataset || demoData;
-            flowdash = new flowDashboard.Dashboard(ds);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      function build(dataset) {
+        const ds = dataset || demoData;
+        flowdash = new flowDashboard.Dashboard(ds);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => demoData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => demoData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(demoData);
+      build(demoData);
 
-        function getNode(id) { return flowdash.main.root.getNode(id); }
+      function getNode(id) {
+        return flowdash.main.root.getNode(id);
+      }
 
-        document.getElementById('collapseLane').addEventListener('click', () => getNode('laneA')?.collapse());
-        document.getElementById('expandLane').addEventListener('click', () => getNode('laneA')?.expand());
-        document.getElementById('collapseCols').addEventListener('click', () => getNode('colsB')?.collapse());
-        document.getElementById('expandCols').addEventListener('click', () => getNode('colsB')?.expand());
-        document.getElementById('testBtn').addEventListener('click', () => runDemoTests());
+      document
+        .getElementById('collapseLane')
+        .addEventListener('click', () => getNode('laneA')?.collapse());
+      document
+        .getElementById('expandLane')
+        .addEventListener('click', () => getNode('laneA')?.expand());
+      document
+        .getElementById('collapseCols')
+        .addEventListener('click', () => getNode('colsB')?.collapse());
+      document
+        .getElementById('expandCols')
+        .addEventListener('click', () => getNode('colsB')?.expand());
+      document.getElementById('testBtn').addEventListener('click', () => runDemoTests());
 
-        function runDemoTests() {
-            const edges = document.querySelectorAll('g.edge .path');
-            const hasEdges = edges.length > 0;
-            console.log('Edges rendered:', edges.length, 'OK=', hasEdges);
-        }
+      function runDemoTests() {
+        const edges = document.querySelectorAll('g.edge .path');
+        const hasEdges = edges.length > 0;
+        console.log('Edges rendered:', edges.length, 'OK=', hasEdges);
+      }
     </script>
-</body>
+  </body>
 </html>
-
-

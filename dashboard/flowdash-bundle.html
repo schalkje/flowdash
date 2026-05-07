@@ -1,9 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flow Dashboard</title>
     <!-- Load D3.js separately - this will be externalized from the bundle -->
     <script src="libs/d3.min.js"></script>
@@ -11,486 +10,559 @@
     <script src="libs/d3-dag.iife.min.js"></script>
     <!-- Load the bundle after D3.js is available -->
     <script src="dist/flowdash.min.js"></script>
-    <link rel="stylesheet" href="flowdash.css">
-    <link rel="stylesheet" href="flowdash-demo.css">
-    <script>window.FLOWDASH_THEME = { default: 'retro' };</script>
+    <link rel="stylesheet" href="flowdash.css" />
+    <link rel="stylesheet" href="flowdash-demo.css" />
+    <script>
+      window.FLOWDASH_THEME = { default: 'retro' };
+    </script>
     <script src="js/themeManager.js"></script>
-</head>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
 
-<body>
+  <body>
     <header class="demo-header">
-        <div class="demo-header__titles">
-            <h1 id="pageTitle">Title to be replaced with filename</h1>
-            <h2>Interactive Flow Dashboard</h2>
-            <p class="demo-description">Visualize datasets with configurable layout, visibility options and zoom controls</p>
-        </div>
-        <div class="demo-controls">
-            <button id="settingsBtn" type="button" aria-expanded="false">Settings</button>
-            <button id="cycleFilesBtn" type="button">Cycle Files</button>
-            <button id="status-updated" onclick="setStatus('Updated')">Set to ready</button>
-            <button id="status-unknown" onclick="setStatus('Unknown')">Set to unknown</button>
-            <button id="status-random" onclick="randomStates()">Random States</button>
-        </div>
+      <div class="demo-header__titles">
+        <h1 id="pageTitle">Title to be replaced with filename</h1>
+        <h2>Interactive Flow Dashboard</h2>
+        <p class="demo-description">
+          Visualize datasets with configurable layout, visibility options and zoom controls
+        </p>
+      </div>
+      <div class="demo-controls">
+        <button id="settingsBtn" type="button" aria-expanded="false">Settings</button>
+        <button id="cycleFilesBtn" type="button">Cycle Files</button>
+        <button id="status-updated" onclick="setStatus('Updated')">Set to ready</button>
+        <button id="status-unknown" onclick="setStatus('Unknown')">Set to unknown</button>
+        <button id="status-random" onclick="randomStates()">Random States</button>
+      </div>
     </header>
 
     <section class="settings-panel">
-        <div class="settings-row">
-            <div class="settings-group">
-                <label class="settings-title">Data</label>
-                <div class="settings-inline">
-                    <label for="fileSelect">Select JSON file</label>
-                    <select id="fileSelect"></select>
-                </div>
-            </div>
-            <div class="settings-group is-toggles">
-                <label class="settings-title">Layout</label>
-                <div class="settings-toggles">
-                    <label><input type="checkbox" id="horizontalCheckbox"> Horizontal</label>
-                    <label><input type="checkbox" id="curveCheckbox" checked> Curved edges</label>
-                    <label>Mechanism
-                        <select id="layoutMechanismSelect" value="force">
-                            <option value="force" selected>Force</option>
-                            <option value="sugiyama">Sugiyama</option>
-                        </select>
-                    </label>
-                </div>
-            </div>
-            <div class="settings-group is-toggles">
-                <label class="settings-title">Visibility</label>
-                <div class="settings-toggles is-3cols">
-                    <label><input type="checkbox" id="showEdgesCheckbox" checked> Show edges</label>
-                    <label><input type="checkbox" id="showGhostlinesCheckbox"> Ghostlines</label>
-                    <label><input type="checkbox" id="showBoundingBoxCheckbox" checked> Bounding box</label>
-                    <label><input type="checkbox" id="showCenterMarkCheckbox"> Center mark</label>
-                    <label><input type="checkbox" id="showConnectionPointsCheckbox"> Connection points</label>
-                    <label><input type="checkbox" id="zoomToRoot" checked> Zoom to root</label>
-                    <label><input type="checkbox" id="showInnerZoneRectCheckbox"> Inner zone rect</label>
-                </div>
-            </div>
-            <div class="settings-group is-toggles">
-                <label class="settings-title">Status Behavior</label>
-                <div class="settings-toggles">
-                    <label><input type="checkbox" id="toggleCollapseOnStatusChange" checked> Auto-collapse on status change</label>
-                    <label><input type="checkbox" id="cascadeOnStatusChange" checked> Cascade status changes</label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <label class="settings-title">Minimap</label>
-                <div class="settings-inline">
-                    <label for="minimapModeSelect">Mode</label>
-                    <select id="minimapModeSelect" style="width:160px">
-                        <option value="always" selected>Always</option>
-                        <option value="hover">Hover</option>
-                        <option value="hidden">Hidden</option>
-                        <option value="disabled">Disabled (Best Performance)</option>
-                    </select>
-                    <label for="minimapPositionSelect" style="margin-left:12px">Position</label>
-                    <select id="minimapPositionSelect" style="width:160px">
-                        <option value="bottom-right" selected>Bottom-right</option>
-                        <option value="bottom-left">Bottom-left</option>
-                        <option value="top-right">Top-right</option>
-                        <option value="top-left">Top-left</option>
-                    </select>
-                    <label for="minimapSizeSelect" style="margin-left:12px">Size</label>
-                    <select id="minimapSizeSelect" style="width:120px">
-                        <option value="s">Small</option>
-                        <option value="m" selected>Medium</option>
-                        <option value="l">Large</option>
-                    </select>
-                </div>
-                <div class="settings-inline" style="margin-top:8px">
-                    <label style="margin-left:0"><input type="checkbox" id="minimapScaleVisible" checked> Show scale</label>
-                </div>
-            </div>
-
-            <div class="settings-group">
-                <label class="settings-title">Edges</label>
-                <div class="settings-inline">
-                    <label>Curve margin <input type="number" step="0.05" min="0" max="0.8" id="numCurveMargin" style="width:80px"></label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <label class="settings-title">Selector</label>
-                <div class="settings-inline">
-                    <label>Incoming <input type="number" min="0" id="numSelectorIn" style="width:70px"></label>
-                    <label>Outgoing <input type="number" min="0" id="numSelectorOut" style="width:70px"></label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <label class="settings-title">Node spacing</label>
-                <div class="settings-inline">
-                    <label>H <input type="number" min="0" id="numNodeSpacingH" style="width:70px"></label>
-                    <label>V <input type="number" min="0" id="numNodeSpacingV" style="width:70px"></label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <label class="settings-title">Container margin</label>
-                <div class="settings-inline">
-                    <label>T <input type="number" min="0" id="numMarginTop" style="width:60px"></label>
-                    <label>R <input type="number" min="0" id="numMarginRight" style="width:60px"></label>
-                    <label>B <input type="number" min="0" id="numMarginBottom" style="width:60px"></label>
-                    <label>L <input type="number" min="0" id="numMarginLeft" style="width:60px"></label>
-                </div>
-            </div>
+      <div class="settings-row">
+        <div class="settings-group">
+          <label class="settings-title">Data</label>
+          <div class="settings-inline">
+            <label for="fileSelect">Select JSON file</label>
+            <select id="fileSelect"></select>
+          </div>
         </div>
+        <div class="settings-group is-toggles">
+          <label class="settings-title">Layout</label>
+          <div class="settings-toggles">
+            <label><input type="checkbox" id="horizontalCheckbox" /> Horizontal</label>
+            <label><input type="checkbox" id="curveCheckbox" checked /> Curved edges</label>
+            <label
+              >Mechanism
+              <select id="layoutMechanismSelect" value="force">
+                <option value="force" selected>Force</option>
+                <option value="sugiyama">Sugiyama</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="settings-group is-toggles">
+          <label class="settings-title">Visibility</label>
+          <div class="settings-toggles is-3cols">
+            <label><input type="checkbox" id="showEdgesCheckbox" checked /> Show edges</label>
+            <label><input type="checkbox" id="showGhostlinesCheckbox" /> Ghostlines</label>
+            <label
+              ><input type="checkbox" id="showBoundingBoxCheckbox" checked /> Bounding box</label
+            >
+            <label><input type="checkbox" id="showCenterMarkCheckbox" /> Center mark</label>
+            <label
+              ><input type="checkbox" id="showConnectionPointsCheckbox" /> Connection points</label
+            >
+            <label><input type="checkbox" id="zoomToRoot" checked /> Zoom to root</label>
+            <label><input type="checkbox" id="showInnerZoneRectCheckbox" /> Inner zone rect</label>
+          </div>
+        </div>
+        <div class="settings-group is-toggles">
+          <label class="settings-title">Status Behavior</label>
+          <div class="settings-toggles">
+            <label
+              ><input type="checkbox" id="toggleCollapseOnStatusChange" checked /> Auto-collapse on
+              status change</label
+            >
+            <label
+              ><input type="checkbox" id="cascadeOnStatusChange" checked /> Cascade status
+              changes</label
+            >
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-title">Minimap</label>
+          <div class="settings-inline">
+            <label for="minimapModeSelect">Mode</label>
+            <select id="minimapModeSelect" style="width: 160px">
+              <option value="always" selected>Always</option>
+              <option value="hover">Hover</option>
+              <option value="hidden">Hidden</option>
+              <option value="disabled">Disabled (Best Performance)</option>
+            </select>
+            <label for="minimapPositionSelect" style="margin-left: 12px">Position</label>
+            <select id="minimapPositionSelect" style="width: 160px">
+              <option value="bottom-right" selected>Bottom-right</option>
+              <option value="bottom-left">Bottom-left</option>
+              <option value="top-right">Top-right</option>
+              <option value="top-left">Top-left</option>
+            </select>
+            <label for="minimapSizeSelect" style="margin-left: 12px">Size</label>
+            <select id="minimapSizeSelect" style="width: 120px">
+              <option value="s">Small</option>
+              <option value="m" selected>Medium</option>
+              <option value="l">Large</option>
+            </select>
+          </div>
+          <div class="settings-inline" style="margin-top: 8px">
+            <label style="margin-left: 0"
+              ><input type="checkbox" id="minimapScaleVisible" checked /> Show scale</label
+            >
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-title">Edges</label>
+          <div class="settings-inline">
+            <label
+              >Curve margin
+              <input
+                type="number"
+                step="0.05"
+                min="0"
+                max="0.8"
+                id="numCurveMargin"
+                style="width: 80px"
+            /></label>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-title">Selector</label>
+          <div class="settings-inline">
+            <label
+              >Incoming <input type="number" min="0" id="numSelectorIn" style="width: 70px"
+            /></label>
+            <label
+              >Outgoing <input type="number" min="0" id="numSelectorOut" style="width: 70px"
+            /></label>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-title">Node spacing</label>
+          <div class="settings-inline">
+            <label
+              >H <input type="number" min="0" id="numNodeSpacingH" style="width: 70px"
+            /></label>
+            <label
+              >V <input type="number" min="0" id="numNodeSpacingV" style="width: 70px"
+            /></label>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-title">Container margin</label>
+          <div class="settings-inline">
+            <label>T <input type="number" min="0" id="numMarginTop" style="width: 60px" /></label>
+            <label>R <input type="number" min="0" id="numMarginRight" style="width: 60px" /></label>
+            <label
+              >B <input type="number" min="0" id="numMarginBottom" style="width: 60px"
+            /></label>
+            <label>L <input type="number" min="0" id="numMarginLeft" style="width: 60px" /></label>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="demo-container">
-        <div id="graph-container">
-            <svg id="graph" class="canvas"></svg>
-        </div>
+      <div id="graph-container">
+        <svg id="graph" class="canvas"></svg>
+      </div>
     </div>
 
     <script>
-        const jsonFiles = [
-            "adapter-1.json",
-            "dwh-1.json",
-            "dwh-2.json",
-            "dwh-3.json",
-            "dwh-4.json",
-            "dwh-5.json",
-            "lane-small.json",
-            "lane-big.json",
-            "theme_1.json",
-            "theme_2.json"
-        ];
-        let currentFileIndex = 9;
+      const jsonFiles = [
+        'adapter-1.json',
+        'dwh-1.json',
+        'dwh-2.json',
+        'dwh-3.json',
+        'dwh-4.json',
+        'dwh-5.json',
+        'lane-small.json',
+        'lane-big.json',
+        'theme_1.json',
+        'theme_2.json',
+      ];
+      let currentFileIndex = 9;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setPageTitle();
-            populateFileDropdown();
-            setUIFromDefaults();
-            initializeEventListeners();
-            renderDashboard();
+      document.addEventListener('DOMContentLoaded', () => {
+        setPageTitle();
+        populateFileDropdown();
+        setUIFromDefaults();
+        initializeEventListeners();
+        renderDashboard();
 
-            // Settings panel toggle
-            const settingsPanel = document.querySelector('.settings-panel');
-            const settingsBtn = document.getElementById('settingsBtn');
-            if (settingsPanel && settingsBtn) {
-                const toggleSettingsVisibility = () => {
-                    const isOpen = settingsPanel.classList.toggle('open');
-                    settingsBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                    settingsBtn.textContent = isOpen ? 'Hide settings' : 'Settings';
-                };
-                settingsBtn.addEventListener('click', toggleSettingsVisibility);
+        // Settings panel toggle
+        const settingsPanel = document.querySelector('.settings-panel');
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsPanel && settingsBtn) {
+          const toggleSettingsVisibility = () => {
+            const isOpen = settingsPanel.classList.toggle('open');
+            settingsBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            settingsBtn.textContent = isOpen ? 'Hide settings' : 'Settings';
+          };
+          settingsBtn.addEventListener('click', toggleSettingsVisibility);
+        }
+
+        // Cycle files button
+        const cycleBtn = document.getElementById('cycleFilesBtn');
+        if (cycleBtn) {
+          cycleBtn.addEventListener('click', () => {
+            currentFileIndex = (currentFileIndex + 1) % jsonFiles.length;
+            const next = jsonFiles[currentFileIndex];
+            const fileSelect = document.getElementById('fileSelect');
+            if (fileSelect) {
+              fileSelect.value = next;
             }
+            updateGraphData();
+          });
+        }
+      });
 
-            // Cycle files button
-            const cycleBtn = document.getElementById('cycleFilesBtn');
-            if (cycleBtn) {
-                cycleBtn.addEventListener('click', () => {
-                    currentFileIndex = (currentFileIndex + 1) % jsonFiles.length;
-                    const next = jsonFiles[currentFileIndex];
-                    const fileSelect = document.getElementById('fileSelect');
-                    if (fileSelect) {
-                        fileSelect.value = next;
-                    }
-                    updateGraphData();
-                });
-            }
+      window.setStatus = function (status) {
+        const structure = dashboard.getStructure();
+
+        if (structure && structure.Nodes) {
+          const updatePromises = structure.Nodes.map((node, index) => {
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                dashboard.updateNodeStatus(node.Id, status);
+                resolve();
+              }, index * 100); // Delay each update by 100ms multiplied by the index
+            });
+          });
+
+          Promise.all(updatePromises);
+        } else {
+          console.error('structure.Nodes is undefined', structure);
+        }
+      };
+
+      // Randomize node statuses sequentially using all available statuses (excluding Undetermined)
+      const ALL_STATUSES = ['Updated', 'Unknown', 'Error', 'Warning', 'Info'];
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+      window.randomStates = function () {
+        const structure = dashboard.getStructure();
+        if (!(structure && structure.Nodes)) {
+          console.error('structure.Nodes is undefined', structure);
+          return;
+        }
+        const statuses = shuffle([...ALL_STATUSES]);
+        const updatePromises = structure.Nodes.map((node, index) => {
+          const status = statuses[index % statuses.length];
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              dashboard.updateNodeStatus(node.Id, status);
+              resolve();
+            }, index * 100);
+          });
         });
+        Promise.all(updatePromises);
+      };
 
-        window.setStatus = function(status) {
-            const structure = dashboard.getStructure();
-            
-            if (structure && structure.Nodes) {
-                const updatePromises = structure.Nodes.map((node, index) => {
-                    return new Promise((resolve) => {
-                        setTimeout(() => {
-                            dashboard.updateNodeStatus(node.Id, status);
-                            resolve();
-                        }, index * 100); // Delay each update by 100ms multiplied by the index
-                    });
-                });
-
-                Promise.all(updatePromises);
-            } else {
-                console.error('structure.Nodes is undefined', structure);
-            }
+      // Function to set the page title dynamically
+      function setPageTitle() {
+        const getFilename = () => {
+          const path = window.location.pathname;
+          return path.substring(path.lastIndexOf('/') + 1) || 'index.html';
         };
+        document.getElementById('pageTitle').textContent = `${document.title} - ${getFilename()}`;
+      }
 
-        // Randomize node statuses sequentially using all available statuses (excluding Undetermined)
-        const ALL_STATUSES = ['Updated', 'Unknown', 'Error', 'Warning', 'Info'];
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+      // Function to populate the file dropdown
+      function populateFileDropdown() {
+        const fileSelect = document.getElementById('fileSelect');
+        if (!fileSelect) return;
+        fileSelect.innerHTML = '';
+        jsonFiles.forEach((filename, idx) => {
+          const option = document.createElement('option');
+          option.value = filename;
+          option.text = filename;
+          if (idx === currentFileIndex) option.selected = true;
+          fileSelect.appendChild(option);
+        });
+      }
+
+      function setUIFromDefaults() {
+        const setChecked = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.checked = !!val;
+        };
+        const setValue = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.value = val;
+        };
+        setChecked('horizontalCheckbox', false);
+        setChecked('curveCheckbox', false);
+        setChecked('showEdgesCheckbox', true);
+        setChecked('showGhostlinesCheckbox', false);
+        setChecked('showBoundingBoxCheckbox', true);
+        setChecked('showCenterMarkCheckbox', false);
+        setChecked('showConnectionPointsCheckbox', false);
+        setChecked('zoomToRoot', true);
+        setChecked('showInnerZoneRectCheckbox', false);
+        setChecked('toggleCollapseOnStatusChange', true);
+        setChecked('cascadeOnStatusChange', true);
+        setValue('layoutMechanismSelect', 'force');
+        setValue('numCurveMargin', 0);
+        setValue('numSelectorIn', 1);
+        setValue('numSelectorOut', 1);
+        setValue('numNodeSpacingH', 20);
+        setValue('numNodeSpacingV', 10);
+        setValue('numMarginTop', 8);
+        setValue('numMarginRight', 8);
+        setValue('numMarginBottom', 8);
+        setValue('numMarginLeft', 8);
+        // Minimap defaults
+        const mmMode = document.getElementById('minimapModeSelect');
+        if (mmMode) mmMode.value = 'always';
+        const mmPos = document.getElementById('minimapPositionSelect');
+        if (mmPos) mmPos.value = 'bottom-right';
+        const mmSize = document.getElementById('minimapSizeSelect');
+        if (mmSize) mmSize.value = 'm';
+        const mmScaleVisible = document.getElementById('minimapScaleVisible');
+        if (mmScaleVisible) mmScaleVisible.checked = true;
+        const fileSelect = document.getElementById('fileSelect');
+        if (fileSelect) fileSelect.value = jsonFiles[currentFileIndex];
+      }
+
+      // Function to initialize event listeners
+      function initializeEventListeners() {
+        document.getElementById('horizontalCheckbox').addEventListener('change', updateLayout);
+        document.getElementById('curveCheckbox').addEventListener('change', updateLayout);
+        document.getElementById('fileSelect').addEventListener('change', updateGraphData);
+        document.getElementById('layoutMechanismSelect').addEventListener('change', updateLayout);
+        document.getElementById('showEdgesCheckbox').addEventListener('change', updateLayout);
+        document.getElementById('showGhostlinesCheckbox').addEventListener('change', updateLayout);
+        document.getElementById('showBoundingBoxCheckbox').addEventListener('change', updateLayout);
+        document.getElementById('showCenterMarkCheckbox').addEventListener('change', updateLayout);
+        document
+          .getElementById('showConnectionPointsCheckbox')
+          .addEventListener('change', updateLayout);
+        document.getElementById('zoomToRoot').addEventListener('change', updateLayout);
+        document
+          .getElementById('showInnerZoneRectCheckbox')
+          .addEventListener('change', updateLayout);
+        document
+          .getElementById('toggleCollapseOnStatusChange')
+          .addEventListener('change', updateLayout);
+        document.getElementById('cascadeOnStatusChange').addEventListener('change', updateLayout);
+        document.getElementById('numCurveMargin').addEventListener('change', updateLayout);
+        document.getElementById('numSelectorIn').addEventListener('change', updateLayout);
+        document.getElementById('numSelectorOut').addEventListener('change', updateLayout);
+        document.getElementById('numNodeSpacingH').addEventListener('change', updateLayout);
+        document.getElementById('numNodeSpacingV').addEventListener('change', updateLayout);
+        document.getElementById('numMarginTop').addEventListener('change', updateLayout);
+        document.getElementById('numMarginRight').addEventListener('change', updateLayout);
+        document.getElementById('numMarginBottom').addEventListener('change', updateLayout);
+        document.getElementById('numMarginLeft').addEventListener('change', updateLayout);
+      }
+
+      let dag, dashboard;
+      let horizontal = document.getElementById('horizontalCheckbox').checked;
+      let isEdgeCurved = document.getElementById('curveCheckbox').checked;
+      let showEdges = document.getElementById('showEdgesCheckbox').checked;
+      let showGhostlines = document.getElementById('showGhostlinesCheckbox').checked;
+      let showBoundingBox = document.getElementById('showBoundingBoxCheckbox').checked;
+      let showCenterMark = document.getElementById('showCenterMarkCheckbox').checked;
+      let showConnectionPoints = document.getElementById('showConnectionPointsCheckbox').checked;
+      let zoomToRoot = document.getElementById('zoomToRoot').checked;
+      let layoutMechanism = document.getElementById('layoutMechanismSelect').value;
+      let selectedFile = document.getElementById('fileSelect').value;
+
+      // Function to initialize the dashboard with default settings
+      function initializeDashboard() {
+        selectedFile =
+          document.getElementById('fileSelect').value ||
+          jsonFiles[currentFileIndex] ||
+          'dwh-1.json';
+        // loading handled by dashboard.initialize()
+        flowdash.fetchDashboardFile(selectedFile).then((dashboardData) => {
+          // Apply all UI settings to dashboard data
+          dashboardData.settings.zoomToRoot = zoomToRoot;
+          dashboardData.settings.showBoundingBox = showBoundingBox;
+          dashboardData.settings.showCenterMark = showCenterMark;
+          dashboardData.settings.showConnectionPoints = showConnectionPoints;
+          dashboardData.settings.showGhostlines = showGhostlines;
+          dashboardData.settings.showInnerZoneRect = document.getElementById(
+            'showInnerZoneRectCheckbox',
+          ).checked;
+          dashboardData.settings.showEdges = showEdges;
+          dashboardData.settings.horizontal = horizontal;
+          dashboardData.settings.curved = isEdgeCurved;
+
+          const curveMargin = parseFloat(document.getElementById('numCurveMargin').value);
+          if (!Number.isNaN(curveMargin)) dashboardData.settings.curveMargin = curveMargin;
+
+          const selector = dashboardData.settings.selector || {};
+          const inVal = parseInt(document.getElementById('numSelectorIn').value, 10);
+          const outVal = parseInt(document.getElementById('numSelectorOut').value, 10);
+          if (!Number.isNaN(inVal)) selector.incomming = inVal;
+          if (!Number.isNaN(outVal)) selector.outgoing = outVal;
+          dashboardData.settings.selector = selector;
+
+          const nodeSpacing = dashboardData.settings.nodeSpacing || {};
+          const h = parseInt(document.getElementById('numNodeSpacingH').value, 10);
+          const v = parseInt(document.getElementById('numNodeSpacingV').value, 10);
+          if (!Number.isNaN(h)) nodeSpacing.horizontal = h;
+          if (!Number.isNaN(v)) nodeSpacing.vertical = v;
+          dashboardData.settings.nodeSpacing = nodeSpacing;
+
+          const containerMargin = dashboardData.settings.containerMargin || {};
+          const mt = parseInt(document.getElementById('numMarginTop').value, 10);
+          const mr = parseInt(document.getElementById('numMarginRight').value, 10);
+          const mb = parseInt(document.getElementById('numMarginBottom').value, 10);
+          const ml = parseInt(document.getElementById('numMarginLeft').value, 10);
+          if (!Number.isNaN(mt)) containerMargin.top = mt;
+          if (!Number.isNaN(mr)) containerMargin.right = mr;
+          if (!Number.isNaN(mb)) containerMargin.bottom = mb;
+          if (!Number.isNaN(ml)) containerMargin.left = ml;
+          dashboardData.settings.containerMargin = containerMargin;
+
+          // Minimap from UI
+          const mm = dashboardData.settings.minimap || (dashboardData.settings.minimap = {});
+          mm.mode = document.getElementById('minimapModeSelect')?.value || 'always';
+          mm.position = document.getElementById('minimapPositionSelect')?.value || 'bottom-right';
+          mm.size = document.getElementById('minimapSizeSelect')?.value || 'm';
+          // ensure enabled when not hidden
+          mm.enabled = mm.mode !== 'hidden';
+          mm.scaleIndicator = mm.scaleIndicator || {};
+          mm.scaleIndicator.visible = !!document.getElementById('minimapScaleVisible')?.checked;
+
+          // Status behavior settings from UI
+          dashboardData.settings.toggleCollapseOnStatusChange = document.getElementById(
+            'toggleCollapseOnStatusChange',
+          ).checked;
+          dashboardData.settings.cascadeOnStatusChange =
+            document.getElementById('cascadeOnStatusChange').checked;
+
+          dashboard = new flowdash.Dashboard(dashboardData);
+          dashboard.initialize('#graph');
+        });
+      }
+
+      // Function to update the graph layout
+      function updateLayout() {
+        horizontal = document.getElementById('horizontalCheckbox').checked;
+        isEdgeCurved = document.getElementById('curveCheckbox').checked;
+        layoutMechanism = document.getElementById('layoutMechanismSelect').value;
+        showEdges = document.getElementById('showEdgesCheckbox').checked;
+        showGhostlines = document.getElementById('showGhostlinesCheckbox').checked;
+        showBoundingBox = document.getElementById('showBoundingBoxCheckbox').checked;
+        showCenterMark = document.getElementById('showCenterMarkCheckbox').checked;
+        showConnectionPoints = document.getElementById('showConnectionPointsCheckbox').checked;
+        zoomToRoot = document.getElementById('zoomToRoot').checked;
+
+        // Check if status behavior settings changed
+        const toggleCollapseChanged =
+          document.getElementById('toggleCollapseOnStatusChange').checked !==
+          dashboard?.data?.settings?.toggleCollapseOnStatusChange;
+        const cascadeChanged =
+          document.getElementById('cascadeOnStatusChange').checked !==
+          dashboard?.data?.settings?.cascadeOnStatusChange;
+
+        renderDashboard();
+
+        // If toggleCollapseOnStatusChange changed, update the display immediately
+        if (
+          toggleCollapseChanged &&
+          dashboard &&
+          typeof dashboard.updateStatusBasedCollapse === 'function'
+        ) {
+          dashboard.updateStatusBasedCollapse();
         }
-        window.randomStates = function() {
-            const structure = dashboard.getStructure();
-            if (!(structure && structure.Nodes)) {
-                console.error('structure.Nodes is undefined', structure);
-                return;
-            }
-            const statuses = shuffle([...ALL_STATUSES]);
-            const updatePromises = structure.Nodes.map((node, index) => {
-                const status = statuses[index % statuses.length];
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        dashboard.updateNodeStatus(node.Id, status);
-                        resolve();
-                    }, index * 100);
-                });
-            });
-            Promise.all(updatePromises);
-        }
+      }
 
-        // Function to set the page title dynamically
-        function setPageTitle() {
-            const getFilename = () => {
-                const path = window.location.pathname;
-                return path.substring(path.lastIndexOf('/') + 1) || 'index.html';
-            };
-            document.getElementById('pageTitle').textContent = `${document.title} - ${getFilename()}`;
-        }
+      // Function to update graph data when a new file is selected
+      function updateGraphData() {
+        renderDashboard();
+      }
 
-        // Function to populate the file dropdown
-        function populateFileDropdown() {
-            const fileSelect = document.getElementById('fileSelect');
-            if (!fileSelect) return;
-            fileSelect.innerHTML = '';
-            jsonFiles.forEach((filename, idx) => {
-                const option = document.createElement('option');
-                option.value = filename;
-                option.text = filename;
-                if (idx === currentFileIndex) option.selected = true;
-                fileSelect.appendChild(option);
-            });
-        }
+      // Function to render or re-render the dashboard
+      function renderDashboard() {
+        selectedFile = document.getElementById('fileSelect').value;
+        // loading handled by dashboard.initialize()/setData()
+        flowdash.fetchDashboardFile(selectedFile).then((dashboardData) => {
+          // Apply all UI settings to dashboard data
+          dashboardData.settings.zoomToRoot = zoomToRoot;
+          dashboardData.settings.showBoundingBox = showBoundingBox;
+          dashboardData.settings.showCenterMark = showCenterMark;
+          dashboardData.settings.showConnectionPoints = showConnectionPoints;
+          dashboardData.settings.showGhostlines = showGhostlines;
+          dashboardData.settings.showInnerZoneRect = document.getElementById(
+            'showInnerZoneRectCheckbox',
+          ).checked;
+          dashboardData.settings.showEdges = showEdges;
+          dashboardData.settings.horizontal = horizontal;
+          dashboardData.settings.curved = isEdgeCurved;
 
-        function setUIFromDefaults() {
-            const setChecked = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
-            const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-            setChecked('horizontalCheckbox', false);
-            setChecked('curveCheckbox', false);
-            setChecked('showEdgesCheckbox', true);
-            setChecked('showGhostlinesCheckbox', false);
-            setChecked('showBoundingBoxCheckbox', true);
-            setChecked('showCenterMarkCheckbox', false);
-            setChecked('showConnectionPointsCheckbox', false);
-            setChecked('zoomToRoot', true);
-            setChecked('showInnerZoneRectCheckbox', false);
-            setChecked('toggleCollapseOnStatusChange', true);
-            setChecked('cascadeOnStatusChange', true);
-            setValue('layoutMechanismSelect', 'force');
-            setValue('numCurveMargin', 0);
-            setValue('numSelectorIn', 1);
-            setValue('numSelectorOut', 1);
-            setValue('numNodeSpacingH', 20);
-            setValue('numNodeSpacingV', 10);
-            setValue('numMarginTop', 8);
-            setValue('numMarginRight', 8);
-            setValue('numMarginBottom', 8);
-            setValue('numMarginLeft', 8);
-            // Minimap defaults
-            const mmMode = document.getElementById('minimapModeSelect'); if (mmMode) mmMode.value = 'always';
-            const mmPos = document.getElementById('minimapPositionSelect'); if (mmPos) mmPos.value = 'bottom-right';
-            const mmSize = document.getElementById('minimapSizeSelect'); if (mmSize) mmSize.value = 'm';
-            const mmScaleVisible = document.getElementById('minimapScaleVisible'); if (mmScaleVisible) mmScaleVisible.checked = true;
-            const fileSelect = document.getElementById('fileSelect');
-            if (fileSelect) fileSelect.value = jsonFiles[currentFileIndex];
-        }
+          const curveMargin = parseFloat(document.getElementById('numCurveMargin').value);
+          if (!Number.isNaN(curveMargin)) dashboardData.settings.curveMargin = curveMargin;
 
-        // Function to initialize event listeners
-        function initializeEventListeners() {
-            document.getElementById('horizontalCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('curveCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('fileSelect').addEventListener('change', updateGraphData);
-            document.getElementById('layoutMechanismSelect').addEventListener('change', updateLayout);
-            document.getElementById('showEdgesCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('showGhostlinesCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('showBoundingBoxCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('showCenterMarkCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('showConnectionPointsCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('zoomToRoot').addEventListener('change', updateLayout);
-            document.getElementById('showInnerZoneRectCheckbox').addEventListener('change', updateLayout);
-            document.getElementById('toggleCollapseOnStatusChange').addEventListener('change', updateLayout);
-            document.getElementById('cascadeOnStatusChange').addEventListener('change', updateLayout);
-            document.getElementById('numCurveMargin').addEventListener('change', updateLayout);
-            document.getElementById('numSelectorIn').addEventListener('change', updateLayout);
-            document.getElementById('numSelectorOut').addEventListener('change', updateLayout);
-            document.getElementById('numNodeSpacingH').addEventListener('change', updateLayout);
-            document.getElementById('numNodeSpacingV').addEventListener('change', updateLayout);
-            document.getElementById('numMarginTop').addEventListener('change', updateLayout);
-            document.getElementById('numMarginRight').addEventListener('change', updateLayout);
-            document.getElementById('numMarginBottom').addEventListener('change', updateLayout);
-            document.getElementById('numMarginLeft').addEventListener('change', updateLayout);
-        }
+          const selector = dashboardData.settings.selector || {};
+          const inVal = parseInt(document.getElementById('numSelectorIn').value, 10);
+          const outVal = parseInt(document.getElementById('numSelectorOut').value, 10);
+          if (!Number.isNaN(inVal)) selector.incomming = inVal;
+          if (!Number.isNaN(outVal)) selector.outgoing = outVal;
+          dashboardData.settings.selector = selector;
 
-        let dag, dashboard;
-        let horizontal = document.getElementById('horizontalCheckbox').checked;
-        let isEdgeCurved = document.getElementById('curveCheckbox').checked;
-        let showEdges = document.getElementById('showEdgesCheckbox').checked;
-        let showGhostlines = document.getElementById('showGhostlinesCheckbox').checked;
-        let showBoundingBox = document.getElementById('showBoundingBoxCheckbox').checked;
-        let showCenterMark = document.getElementById('showCenterMarkCheckbox').checked;
-        let showConnectionPoints = document.getElementById('showConnectionPointsCheckbox').checked;
-        let zoomToRoot = document.getElementById('zoomToRoot').checked;
-        let layoutMechanism = document.getElementById('layoutMechanismSelect').value;
-        let selectedFile = document.getElementById('fileSelect').value;
+          const nodeSpacing = dashboardData.settings.nodeSpacing || {};
+          const h = parseInt(document.getElementById('numNodeSpacingH').value, 10);
+          const v = parseInt(document.getElementById('numNodeSpacingV').value, 10);
+          if (!Number.isNaN(h)) nodeSpacing.horizontal = h;
+          if (!Number.isNaN(v)) nodeSpacing.vertical = v;
+          dashboardData.settings.nodeSpacing = nodeSpacing;
 
-        // Function to initialize the dashboard with default settings
-        function initializeDashboard() {
-            selectedFile = document.getElementById('fileSelect').value || jsonFiles[currentFileIndex] || "dwh-1.json";
-            // loading handled by dashboard.initialize()
-            flowdash.fetchDashboardFile(selectedFile).then(dashboardData => {
-                // Apply all UI settings to dashboard data
-                dashboardData.settings.zoomToRoot = zoomToRoot;
-                dashboardData.settings.showBoundingBox = showBoundingBox;
-                dashboardData.settings.showCenterMark = showCenterMark;
-                dashboardData.settings.showConnectionPoints = showConnectionPoints;
-                dashboardData.settings.showGhostlines = showGhostlines;
-                dashboardData.settings.showInnerZoneRect = document.getElementById('showInnerZoneRectCheckbox').checked;
-                dashboardData.settings.showEdges = showEdges;
-                dashboardData.settings.horizontal = horizontal;
-                dashboardData.settings.curved = isEdgeCurved;
-                
-                const curveMargin = parseFloat(document.getElementById('numCurveMargin').value);
-                if (!Number.isNaN(curveMargin)) dashboardData.settings.curveMargin = curveMargin;
-                
-                const selector = dashboardData.settings.selector || {};
-                const inVal = parseInt(document.getElementById('numSelectorIn').value, 10);
-                const outVal = parseInt(document.getElementById('numSelectorOut').value, 10);
-                if (!Number.isNaN(inVal)) selector.incomming = inVal;
-                if (!Number.isNaN(outVal)) selector.outgoing = outVal;
-                dashboardData.settings.selector = selector;
-                
-                const nodeSpacing = dashboardData.settings.nodeSpacing || {};
-                const h = parseInt(document.getElementById('numNodeSpacingH').value, 10);
-                const v = parseInt(document.getElementById('numNodeSpacingV').value, 10);
-                if (!Number.isNaN(h)) nodeSpacing.horizontal = h;
-                if (!Number.isNaN(v)) nodeSpacing.vertical = v;
-                dashboardData.settings.nodeSpacing = nodeSpacing;
-                
-                const containerMargin = dashboardData.settings.containerMargin || {};
-                const mt = parseInt(document.getElementById('numMarginTop').value, 10);
-                const mr = parseInt(document.getElementById('numMarginRight').value, 10);
-                const mb = parseInt(document.getElementById('numMarginBottom').value, 10);
-                const ml = parseInt(document.getElementById('numMarginLeft').value, 10);
-                if (!Number.isNaN(mt)) containerMargin.top = mt;
-                if (!Number.isNaN(mr)) containerMargin.right = mr;
-                if (!Number.isNaN(mb)) containerMargin.bottom = mb;
-                if (!Number.isNaN(ml)) containerMargin.left = ml;
-                dashboardData.settings.containerMargin = containerMargin;
-                
-                // Minimap from UI
-                const mm = dashboardData.settings.minimap || (dashboardData.settings.minimap = {});
-                mm.mode = (document.getElementById('minimapModeSelect')?.value) || 'always';
-                mm.position = (document.getElementById('minimapPositionSelect')?.value) || 'bottom-right';
-                mm.size = (document.getElementById('minimapSizeSelect')?.value) || 'm';
-                // ensure enabled when not hidden
-                mm.enabled = mm.mode !== 'hidden';
-                mm.scaleIndicator = mm.scaleIndicator || {};
-                mm.scaleIndicator.visible = !!(document.getElementById('minimapScaleVisible')?.checked);
-                
-                // Status behavior settings from UI
-                dashboardData.settings.toggleCollapseOnStatusChange = document.getElementById('toggleCollapseOnStatusChange').checked;
-                dashboardData.settings.cascadeOnStatusChange = document.getElementById('cascadeOnStatusChange').checked;
-                
-                dashboard = new flowdash.Dashboard(dashboardData);
-                dashboard.initialize('#graph');
-            });
-        }
+          const containerMargin = dashboardData.settings.containerMargin || {};
+          const mt = parseInt(document.getElementById('numMarginTop').value, 10);
+          const mr = parseInt(document.getElementById('numMarginRight').value, 10);
+          const mb = parseInt(document.getElementById('numMarginBottom').value, 10);
+          const ml = parseInt(document.getElementById('numMarginLeft').value, 10);
+          if (!Number.isNaN(mt)) containerMargin.top = mt;
+          if (!Number.isNaN(mr)) containerMargin.right = mr;
+          if (!Number.isNaN(mb)) containerMargin.bottom = mb;
+          if (!Number.isNaN(ml)) containerMargin.left = ml;
+          dashboardData.settings.containerMargin = containerMargin;
 
-        // Function to update the graph layout
-        function updateLayout() {
-            horizontal = document.getElementById('horizontalCheckbox').checked;
-            isEdgeCurved = document.getElementById('curveCheckbox').checked;
-            layoutMechanism = document.getElementById('layoutMechanismSelect').value;
-            showEdges = document.getElementById('showEdgesCheckbox').checked;
-            showGhostlines = document.getElementById('showGhostlinesCheckbox').checked;
-            showBoundingBox = document.getElementById('showBoundingBoxCheckbox').checked;
-            showCenterMark = document.getElementById('showCenterMarkCheckbox').checked;
-            showConnectionPoints = document.getElementById('showConnectionPointsCheckbox').checked;
-            zoomToRoot = document.getElementById('zoomToRoot').checked;
+          // Minimap from UI
+          const mm = dashboardData.settings.minimap || (dashboardData.settings.minimap = {});
+          mm.mode = document.getElementById('minimapModeSelect')?.value || 'always';
+          mm.position = document.getElementById('minimapPositionSelect')?.value || 'bottom-right';
+          mm.size = document.getElementById('minimapSizeSelect')?.value || 'm';
+          // ensure enabled when not hidden
+          mm.enabled = mm.mode !== 'hidden';
+          mm.scaleIndicator = mm.scaleIndicator || {};
+          mm.scaleIndicator.visible = !!document.getElementById('minimapScaleVisible')?.checked;
 
-            // Check if status behavior settings changed
-            const toggleCollapseChanged = document.getElementById('toggleCollapseOnStatusChange').checked !== dashboard?.data?.settings?.toggleCollapseOnStatusChange;
-            const cascadeChanged = document.getElementById('cascadeOnStatusChange').checked !== dashboard?.data?.settings?.cascadeOnStatusChange;
+          // Status behavior settings from UI
+          dashboardData.settings.toggleCollapseOnStatusChange = document.getElementById(
+            'toggleCollapseOnStatusChange',
+          ).checked;
+          dashboardData.settings.cascadeOnStatusChange =
+            document.getElementById('cascadeOnStatusChange').checked;
 
-            renderDashboard();
-
-            // If toggleCollapseOnStatusChange changed, update the display immediately
-            if (toggleCollapseChanged && dashboard && typeof dashboard.updateStatusBasedCollapse === 'function') {
-                dashboard.updateStatusBasedCollapse();
-            }
-        }
-
-        // Function to update graph data when a new file is selected
-        function updateGraphData() {
-            renderDashboard();
-        }
-
-        // Function to render or re-render the dashboard
-        function renderDashboard() {
-            selectedFile = document.getElementById('fileSelect').value;
-            // loading handled by dashboard.initialize()/setData()
-            flowdash.fetchDashboardFile(selectedFile).then(dashboardData => {
-                // Apply all UI settings to dashboard data
-                dashboardData.settings.zoomToRoot = zoomToRoot;
-                dashboardData.settings.showBoundingBox = showBoundingBox;
-                dashboardData.settings.showCenterMark = showCenterMark;
-                dashboardData.settings.showConnectionPoints = showConnectionPoints;
-                dashboardData.settings.showGhostlines = showGhostlines;
-                dashboardData.settings.showInnerZoneRect = document.getElementById('showInnerZoneRectCheckbox').checked;
-                dashboardData.settings.showEdges = showEdges;
-                dashboardData.settings.horizontal = horizontal;
-                dashboardData.settings.curved = isEdgeCurved;
-                
-                const curveMargin = parseFloat(document.getElementById('numCurveMargin').value);
-                if (!Number.isNaN(curveMargin)) dashboardData.settings.curveMargin = curveMargin;
-                
-                const selector = dashboardData.settings.selector || {};
-                const inVal = parseInt(document.getElementById('numSelectorIn').value, 10);
-                const outVal = parseInt(document.getElementById('numSelectorOut').value, 10);
-                if (!Number.isNaN(inVal)) selector.incomming = inVal;
-                if (!Number.isNaN(outVal)) selector.outgoing = outVal;
-                dashboardData.settings.selector = selector;
-                
-                const nodeSpacing = dashboardData.settings.nodeSpacing || {};
-                const h = parseInt(document.getElementById('numNodeSpacingH').value, 10);
-                const v = parseInt(document.getElementById('numNodeSpacingV').value, 10);
-                if (!Number.isNaN(h)) nodeSpacing.horizontal = h;
-                if (!Number.isNaN(v)) nodeSpacing.vertical = v;
-                dashboardData.settings.nodeSpacing = nodeSpacing;
-                
-                const containerMargin = dashboardData.settings.containerMargin || {};
-                const mt = parseInt(document.getElementById('numMarginTop').value, 10);
-                const mr = parseInt(document.getElementById('numMarginRight').value, 10);
-                const mb = parseInt(document.getElementById('numMarginBottom').value, 10);
-                const ml = parseInt(document.getElementById('numMarginLeft').value, 10);
-                if (!Number.isNaN(mt)) containerMargin.top = mt;
-                if (!Number.isNaN(mr)) containerMargin.right = mr;
-                if (!Number.isNaN(mb)) containerMargin.bottom = mb;
-                if (!Number.isNaN(ml)) containerMargin.left = ml;
-                dashboardData.settings.containerMargin = containerMargin;
-                
-                // Minimap from UI
-                const mm = dashboardData.settings.minimap || (dashboardData.settings.minimap = {});
-                mm.mode = (document.getElementById('minimapModeSelect')?.value) || 'always';
-                mm.position = (document.getElementById('minimapPositionSelect')?.value) || 'bottom-right';
-                mm.size = (document.getElementById('minimapSizeSelect')?.value) || 'm';
-                // ensure enabled when not hidden
-                mm.enabled = mm.mode !== 'hidden';
-                mm.scaleIndicator = mm.scaleIndicator || {};
-                mm.scaleIndicator.visible = !!(document.getElementById('minimapScaleVisible')?.checked);
-                
-                // Status behavior settings from UI
-                dashboardData.settings.toggleCollapseOnStatusChange = document.getElementById('toggleCollapseOnStatusChange').checked;
-                dashboardData.settings.cascadeOnStatusChange = document.getElementById('cascadeOnStatusChange').checked;
-
-                if (!dashboard) {
-                    dashboard = new flowdash.Dashboard(dashboardData);
-                    dashboard.initialize('#graph');
-                } else {
-                    // Assigning .data triggers a full reinitialization including the minimap
-                    dashboard.data = dashboardData;
-                }
-            });
-        }       
+          if (!dashboard) {
+            dashboard = new flowdash.Dashboard(dashboardData);
+            dashboard.initialize('#graph');
+          } else {
+            // Assigning .data triggers a full reinitialization including the minimap
+            dashboard.data = dashboardData;
+          }
+        });
+      }
     </script>
-</body>
-
+  </body>
 </html>

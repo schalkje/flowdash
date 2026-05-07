@@ -1,110 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>07 - Role Display Arrangement 1 (Explicit Children)</title>
-    
-    <!-- Standard CSS -->
-    <link rel="stylesheet" href="../../../dashboard/flowdash.css">
-    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css">
 
-    
+    <!-- Standard CSS -->
+    <link rel="stylesheet" href="../../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../../dashboard/flowdash-demo.css" />
+
     <!-- Required Libraries -->
     <script src="../../../dashboard/libs/d3.min.js"></script>
     <script src="../../../dashboard/libs/d3-shape.min.js"></script>
     <script src="../../../dashboard/libs/d3-dag.iife.min.js"></script>
-    <script>window.FLOWDASH_THEME = { default: 'light' };</script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
     <script src="../../../dashboard/js/themeManager.js"></script>
-</head>
-<body>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
     <!-- Demo Header -->
     <header class="demo-header">
-        <h1>Adapter Demos - Explicit Children</h1>
-        <h2>07 - Role Display Arrangement 1 (Explicit Children)</h2>
-        <p class="demo-description">Adapter node with role display mode, arrangement 1, and explicitly defined children</p>
-        
-        <!-- Demo Controls -->
-        <div class="demo-controls">
-            <button id="updateBtn" onclick="updateDemo()">Update</button>
-            <button id="resetBtn" onclick="resetDemo()">Reset</button>
-            <button id="testBtn" onclick="runTests()">Run Tests</button>
-        </div>
+      <h1>Adapter Demos - Explicit Children</h1>
+      <h2>07 - Role Display Arrangement 1 (Explicit Children)</h2>
+      <p class="demo-description">
+        Adapter node with role display mode, arrangement 1, and explicitly defined children
+      </p>
+
+      <!-- Demo Controls -->
+      <div class="demo-controls">
+        <button id="updateBtn" onclick="updateDemo()">Update</button>
+        <button id="resetBtn" onclick="resetDemo()">Reset</button>
+        <button id="testBtn" onclick="runTests()">Run Tests</button>
+      </div>
     </header>
 
     <!-- Settings Panel (injected) + Demo Container -->
     <div class="demo-container">
-        <svg id="graph" class="canvas"></svg>
+      <svg id="graph" class="canvas"></svg>
     </div>
 
     <!-- Demo Information -->
     <footer class="demo-info">
-        <div class="demo-metadata">
-            <p><strong>Node Type:</strong> adapter</p>
-            <p><strong>Features:</strong> Role display mode, Arrangement 1, Explicit children with role emphasis</p>
-            <p><strong>Children:</strong> 3 explicit nodes with role-based rendering</p>
-            <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
-        </div>
+      <div class="demo-metadata">
+        <p><strong>Node Type:</strong> adapter</p>
+        <p>
+          <strong>Features:</strong> Role display mode, Arrangement 1, Explicit children with role
+          emphasis
+        </p>
+        <p><strong>Children:</strong> 3 explicit nodes with role-based rendering</p>
+        <p><strong>Test Status:</strong> <span id="testStatus">Not Tested</span></p>
+      </div>
     </footer>
 
     <script type="module">
-        // Import demo data
-        import { demoData } from './js/graphData.js';
-        import flowDashboard from '../../../dashboard/js/index.js';
-        import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
+      // Import demo data
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../../dashboard/js/index.js';
+      import { injectSettingsUI } from '../../../dashboard/js/demoSettings.js';
 
-        let flowdash;
-        const baseData = demoData;
+      let flowdash;
+      const baseData = demoData;
 
-        function build(dataset) {
-            if (!dataset) return;
-            flowdash = new flowDashboard.Dashboard(dataset);
-            flowdash.initialize('#graph');
-            window.flowdash = flowdash;
-        }
+      function build(dataset) {
+        if (!dataset) return;
+        flowdash = new flowDashboard.Dashboard(dataset);
+        flowdash.initialize('#graph');
+        window.flowdash = flowdash;
+      }
 
-        injectSettingsUI({
-            containerSelector: 'body',
-            withVariation: false,
-            getBaseData: () => baseData,
-            buildDashboard: (dataset) => build(dataset)
-        });
+      injectSettingsUI({
+        containerSelector: 'body',
+        withVariation: false,
+        getBaseData: () => baseData,
+        buildDashboard: (dataset) => build(dataset),
+      });
 
-        build(baseData);
-        window.demoData = demoData;
-        
-        window.updateDemo = function() { console.log('Update demo called'); };
-        window.resetDemo = function() { flowdash.reset(); };
-        window.runTests = function() { runDemoTests(); };
-        
-        function runDemoTests() {
-            const testStatus = document.getElementById('testStatus');
-            testStatus.textContent = 'Running...';
-            
-            const tests = [
-                () => flowdash && typeof flowdash.initialize === 'function',
-                () => document.querySelectorAll('.node').length > 0,
-                () => {
-                    const adapter = demoData.nodes.find(n => n.type === 'adapter');
-                    return adapter && adapter.layout && adapter.layout.displayMode === 'role';
-                },
-                () => {
-                    const adapter = demoData.nodes.find(n => n.type === 'adapter');
-                    return adapter && adapter.layout && adapter.layout.arrangement === 1;
-                },
-                () => {
-                    const adapter = demoData.nodes.find(n => n.type === 'adapter');
-                    return adapter && adapter.children && adapter.children.length === 3;
-                }
-            ];
-            
-            let passed = tests.filter(test => {
-                try { return test(); } catch (e) { return false; }
-            }).length;
-            
-            testStatus.textContent = `${passed}/${tests.length} tests passed`;
-            testStatus.className = passed === tests.length ? 'test-pass' : 'test-fail';
-        }
+      build(baseData);
+      window.demoData = demoData;
+
+      window.updateDemo = function () {
+        console.log('Update demo called');
+      };
+      window.resetDemo = function () {
+        flowdash.reset();
+      };
+      window.runTests = function () {
+        runDemoTests();
+      };
+
+      function runDemoTests() {
+        const testStatus = document.getElementById('testStatus');
+        testStatus.textContent = 'Running...';
+
+        const tests = [
+          () => flowdash && typeof flowdash.initialize === 'function',
+          () => document.querySelectorAll('.node').length > 0,
+          () => {
+            const adapter = demoData.nodes.find((n) => n.type === 'adapter');
+            return adapter && adapter.layout && adapter.layout.displayMode === 'role';
+          },
+          () => {
+            const adapter = demoData.nodes.find((n) => n.type === 'adapter');
+            return adapter && adapter.layout && adapter.layout.arrangement === 1;
+          },
+          () => {
+            const adapter = demoData.nodes.find((n) => n.type === 'adapter');
+            return adapter && adapter.children && adapter.children.length === 3;
+          },
+        ];
+
+        let passed = tests.filter((test) => {
+          try {
+            return test();
+          } catch (e) {
+            return false;
+          }
+        }).length;
+
+        testStatus.textContent = `${passed}/${tests.length} tests passed`;
+        testStatus.className = passed === tests.length ? 'test-pass' : 'test-fail';
+      }
     </script>
-</body>
+  </body>
 </html>

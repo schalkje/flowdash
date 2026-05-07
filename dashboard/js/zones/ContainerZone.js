@@ -17,16 +17,18 @@ export class ContainerZone extends BaseZone {
    */
   createElement() {
     super.createElement();
-    
+
     // Create the main container shape
-    this.shape = this.element.append('rect')
+    this.shape = this.element
+      .append('rect')
       .attr('class', 'container-shape')
       .attr('x', 0)
       .attr('y', 0)
       .attr('fill', 'transparent'); // Make it clickable
-    
+
     // Create border for selection feedback
-    this.border = this.element.append('rect')
+    this.border = this.element
+      .append('rect')
       .attr('class', 'container-border')
       .attr('x', 0)
       .attr('y', 0);
@@ -46,7 +48,7 @@ export class ContainerZone extends BaseZone {
     if (this.node.settings.containerStrokeWidth) {
       this.shape.attr('stroke-width', this.node.settings.containerStrokeWidth);
     }
-    
+
     if (this.node.settings.selectionBorderWidth) {
       this.border.attr('stroke-width', this.node.settings.selectionBorderWidth);
     }
@@ -62,17 +64,17 @@ export class ContainerZone extends BaseZone {
       .on('dblclick', (event) => this.handleDblClick(event))
       .on('mouseenter', (event) => this.handleMouseEnter(event))
       .on('mouseleave', (event) => this.handleMouseLeave(event));
-    
+
     // Also setup interactions on the zone element itself for better event handling
     this.element
       .on('click', (event) => this.handleClick(event))
       .on('dblclick', (event) => this.handleDblClick(event))
       .on('mouseenter', (event) => this.handleMouseEnter(event))
       .on('mouseleave', (event) => this.handleMouseLeave(event));
-    
+
     // Handle selection state changes
     this.updateSelectionState();
-    
+
     // Handle status changes
     this.updateStatusState();
   }
@@ -82,17 +84,17 @@ export class ContainerZone extends BaseZone {
    */
   updateSize() {
     if (!this.shape || !this.border) return;
-    
+
     const width = this.size.width;
     const height = this.size.height;
-    
+
     // Update main shape - center it
     this.shape
       .attr('width', width)
       .attr('height', height)
       .attr('x', -width / 2)
       .attr('y', -height / 2);
-    
+
     // Update border (slightly larger for selection feedback)
     const borderOffset = 2;
     this.border
@@ -115,7 +117,7 @@ export class ContainerZone extends BaseZone {
    */
   updateSelectionState() {
     if (!this.border) return;
-    
+
     if (this.node.selected) {
       this.border.classed('selected', true);
       // Apply custom selection color if provided
@@ -137,11 +139,11 @@ export class ContainerZone extends BaseZone {
    */
   updateStatusState() {
     if (!this.shape) return;
-    
+
     // Apply status-based styling
     const status = this.node.status;
     const statusColors = this.node.settings.statusColors || {};
-    
+
     if (statusColors[status]) {
       // Apply custom status colors if provided
       if (statusColors[status].border) {
@@ -221,10 +223,12 @@ export class ContainerZone extends BaseZone {
   isCollidingWith(otherContainer) {
     const bounds1 = this.getCollisionBounds();
     const bounds2 = otherContainer.getCollisionBounds();
-    
-    return !(bounds1.right < bounds2.left || 
-             bounds1.left > bounds2.right || 
-             bounds1.bottom < bounds2.top || 
-             bounds1.top > bounds2.bottom);
+
+    return !(
+      bounds1.right < bounds2.left ||
+      bounds1.left > bounds2.right ||
+      bounds1.bottom < bounds2.top ||
+      bounds1.top > bounds2.bottom
+    );
   }
-} 
+}

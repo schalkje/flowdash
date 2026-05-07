@@ -1,101 +1,2455 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flow Demos</title>
     <style>
-        :root { --sidebar-bg:#0f172a; --sidebar-fg:#cbd5e1; --sidebar-fg-strong:#e2e8f0; --border:rgba(148,163,184,.25); --link:#93c5fd; --bg:#0b1020; }
-        *{box-sizing:border-box}
-        html,body{height:100%}
-        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--sidebar-fg)}
-        .app{display:flex;min-height:100vh}
-        .sidebar{width:320px;background:var(--sidebar-bg);color:var(--sidebar-fg);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .2s ease;overflow:hidden}
-        .sidebar-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;position:sticky;top:0;background:var(--sidebar-bg);border-bottom:1px solid var(--border);z-index:1}
-        .sidebar-header h1{font-size:16px;font-weight:700;margin:0;color:var(--sidebar-fg-strong)}
-        #sidebarToggle{appearance:none;border:1px solid var(--border);background:transparent;color:var(--sidebar-fg-strong);border-radius:8px;padding:6px 10px;cursor:pointer}
-        #sidebarToggle:hover{background:rgba(255,255,255,.06)}
-        nav#index{padding:8px 10px 24px;overflow-y:auto}
-        .app.sidebar-collapsed .sidebar{width:48px}
-        .app.sidebar-collapsed nav#index{display:none}
-        .app.sidebar-collapsed .sidebar-header{justify-content:center}
-        .app.sidebar-collapsed .sidebar-header h1{display:none}
-        .content{flex:1;height:100vh;background:#0b1020}
-        #viewer{width:100%;height:100%;border:0;background:#ffffff}
-        details{border-radius:8px}
-        summary{cursor:pointer;padding:6px 10px;border-radius:8px;outline:none;list-style:none}
-        details[open]>summary{background:rgba(255,255,255,.06)}
-        details.group>summary{font-weight:600;color:var(--sidebar-fg-strong)}
-        details.folder>summary{margin-left:12px;color:var(--sidebar-fg)}
-        .group-desc{margin:4px 0 4px 14px;font-size:12px;color:#94a3b8}
-        ul.file-list{list-style:none;margin:4px 0 8px 28px;padding:0}
-        li.file-li{display:flex;align-items:center;gap:6px;margin:2px 0}
-        .file-li a{text-decoration:none;color:var(--link);padding:4px 6px;border-radius:6px}
-        .file-li a:hover{background:rgba(148,163,184,.15)}
-        .file-li a.active{background:rgba(147,197,253,.25);color:#fff}
-        .link-icon{opacity:.7}
-        .link-icon:hover{opacity:1}
-        .number{display:inline-block;min-width:2ch;font-variant-numeric:tabular-nums;margin-right:6px;padding:2px 6px;background:rgba(148,163,184,.15);border:1px solid var(--border);border-radius:6px}
+      :root {
+        --sidebar-bg: #0f172a;
+        --sidebar-fg: #cbd5e1;
+        --sidebar-fg-strong: #e2e8f0;
+        --border: rgba(148, 163, 184, 0.25);
+        --link: #93c5fd;
+        --bg: #0b1020;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--sidebar-fg);
+      }
+      .app {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: 320px;
+        background: var(--sidebar-bg);
+        color: var(--sidebar-fg);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        transition: width 0.2s ease;
+        overflow: hidden;
+      }
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 14px;
+        flex: 0 0 auto;
+        background: var(--sidebar-bg);
+        border-bottom: 1px solid var(--border);
+        z-index: 1;
+      }
+      .sidebar-header h1 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--sidebar-fg-strong);
+      }
+      #sidebarToggle {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--sidebar-fg-strong);
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      #sidebarToggle:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      nav#index {
+        padding: 8px 10px 24px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      .app.sidebar-collapsed .sidebar {
+        width: 48px;
+      }
+      .app.sidebar-collapsed nav#index {
+        display: none;
+      }
+      .app.sidebar-collapsed .sidebar-header {
+        justify-content: center;
+      }
+      .app.sidebar-collapsed .sidebar-header h1 {
+        display: none;
+      }
+      .content {
+        flex: 1;
+        height: 100vh;
+        background: #0b1020;
+      }
+      #viewer {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #ffffff;
+      }
+      details {
+        border-radius: 8px;
+      }
+      summary {
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 8px;
+        outline: none;
+        list-style: none;
+      }
+      details[open] > summary {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      details.group > summary {
+        font-weight: 600;
+        color: var(--sidebar-fg-strong);
+      }
+      details.folder > summary {
+        margin-left: 12px;
+        color: var(--sidebar-fg);
+      }
+      .group-desc {
+        margin: 4px 0 4px 14px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      ul.file-list {
+        list-style: none;
+        margin: 4px 0 8px 28px;
+        padding: 0;
+      }
+      li.file-li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 2px 0;
+      }
+      .file-li a {
+        text-decoration: none;
+        color: var(--link);
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+      .file-li a:hover {
+        background: rgba(148, 163, 184, 0.15);
+      }
+      .file-li a.active {
+        background: rgba(147, 197, 253, 0.25);
+        color: #fff;
+      }
+      .link-icon {
+        opacity: 0.7;
+      }
+      .link-icon:hover {
+        opacity: 1;
+      }
+      .number {
+        display: inline-block;
+        min-width: 2ch;
+        font-variant-numeric: tabular-nums;
+        margin-right: 6px;
+        padding: 2px 6px;
+        background: rgba(148, 163, 184, 0.15);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
     </style>
     <script>
-        function loadPage(path){var v=document.getElementById('viewer');if(v){v.src=path}try{window.history.replaceState(null,'','#'+encodeURIComponent(path))}catch(e){}}
-        document.addEventListener('DOMContentLoaded',function(){
-            var app=document.querySelector('.app');
-            var toggleBtn=document.getElementById('sidebarToggle');
-            if(localStorage.getItem('sidebarCollapsed')==='1'){app.classList.add('sidebar-collapsed')}
-            if(toggleBtn){toggleBtn.addEventListener('click',function(){app.classList.toggle('sidebar-collapsed');localStorage.setItem('sidebarCollapsed',app.classList.contains('sidebar-collapsed')?'1':'0')})}
-            document.querySelectorAll('details[data-key]').forEach(function(d){var key='open:'+d.dataset.key;var saved=localStorage.getItem(key);if(saved==='0'){d.removeAttribute('open')}if(saved==='1'){d.setAttribute('open','open')}d.addEventListener('toggle',function(){localStorage.setItem(key,d.open?'1':'0')})});
-            document.addEventListener('click',function(e){var a=e.target.closest('a[data-load]');if(!a)return;e.preventDefault();var p=a.getAttribute('data-path');loadPage(p);document.querySelectorAll('.file-li a[data-load].active').forEach(function(el){el.classList.remove('active')});a.classList.add('active')});
-            // Load flowdash-bundle.html by default
-            loadPage('dashboard/flowdash-bundle.html');
-            // Set the dashboard link as active by default
-            var dashboardLink = document.querySelector('a[data-path="dashboard/flowdash-bundle.html"]');
-            if(dashboardLink) {
-                dashboardLink.classList.add('active');
-            }
+      function loadPage(path) {
+        var v = document.getElementById('viewer');
+        if (v) {
+          v.src = path;
+        }
+        try {
+          window.history.replaceState(null, '', '#' + encodeURIComponent(path));
+        } catch (e) {}
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        var app = document.querySelector('.app');
+        var toggleBtn = document.getElementById('sidebarToggle');
+        if (localStorage.getItem('sidebarCollapsed') === '1') {
+          app.classList.add('sidebar-collapsed');
+        }
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function () {
+            app.classList.toggle('sidebar-collapsed');
+            localStorage.setItem(
+              'sidebarCollapsed',
+              app.classList.contains('sidebar-collapsed') ? '1' : '0',
+            );
+          });
+        }
+        document.querySelectorAll('details[data-key]').forEach(function (d) {
+          var key = 'open:' + d.dataset.key;
+          var saved = localStorage.getItem(key);
+          if (saved === '0') {
+            d.removeAttribute('open');
+          }
+          if (saved === '1') {
+            d.setAttribute('open', 'open');
+          }
+          d.addEventListener('toggle', function () {
+            localStorage.setItem(key, d.open ? '1' : '0');
+          });
         });
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest('a[data-load]');
+          if (!a) return;
+          e.preventDefault();
+          var p = a.getAttribute('data-path');
+          loadPage(p);
+          document.querySelectorAll('.file-li a[data-load].active').forEach(function (el) {
+            el.classList.remove('active');
+          });
+          a.classList.add('active');
+        });
+        // Resolve the initial page from the URL hash (so bookmarked /#path
+        // links actually open that page), falling back to the dashboard.
+        var initialPath = 'dashboard/flowdash-bundle.html';
+        if (location.hash && location.hash.length > 1) {
+          try {
+            initialPath = decodeURIComponent(location.hash.slice(1));
+          } catch (e) {}
+        }
+        loadPage(initialPath);
+        var initialLink = document.querySelector(
+          'a[data-path="' + initialPath.replace(/"/g, '\\"') + '"]',
+        );
+        if (initialLink) {
+          initialLink.classList.add('active');
+        }
+
+        // Demo pages embed dashboard/demo-nav.js, which posts a message
+        // when the user clicks Prev/Next inside the iframe. Mirror the
+        // change in the sidebar + URL hash so the two stay aligned.
+        window.addEventListener('message', function (e) {
+          var d = e && e.data;
+          if (!d || d.type !== 'flowdash-nav' || !d.path) return;
+          loadPage(d.path);
+          document.querySelectorAll('.file-li a[data-load].active').forEach(function (el) {
+            el.classList.remove('active');
+          });
+          var link = document.querySelector('a[data-path="' + d.path.replace(/"/g, '\\"') + '"]');
+          if (link) link.classList.add('active');
+        });
+      });
     </script>
-</head>
-<body>
+  </head>
+  <body>
     <div class="app">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1>Flow Demos</h1>
-                <button id="sidebarToggle" title="Toggle sidebar" aria-label="Toggle sidebar">☰</button>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>Flow Demos</h1>
+          <button id="sidebarToggle" title="Toggle sidebar" aria-label="Toggle sidebar">☰</button>
+        </div>
+        <nav id="index">
+          <details class="group" data-key="group/01_basicNodes">
+            <summary><span class="number">01</span> basicNodes</summary>
+            <div class="group-desc">Basic nodes: shapes, layouts, and states.</div>
+            <details class="folder" data-key="folder/01_basicNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="01_basicNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="01_basicNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/01_basicNodes/02_layout-modes">
+              <summary><span class="folder">02_layout-modes/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="01_basicNodes/02_layout-modes/01_default-layout.html"
+                    >01_default-layout.html</a
+                  >
+                  <a
+                    href="01_basicNodes/02_layout-modes/01_default-layout.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="01_basicNodes/02_layout-modes/02_auto-size-small.html"
+                    >02_auto-size-small.html</a
+                  >
+                  <a
+                    href="01_basicNodes/02_layout-modes/02_auto-size-small.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="01_basicNodes/02_layout-modes/03_auto-size-large.html"
+                    >03_auto-size-large.html</a
+                  >
+                  <a
+                    href="01_basicNodes/02_layout-modes/03_auto-size-large.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="01_basicNodes/02_layout-modes/04_fixed-size-small.html"
+                    >04_fixed-size-small.html</a
+                  >
+                  <a
+                    href="01_basicNodes/02_layout-modes/04_fixed-size-small.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="01_basicNodes/02_layout-modes/05_fixed-size-large.html"
+                    >05_fixed-size-large.html</a
+                  >
+                  <a
+                    href="01_basicNodes/02_layout-modes/05_fixed-size-large.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/themes">
+            <summary><span class="number">🎨</span> themes</summary>
+            <div class="group-desc">Theme demos and theme-grid showcases.</div>
+            <details class="folder" data-key="folder/themes">
+              <summary><span class="folder">themes/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/01_basic.html">01_basic.html</a>
+                  <a href="themes/01_basic.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/02_theme-overview.html"
+                    >02_theme-overview.html</a
+                  >
+                  <a href="themes/02_theme-overview.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/03_themes-grid.html"
+                    >03_themes-grid.html</a
+                  >
+                  <a href="themes/03_themes-grid.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="themes/04_themes-grid-adapters-collapsed.html"
+                    >04_themes-grid-adapters-collapsed.html</a
+                  >
+                  <a
+                    href="themes/04_themes-grid-adapters-collapsed.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/05_themes-grid-columns-2rects.html"
+                    >05_themes-grid-columns-2rects.html</a
+                  >
+                  <a
+                    href="themes/05_themes-grid-columns-2rects.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="themes/06_themes-grid-foundation-explicit.html"
+                    >06_themes-grid-foundation-explicit.html</a
+                  >
+                  <a
+                    href="themes/06_themes-grid-foundation-explicit.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/07_themes-grid-lane-2rects.html"
+                    >07_themes-grid-lane-2rects.html</a
+                  >
+                  <a href="themes/07_themes-grid-lane-2rects.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="themes/08_themes-grid-mart-explicit.html"
+                    >08_themes-grid-mart-explicit.html</a
+                  >
+                  <a
+                    href="themes/08_themes-grid-mart-explicit.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/02_rectangularNodes">
+            <summary><span class="number">02</span> rectangularNodes</summary>
+            <div class="group-desc">Rectangular nodes and demos.</div>
+            <details class="folder" data-key="folder/02_rectangularNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="02_rectangularNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a
+                    href="02_rectangularNodes/01_basic/basic.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/03_circleNodes">
+            <summary><span class="number">03</span> circleNodes</summary>
+            <div class="group-desc">Circle nodes and demos.</div>
+            <details class="folder" data-key="folder/03_circleNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="03_circleNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="03_circleNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/04_laneNodes">
+            <summary><span class="number">04</span> laneNodes</summary>
+            <div class="group-desc">Lane containers and nested tests.</div>
+            <details class="folder" data-key="folder/04_laneNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="04_laneNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="04_laneNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/04_laneNodes/01_simple-tests">
+              <summary><span class="folder">01_simple-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/01_simple-tests/01_default-mode/default-mode.html"
+                    >default-mode.html</a
+                  >
+                  <a
+                    href="04_laneNodes/01_simple-tests/01_default-mode/default-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/01_simple-tests/02_collapsed-mode/collapsed-mode.html"
+                    >collapsed-mode.html</a
+                  >
+                  <a
+                    href="04_laneNodes/01_simple-tests/02_collapsed-mode/collapsed-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/01_simple-tests/03_auto-size-labels/auto-size-labels.html"
+                    >auto-size-labels.html</a
+                  >
+                  <a
+                    href="04_laneNodes/01_simple-tests/03_auto-size-labels/auto-size-labels.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/01_simple-tests/04_fixed-size-labels/fixed-size-labels.html"
+                    >fixed-size-labels.html</a
+                  >
+                  <a
+                    href="04_laneNodes/01_simple-tests/04_fixed-size-labels/fixed-size-labels.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/01_simple-tests/05_dynamic-addition/dynamic-addition.html"
+                    >dynamic-addition.html</a
+                  >
+                  <a
+                    href="04_laneNodes/01_simple-tests/05_dynamic-addition/dynamic-addition.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/04_laneNodes/02_nested-tests">
+              <summary><span class="folder">02_nested-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/02_nested-tests/07_nested-lanes/nested-lanes.html"
+                    >nested-lanes.html</a
+                  >
+                  <a
+                    href="04_laneNodes/02_nested-tests/07_nested-lanes/nested-lanes.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/02_nested-tests/08_nested-collapsed/nested-collapsed.html"
+                    >nested-collapsed.html</a
+                  >
+                  <a
+                    href="04_laneNodes/02_nested-tests/08_nested-collapsed/nested-collapsed.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="04_laneNodes/02_nested-tests/09_deep-nesting/deep-nesting.html"
+                    >deep-nesting.html</a
+                  >
+                  <a
+                    href="04_laneNodes/02_nested-tests/09_deep-nesting/deep-nesting.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/05_columnsNodes">
+            <summary><span class="number">05</span> columnsNodes</summary>
+            <div class="group-desc">Columns containers: basic and nested tests.</div>
+            <details class="folder" data-key="folder/05_columnsNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="05_columnsNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="05_columnsNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/05_columnsNodes/01_simple-tests">
+              <summary><span class="folder">01_simple-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/01_simple-tests/01_default-mode/default-mode.html"
+                    >default-mode.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/01_simple-tests/01_default-mode/default-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/01_simple-tests/02_auto-size-mode/auto-size-mode.html"
+                    >auto-size-mode.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/01_simple-tests/02_auto-size-mode/auto-size-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/01_simple-tests/03_fixed-size-mode/fixed-size-mode.html"
+                    >fixed-size-mode.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/01_simple-tests/03_fixed-size-mode/fixed-size-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/01_simple-tests/04_dynamic-addition/dynamic-addition.html"
+                    >dynamic-addition.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/01_simple-tests/04_dynamic-addition/dynamic-addition.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/05_columnsNodes/02_nested-tests">
+              <summary><span class="folder">02_nested-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/02_nested-tests/05_nested-columns/nested-columns.html"
+                    >nested-columns.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/02_nested-tests/05_nested-columns/nested-columns.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/02_nested-tests/06_mixed-children/mixed-children.html"
+                    >mixed-children.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/02_nested-tests/06_mixed-children/mixed-children.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="05_columnsNodes/02_nested-tests/07_variable-width/variable-width.html"
+                    >variable-width.html</a
+                  >
+                  <a
+                    href="05_columnsNodes/02_nested-tests/07_variable-width/variable-width.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/06_adapterNodes">
+            <summary><span class="number">06</span> adapterNodes</summary>
+            <div class="group-desc">Adapter nodes: basic, single, and specified layouts.</div>
+            <details class="folder" data-key="folder/06_adapterNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="06_adapterNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="06_adapterNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/06_adapterNodes/01_single">
+              <summary><span class="folder">01_single/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="06_adapterNodes/01_single/01_single.html"
+                    >01_single.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/01_single.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/02_full_arr1/02_full_arr1.html"
+                    >02_full_arr1.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/02_full_arr1/02_full_arr1.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/03_full_arr2/03_full_arr2.html"
+                    >03_full_arr2.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/03_full_arr2/03_full_arr2.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/04_full_arr3/04_full_arr3.html"
+                    >04_full_arr3.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/04_full_arr3/04_full_arr3.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/05_staging_archive/05_staging_archive.html"
+                    >05_staging_archive.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/05_staging_archive/05_staging_archive.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/06_staging_transform/06_staging_transform.html"
+                    >06_staging_transform.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/06_staging_transform/06_staging_transform.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/07_archive_only/07_archive_only.html"
+                    >07_archive_only.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/07_archive_only/07_archive_only.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/08_role_arr1/08_role_arr1.html"
+                    >08_role_arr1.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/08_role_arr1/08_role_arr1.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/09_role_arr2/09_role_arr2.html"
+                    >09_role_arr2.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/09_role_arr2/09_role_arr2.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/01_single/10_role_arr3/10_role_arr3.html"
+                    >10_role_arr3.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/01_single/10_role_arr3/10_role_arr3.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/06_adapterNodes/02_layouts_full">
+              <summary><span class="folder">02_layouts_full/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/02_layouts_full/02_layouts_full.html"
+                    >02_layouts_full.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/02_layouts_full/02_layouts_full.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/06_adapterNodes/03_specified">
+              <summary><span class="folder">03_specified/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/01_full_arr1/01_full_arr1.html"
+                    >01_full_arr1.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/01_full_arr1/01_full_arr1.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/02_full_arr2/02_full_arr2.html"
+                    >02_full_arr2.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/02_full_arr2/02_full_arr2.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/03_full_arr3/03_full_arr3.html"
+                    >03_full_arr3.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/03_full_arr3/03_full_arr3.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/04_staging_archive/04_staging_archive.html"
+                    >04_staging_archive.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/04_staging_archive/04_staging_archive.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/05_staging_transform/05_staging_transform.html"
+                    >05_staging_transform.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/05_staging_transform/05_staging_transform.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/06_archive_only/06_archive_only.html"
+                    >06_archive_only.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/06_archive_only/06_archive_only.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/07_role_arr1/07_role_arr1.html"
+                    >07_role_arr1.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/07_role_arr1/07_role_arr1.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/08_role_arr2/08_role_arr2.html"
+                    >08_role_arr2.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/08_role_arr2/08_role_arr2.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="06_adapterNodes/03_specified/09_role_arr3/09_role_arr3.html"
+                    >09_role_arr3.html</a
+                  >
+                  <a
+                    href="06_adapterNodes/03_specified/09_role_arr3/09_role_arr3.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/07_foundationNodes">
+            <summary><span class="number">07</span> foundationNodes</summary>
+            <div class="group-desc">Foundation nodes with orientation variants.</div>
+            <details class="folder" data-key="folder/07_foundationNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="07_foundationNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="07_foundationNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/07_foundationNodes/01_simple-tests">
+              <summary><span class="folder">01_simple-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/01_full-mode/full-mode.html"
+                    >full-mode.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/01_full-mode/full-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/02_role-mode/role-mode.html"
+                    >role-mode.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/02_role-mode/role-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_orientations/horizontal_line.html"
+                    >horizontal_line.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_orientations/horizontal_line.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_orientations/horizontal.html"
+                    >horizontal.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_orientations/horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_orientations/rotate270.html"
+                    >rotate270.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_orientations/rotate270.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_orientations/rotate90.html"
+                    >rotate90.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_orientations/rotate90.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_orientations/vertical.html"
+                    >vertical.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_orientations/vertical.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/03_role-mode-large-titles/role-mode-large-titles.html"
+                    >role-mode-large-titles.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/03_role-mode-large-titles/role-mode-large-titles.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/01_simple-tests/04_full-mode-large-titles/full-mode-large-titles.html"
+                    >full-mode-large-titles.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/01_simple-tests/04_full-mode-large-titles/full-mode-large-titles.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/07_foundationNodes/02_extended-tests">
+              <summary><span class="folder">02_extended-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html"
+                    >all-orientations-lane.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/07_foundationNodes/03_specified">
+              <summary><span class="folder">03_specified/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/01_full_horizontal/01_full_horizontal.html"
+                    >01_full_horizontal.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/01_full_horizontal/01_full_horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/02_full_vertical/02_full_vertical.html"
+                    >02_full_vertical.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/02_full_vertical/02_full_vertical.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/03_full_rotate90/03_full_rotate90.html"
+                    >03_full_rotate90.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/03_full_rotate90/03_full_rotate90.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/04_full_rotate270/04_full_rotate270.html"
+                    >04_full_rotate270.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/04_full_rotate270/04_full_rotate270.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/05_role_horizontal/05_role_horizontal.html"
+                    >05_role_horizontal.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/05_role_horizontal/05_role_horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/06_role_vertical/06_role_vertical.html"
+                    >06_role_vertical.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/06_role_vertical/06_role_vertical.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/07_role_rotate90/07_role_rotate90.html"
+                    >07_role_rotate90.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/07_role_rotate90/07_role_rotate90.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="07_foundationNodes/03_specified/08_role_rotate270/08_role_rotate270.html"
+                    >08_role_rotate270.html</a
+                  >
+                  <a
+                    href="07_foundationNodes/03_specified/08_role_rotate270/08_role_rotate270.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/08_martNodes">
+            <summary><span class="number">08</span> martNodes</summary>
+            <div class="group-desc">Mart nodes with modes and orientations.</div>
+            <details class="folder" data-key="folder/08_martNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="08_martNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="08_martNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/08_martNodes/01_simple-tests">
+              <summary><span class="folder">01_simple-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/01_full-mode/full-mode.html"
+                    >full-mode.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/01_full-mode/full-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/02_role-mode/role-mode.html"
+                    >role-mode.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/02_role-mode/role-mode.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/03_orientations/horizontal.html"
+                    >horizontal.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/03_orientations/horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/03_orientations/rotate270.html"
+                    >rotate270.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/03_orientations/rotate270.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/03_orientations/rotate90.html"
+                    >rotate90.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/03_orientations/rotate90.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/01_simple-tests/03_orientations/vertical.html"
+                    >vertical.html</a
+                  >
+                  <a
+                    href="08_martNodes/01_simple-tests/03_orientations/vertical.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/08_martNodes/02_extended-tests">
+              <summary><span class="folder">02_extended-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html"
+                    >all-orientations-lane.html</a
+                  >
+                  <a
+                    href="08_martNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/08_martNodes/03_specified">
+              <summary><span class="folder">03_specified/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/03_specified/01_full_horizontal/01_full_horizontal.html"
+                    >01_full_horizontal.html</a
+                  >
+                  <a
+                    href="08_martNodes/03_specified/01_full_horizontal/01_full_horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/03_specified/02_full_vertical/02_full_vertical.html"
+                    >02_full_vertical.html</a
+                  >
+                  <a
+                    href="08_martNodes/03_specified/02_full_vertical/02_full_vertical.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/03_specified/03_full_rotate90/03_full_rotate90.html"
+                    >03_full_rotate90.html</a
+                  >
+                  <a
+                    href="08_martNodes/03_specified/03_full_rotate90/03_full_rotate90.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="08_martNodes/03_specified/05_role_horizontal/05_role_horizontal.html"
+                    >05_role_horizontal.html</a
+                  >
+                  <a
+                    href="08_martNodes/03_specified/05_role_horizontal/05_role_horizontal.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/09_groupNodes">
+            <summary><span class="number">09</span> groupNodes</summary>
+            <div class="group-desc">Group nodes.</div>
+            <details class="folder" data-key="folder/09_groupNodes/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="09_groupNodes/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="09_groupNodes/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/10_edges">
+            <summary><span class="number">10</span> edges</summary>
+            <div class="group-desc">Edges and routing demos (basic, simple, extended).</div>
+            <details class="folder" data-key="folder/10_edges/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_basic/horizontal-ltr.html"
+                    >horizontal-ltr.html</a
+                  >
+                  <a href="10_edges/01_basic/horizontal-ltr.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_basic/horizontal-rtl.html"
+                    >horizontal-rtl.html</a
+                  >
+                  <a href="10_edges/01_basic/horizontal-rtl.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_basic/vertical-btt.html"
+                    >vertical-btt.html</a
+                  >
+                  <a href="10_edges/01_basic/vertical-btt.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_basic/vertical-ttb.html"
+                    >vertical-ttb.html</a
+                  >
+                  <a href="10_edges/01_basic/vertical-ttb.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/10_edges/01_simple-tests">
+              <summary><span class="folder">01_simple-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_simple-tests/edge-grid.html"
+                    >edge-grid.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-grid.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_simple-tests/edge-hshifted.html"
+                    >edge-hshifted.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-hshifted.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/01_simple-tests/edge-stair-down.html"
+                    >edge-stair-down.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-stair-down.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_simple-tests/edge-stair-up.html"
+                    >edge-stair-up.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-stair-up.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_simple-tests/edge-vshifted.html"
+                    >edge-vshifted.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-vshifted.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="10_edges/01_simple-tests/edge-vshifted2.html"
+                    >edge-vshifted2.html</a
+                  >
+                  <a
+                    href="10_edges/01_simple-tests/edge-vshifted2.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/10_edges/02_extended-tests">
+              <summary><span class="folder">02_extended-tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/cross-containers.html"
+                    >cross-containers.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/cross-containers.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-01-lane-columns.html"
+                    >extended-01-lane-columns.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-01-lane-columns.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-02-adapter-foundation.html"
+                    >extended-02-adapter-foundation.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-02-adapter-foundation.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-03-nesting-2levels.html"
+                    >extended-03-nesting-2levels.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-03-nesting-2levels.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-04-mart-foundation-columns.html"
+                    >extended-04-mart-foundation-columns.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-04-mart-foundation-columns.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-05-nesting-3levels.html"
+                    >extended-05-nesting-3levels.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-05-nesting-3levels.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-06-fan-in-fan-out.html"
+                    >extended-06-fan-in-fan-out.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-06-fan-in-fan-out.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-07-cross-layers.html"
+                    >extended-07-cross-layers.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-07-cross-layers.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-08-orthogonal-like.html"
+                    >extended-08-orthogonal-like.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-08-orthogonal-like.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-09-deep-nesting-4levels.html"
+                    >extended-09-deep-nesting-4levels.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-09-deep-nesting-4levels.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="10_edges/02_extended-tests/extended-10-performance.html"
+                    >extended-10-performance.html</a
+                  >
+                  <a
+                    href="10_edges/02_extended-tests/extended-10-performance.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/11_dashboard">
+            <summary><span class="number">11</span> dashboard</summary>
+            <div class="group-desc">Dashboard layout and components.</div>
+            <details class="folder" data-key="folder/11_dashboard/01_showcase" open>
+              <summary><span class="folder">01_showcase/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="11_dashboard/01_showcase/showcase.html"
+                    >showcase.html</a
+                  >
+                  <a href="11_dashboard/01_showcase/showcase.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/11_dashboard/02_click-handlers">
+              <summary><span class="folder">02_click-handlers/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="11_dashboard/02_click-handlers/01_floating-div-demo/floating-div-demo.html"
+                    >floating-div-demo.html</a
+                  >
+                  <a
+                    href="11_dashboard/02_click-handlers/01_floating-div-demo/floating-div-demo.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/12_selection">
+            <summary><span class="number">12</span> selection</summary>
+            <div class="group-desc">
+              Selection model: click, double-click, neighborhood traversal.
             </div>
-            <nav id="index"><details class='group' data-key='group/01_basicNodes' ><summary><span class='number'>01</span> basicNodes</summary>
-<div class='group-desc'>Basic nodes: shapes, layouts, and states.</div><details class='folder' data-key='folder/01_basicNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/01_basic/basic.html'>basic.html</a> <a href='01_basicNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/01_basicNodes/02_layout-modes' ><summary><span class='folder'>02_layout-modes/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/02_layout-modes/01_default-layout.html'>01_default-layout.html</a> <a href='01_basicNodes/02_layout-modes/01_default-layout.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/02_layout-modes/02_auto-size-small.html'>02_auto-size-small.html</a> <a href='01_basicNodes/02_layout-modes/02_auto-size-small.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/02_layout-modes/03_auto-size-large.html'>03_auto-size-large.html</a> <a href='01_basicNodes/02_layout-modes/03_auto-size-large.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/02_layout-modes/04_fixed-size-small.html'>04_fixed-size-small.html</a> <a href='01_basicNodes/02_layout-modes/04_fixed-size-small.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/02_layout-modes/05_fixed-size-large.html'>05_fixed-size-large.html</a> <a href='01_basicNodes/02_layout-modes/05_fixed-size-large.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/01_basicNodes/03_states' ><summary><span class='folder'>03_states/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/basic.html'>basic.html</a> <a href='01_basicNodes/03_states/basic.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid-adapters-collapsed.html'>themes-grid-adapters-collapsed.html</a> <a href='01_basicNodes/03_states/themes-grid-adapters-collapsed.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid-columns-2rects.html'>themes-grid-columns-2rects.html</a> <a href='01_basicNodes/03_states/themes-grid-columns-2rects.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid-foundation-explicit.html'>themes-grid-foundation-explicit.html</a> <a href='01_basicNodes/03_states/themes-grid-foundation-explicit.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid-lane-2rects.html'>themes-grid-lane-2rects.html</a> <a href='01_basicNodes/03_states/themes-grid-lane-2rects.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid-mart-explicit.html'>themes-grid-mart-explicit.html</a> <a href='01_basicNodes/03_states/themes-grid-mart-explicit.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='01_basicNodes/03_states/themes-grid.html'>themes-grid.html</a> <a href='01_basicNodes/03_states/themes-grid.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/02_rectangularNodes' ><summary><span class='number'>02</span> rectangularNodes</summary>
-<div class='group-desc'>Rectangular nodes and demos.</div><details class='folder' data-key='folder/02_rectangularNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='02_rectangularNodes/01_basic/basic.html'>basic.html</a> <a href='02_rectangularNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/03_circleNodes' ><summary><span class='number'>03</span> circleNodes</summary>
-<div class='group-desc'>Circle nodes and demos.</div><details class='folder' data-key='folder/03_circleNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='03_circleNodes/01_basic/basic.html'>basic.html</a> <a href='03_circleNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/04_laneNodes' ><summary><span class='number'>04</span> laneNodes</summary>
-<div class='group-desc'>Lane containers and nested tests.</div><details class='folder' data-key='folder/04_laneNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_basic/basic.html'>basic.html</a> <a href='04_laneNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/04_laneNodes/01_simple-tests' ><summary><span class='folder'>01_simple-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_simple-tests/01_default-mode/default-mode.html'>default-mode.html</a> <a href='04_laneNodes/01_simple-tests/01_default-mode/default-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_simple-tests/02_collapsed-mode/collapsed-mode.html'>collapsed-mode.html</a> <a href='04_laneNodes/01_simple-tests/02_collapsed-mode/collapsed-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_simple-tests/03_auto-size-labels/auto-size-labels.html'>auto-size-labels.html</a> <a href='04_laneNodes/01_simple-tests/03_auto-size-labels/auto-size-labels.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_simple-tests/04_fixed-size-labels/fixed-size-labels.html'>fixed-size-labels.html</a> <a href='04_laneNodes/01_simple-tests/04_fixed-size-labels/fixed-size-labels.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/01_simple-tests/05_dynamic-addition/dynamic-addition.html'>dynamic-addition.html</a> <a href='04_laneNodes/01_simple-tests/05_dynamic-addition/dynamic-addition.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/04_laneNodes/02_nested-tests' ><summary><span class='folder'>02_nested-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/02_nested-tests/07_nested-lanes/nested-lanes.html'>nested-lanes.html</a> <a href='04_laneNodes/02_nested-tests/07_nested-lanes/nested-lanes.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/02_nested-tests/08_nested-collapsed/nested-collapsed.html'>nested-collapsed.html</a> <a href='04_laneNodes/02_nested-tests/08_nested-collapsed/nested-collapsed.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='04_laneNodes/02_nested-tests/09_deep-nesting/deep-nesting.html'>deep-nesting.html</a> <a href='04_laneNodes/02_nested-tests/09_deep-nesting/deep-nesting.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/05_columnsNodes' ><summary><span class='number'>05</span> columnsNodes</summary>
-<div class='group-desc'>Columns containers: basic and nested tests.</div><details class='folder' data-key='folder/05_columnsNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/01_basic/basic.html'>basic.html</a> <a href='05_columnsNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/05_columnsNodes/01_simple-tests' ><summary><span class='folder'>01_simple-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/01_simple-tests/01_default-mode/default-mode.html'>default-mode.html</a> <a href='05_columnsNodes/01_simple-tests/01_default-mode/default-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/01_simple-tests/02_auto-size-mode/auto-size-mode.html'>auto-size-mode.html</a> <a href='05_columnsNodes/01_simple-tests/02_auto-size-mode/auto-size-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/01_simple-tests/03_fixed-size-mode/fixed-size-mode.html'>fixed-size-mode.html</a> <a href='05_columnsNodes/01_simple-tests/03_fixed-size-mode/fixed-size-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/01_simple-tests/04_dynamic-addition/dynamic-addition.html'>dynamic-addition.html</a> <a href='05_columnsNodes/01_simple-tests/04_dynamic-addition/dynamic-addition.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/05_columnsNodes/02_nested-tests' ><summary><span class='folder'>02_nested-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/02_nested-tests/05_nested-columns/nested-columns.html'>nested-columns.html</a> <a href='05_columnsNodes/02_nested-tests/05_nested-columns/nested-columns.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/02_nested-tests/06_mixed-children/mixed-children.html'>mixed-children.html</a> <a href='05_columnsNodes/02_nested-tests/06_mixed-children/mixed-children.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='05_columnsNodes/02_nested-tests/07_variable-width/variable-width.html'>variable-width.html</a> <a href='05_columnsNodes/02_nested-tests/07_variable-width/variable-width.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/06_adapterNodes' ><summary><span class='number'>06</span> adapterNodes</summary>
-<div class='group-desc'>Adapter nodes: basic, single, and specified layouts.</div><details class='folder' data-key='folder/06_adapterNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_basic/basic.html'>basic.html</a> <a href='06_adapterNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/06_adapterNodes/01_single' ><summary><span class='folder'>01_single/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/01_single.html'>01_single.html</a> <a href='06_adapterNodes/01_single/01_single.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/02_full_arr1/02_full_arr1.html'>02_full_arr1.html</a> <a href='06_adapterNodes/01_single/02_full_arr1/02_full_arr1.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/03_full_arr2/03_full_arr2.html'>03_full_arr2.html</a> <a href='06_adapterNodes/01_single/03_full_arr2/03_full_arr2.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/04_full_arr3/04_full_arr3.html'>04_full_arr3.html</a> <a href='06_adapterNodes/01_single/04_full_arr3/04_full_arr3.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/05_staging_archive/05_staging_archive.html'>05_staging_archive.html</a> <a href='06_adapterNodes/01_single/05_staging_archive/05_staging_archive.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/06_staging_transform/06_staging_transform.html'>06_staging_transform.html</a> <a href='06_adapterNodes/01_single/06_staging_transform/06_staging_transform.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/07_archive_only/07_archive_only.html'>07_archive_only.html</a> <a href='06_adapterNodes/01_single/07_archive_only/07_archive_only.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/08_role_arr1/08_role_arr1.html'>08_role_arr1.html</a> <a href='06_adapterNodes/01_single/08_role_arr1/08_role_arr1.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/09_role_arr2/09_role_arr2.html'>09_role_arr2.html</a> <a href='06_adapterNodes/01_single/09_role_arr2/09_role_arr2.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/01_single/10_role_arr3/10_role_arr3.html'>10_role_arr3.html</a> <a href='06_adapterNodes/01_single/10_role_arr3/10_role_arr3.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/06_adapterNodes/02_layouts_full' ><summary><span class='folder'>02_layouts_full/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/02_layouts_full/02_layouts_full.html'>02_layouts_full.html</a> <a href='06_adapterNodes/02_layouts_full/02_layouts_full.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/06_adapterNodes/03_specified' ><summary><span class='folder'>03_specified/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/01_full_arr1/01_full_arr1.html'>01_full_arr1.html</a> <a href='06_adapterNodes/03_specified/01_full_arr1/01_full_arr1.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/02_full_arr2/02_full_arr2.html'>02_full_arr2.html</a> <a href='06_adapterNodes/03_specified/02_full_arr2/02_full_arr2.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/03_full_arr3/03_full_arr3.html'>03_full_arr3.html</a> <a href='06_adapterNodes/03_specified/03_full_arr3/03_full_arr3.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/04_staging_archive/04_staging_archive.html'>04_staging_archive.html</a> <a href='06_adapterNodes/03_specified/04_staging_archive/04_staging_archive.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/05_staging_transform/05_staging_transform.html'>05_staging_transform.html</a> <a href='06_adapterNodes/03_specified/05_staging_transform/05_staging_transform.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/06_archive_only/06_archive_only.html'>06_archive_only.html</a> <a href='06_adapterNodes/03_specified/06_archive_only/06_archive_only.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/07_role_arr1/07_role_arr1.html'>07_role_arr1.html</a> <a href='06_adapterNodes/03_specified/07_role_arr1/07_role_arr1.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/08_role_arr2/08_role_arr2.html'>08_role_arr2.html</a> <a href='06_adapterNodes/03_specified/08_role_arr2/08_role_arr2.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='06_adapterNodes/03_specified/09_role_arr3/09_role_arr3.html'>09_role_arr3.html</a> <a href='06_adapterNodes/03_specified/09_role_arr3/09_role_arr3.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/07_foundationNodes' ><summary><span class='number'>07</span> foundationNodes</summary>
-<div class='group-desc'>Foundation nodes with orientation variants.</div><details class='folder' data-key='folder/07_foundationNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_basic/basic.html'>basic.html</a> <a href='07_foundationNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/07_foundationNodes/01_simple-tests' ><summary><span class='folder'>01_simple-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/01_full-mode/full-mode.html'>full-mode.html</a> <a href='07_foundationNodes/01_simple-tests/01_full-mode/full-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/02_role-mode/role-mode.html'>role-mode.html</a> <a href='07_foundationNodes/01_simple-tests/02_role-mode/role-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_orientations/horizontal_line.html'>horizontal_line.html</a> <a href='07_foundationNodes/01_simple-tests/03_orientations/horizontal_line.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_orientations/horizontal.html'>horizontal.html</a> <a href='07_foundationNodes/01_simple-tests/03_orientations/horizontal.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_orientations/rotate270.html'>rotate270.html</a> <a href='07_foundationNodes/01_simple-tests/03_orientations/rotate270.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_orientations/rotate90.html'>rotate90.html</a> <a href='07_foundationNodes/01_simple-tests/03_orientations/rotate90.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_orientations/vertical.html'>vertical.html</a> <a href='07_foundationNodes/01_simple-tests/03_orientations/vertical.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/03_role-mode-large-titles/role-mode-large-titles.html'>role-mode-large-titles.html</a> <a href='07_foundationNodes/01_simple-tests/03_role-mode-large-titles/role-mode-large-titles.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/01_simple-tests/04_full-mode-large-titles/full-mode-large-titles.html'>full-mode-large-titles.html</a> <a href='07_foundationNodes/01_simple-tests/04_full-mode-large-titles/full-mode-large-titles.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/07_foundationNodes/02_extended-tests' ><summary><span class='folder'>02_extended-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html'>all-orientations-lane.html</a> <a href='07_foundationNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/07_foundationNodes/03_specified' ><summary><span class='folder'>03_specified/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/01_full_horizontal/01_full_horizontal.html'>01_full_horizontal.html</a> <a href='07_foundationNodes/03_specified/01_full_horizontal/01_full_horizontal.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/02_full_vertical/02_full_vertical.html'>02_full_vertical.html</a> <a href='07_foundationNodes/03_specified/02_full_vertical/02_full_vertical.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/03_full_rotate90/03_full_rotate90.html'>03_full_rotate90.html</a> <a href='07_foundationNodes/03_specified/03_full_rotate90/03_full_rotate90.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/04_full_rotate270/04_full_rotate270.html'>04_full_rotate270.html</a> <a href='07_foundationNodes/03_specified/04_full_rotate270/04_full_rotate270.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/05_role_horizontal/05_role_horizontal.html'>05_role_horizontal.html</a> <a href='07_foundationNodes/03_specified/05_role_horizontal/05_role_horizontal.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/06_role_vertical/06_role_vertical.html'>06_role_vertical.html</a> <a href='07_foundationNodes/03_specified/06_role_vertical/06_role_vertical.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/07_role_rotate90/07_role_rotate90.html'>07_role_rotate90.html</a> <a href='07_foundationNodes/03_specified/07_role_rotate90/07_role_rotate90.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='07_foundationNodes/03_specified/08_role_rotate270/08_role_rotate270.html'>08_role_rotate270.html</a> <a href='07_foundationNodes/03_specified/08_role_rotate270/08_role_rotate270.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/08_martNodes' ><summary><span class='number'>08</span> martNodes</summary>
-<div class='group-desc'>Mart nodes with modes and orientations.</div><details class='folder' data-key='folder/08_martNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_basic/basic.html'>basic.html</a> <a href='08_martNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/08_martNodes/01_simple-tests' ><summary><span class='folder'>01_simple-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/01_full-mode/full-mode.html'>full-mode.html</a> <a href='08_martNodes/01_simple-tests/01_full-mode/full-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/02_role-mode/role-mode.html'>role-mode.html</a> <a href='08_martNodes/01_simple-tests/02_role-mode/role-mode.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/03_orientations/horizontal.html'>horizontal.html</a> <a href='08_martNodes/01_simple-tests/03_orientations/horizontal.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/03_orientations/rotate270.html'>rotate270.html</a> <a href='08_martNodes/01_simple-tests/03_orientations/rotate270.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/03_orientations/rotate90.html'>rotate90.html</a> <a href='08_martNodes/01_simple-tests/03_orientations/rotate90.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/01_simple-tests/03_orientations/vertical.html'>vertical.html</a> <a href='08_martNodes/01_simple-tests/03_orientations/vertical.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/08_martNodes/02_extended-tests' ><summary><span class='folder'>02_extended-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html'>all-orientations-lane.html</a> <a href='08_martNodes/02_extended-tests/01_all-orientations-lane/all-orientations-lane.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/08_martNodes/03_specified' ><summary><span class='folder'>03_specified/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/03_specified/01_full_horizontal/01_full_horizontal.html'>01_full_horizontal.html</a> <a href='08_martNodes/03_specified/01_full_horizontal/01_full_horizontal.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/03_specified/02_full_vertical/02_full_vertical.html'>02_full_vertical.html</a> <a href='08_martNodes/03_specified/02_full_vertical/02_full_vertical.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/03_specified/03_full_rotate90/03_full_rotate90.html'>03_full_rotate90.html</a> <a href='08_martNodes/03_specified/03_full_rotate90/03_full_rotate90.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/03_specified/05_role_horizontal/05_role_horizontal.html'>05_role_horizontal.html</a> <a href='08_martNodes/03_specified/05_role_horizontal/05_role_horizontal.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/08_martNodes/debug_comparison.html' ><summary><span class='folder'>debug_comparison.html/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/debug_comparison.html'>debug_comparison.html</a> <a href='08_martNodes/debug_comparison.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/08_martNodes/debug_explicit_role.html' ><summary><span class='folder'>debug_explicit_role.html/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='08_martNodes/debug_explicit_role.html'>debug_explicit_role.html</a> <a href='08_martNodes/debug_explicit_role.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/09_groupNodes' ><summary><span class='number'>09</span> groupNodes</summary>
-<div class='group-desc'>Group nodes.</div><details class='folder' data-key='folder/09_groupNodes/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='09_groupNodes/01_basic/basic.html'>basic.html</a> <a href='09_groupNodes/01_basic/basic.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/10_edges' ><summary><span class='number'>10</span> edges</summary>
-<div class='group-desc'>Edges and routing demos (basic, simple, extended).</div><details class='folder' data-key='folder/10_edges/01_basic' ><summary><span class='folder'>01_basic/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_basic/horizontal-ltr.html'>horizontal-ltr.html</a> <a href='10_edges/01_basic/horizontal-ltr.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_basic/horizontal-rtl.html'>horizontal-rtl.html</a> <a href='10_edges/01_basic/horizontal-rtl.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_basic/vertical-btt.html'>vertical-btt.html</a> <a href='10_edges/01_basic/vertical-btt.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_basic/vertical-ttb.html'>vertical-ttb.html</a> <a href='10_edges/01_basic/vertical-ttb.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/10_edges/01_simple-tests' ><summary><span class='folder'>01_simple-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-grid.html'>edge-grid.html</a> <a href='10_edges/01_simple-tests/edge-grid.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-hshifted.html'>edge-hshifted.html</a> <a href='10_edges/01_simple-tests/edge-hshifted.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-stair-down.html'>edge-stair-down.html</a> <a href='10_edges/01_simple-tests/edge-stair-down.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-stair-up.html'>edge-stair-up.html</a> <a href='10_edges/01_simple-tests/edge-stair-up.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-vshifted.html'>edge-vshifted.html</a> <a href='10_edges/01_simple-tests/edge-vshifted.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/01_simple-tests/edge-vshifted2.html'>edge-vshifted2.html</a> <a href='10_edges/01_simple-tests/edge-vshifted2.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/10_edges/02_extended-tests' ><summary><span class='folder'>02_extended-tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/cross-containers.html'>cross-containers.html</a> <a href='10_edges/02_extended-tests/cross-containers.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-01-lane-columns.html'>extended-01-lane-columns.html</a> <a href='10_edges/02_extended-tests/extended-01-lane-columns.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-02-adapter-foundation.html'>extended-02-adapter-foundation.html</a> <a href='10_edges/02_extended-tests/extended-02-adapter-foundation.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-03-nesting-2levels.html'>extended-03-nesting-2levels.html</a> <a href='10_edges/02_extended-tests/extended-03-nesting-2levels.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-04-mart-foundation-columns.html'>extended-04-mart-foundation-columns.html</a> <a href='10_edges/02_extended-tests/extended-04-mart-foundation-columns.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-05-nesting-3levels.html'>extended-05-nesting-3levels.html</a> <a href='10_edges/02_extended-tests/extended-05-nesting-3levels.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-06-fan-in-fan-out.html'>extended-06-fan-in-fan-out.html</a> <a href='10_edges/02_extended-tests/extended-06-fan-in-fan-out.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-07-cross-layers.html'>extended-07-cross-layers.html</a> <a href='10_edges/02_extended-tests/extended-07-cross-layers.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-08-orthogonal-like.html'>extended-08-orthogonal-like.html</a> <a href='10_edges/02_extended-tests/extended-08-orthogonal-like.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-09-deep-nesting-4levels.html'>extended-09-deep-nesting-4levels.html</a> <a href='10_edges/02_extended-tests/extended-09-deep-nesting-4levels.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='10_edges/02_extended-tests/extended-10-performance.html'>extended-10-performance.html</a> <a href='10_edges/02_extended-tests/extended-10-performance.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/11_dashboard' ><summary><span class='number'>11</span> dashboard</summary>
-<div class='group-desc'>Dashboard layout and components.</div><details class='folder' data-key='folder/11_dashboard/01_loading' ><summary><span class='folder'>01_loading/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='11_dashboard/01_loading/loading-overlay.html'>loading-overlay.html</a> <a href='11_dashboard/01_loading/loading-overlay.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/11_dashboard/02_click-handlers' ><summary><span class='folder'>02_click-handlers/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='11_dashboard/02_click-handlers/01_floating-div-demo/floating-div-demo.html'>floating-div-demo.html</a> <a href='11_dashboard/02_click-handlers/01_floating-div-demo/floating-div-demo.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/d3_basics' ><summary>d3 basics</summary>
-<div class='group-desc'>Introductory D3.js examples and learning modules.</div><details class='folder' data-key='folder/d3_basics/01_hello_d3' ><summary><span class='folder'>01_hello_d3/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/01_hello_d3/hello_d3.html'>hello_d3.html</a> <a href='d3_basics/01_hello_d3/hello_d3.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/02_first_data' ><summary><span class='folder'>02_first_data/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/02_first_data/first_data.html'>first_data.html</a> <a href='d3_basics/02_first_data/first_data.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/03_dynamic_update' ><summary><span class='folder'>03_dynamic_update/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/03_dynamic_update/dynamic_update.html'>dynamic_update.html</a> <a href='d3_basics/03_dynamic_update/dynamic_update.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/10_force_graph_layout' ><summary><span class='folder'>10_force_graph_layout/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/10_force_graph_layout/circle_graph.html'>circle_graph.html</a> <a href='d3_basics/10_force_graph_layout/circle_graph.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/11_force_graph_chart_layout' ><summary><span class='folder'>11_force_graph_chart_layout/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/11_force_graph_chart_layout/chart_layout.html'>chart_layout.html</a> <a href='d3_basics/11_force_graph_chart_layout/chart_layout.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/12_force_graph_layout_split_js' ><summary><span class='folder'>12_force_graph_layout_split_js/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/12_force_graph_layout_split_js/circle_graph.html'>circle_graph.html</a> <a href='d3_basics/12_force_graph_layout_split_js/circle_graph.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/13_rect_force_graph_layout' ><summary><span class='folder'>13_rect_force_graph_layout/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/13_rect_force_graph_layout/rect_graph.html'>rect_graph.html</a> <a href='d3_basics/13_rect_force_graph_layout/rect_graph.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/14_rect_force_distance' ><summary><span class='folder'>14_rect_force_distance/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/14_rect_force_distance/rect_graph.html'>rect_graph.html</a> <a href='d3_basics/14_rect_force_distance/rect_graph.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/d3_basics/15_rect_force_avoidNodeLinkCollisions' ><summary><span class='folder'>15_rect_force_avoidNodeLinkCollisions/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='d3_basics/15_rect_force_avoidNodeLinkCollisions/rect_graph.html'>rect_graph.html</a> <a href='d3_basics/15_rect_force_avoidNodeLinkCollisions/rect_graph.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/dashboard' open><summary>dashboard</summary>
-<div class='group-desc'>Main product: Modular dashboard with real data and advanced features.</div><details class='folder' data-key='folder/dashboard/flowdash-bundle.html' open><summary><span class='folder'>flowdash-bundle.html/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='dashboard/flowdash-bundle.html'>flowdash-bundle.html</a> <a href='dashboard/flowdash-bundle.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/dashboard/flowdash-js.html' open><summary><span class='folder'>flowdash-js.html/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='dashboard/flowdash-js.html'>flowdash-js.html</a> <a href='dashboard/flowdash-js.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/dashboard/prerender' open><summary><span class='folder'>prerender/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='dashboard/prerender/prerender-generator.html'>prerender-generator.html</a> <a href='dashboard/prerender/prerender-generator.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/prerender/test-prerender.html'>test-prerender.html</a> <a href='dashboard/prerender/test-prerender.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/dashboard/tests' open><summary><span class='folder'>tests/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/compare-results.html'>compare-results.html</a> <a href='dashboard/tests/compare-results.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/run-baseline-tests.html'>run-baseline-tests.html</a> <a href='dashboard/tests/run-baseline-tests.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-detailed-profiling.html'>test-detailed-profiling.html</a> <a href='dashboard/tests/test-detailed-profiling.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-double-click.html'>test-double-click.html</a> <a href='dashboard/tests/test-double-click.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-node-init-profiling.html'>test-node-init-profiling.html</a> <a href='dashboard/tests/test-node-init-profiling.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-optimization-4.html'>test-optimization-4.html</a> <a href='dashboard/tests/test-optimization-4.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-optimization-6.html'>test-optimization-6.html</a> <a href='dashboard/tests/test-optimization-6.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-performance.html'>test-performance.html</a> <a href='dashboard/tests/test-performance.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-profiling.html'>test-profiling.html</a> <a href='dashboard/tests/test-profiling.html' target='_blank' class='link-icon'>🔗</a></li><li class='file-li'><a href='#' data-load='1' data-path='dashboard/tests/test-zone-system.html'>test-zone-system.html</a> <a href='dashboard/tests/test-zone-system.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-<details class='group' data-key='group/experiments' ><summary>experiments</summary>
-<div class='group-desc'>Advanced and experimental D3/network visualizations.</div><details class='folder' data-key='folder/experiments/40_dwhflow' ><summary><span class='folder'>40_dwhflow/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='experiments/40_dwhflow/dwh_lineage.html'>dwh_lineage.html</a> <a href='experiments/40_dwhflow/dwh_lineage.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/experiments/41_dwhflow' ><summary><span class='folder'>41_dwhflow/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='experiments/41_dwhflow/dwh_lineage.html'>dwh_lineage.html</a> <a href='experiments/41_dwhflow/dwh_lineage.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/experiments/42_dwhflow' ><summary><span class='folder'>42_dwhflow/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='experiments/42_dwhflow/dwh_lineage.html'>dwh_lineage.html</a> <a href='experiments/42_dwhflow/dwh_lineage.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/experiments/50_network' ><summary><span class='folder'>50_network/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='experiments/50_network/network_lineage.html'>network_lineage.html</a> <a href='experiments/50_network/network_lineage.html' target='_blank' class='link-icon'>🔗</a></li></ul></details><details class='folder' data-key='folder/experiments/51_network' ><summary><span class='folder'>51_network/</span></summary><ul class='file-list'><li class='file-li'><a href='#' data-load='1' data-path='experiments/51_network/network_lineage.html'>network_lineage.html</a> <a href='experiments/51_network/network_lineage.html' target='_blank' class='link-icon'>🔗</a></li></ul></details></details>
-            </nav>
-        </aside>
-        <main class="content">
-            <iframe id="viewer"></iframe>
-        </main>
+            <details class="folder" data-key="folder/12_selection/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="12_selection/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="12_selection/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/13_zoom">
+            <summary><span class="number">13</span> zoom</summary>
+            <div class="group-desc">Zoom: pan, scale, fit-to-viewport, double-click auto-zoom.</div>
+            <details class="folder" data-key="folder/13_zoom/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="13_zoom/01_basic/basic.html">basic.html</a>
+                  <a href="13_zoom/01_basic/basic.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/14_status">
+            <summary><span class="number">14</span> status</summary>
+            <div class="group-desc">Status state machine, cascade, auto-collapse.</div>
+            <details class="folder" data-key="folder/14_status/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="14_status/01_basic/basic.html">basic.html</a>
+                  <a href="14_status/01_basic/basic.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/15_minimap">
+            <summary><span class="number">15</span> minimap</summary>
+            <div class="group-desc">Minimap interactions, modes, positions, sizing.</div>
+            <details class="folder" data-key="folder/15_minimap/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="15_minimap/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="15_minimap/01_basic/basic.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/16_overlay">
+            <summary><span class="number">16</span> overlay</summary>
+            <div class="group-desc">Loading + floating-div overlays.</div>
+            <details class="folder" data-key="folder/16_overlay/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="16_overlay/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="16_overlay/01_basic/basic.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/17_prerender">
+            <summary><span class="number">17</span> prerender</summary>
+            <div class="group-desc">Cold vs prerendered side-by-side timing.</div>
+            <details class="folder" data-key="folder/17_prerender/01_basic">
+              <summary><span class="folder">01_basic/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="17_prerender/01_basic/basic.html"
+                    >basic.html</a
+                  >
+                  <a href="17_prerender/01_basic/basic.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/18_foldExpand">
+            <summary><span class="number">18</span> foldExpand</summary>
+            <div class="group-desc">
+              Fold / expand demos: manual collapse, edges, deep nesting, status-driven, and autoplay
+              movies.
+            </div>
+            <details class="folder" data-key="folder/18_foldExpand/01_simple">
+              <summary><span class="folder">01_simple/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="18_foldExpand/01_simple/simple.html"
+                    >simple.html</a
+                  >
+                  <a href="18_foldExpand/01_simple/simple.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/18_foldExpand/02_with-edges">
+              <summary><span class="folder">02_with-edges/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="18_foldExpand/02_with-edges/with-edges.html"
+                    >with-edges.html</a
+                  >
+                  <a
+                    href="18_foldExpand/02_with-edges/with-edges.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/18_foldExpand/03_nested">
+              <summary><span class="folder">03_nested/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="18_foldExpand/03_nested/nested.html"
+                    >nested.html</a
+                  >
+                  <a href="18_foldExpand/03_nested/nested.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/18_foldExpand/04_status-driven">
+              <summary><span class="folder">04_status-driven/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="18_foldExpand/04_status-driven/status-driven.html"
+                    >status-driven.html</a
+                  >
+                  <a
+                    href="18_foldExpand/04_status-driven/status-driven.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/18_foldExpand/05_movie-small">
+              <summary><span class="folder">05_movie-small/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="18_foldExpand/05_movie-small/movie-small.html"
+                    >movie-small.html</a
+                  >
+                  <a
+                    href="18_foldExpand/05_movie-small/movie-small.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/18_foldExpand/06_movie-big">
+              <summary><span class="folder">06_movie-big/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="18_foldExpand/06_movie-big/movie-big.html"
+                    >movie-big.html</a
+                  >
+                  <a
+                    href="18_foldExpand/06_movie-big/movie-big.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/d3_basics">
+            <summary>d3 basics</summary>
+            <div class="group-desc">Introductory D3.js examples and learning modules.</div>
+            <details class="folder" data-key="folder/d3_basics/01_hello_d3">
+              <summary><span class="folder">01_hello_d3/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="d3_basics/01_hello_d3/hello_d3.html"
+                    >hello_d3.html</a
+                  >
+                  <a href="d3_basics/01_hello_d3/hello_d3.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/02_first_data">
+              <summary><span class="folder">02_first_data/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="d3_basics/02_first_data/first_data.html"
+                    >first_data.html</a
+                  >
+                  <a
+                    href="d3_basics/02_first_data/first_data.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/03_dynamic_update">
+              <summary><span class="folder">03_dynamic_update/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/03_dynamic_update/dynamic_update.html"
+                    >dynamic_update.html</a
+                  >
+                  <a
+                    href="d3_basics/03_dynamic_update/dynamic_update.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/10_force_graph_layout">
+              <summary><span class="folder">10_force_graph_layout/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/10_force_graph_layout/circle_graph.html"
+                    >circle_graph.html</a
+                  >
+                  <a
+                    href="d3_basics/10_force_graph_layout/circle_graph.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/11_force_graph_chart_layout">
+              <summary><span class="folder">11_force_graph_chart_layout/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/11_force_graph_chart_layout/chart_layout.html"
+                    >chart_layout.html</a
+                  >
+                  <a
+                    href="d3_basics/11_force_graph_chart_layout/chart_layout.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/12_force_graph_layout_split_js">
+              <summary><span class="folder">12_force_graph_layout_split_js/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/12_force_graph_layout_split_js/circle_graph.html"
+                    >circle_graph.html</a
+                  >
+                  <a
+                    href="d3_basics/12_force_graph_layout_split_js/circle_graph.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/13_rect_force_graph_layout">
+              <summary><span class="folder">13_rect_force_graph_layout/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/13_rect_force_graph_layout/rect_graph.html"
+                    >rect_graph.html</a
+                  >
+                  <a
+                    href="d3_basics/13_rect_force_graph_layout/rect_graph.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/d3_basics/14_rect_force_distance">
+              <summary><span class="folder">14_rect_force_distance/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/14_rect_force_distance/rect_graph.html"
+                    >rect_graph.html</a
+                  >
+                  <a
+                    href="d3_basics/14_rect_force_distance/rect_graph.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details
+              class="folder"
+              data-key="folder/d3_basics/15_rect_force_avoidNodeLinkCollisions"
+            >
+              <summary><span class="folder">15_rect_force_avoidNodeLinkCollisions/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="d3_basics/15_rect_force_avoidNodeLinkCollisions/rect_graph.html"
+                    >rect_graph.html</a
+                  >
+                  <a
+                    href="d3_basics/15_rect_force_avoidNodeLinkCollisions/rect_graph.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/dashboard" open>
+            <summary>dashboard</summary>
+            <div class="group-desc">
+              Main product: Modular dashboard with real data and advanced features.
+            </div>
+            <details class="folder" data-key="folder/dashboard/flowdash-bundle.html" open>
+              <summary><span class="folder">flowdash-bundle.html/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/flowdash-bundle.html"
+                    >flowdash-bundle.html</a
+                  >
+                  <a href="dashboard/flowdash-bundle.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/dashboard/flowdash-js.html" open>
+              <summary><span class="folder">flowdash-js.html/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/flowdash-js.html"
+                    >flowdash-js.html</a
+                  >
+                  <a href="dashboard/flowdash-js.html" target="_blank" class="link-icon">🔗</a>
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/dashboard/prerender" open>
+              <summary><span class="folder">prerender/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/prerender/prerender-generator.html"
+                    >prerender-generator.html</a
+                  >
+                  <a
+                    href="dashboard/prerender/prerender-generator.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/prerender/test-prerender.html"
+                    >test-prerender.html</a
+                  >
+                  <a
+                    href="dashboard/prerender/test-prerender.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/dashboard/tests" open>
+              <summary><span class="folder">tests/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/compare-results.html"
+                    >compare-results.html</a
+                  >
+                  <a href="dashboard/tests/compare-results.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/run-baseline-tests.html"
+                    >run-baseline-tests.html</a
+                  >
+                  <a
+                    href="dashboard/tests/run-baseline-tests.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-detailed-profiling.html"
+                    >test-detailed-profiling.html</a
+                  >
+                  <a
+                    href="dashboard/tests/test-detailed-profiling.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-double-click.html"
+                    >test-double-click.html</a
+                  >
+                  <a href="dashboard/tests/test-double-click.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a
+                    href="#"
+                    data-load="1"
+                    data-path="dashboard/tests/test-node-init-profiling.html"
+                    >test-node-init-profiling.html</a
+                  >
+                  <a
+                    href="dashboard/tests/test-node-init-profiling.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-optimization-4.html"
+                    >test-optimization-4.html</a
+                  >
+                  <a
+                    href="dashboard/tests/test-optimization-4.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-optimization-6.html"
+                    >test-optimization-6.html</a
+                  >
+                  <a
+                    href="dashboard/tests/test-optimization-6.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-performance.html"
+                    >test-performance.html</a
+                  >
+                  <a href="dashboard/tests/test-performance.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-profiling.html"
+                    >test-profiling.html</a
+                  >
+                  <a href="dashboard/tests/test-profiling.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="dashboard/tests/test-zone-system.html"
+                    >test-zone-system.html</a
+                  >
+                  <a href="dashboard/tests/test-zone-system.html" target="_blank" class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+          <details class="group" data-key="group/experiments">
+            <summary>experiments</summary>
+            <div class="group-desc">Advanced and experimental D3/network visualizations.</div>
+            <details class="folder" data-key="folder/experiments/40_dwhflow">
+              <summary><span class="folder">40_dwhflow/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="experiments/40_dwhflow/dwh_lineage.html"
+                    >dwh_lineage.html</a
+                  >
+                  <a
+                    href="experiments/40_dwhflow/dwh_lineage.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/experiments/41_dwhflow">
+              <summary><span class="folder">41_dwhflow/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="experiments/41_dwhflow/dwh_lineage.html"
+                    >dwh_lineage.html</a
+                  >
+                  <a
+                    href="experiments/41_dwhflow/dwh_lineage.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/experiments/42_dwhflow">
+              <summary><span class="folder">42_dwhflow/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="experiments/42_dwhflow/dwh_lineage.html"
+                    >dwh_lineage.html</a
+                  >
+                  <a
+                    href="experiments/42_dwhflow/dwh_lineage.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/experiments/50_network">
+              <summary><span class="folder">50_network/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="experiments/50_network/network_lineage.html"
+                    >network_lineage.html</a
+                  >
+                  <a
+                    href="experiments/50_network/network_lineage.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+            <details class="folder" data-key="folder/experiments/51_network">
+              <summary><span class="folder">51_network/</span></summary>
+              <ul class="file-list">
+                <li class="file-li">
+                  <a href="#" data-load="1" data-path="experiments/51_network/network_lineage.html"
+                    >network_lineage.html</a
+                  >
+                  <a
+                    href="experiments/51_network/network_lineage.html"
+                    target="_blank"
+                    class="link-icon"
+                    >🔗</a
+                  >
+                </li>
+              </ul>
+            </details>
+          </details>
+        </nav>
+      </aside>
+      <main class="content">
+        <iframe id="viewer"></iframe>
+      </main>
     </div>
-</body>
+  </body>
 </html>

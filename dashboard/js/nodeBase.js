@@ -1,8 +1,8 @@
-import { computeConnectionPoints } from "./utilPath.js";
-import { EventManager } from "./eventManager.js";
-import { StatusManager } from "./statusManager.js";
-import { ConfigManager } from "./configManager.js";
-import { ZoneManager } from "./zones/index.js";
+import { computeConnectionPoints } from './utilPath.js';
+import { EventManager } from './eventManager.js';
+import { StatusManager } from './statusManager.js';
+import { ConfigManager } from './configManager.js';
+import { ZoneManager } from './zones/index.js';
 
 export const NodeStatus = Object.freeze({
   UNDETERMINED: 'Undetermined',
@@ -14,9 +14,9 @@ export const NodeStatus = Object.freeze({
   UPDATED: 'Updated',
   SKIPPED: 'Skipped',
   // error states
-  DELAYED: 'Delayed',  
+  DELAYED: 'Delayed',
   WARNING: 'Warning',
-  ERROR: 'Error'
+  ERROR: 'Error',
 });
 
 export default class BaseNode {
@@ -32,8 +32,8 @@ export default class BaseNode {
     this.onDblClick = null;
     this._selected = false;
     this._status = nodeData.state ?? NodeStatus.UNKNOWN;
-    this._visible = nodeData.visible ?? true; 
-    this._collapsed = nodeData.collapsed ?? false; 
+    this._visible = nodeData.visible ?? true;
+    this._collapsed = nodeData.collapsed ?? false;
     this.suspenseDisplayChange = false;
 
     this.id = nodeData.id;
@@ -49,12 +49,6 @@ export default class BaseNode {
     this.zoneManager = null;
     this._updatingCollapseState = false;
 
-    // Set default values for x, y, width, and height
-    this.x ??= 0;
-    this.y ??= 0;
-    this.data.width ??= 60;
-    this.data.height ??= 60;
-
     // Apply pre-render position if available
     if (nodeData.prerender) {
       this.x = nodeData.prerender.x;
@@ -63,6 +57,11 @@ export default class BaseNode {
       this.data.height = nodeData.prerender.height;
       this._hasPrerenderData = true;
     } else {
+      // Read initial position from nodeData, with defaults
+      this.x = nodeData.x ?? 0;
+      this.y = nodeData.y ?? 0;
+      this.data.width ??= 60;
+      this.data.height ??= 60;
       this._hasPrerenderData = false;
     }
   }
@@ -75,7 +74,7 @@ export default class BaseNode {
     if (value === this._visible) return;
 
     this._visible = value;
-    
+
     // Actually hide/show the DOM element
     if (this.element) {
       if (value) {
@@ -92,14 +91,14 @@ export default class BaseNode {
 
   set collapsed(value) {
     if (value === this._collapsed) return;
-    
+
     this._collapsed = value;
 
     // Always update DOM classes if element exists
     if (this.element) {
-      this.element.classed("collapsed", this.collapsed);
-      this.element.classed("expanded", !this.collapsed);
-    } 
+      this.element.classed('collapsed', this.collapsed);
+      this.element.classed('expanded', !this.collapsed);
+    }
   }
 
   /**
@@ -117,25 +116,48 @@ export default class BaseNode {
   set status(value) {
     this._status = value;
     if (this.element) {
-      this.element.attr("status", value);
+      this.element.attr('status', value);
     }
 
     // Auto collapse/expand based on status when enabled, avoiding re-entrancy
     // Only containers should auto-toggle collapsed state
-    if (this.isContainer && this.settings.toggleCollapseOnStatusChange && !this._updatingCollapseState) {
-      // Determine collapse rule based on effective status (containers use aggregated child status)
-      let effectiveStatus = value;
+    if (
+      this.isContainer &&
+      this.settings.toggleCollapseOnStatusChange &&
+      !this._updatingCollapseState
+    ) {
+      // For containers, determine collapse based on children's statuses
+      let shouldCollapse = false;
       if (this.isContainer && this.childNodes && this.childNodes.length > 0) {
-        try { effectiveStatus = StatusManager.calculateContainerStatus(this.childNodes, this.settings); } catch {}
+        try {
+          // Collect leaf node statuses
+          const collectLeafStatuses = (nodes, out) => {
+            for (const n of nodes) {
+              if (n.isContainer && Array.isArray(n.childNodes) && n.childNodes.length > 0) {
+                collectLeafStatuses(n.childNodes, out);
+              } else {
+                out.push(n.status);
+              }
+            }
+          };
+          const childStatuses = [];
+          collectLeafStatuses(this.childNodes, childStatuses);
+          shouldCollapse = StatusManager.shouldContainerCollapse(childStatuses, this.settings);
+        } catch {}
+      } else {
+        // Non-container or no children: use simple status check
+        shouldCollapse = StatusManager.shouldCollapseOnStatus(value, this.settings);
       }
-      const shouldCollapse = StatusManager.shouldCollapseOnStatus(effectiveStatus, this.settings);
+
       this._updatingCollapseState = true;
       try {
         if (shouldCollapse) {
           this.collapsed = true;
+          this._statusCollapseApplied = true; // Mark that status-based collapse was applied
         } else {
           // Explicitly expand when status becomes non-collapsible
           this.collapsed = false;
+          this._statusCollapseApplied = true; // Mark that status-based collapse was applied
           // Ensure all ancestor containers are expanded so this node becomes visible
           let ancestor = this.parentNode;
           while (ancestor) {
@@ -176,11 +198,10 @@ export default class BaseNode {
   }
 
   set selected(value) {
-
     this._selected = value;
     // Only update DOM if element exists
     if (this.element) {
-      this.element.classed("selected", this._selected);
+      this.element.classed('selected', this._selected);
     }
   }
 
@@ -188,11 +209,11 @@ export default class BaseNode {
     if (this.suspenseDisplayChange) {
       return;
     }
-    
+
     try {
       // Check this node's dashboard reference (inherited during init)
       const dashboard = this.__dashboard;
-      
+
       // Check suspension - early exit during initialization
       if (dashboard && dashboard._suspendDisplayChange) {
         return;
@@ -210,11 +231,11 @@ export default class BaseNode {
   move(x, y) {
     this.x = x;
     this.y = y;
-    
+
     // Only update element if it exists (has been initialized)
     if (this.element) {
-      this.element.attr("transform", `translate(${this.x}, ${this.y})`);
-      
+      this.element.attr('transform', `translate(${this.x}, ${this.y})`);
+
       // Only call handleDisplayChange if we're not in the middle of initialization
       if (!this.suspenseDisplayChange) {
         this.handleDisplayChange();
@@ -222,13 +243,13 @@ export default class BaseNode {
     }
   }
 
-   init(parentElement = null) {
+  init(parentElement = null) {
     // Performance profiling: Mark start of init
     const perfId = `node-init-${this.id}`;
     performance.mark(`${perfId}-start`);
-    
+
     if (parentElement) this.parentElement = parentElement;
-    
+
     // Inherit dashboard reference from parent for suspension checks
     if (this.parentNode?.__dashboard) {
       this.__dashboard = this.parentNode.__dashboard;
@@ -237,18 +258,18 @@ export default class BaseNode {
     // Performance profiling: DOM element creation
     performance.mark(`${perfId}-before-dom-create`);
     this.element = this.parentElement
-      .append("g")
-      .attr("class", this.data.type)
-      .attr("id", this.id)
-      .attr("status", this.status);
-    
+      .append('g')
+      .attr('class', this.data.type)
+      .attr('id', this.id)
+      .attr('status', this.status);
+
     // Apply pre-render transform immediately if available
     if (this.hasPrerenderData) {
-      this.element.attr("transform", `translate(${this.x}, ${this.y})`);
+      this.element.attr('transform', `translate(${this.x}, ${this.y})`);
     }
-    
+
     performance.mark(`${perfId}-after-dom-create`);
-      
+
     // Attach the node instance to the DOM element for testing access
     this.element.node().__node = this;
 
@@ -257,7 +278,7 @@ export default class BaseNode {
     // Initialize zone manager only for container nodes
     if (this.isContainer) {
       this.zoneManager = new ZoneManager(this);
-      
+
       // OPTIMIZATION #7: If batching DOM operations, defer complex zone initialization
       const isBatching = this.__dashboard?._batchDomOperations;
       if (isBatching) {
@@ -289,7 +310,11 @@ export default class BaseNode {
       if (parent && parent.element && this.element) {
         let desiredParentGroup = parent.element;
         if (parent.isContainer && !parent.collapsed) {
-          const innerZone = parent.zoneManager?.innerContainerZone || (parent.zoneManager?.ensureInnerContainerZone ? parent.zoneManager.ensureInnerContainerZone() : null);
+          const innerZone =
+            parent.zoneManager?.innerContainerZone ||
+            (parent.zoneManager?.ensureInnerContainerZone
+              ? parent.zoneManager.ensureInnerContainerZone()
+              : null);
           desiredParentGroup = innerZone?.getChildContainer?.() || parent.element;
         }
         const currentParent = this.element.node()?.parentNode || null;
@@ -306,19 +331,22 @@ export default class BaseNode {
     // Set up default events using EventManager
     EventManager.setupDefaultNodeEvents(this);
     performance.mark(`${perfId}-after-event-setup`);
-      
+
     // Performance profiling: CSS class operations
     performance.mark(`${perfId}-before-css-classes`);
     // Set expanded or collapsed state
-    this.element.classed("collapsed", this.collapsed);
-    this.element.classed("expanded", !this.collapsed);
+    this.element.classed('collapsed', this.collapsed);
+    this.element.classed('expanded', !this.collapsed);
     performance.mark(`${perfId}-after-css-classes`);
 
     // Performance profiling: Visual elements (center mark)
     performance.mark(`${perfId}-before-center-mark`);
     // show the center stip
     if (this.settings.showCenterMark)
-      this.element.append("circle").attr("class", "centermark").attr("r", 3).attr("cx", 0).attr("cy", 0);
+      this.element
+        .append('use')
+        .attr('class', 'centermark')
+        .attr('href', '#flowdash-centermark-template');
     performance.mark(`${perfId}-after-center-mark`);
 
     // Performance profiling: Connection points
@@ -326,15 +354,20 @@ export default class BaseNode {
     // show the connection points
     if (this.settings.showConnectionPoints) {
       // Create a dedicated group to isolate this node's connection points from descendants
-      this.connectionPointsGroup = this.element.append("g").attr("class", "connection-points");
-      const connectionPoints = this.computeConnectionPoints(0, 0, this.data.width, this.data.height);
+      this.connectionPointsGroup = this.element.append('g').attr('class', 'connection-points');
+      const connectionPoints = this.computeConnectionPoints(
+        0,
+        0,
+        this.data.width,
+        this.data.height,
+      );
       Object.values(connectionPoints).forEach((point) => {
         this.connectionPointsGroup
-          .append("circle")
-          .attr("class", `connection-point side-${point.side}`)
-          .attr("cx", point.x)
-          .attr("cy", point.y)
-          .attr("r", 2);
+          .append('use')
+          .attr('class', `connection-point side-${point.side}`)
+          .attr('href', '#flowdash-connection-point-template')
+          .attr('x', point.x)
+          .attr('y', point.y);
       });
       try {
         if (this.settings.isDebug) {
@@ -343,33 +376,65 @@ export default class BaseNode {
       } catch {}
     }
     performance.mark(`${perfId}-after-connection-points`);
-    
+
     // Performance profiling: Display change
     performance.mark(`${perfId}-before-display-change`);
     // Skip display change if in pre-render mode or dashboard is suspending changes
-    const shouldSkipDisplayChange = this.hasPrerenderData && this.__dashboard?._suspendDisplayChange;
+    const shouldSkipDisplayChange =
+      this.hasPrerenderData && this.__dashboard?._suspendDisplayChange;
     if (!shouldSkipDisplayChange) {
       // Trigger display change after initialization to ensure loading overlay is hidden
       this.handleDisplayChange();
     }
     performance.mark(`${perfId}-after-display-change`);
-    
+
     // Performance profiling: Create measurements and log
     performance.mark(`${perfId}-end`);
     performance.measure(`${perfId}-total`, `${perfId}-start`, `${perfId}-end`);
-    performance.measure(`${perfId}-dom-create`, `${perfId}-before-dom-create`, `${perfId}-after-dom-create`);
-    performance.measure(`${perfId}-zone-manager`, `${perfId}-before-zone-manager`, `${perfId}-after-zone-manager`);
-    performance.measure(`${perfId}-dom-parenting`, `${perfId}-before-dom-parenting`, `${perfId}-after-dom-parenting`);
-    performance.measure(`${perfId}-event-setup`, `${perfId}-before-event-setup`, `${perfId}-after-event-setup`);
-    performance.measure(`${perfId}-css-classes`, `${perfId}-before-css-classes`, `${perfId}-after-css-classes`);
-    performance.measure(`${perfId}-center-mark`, `${perfId}-before-center-mark`, `${perfId}-after-center-mark`);
-    performance.measure(`${perfId}-connection-points`, `${perfId}-before-connection-points`, `${perfId}-after-connection-points`);
-    performance.measure(`${perfId}-display-change`, `${perfId}-before-display-change`, `${perfId}-after-display-change`);
+    performance.measure(
+      `${perfId}-dom-create`,
+      `${perfId}-before-dom-create`,
+      `${perfId}-after-dom-create`,
+    );
+    performance.measure(
+      `${perfId}-zone-manager`,
+      `${perfId}-before-zone-manager`,
+      `${perfId}-after-zone-manager`,
+    );
+    performance.measure(
+      `${perfId}-dom-parenting`,
+      `${perfId}-before-dom-parenting`,
+      `${perfId}-after-dom-parenting`,
+    );
+    performance.measure(
+      `${perfId}-event-setup`,
+      `${perfId}-before-event-setup`,
+      `${perfId}-after-event-setup`,
+    );
+    performance.measure(
+      `${perfId}-css-classes`,
+      `${perfId}-before-css-classes`,
+      `${perfId}-after-css-classes`,
+    );
+    performance.measure(
+      `${perfId}-center-mark`,
+      `${perfId}-before-center-mark`,
+      `${perfId}-after-center-mark`,
+    );
+    performance.measure(
+      `${perfId}-connection-points`,
+      `${perfId}-before-connection-points`,
+      `${perfId}-after-connection-points`,
+    );
+    performance.measure(
+      `${perfId}-display-change`,
+      `${perfId}-before-display-change`,
+      `${perfId}-after-display-change`,
+    );
   }
 
   // function to put all the elements in the correct place
-   update() {
-
+  update() {
     // Update zones only for container nodes
     if (this.isContainer && this.zoneManager) {
       this.zoneManager.update();
@@ -394,30 +459,20 @@ export default class BaseNode {
 
       const connectionPoints = this.computeConnectionPoints(0, 0, width, height);
       Object.values(connectionPoints).forEach((point) => {
-        // Update only this node's own points (scoped to the dedicated group)
+        // Update only this node's own points (scoped to the dedicated group).
+        // Connection points are now <use> elements; their position attributes
+        // are `x`/`y` rather than `cx`/`cy`.
         const scope = this.connectionPointsGroup || this.element;
         if (scope) {
           scope
             .select(`.connection-point.side-${point.side}`)
-            .attr("cx", point.x)
-            .attr("cy", point.y);
+            .attr('x', point.x)
+            .attr('y', point.y);
         }
       });
-              try {
-          if (this.settings.isDebug) {
-            const scope = this.connectionPointsGroup || this.element;
-            if (scope) {
-              const read = (side) => ({
-                side,
-                cx: parseFloat(scope.select(`.connection-point.side-${side}`).attr('cx')),
-                cy: parseFloat(scope.select(`.connection-point.side-${side}`).attr('cy')),
-              });
-            }
-          }
-        } catch {}
     }
   }
-  
+
   handleClicked(event, node = this) {
     // Forward the originally clicked node so bubbling preserves the true target
     EventManager.handleNodeClick(this, event, node);
@@ -428,10 +483,9 @@ export default class BaseNode {
     EventManager.handleNodeDblClick(this, event, node);
   }
 
-   resize(size, forced = false) {
+  resize(size, forced = false) {
     // node base has no elements of it's own, so just update the data
-    if  (forced || this.data.width !== size.width || this.data.height !== size.height)
-    {
+    if (forced || this.data.width !== size.width || this.data.height !== size.height) {
       this.data.width = size.width;
       this.data.height = size.height;
 
@@ -440,7 +494,7 @@ export default class BaseNode {
         this.zoneManager.resize(size.width, size.height);
       }
 
-       this.update();
+      this.update();
 
       this.handleDisplayChange();
     }
@@ -469,21 +523,19 @@ export default class BaseNode {
   // function to return all the nodes in the graph
   getAllEdges(onlySelected = false, allEdges = []) {
     this.edges.incoming.forEach((edge) => {
-      if (!onlySelected || edge.selected) 
-      {
+      if (!onlySelected || edge.selected) {
         if (allEdges.indexOf(edge) === -1) {
           allEdges.push(edge);
-        } 
+        }
       }
     });
     this.edges.outgoing.forEach((edge) => {
-      if (!onlySelected || edge.selected) 
-        {
-          if (allEdges.indexOf(edge) === -1) {
-            allEdges.push(edge);
-          } 
+      if (!onlySelected || edge.selected) {
+        if (allEdges.indexOf(edge) === -1) {
+          allEdges.push(edge);
         }
-      });
+      }
+    });
   }
 
   isDescendantOf(node) {
@@ -498,7 +550,7 @@ export default class BaseNode {
   }
 
   getNeighbors(selector = { incomming: 1, outgoing: 1 }) {
-    const neighbors = {nodes:[],edges:[]};
+    const neighbors = { nodes: [], edges: [] };
 
     // Add the incoming neighbors
     if (selector.incomming > 0) {
@@ -506,7 +558,9 @@ export default class BaseNode {
         neighbors.edges.push(edge);
         if (selector.incomming > 1) {
           // Get the neighbors recursively and add them to the neighbors array
-          neighbors.nodes.push(...edge.source.getNeighbors({ incomming: selector.incomming - 1, outgoing: 0 }));
+          neighbors.nodes.push(
+            ...edge.source.getNeighbors({ incomming: selector.incomming - 1, outgoing: 0 }),
+          );
         } else {
           // Directly add the source node to the neighbors array
           neighbors.nodes.push(edge.source);
@@ -523,7 +577,9 @@ export default class BaseNode {
         neighbors.edges.push(edge);
         if (selector.outgoing > 1) {
           // Get the neighbors recursively and add them to the neighbors array
-          neighbors.nodes.push(...edge.target.getNeighbors({ incomming: 0, outgoing: selector.outgoing - 1 }));
+          neighbors.nodes.push(
+            ...edge.target.getNeighbors({ incomming: 0, outgoing: selector.outgoing - 1 }),
+          );
         } else {
           // Directly add the source node to the neighbors array
           neighbors.nodes.push(edge.target);
@@ -538,7 +594,7 @@ export default class BaseNode {
     if (!this.parentNode) {
       return [];
     }
-    
+
     // Defensive check: ensure parentNode has getParents method and it returns an array
     if (typeof this.parentNode.getParents === 'function') {
       const parentParents = this.parentNode.getParents();
@@ -552,23 +608,23 @@ export default class BaseNode {
       return [this.parentNode];
     }
   }
-  
-
-
 
   cascadeUpdate() {
     if (this.parentNode) {
       this.parentNode.update();
       this.parentNode.cascadeUpdate();
-    } 
+    }
   }
 
   cascadeStatusChange() {
-    if (this.parentNode && 
-        typeof this.parentNode.determineStatusBasedOnChildren === 'function' &&
-        this.parentNode.element) { // Safety check: parent element exists
+    if (
+      this.parentNode &&
+      typeof this.parentNode.determineStatusBasedOnChildren === 'function' &&
+      this.parentNode.element
+    ) {
+      // Safety check: parent element exists
       this.parentNode.determineStatusBasedOnChildren();
-    } 
+    }
   }
 
   cascadeRestartSimulation() {
@@ -589,13 +645,12 @@ export default class BaseNode {
     }
   }
 
-
   // drag
   drag_started(event, node) {
     node.cascadeRestartSimulation();
     event.fx = event.x;
     event.fy = event.y;
-    node.element.classed("grabbing", true);
+    node.element.classed('grabbing', true);
   }
 
   dragged(event, node) {
@@ -607,7 +662,7 @@ export default class BaseNode {
   }
 
   drag_ended(event, node) {
-    node.element.classed("grabbing", false);
+    node.element.classed('grabbing', false);
 
     node.cascadeStopSimulation();
   }
