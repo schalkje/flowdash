@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo is a vanilla-JS / D3.js codebase served as static files. There are **two npm projects**:
 
 - **Root** (`/package.json`) — hosts the Playwright test suite that drives the demo pages and the dashboard via a static HTTP server.
-- **Dashboard** (`/dashboard/package.json`) — the production library; webpack-bundled, version-bumped on each `prebuild`, externalises `d3`. This is the actual product.
+- **Dashboard** (`/dashboard/package.json`) — the production library; webpack-bundled, externalises `d3`. This is the actual product. Version bumps are explicit (`npm version <bump>` per release) — `npm run build` does **not** modify `package.json`.
 
 The numbered top-level folders (`01_basicNodes/` … `11_dashboard/`), `d3_basics/`, and `experiments/` are standalone HTML demos used both for incremental learning and as test fixtures. They are not built — Playwright loads them directly from the static server.
 
@@ -41,11 +41,11 @@ npx playwright test tests/<file>.spec.js --project=chromium   # single browser
 cd dashboard
 npm install
 npm start            # webpack-dev-server with hot reload
-npm run build        # production bundle to dashboard/dist/flowdash.min.js (auto-bumps patch version)
+npm run build        # production bundle to dashboard/dist/flowdash.min.js (does NOT bump version)
 npm run build:analyze  # opens webpack-bundle-analyzer on 127.0.0.1:8888
 ```
 
-`prebuild` runs `npm version patch --no-git-tag-version`, so every `npm run build` increments the version in `dashboard/package.json`. Don't run `build` casually if you don't want a version bump.
+`npm run build` is idempotent — it does not bump the version. Releases set the version explicitly via `npm version <bump>` from `/dashboard/`; the build then embeds it in the bundle banner via webpack's `BannerPlugin`.
 
 ### Distribution scripts (PowerShell, optional)
 

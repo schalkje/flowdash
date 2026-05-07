@@ -7,7 +7,7 @@ Quick start:
 ```bash
 cd dashboard
 npm install            # once
-npm run build          # patch-bumps version, writes dashboard/dist/flowdash.min.js
+npm run build          # writes dashboard/dist/flowdash.min.js (does not bump version)
 ```
 
 Build + copy CSS/themes into a dist tree:

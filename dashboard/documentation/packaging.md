@@ -80,18 +80,31 @@ pwsh scripts/copy-flowdash-css.ps1 -DistRoot <path> -Clean
 
 ## Cut a release
 
-Releases are **automated**. Source of truth: [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
+Releases are **automated**. Source of truth: [`.github/workflows/release.yml`](../../.github/workflows/release.yml). The workflow fires on `push: tags: ['v*']`, regardless of branch.
 
-Maintainer flow from a green `main`:
+### Preflight
+
+`npm version` aborts with `Git working directory not clean` if `dashboard/` has uncommitted changes — and does nothing (no commit, no tag). Land or stash unrelated work first:
+
+```bash
+git checkout main
+git pull --ff-only
+git status -s dashboard/        # must be empty
+```
+
+### Bump + tag + push
 
 ```bash
 cd dashboard
-npm version <patch|minor|major>   # edits package.json, commits, creates tag vX.Y.Z
+npm version <patch|minor|major>   # edits package.json + commits + creates tag vX.Y.Z
 cd ..
-git push --follow-tags
+git push --follow-tags            # pushes the bump commit AND the tag
+git tag --list 'v*' | tail -3     # sanity check the tag exists locally
 ```
 
-For a release candidate: `npm version prerelease --preid=rc` — the workflow auto-marks the GitHub Release as a pre-release.
+For a release candidate: `cd dashboard && npm version prerelease --preid=rc` — the workflow auto-marks the GitHub Release as a pre-release.
+
+> Convention is to release from a green `main`. The workflow itself is happy to fire on a tag from any branch — useful in a pinch, but the resulting bundle reflects whatever that branch's state is.
 
 CI then:
 
@@ -105,7 +118,15 @@ CI then:
 
 The full Playwright suite is gated by [`test.yml`](../../.github/workflows/test.yml) on the same SHA — only tag commits whose CI is already green.
 
-Re-running a failed release: use the workflow's `workflow_dispatch` input with the existing tag name. If a partial release was created, delete it in the GitHub UI first (`gh release create` is not idempotent).
+### Re-running / recovering
+
+- **Workflow failed (bad token, network, etc.)** — re-trigger via `workflow_dispatch` with the existing tag name. If a partial release was created, delete it in the GitHub UI first (`gh release create` isn't idempotent).
+- **Version bumped but no Release appeared** — the `vX.Y.Z` tag is missing. Almost always caused by `npm version` aborting on a dirty tree, then a manual edit + commit. Recover:
+  ```bash
+  git tag --list 'v*'                    # confirm vX.Y.Z is missing
+  git tag vX.Y.Z <bump-commit-sha>
+  git push origin vX.Y.Z                 # this is the trigger
+  ```
 
 See [`docs/release.md`](../../docs/release.md) for the broader versioning policy and the npm-publish follow-up.
 
@@ -114,7 +135,7 @@ See [`docs/release.md`](../../docs/release.md) for the broader versioning policy
 | Want                                    | Run                                                           |
 | --------------------------------------- | ------------------------------------------------------------- |
 | Local dev with hot reload               | `cd dashboard && npm start`                                   |
-| Production bundle only (bumps version)  | `cd dashboard && npm run build`                               |
+| Production bundle only                  | `cd dashboard && npm run build`                               |
 | Production bundle + bundle-analyzer     | `cd dashboard && npm run build:analyze`                       |
 | Bundle + CSS + themes into a dist tree  | `pwsh scripts/distribute.ps1 [-DistRoot <p>] [-Clean]`        |
 | CSS + themes only (no rebuild)          | `pwsh scripts/copy-flowdash-css.ps1 [-DistRoot <p>] [-Clean]` |
