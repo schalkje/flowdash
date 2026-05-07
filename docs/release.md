@@ -83,9 +83,8 @@ What CI does on the tag push:
 1. Resolves the tag (`vX.Y.Z` or `vX.Y.Z-<prerelease>`), validates the format.
 2. Asserts `dashboard/package.json`'s `version` equals the tag's version — fails loudly if you forgot the `npm version` step.
 3. Runs `npm ci`, `npm run test:unit`, `npm run build` from `/dashboard/`.
-4. Stages four release assets:
-   - `flowdash.min.js`
-   - `flowdash.min.js.LICENSE.txt`
+4. Stages three release assets:
+   - `flowdash.min.js` (banner with version + MIT notice is embedded in the file)
    - `flowdash.css`
    - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved)
 5. Calls `gh release create` with `--generate-notes` (auto-generated commit summary). Pre-release tags get `--prerelease`.

@@ -97,9 +97,8 @@ CI then:
 
 1. Validates the tag format and asserts `dashboard/package.json` version equals the tag.
 2. Runs `npm ci` + `npm run test:unit` + `npm run build` from `/dashboard/`.
-3. Stages four assets:
-   - `flowdash.min.js`
-   - `flowdash.min.js.LICENSE.txt`
+3. Stages three assets:
+   - `flowdash.min.js` (banner with version + MIT notice is embedded in the file)
    - `flowdash.css`
    - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved)
 4. Calls `gh release create --generate-notes` (auto-generated from commits).

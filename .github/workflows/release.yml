@@ -87,7 +87,6 @@ jobs:
           set -euo pipefail
           mkdir -p release-assets
           cp dashboard/dist/flowdash.min.js release-assets/
-          cp dashboard/dist/flowdash.min.js.LICENSE.txt release-assets/
           cp dashboard/flowdash.css release-assets/
           (cd dashboard && zip -r "../release-assets/flowdash-themes-${TAG}.zip" themes -i '*.css')
           ls -lh release-assets/
