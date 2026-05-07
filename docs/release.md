@@ -4,10 +4,10 @@ This repo contains **two npm projects**. Understanding which is which matters wh
 
 ## The dual-package model
 
-| Package            | Path                                                   | Role                                                                                                                                                                               | Versioning                                                                                                      |
-| ------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `flowdash`         | [`/dashboard/package.json`](../dashboard/package.json) | The library itself. Webpack-bundled, externalises D3, ships [`flowdash.min.js`](../dashboard/dist/flowdash.min.js) and CSS. **This is the version external consumers care about.** | `prebuild` auto-bumps the patch (`npm version patch --no-git-tag-version`) on every successful `npm run build`. |
-| `flowdash-harness` | [`/package.json`](../package.json)                     | Test runner, demo server orchestrator, and dev tooling. **Not published, not consumed by anyone.**                                                                                 | Stays at `0.0.0`, marked `"private": true`. Don't bump it.                                                      |
+| Package            | Path                                                   | Role                                                                                                                                                                       | Versioning                                                                                                                |
+| ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `flowdash`         | [`/dashboard/package.json`](../dashboard/package.json) | The library itself. Webpack-bundled, externalises D3, ships `flowdash.min.js` and CSS as **GitHub Release assets**. **This is the version external consumers care about.** | Bumped explicitly per release via `npm version <bump>` from `/dashboard/`. The tag drives the GitHub Actions release run. |
+| `flowdash-harness` | [`/package.json`](../package.json)                     | Test runner, demo server orchestrator, and dev tooling. **Not published, not consumed by anyone.**                                                                         | Stays at `0.0.0`, marked `"private": true`. Don't bump it.                                                                |
 
 If you find yourself looking at "the version" of FlowDash, you almost always mean the version inside `/dashboard/package.json`.
 
@@ -28,11 +28,11 @@ npm run build
 
 What `dashboard/`'s `build` does:
 
-1. **`prebuild` hook fires first** — runs `npm version patch --no-git-tag-version`, which bumps the `version` field in `dashboard/package.json` (e.g. `1.2.32` → `1.2.33`). It does _not_ tag git.
-2. **Webpack runs in production mode** — produces minified `dashboard/dist/flowdash.min.js` and `dashboard/dist/flowdash.css`. D3 is externalised; consumers must provide it.
-3. **CSS distribution scripts** (PowerShell, see `/scripts/`) can copy the bundle and themes into a release tree.
+1. **Webpack runs in production mode** — produces minified `dashboard/dist/flowdash.min.js` and `dashboard/dist/flowdash.css`. D3 is externalised; consumers must provide it.
+2. The bundle banner (via webpack `BannerPlugin`) embeds the current version from `dashboard/package.json`.
+3. **CSS distribution scripts** (PowerShell, see `/scripts/`) can copy the bundle and themes into a local dist tree for smoke-testing.
 
-> ⚠️ **Don't run `npm run build` casually.** Every successful build bumps the patch version and modifies `dashboard/package.json`. If you only want to inspect the bundle, use `npm run build:analyze` from `/dashboard/` (still bumps the version) or run webpack directly without the prebuild hook.
+> Build is idempotent — running it does not modify `package.json`. The version is set explicitly by the maintainer before tagging (see [Cutting a release](#cutting-a-release) below). `dashboard/dist/` is gitignored; it lives in CI builds and on the GitHub Release page.
 
 ## Bundle analysis
 
@@ -58,32 +58,64 @@ These are Windows-only today. Cross-platform replacements are tracked in [`impro
 
 ## Versioning policy
 
-Today FlowDash auto-bumps the **patch** on every build. That is appropriate while the project is still pre-1.0 in spirit: every successful build is a snapshot consumers may want to pin against.
+Releases use semver bumps chosen explicitly by the maintainer:
 
-A more disciplined policy, recommended once the test pyramid and CI are in place:
+- **Patch** (`1.2.x`) — bug fixes, internal refactors, no API changes.
+- **Minor** (`1.x.0`) — new features, backwards-compatible API additions.
+- **Major** (`x.0.0`) — breaking API changes (settings schema, public exports, data shape). Discuss in advance and document the migration in [`docs/migration/`](./).
+- **Pre-release** (`1.3.0-rc.1`) — `npm version prerelease --preid=rc`. The release workflow auto-marks these as GitHub pre-releases.
 
-- **Patch** (`1.2.x`) — bug fixes, internal refactors, no API changes. Auto-bump on `prebuild` is appropriate.
-- **Minor** (`1.x.0`) — new features, backwards-compatible API additions. Bump manually before the build that ships the feature.
-- **Major** (`x.0.0`) — breaking API changes (settings schema, public exports, data shape). Discuss in advance, document the migration in [`docs/migration/`](./), bump manually.
+## Cutting a release
 
-Until the project goes to npm, "bump" means editing `dashboard/package.json` and committing. There is no `npm publish` step today.
+Releases are **tag-driven**: pushing a `v*` tag triggers [`.github/workflows/release.yml`](../.github/workflows/release.yml), which builds the bundle on Linux, packages the theme CSS, and creates a GitHub Release with assets attached.
 
-## Publishing (currently: not done)
+From a clean working tree on green `main`:
 
-FlowDash is not published to npm. External consumers vendor [`flowdash.min.js`](../dashboard/dist/flowdash.min.js) directly or check out this repository.
+```bash
+cd dashboard
+npm version <patch|minor|major>   # edits package.json + creates tag vX.Y.Z + commits
+cd ..
+git push --follow-tags            # pushes the bump commit and the tag
+```
 
-If publication becomes a goal, the steps would be:
+What CI does on the tag push:
 
-1. Verify CI is green (unit + Playwright + visual + perf).
-2. Decide the version bump (patch/minor/major) per the policy above.
-3. From `/dashboard/`: `npm publish --access public`.
-4. Tag the repo: `git tag dashboard-v$(node -p "require('./dashboard/package.json').version")` and push the tag.
-5. Update [`/dashboard/readme.md`](../dashboard/readme.md) and [`docs/release.md`](./release.md) with the new install instructions.
+1. Resolves the tag (`vX.Y.Z` or `vX.Y.Z-<prerelease>`), validates the format.
+2. Asserts `dashboard/package.json`'s `version` equals the tag's version — fails loudly if you forgot the `npm version` step.
+3. Runs `npm ci`, `npm run test:unit`, `npm run build` from `/dashboard/`.
+4. Stages four release assets:
+   - `flowdash.min.js`
+   - `flowdash.min.js.LICENSE.txt`
+   - `flowdash.css`
+   - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved)
+5. Calls `gh release create` with `--generate-notes` (auto-generated commit summary). Pre-release tags get `--prerelease`.
 
-This is captured as a follow-up in [`improvement-plan.md`](./improvement-plan.md) "Out of scope".
+The full Playwright suite is gated by [`test.yml`](../.github/workflows/test.yml) on the same SHA — only tag commits whose CI is already green.
+
+### Manual re-run
+
+Failed releases (bad token, transient network, etc.) can be re-triggered without re-tagging via the workflow's `workflow_dispatch` input — pass the existing tag name. The workflow is idempotent except for `gh release create`, which will fail if the release already exists; delete the partial release in the GitHub UI first.
+
+## npm publishing (currently: not done)
+
+FlowDash is not yet published to npm. External consumers download the `flowdash.min.js` + `flowdash.css` from the GitHub Release page and vendor them.
+
+When publishing becomes a goal, the workflow needs a small extension:
+
+1. Set up [npm trusted publishing (OIDC)](https://docs.npmjs.com/trusted-publishers) for the `flowdash` package — no `NPM_TOKEN` secret required.
+2. Add a step to the release workflow after the build:
+   ```yaml
+   - name: Publish to npm
+     working-directory: dashboard
+     run: npm publish --provenance --access public
+   ```
+3. The `"files"` allowlist in `dashboard/package.json` is already configured (`dist/`, `flowdash.css`, `themes/`).
+4. Update [`/dashboard/readme.md`](../dashboard/readme.md) with `npm install flowdash` instructions.
+
+Tracked as a follow-up in [`improvement-plan.md`](./improvement-plan.md) "Out of scope".
 
 ## When something goes wrong
 
-- **A failed build still bumped the version** — `prebuild` runs first. If webpack later fails, the version in `dashboard/package.json` is already incremented. Either revert the file or treat the next successful build as "the real version."
+- **Tag pushed without a matching version bump** — the workflow fails at the version-vs-tag assertion. Delete the bad tag locally and on the remote, run `npm version <bump>` from `/dashboard/`, push again.
 - **Two parallel branches both bumped the version** — git will conflict on `dashboard/package.json`. Resolve by picking the higher version and re-bumping if both branches contribute releases.
-- **Consumers get a different bundle than expected** — verify they are sourcing `flowdash.min.js` from the right release. The bundle's first comment line embeds the build-time version (webpack's banner plugin can be configured to make this explicit; see follow-up in `improvement-plan.md`).
+- **Consumers get a different bundle than expected** — verify they are sourcing `flowdash.min.js` from the right release. The bundle's first comment line embeds the build-time version (webpack `BannerPlugin`).
