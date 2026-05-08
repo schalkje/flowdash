@@ -1,6 +1,6 @@
 {
   "name": "flowdash-harness",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Test + tooling harness for the flowdash library. The library itself lives in /dashboard and is versioned independently (see /dashboard/package.json).",
   "homepage": "https://schalken.net",
