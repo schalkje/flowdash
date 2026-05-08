@@ -1,5 +1,5 @@
-import BaseContainerNode from "./nodeBaseContainer.js";
-import Simulation from "./simulation.js";
+import BaseContainerNode from './nodeBaseContainer.js';
+import Simulation from './simulation.js';
 
 export default class GroupNode extends BaseContainerNode {
   constructor(nodeData, parentElement, createNode, settings, parentNode = null) {
@@ -7,18 +7,23 @@ export default class GroupNode extends BaseContainerNode {
   }
 
   updateChildren() {
-    // console.log("GroupNode - updateChildren", this.id, this.childNodes.length);
-    
+    // Prerender fast-path: super.updateChildren() handles the prerender case
+    // and returns; we must NOT run layoutGroup() afterwards because it
+    // recomputes container size from children, overwriting prerender values.
+    if (this.hasPrerenderData) {
+      super.updateChildren();
+      return;
+    }
+
     // Call base method to set container transform
     super.updateChildren();
-    
+
     // Apply our layout logic
     this.layoutGroup();
   }
 
   updateChildrenWithZoneSystem() {
-    
-    
+    if (this.hasPrerenderData) return;
     // Call layoutGroup to recalculate size and positioning when using zone system
     this.layoutGroup();
   }
@@ -31,14 +36,19 @@ export default class GroupNode extends BaseContainerNode {
     const marginZone = this.zoneManager?.marginZone;
     const headerZone = this.zoneManager?.headerZone;
 
-    const visibleChildren = this.childNodes.filter(node => node.visible);
+    const visibleChildren = this.childNodes.filter((node) => node.visible);
     if (visibleChildren.length === 0) return;
 
     // Simple center-based layout: keep existing relative positions, but normalize to center
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    visibleChildren.forEach(node => {
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    visibleChildren.forEach((node) => {
       const effectiveWidth = node.getEffectiveWidth ? node.getEffectiveWidth() : node.data.width;
-      const effectiveHeight = node.getEffectiveHeight ? node.getEffectiveHeight() : node.data.height;
+      const effectiveHeight = node.getEffectiveHeight
+        ? node.getEffectiveHeight()
+        : node.data.height;
       minX = Math.min(minX, node.x - effectiveWidth / 2);
       minY = Math.min(minY, node.y - effectiveHeight / 2);
       maxX = Math.max(maxX, node.x + effectiveWidth / 2);
@@ -51,7 +61,7 @@ export default class GroupNode extends BaseContainerNode {
     // Normalize child positions to be centered around (0,0)
     const contentCenterX = minX + contentWidth / 2;
     const contentCenterY = minY + contentHeight / 2;
-    visibleChildren.forEach(node => {
+    visibleChildren.forEach((node) => {
       const dx = node.x - contentCenterX;
       const dy = node.y - contentCenterY;
       node.move(dx, dy);
@@ -63,7 +73,10 @@ export default class GroupNode extends BaseContainerNode {
       const headerHeight = headerZone.getHeaderHeight();
       const newSize = {
         width: Math.max(this.minimumSize.width, contentWidth + margins.left + margins.right),
-        height: Math.max(this.minimumSize.height, headerHeight + margins.top + contentHeight + margins.bottom)
+        height: Math.max(
+          this.minimumSize.height,
+          headerHeight + margins.top + contentHeight + margins.bottom,
+        ),
       };
       this.resize(newSize);
       this.handleDisplayChange();
@@ -75,8 +88,14 @@ export default class GroupNode extends BaseContainerNode {
     } else {
       // Fallback: size to content + container margins
       const newSize = {
-        width: Math.max(this.minimumSize.width, contentWidth + this.containerMargin.left + this.containerMargin.right),
-        height: Math.max(this.minimumSize.height, contentHeight + this.containerMargin.top + this.containerMargin.bottom)
+        width: Math.max(
+          this.minimumSize.width,
+          contentWidth + this.containerMargin.left + this.containerMargin.right,
+        ),
+        height: Math.max(
+          this.minimumSize.height,
+          contentHeight + this.containerMargin.top + this.containerMargin.bottom,
+        ),
       };
       this.resize(newSize);
       this.handleDisplayChange();
@@ -89,7 +108,7 @@ export default class GroupNode extends BaseContainerNode {
       return;
     }
     // Legacy path (no zones): keep behavior
-    var links = [];
+    const links = [];
     this.simulation = new Simulation(this);
     this.simulation.init();
   }

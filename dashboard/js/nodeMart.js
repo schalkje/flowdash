@@ -151,20 +151,24 @@ export default class MartNode extends BaseContainerNode {
 
     this.initEdges();
 
-    this.data.expandedSize = {
-      width:
-        this.loadNode.data.width +
-        this.nodeSpacing.horizontal +
-        this.reportNode.data.width +
-        this.containerMargin.left +
-        this.containerMargin.right,
-      height:
-        Math.max(this.loadNode.data.height, this.reportNode.data.height) +
-        this.containerMargin.top +
-        this.containerMargin.bottom,
-    };
+    // In prerender mode, init() already applied the prerender size; recomputing
+    // expandedSize and resizing here would overwrite it.
+    if (!this.hasPrerenderData) {
+      this.data.expandedSize = {
+        width:
+          this.loadNode.data.width +
+          this.nodeSpacing.horizontal +
+          this.reportNode.data.width +
+          this.containerMargin.left +
+          this.containerMargin.right,
+        height:
+          Math.max(this.loadNode.data.height, this.reportNode.data.height) +
+          this.containerMargin.top +
+          this.containerMargin.bottom,
+      };
 
-    this.resize(this.data.expandedSize, true);
+      this.resize(this.data.expandedSize, true);
+    }
     this.update();
     this.cascadeUpdate();
 
@@ -249,6 +253,9 @@ export default class MartNode extends BaseContainerNode {
   }
 
   updateChildren() {
+    // Prerender fast-path: see LaneNode.updateChildren for rationale.
+    if (this.hasPrerenderData) return;
+
     // When collapsed, size to header minimum and skip zone-dependent layout
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;

@@ -31,11 +31,14 @@ export default class ColumnsNode extends BaseContainerNode {
   }
 
   updateChildren() {
+    // Prerender fast-path: see LaneNode.updateChildren for rationale.
+    if (this.hasPrerenderData) return;
     // Always call layoutColumns to recalculate size and positioning
     this.layoutColumns();
   }
 
   updateChildrenWithZoneSystem() {
+    if (this.hasPrerenderData) return;
     // Call layoutColumns to recalculate size and positioning when using zone system
     this.layoutColumns();
   }

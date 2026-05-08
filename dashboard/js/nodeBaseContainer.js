@@ -9,7 +9,13 @@ export default class BaseContainerNode extends BaseNode {
   constructor(nodeData, parentElement, createNode, settings, parentNode = null) {
     nodeData.width ??= 0;
     nodeData.height ??= 0;
-    nodeData.expandedSize ??= { width: nodeData.width, height: nodeData.height };
+    // Seed expandedSize from prerender when available so that later expand()
+    // and prerender-aware code paths (Adapter/Foundation/Mart initChildren)
+    // do not snap the container back to a pre-prerender default size.
+    nodeData.expandedSize ??= {
+      width: nodeData.prerender?.width ?? nodeData.width,
+      height: nodeData.prerender?.height ?? nodeData.height,
+    };
     // Ensure layout is an object, not a string
     if (typeof nodeData.layout === 'string') {
       nodeData.layout = { type: nodeData.layout };

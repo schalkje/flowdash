@@ -179,23 +179,28 @@ export default class FoundationNode extends BaseContainerNode {
 
     this.initEdges();
 
-    // Compute expanded width from children and ensure it's at least the header minimum width
-    const headerZone = this.zoneManager?.headerZone;
-    const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
-    const headerBuffer = 2;
-    this.data.expandedSize = {
-      width: Math.max(
-        headerMinWidth + headerBuffer,
-        this.rawNode.data.width +
-          this.nodeSpacing.horizontal +
-          this.baseNode.data.width +
-          this.containerMargin.left +
-          this.containerMargin.right,
-      ),
-      height: this.containerMargin.top + this.containerMargin.bottom + 18, //JS: why fixed 18
-    };
+    // In prerender mode, init() already applied the prerender size; recomputing
+    // expandedSize and resizing here would overwrite it with a heuristic
+    // header/raw/base width and a fixed 18px height.
+    if (!this.hasPrerenderData) {
+      // Compute expanded width from children and ensure it's at least the header minimum width
+      const headerZone = this.zoneManager?.headerZone;
+      const headerMinWidth = headerZone?.getMinWidth?.() ?? 0;
+      const headerBuffer = 2;
+      this.data.expandedSize = {
+        width: Math.max(
+          headerMinWidth + headerBuffer,
+          this.rawNode.data.width +
+            this.nodeSpacing.horizontal +
+            this.baseNode.data.width +
+            this.containerMargin.left +
+            this.containerMargin.right,
+        ),
+        height: this.containerMargin.top + this.containerMargin.bottom + 18, //JS: why fixed 18
+      };
 
-    this.resize(this.data.expandedSize, true);
+      this.resize(this.data.expandedSize, true);
+    }
     this.update();
     this.cascadeUpdate();
 
@@ -298,6 +303,9 @@ export default class FoundationNode extends BaseContainerNode {
   }
 
   updateChildren() {
+    // Prerender fast-path: see LaneNode.updateChildren for rationale.
+    if (this.hasPrerenderData) return;
+
     // When collapsed, size to header minimum and skip zone-dependent layout
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;

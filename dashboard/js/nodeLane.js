@@ -21,11 +21,17 @@ export default class LaneNode extends BaseContainerNode {
   }
 
   updateChildren() {
+    // Prerender fast-path: prerendered nodes already have correct size, child
+    // positions, and DOM transforms set during init(). Recomputing from
+    // children would overwrite those values with sizes derived from a layout
+    // pass that hasn't run yet (children may also still hold prerender data).
+    if (this.hasPrerenderData) return;
     // Always call layoutLane to recalculate size and positioning
     this.layoutLane();
   }
 
   updateChildrenWithZoneSystem() {
+    if (this.hasPrerenderData) return;
     // Call layoutLane to recalculate size and positioning when using zone system
     this.layoutLane();
   }
