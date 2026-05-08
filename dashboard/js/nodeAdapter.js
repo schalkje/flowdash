@@ -285,16 +285,24 @@ export default class AdapterNode extends BaseContainerNode {
 
     // If collapsed, skip zone-dependent layout work
     if (!this.collapsed) {
-      // Trigger child positioning after all children are initialized
-      if (this.zoneManager?.innerContainerZone) {
-        this.zoneManager.innerContainerZone.forceUpdateChildPositions();
+      // In prerender mode, child positions and the adapter's own size were
+      // applied during init() from prerender data. Re-running the layout +
+      // resize(expandedSize) here would overwrite them with arrangement-
+      // specific defaults (e.g. 176x44 for STAGING_ARCHIVE).
+      if (this.hasPrerenderData) {
+        this.update();
       } else {
-        console.warn('AdapterNode - zone system not available for positioning');
-      }
+        // Trigger child positioning after all children are initialized
+        if (this.zoneManager?.innerContainerZone) {
+          this.zoneManager.innerContainerZone.forceUpdateChildPositions();
+        } else {
+          console.warn('AdapterNode - zone system not available for positioning');
+        }
 
-      this.updateChildren();
-      this.resize(this.data.expandedSize, true);
-      this.update();
+        this.updateChildren();
+        this.resize(this.data.expandedSize, true);
+        this.update();
+      }
     }
 
     this.suspenseDisplayChange = false;
@@ -473,6 +481,9 @@ export default class AdapterNode extends BaseContainerNode {
   }
 
   updateChildren() {
+    // Prerender fast-path: see LaneNode.updateChildren for rationale.
+    if (this.hasPrerenderData) return;
+
     // When collapsed, set container width/height to header minimums and skip child layout
     if (this.collapsed) {
       const headerZone = this.zoneManager?.headerZone;

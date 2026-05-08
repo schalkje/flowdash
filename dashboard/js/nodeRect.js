@@ -42,16 +42,21 @@ export default class RectangularNode extends BaseNode {
     } else {
       // For default mode, use provided width as minimum (will expand for text)
       // Priority: nodeData.width > default (150)
-      const initialWidth = nodeData.width ?? 150;
+      const initialWidth = nodeData.width ?? nodeData.layout?.initialWidth ?? 150;
 
-      // Calculate text width and ensure minimum width
-      const textWidth = getTextWidth(nodeData.label);
-      const minWidth = Math.max(initialWidth, textWidth + 20); // Add padding
-      nodeData.width = minWidth;
+      // Skip text-based width expansion when prerender data carries the
+      // authoritative width — recomputing would clobber it. Also do NOT
+      // overwrite an existing layout.initialWidth that downstream callers
+      // (e.g. AdapterNode role-mode children) seeded.
+      if (!nodeData.prerender?.width) {
+        const textWidth = getTextWidth(nodeData.label);
+        const minWidth = Math.max(initialWidth, textWidth + 20); // Add padding
+        nodeData.width = minWidth;
+      }
 
       // Store initial width as the minimum for default mode
       if (!nodeData.layout) nodeData.layout = {};
-      nodeData.layout.initialWidth = initialWidth;
+      nodeData.layout.initialWidth ??= initialWidth;
     }
 
     super(nodeData, parentElement, settings, parentNode);
@@ -67,10 +72,14 @@ export default class RectangularNode extends BaseNode {
   }
 
   draw() {
+    // Lowercase type for CSS classes: SVG class selectors are case-sensitive,
+    // and data files use both 'node'/'Node', 'adapter'/'Adapter', etc.
+    const typeClass = (this.data.type || '').toLowerCase();
+
     // Create a single rectangle for the node shape (no separate border needed)
     this.shape = this.element
       .append('rect')
-      .attr('class', `${this.data.type} shape`)
+      .attr('class', `${typeClass} shape`)
       .attr('width', this.data.width)
       .attr('height', this.data.height)
       .attr('status', this.status)
@@ -81,7 +90,7 @@ export default class RectangularNode extends BaseNode {
     // Set pointer-events to 'none' so clicks pass through to the rectangle
     this.label = this.element
       .append('text')
-      .attr('class', `${this.data.type} label`)
+      .attr('class', `${typeClass} label`)
       .attr('x', 0)
       .attr('y', 0)
       .attr('pointer-events', 'none')
@@ -150,9 +159,10 @@ export default class RectangularNode extends BaseNode {
     const layoutMode = this.data.layout?.layoutMode || 'default';
 
     // Special case: Never truncate text for adapter node children in role mode
+    // Type comparison is case-insensitive: data files use both 'adapter' and 'Adapter'.
     if (
       this.parentNode &&
-      this.parentNode.data.type === 'adapter' &&
+      (this.parentNode.data.type || '').toLowerCase() === 'adapter' &&
       this.parentNode.data.layout?.displayMode === 'role'
     ) {
       this.label.text(text);
@@ -195,13 +205,28 @@ export default class RectangularNode extends BaseNode {
     if (label !== undefined) this.data.label = label;
     if (width !== undefined) this.data.width = width;
 
+    // Prerender fast-path: width comes from baked-in prerender data, so any
+    // text-based recomputation here would silently overwrite it. Just sync
+    // the DOM rect/label and skip the layout-mode branches.
+    if (this.hasPrerenderData) {
+      this.element
+        .select('rect')
+        .attr('width', this.data.width)
+        .attr('x', -this.data.width / 2);
+      if (this.label && label !== undefined) this.label.text(this.data.label);
+      this.removeTooltip();
+      return;
+    }
+
     // Check layout mode
     const layoutMode = this.data.layout?.layoutMode || 'default';
 
     // Special case: For adapter node children in role mode, always show full text
+    // Type comparison is case-insensitive: data files use both 'adapter' and 'Adapter'.
+    const parentType = (this.parentNode?.data?.type || '').toLowerCase();
     const isAdapterRoleChild =
       this.parentNode &&
-      this.parentNode.data.type === 'adapter' &&
+      parentType === 'adapter' &&
       this.parentNode.data.layout?.displayMode === 'role';
 
     if (isAdapterRoleChild) {
@@ -332,13 +357,23 @@ export default class RectangularNode extends BaseNode {
   }
 
   handleTextUpdate() {
+    // Prerender fast-path: width was baked-in by the prerender data, so any
+    // text-based recomputation here would silently overwrite it. Just sync
+    // the displayed label (truncating to fit the prerendered width).
+    if (this.hasPrerenderData) {
+      this.truncateTextIfNeeded();
+      return;
+    }
+
     // Check layout mode
     const layoutMode = this.data.layout?.layoutMode || 'default';
 
     // Special case: For adapter node children in role mode, always show full text
+    // Type comparison is case-insensitive: data files use both 'adapter' and 'Adapter'.
+    const parentType = (this.parentNode?.data?.type || '').toLowerCase();
     const isAdapterRoleChild =
       this.parentNode &&
-      this.parentNode.data.type === 'adapter' &&
+      parentType === 'adapter' &&
       this.parentNode.data.layout?.displayMode === 'role';
 
     if (isAdapterRoleChild) {

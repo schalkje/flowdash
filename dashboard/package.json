@@ -1,6 +1,6 @@
 {
   "name": "flowdash",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Visualize data flow processes",
   "homepage": "https://schalken.net",
   "main": "index.js",
