@@ -86,9 +86,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
+          cp LICENSE release-assets/
           cp dashboard/dist/flowdash.min.js release-assets/
           cp dashboard/flowdash.css release-assets/
-          (cd dashboard && zip -r "../release-assets/flowdash-themes-${TAG}.zip" themes -i '*.css')
+          # Build themes zip with LICENSE included so the archive is self-contained
+          cp LICENSE dashboard/themes/LICENSE
+          (cd dashboard && zip -r "../release-assets/flowdash-themes-${TAG}.zip" themes -i '*.css' 'themes/LICENSE')
+          rm dashboard/themes/LICENSE
           ls -lh release-assets/
 
       - name: Create GitHub Release

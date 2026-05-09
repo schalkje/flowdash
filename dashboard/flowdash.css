@@ -1,3 +1,4 @@
+/*! flowdash | (c) schalken.net | Licensed under the MIT License. See https://opensource.org/licenses/MIT */
 .flowdash-fullscreen,
 #graph.fullscreen {
   position: fixed; /* Position the element relative to the viewport */

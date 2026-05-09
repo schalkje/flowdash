@@ -110,10 +110,11 @@ CI then:
 
 1. Validates the tag format and asserts `dashboard/package.json` version equals the tag.
 2. Runs `npm ci` + `npm run test:unit` + `npm run build` from `/dashboard/`.
-3. Stages three assets:
+3. Stages four assets:
+   - `LICENSE` (MIT)
    - `flowdash.min.js` (banner with version + MIT notice is embedded in the file)
-   - `flowdash.css`
-   - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved)
+   - `flowdash.css` (license header inlined at the top)
+   - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved; `LICENSE` included inside the archive)
 4. Calls `gh release create --generate-notes` (auto-generated from commits).
 
 The full Playwright suite is gated by [`test.yml`](../../.github/workflows/test.yml) on the same SHA — only tag commits whose CI is already green.

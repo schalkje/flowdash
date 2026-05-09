@@ -105,10 +105,11 @@ The workflow fires on **any** `v*` tag push, regardless of which branch the tag 
 1. Resolves the tag (`vX.Y.Z` or `vX.Y.Z-<prerelease>`), validates the format.
 2. Asserts `dashboard/package.json`'s `version` equals the tag's version — fails loudly if you forgot the `npm version` step.
 3. Runs `npm ci`, `npm run test:unit`, `npm run build` from `/dashboard/`.
-4. Stages three release assets:
+4. Stages four release assets:
+   - `LICENSE` (MIT)
    - `flowdash.min.js` (banner with version + MIT notice is embedded in the file)
-   - `flowdash.css`
-   - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved)
+   - `flowdash.css` (license header inlined at the top)
+   - `flowdash-themes-vX.Y.Z.zip` (all theme CSS, folder structure preserved; `LICENSE` included inside the archive)
 5. Calls `gh release create` with `--generate-notes` (auto-generated commit summary). Pre-release tags get `--prerelease`.
 
 The full Playwright suite is gated by [`test.yml`](../.github/workflows/test.yml) on the same SHA — only tag commits whose CI is already green.
