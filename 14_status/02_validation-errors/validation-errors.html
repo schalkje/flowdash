@@ -168,13 +168,24 @@
           <button data-style="none">None</button>
         </div>
       </div>
+      <div class="group">
+        <strong>Size:</strong>
+        <div class="style-picker" id="sizePicker">
+          <button data-size="normal" aria-pressed="true">Normal</button>
+          <button data-size="large">Large · 1.5×</button>
+          <button data-size="big">Big · 2×</button>
+          <button data-size="huge">Huge · 4×</button>
+          <button data-size="gigantic">Gigantic · 8×</button>
+        </div>
+      </div>
       <div class="node-controls-grid" id="nodeControls"></div>
     </div>
 
     <div class="legend">
       Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
       <code>dashboard.setValidationErrorById(id, 'pre' | 'post', value)</code>,
-      <code>dashboard.setValidationIndicatorStyle(style)</code>.
+      <code>dashboard.setValidationIndicatorStyle(style)</code>,
+      <code>dashboard.setValidationIndicatorSize(size)</code>.
     </div>
 
     <div class="demo-container">
@@ -211,6 +222,18 @@
           const style = btn.dataset.style;
           dashboard.setValidationIndicatorStyle(style);
           stylePicker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
+
+      // --- Size picker ---------------------------------------------------
+      const sizePicker = document.getElementById('sizePicker');
+      sizePicker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const size = btn.dataset.size;
+          dashboard.setValidationIndicatorSize(size);
+          sizePicker.querySelectorAll('button').forEach((b) => {
             b.setAttribute('aria-pressed', String(b === btn));
           });
         });

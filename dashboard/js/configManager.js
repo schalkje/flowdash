@@ -52,6 +52,7 @@ export const DEFAULT_SETTINGS = {
   // /dashboard/documentation/validation-indicators.md.
   validationIndicator: {
     style: 'pulse-halo', // 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
+    size: 'normal', // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×)
     glyph: '!',
     animate: true,
   },

@@ -245,6 +245,7 @@ export default class BaseNode {
       width: this.data.width,
       height: this.data.height,
       style: vi.style,
+      size: vi.size,
       glyph: vi.glyph,
       animate: vi.animate,
       preError: this._preValidationError,

@@ -19,6 +19,20 @@ export const VALIDATION_STYLES = Object.freeze([
 
 const STYLE_SET = new Set(VALIDATION_STYLES);
 
+// Size tokens → scale factor applied to disc radius, halo expansion, siren
+// beam length, tape band width, police strap height and the glyph font.
+// Geometry that follows the node bounds (tape band height, police strap
+// length) stays anchored to the node and is NOT scaled — otherwise a "huge"
+// indicator would extend well past the node body.
+export const VALIDATION_SIZES = Object.freeze(['normal', 'large', 'big', 'huge', 'gigantic']);
+const SIZE_SCALES = Object.freeze({
+  normal: 1,
+  large: 1.5,
+  big: 2,
+  huge: 4,
+  gigantic: 8,
+});
+
 let _idCounter = 0;
 function uid(prefix) {
   _idCounter += 1;
@@ -42,6 +56,7 @@ function prefersReducedMotion() {
  * @param {number} opts.width   effective node width
  * @param {number} opts.height  effective node height
  * @param {string} [opts.style]   one of VALIDATION_STYLES; defaults to 'pulse-halo'
+ * @param {string} [opts.size]    one of VALIDATION_SIZES; defaults to 'normal'
  * @param {string} [opts.glyph]   single character drawn in pulse-halo/siren disc; default '!'
  * @param {boolean} [opts.animate] enable animations; default true (honours prefers-reduced-motion)
  * @param {boolean|string} opts.preError  truthy = pre-validation failed
@@ -64,8 +79,14 @@ export function renderValidationIndicators(nodeG, opts) {
 
   const glyph = opts.glyph ?? '!';
   const animate = opts.animate !== false && !prefersReducedMotion();
+  const sizeKey = opts.size && SIZE_SCALES[opts.size] ? opts.size : 'normal';
+  const sizeScale = SIZE_SCALES[sizeKey];
 
-  const layer = nodeG.append('g').attr('class', 'validation-indicators').attr('data-style', style);
+  const layer = nodeG
+    .append('g')
+    .attr('class', 'validation-indicators')
+    .attr('data-style', style)
+    .attr('data-size', sizeKey);
 
   const messages = [];
   if (typeof preErr === 'string' && preErr) messages.push(`pre: ${preErr}`);
@@ -80,6 +101,7 @@ export function renderValidationIndicators(nodeG, opts) {
       glyph,
       animate,
       style,
+      sizeScale,
       message: typeof preErr === 'string' ? preErr : null,
     });
   }
@@ -91,6 +113,7 @@ export function renderValidationIndicators(nodeG, opts) {
       glyph,
       animate,
       style,
+      sizeScale,
       message: typeof postErr === 'string' ? postErr : null,
     });
   }
@@ -140,7 +163,7 @@ function drawSide(layer, side, ctx) {
 
 // --- Reusable bits ---------------------------------------------------------
 
-function drawDisc(parent, cx, cy, r, glyph) {
+function drawDisc(parent, cx, cy, r, glyph, fontSize = 13) {
   parent
     .append('circle')
     .attr('class', 'disc')
@@ -161,10 +184,10 @@ function drawDisc(parent, cx, cy, r, glyph) {
     .append('text')
     .attr('class', 'glyph')
     .attr('x', cx)
-    .attr('y', cy + 4)
+    .attr('y', cy + fontSize * 0.32)
     .attr('text-anchor', 'middle')
     .attr('pointer-events', 'none')
-    .attr('font-size', 13)
+    .attr('font-size', fontSize)
     .attr('font-weight', 800)
     .attr('font-family', 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif')
     .attr('fill', 'var(--fd-validation-text-on-red, #ffffff)')
@@ -176,7 +199,8 @@ function drawDisc(parent, cx, cy, r, glyph) {
 function drawPulseHalo(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
-  const r = 11;
+  const r = 11 * ctx.sizeScale;
+  const fontSize = 13 * ctx.sizeScale;
 
   const halo = g
     .append('circle')
@@ -206,7 +230,7 @@ function drawPulseHalo(g, side, ctx) {
     halo.attr('opacity', 0.45);
   }
 
-  drawDisc(g, cx, cy, r, ctx.glyph);
+  drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }
 
 // --- Style: Rotating Siren -------------------------------------------------
@@ -214,7 +238,12 @@ function drawPulseHalo(g, side, ctx) {
 function drawSiren(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
-  const r = 11;
+  const s = ctx.sizeScale;
+  const r = 11 * s;
+  const fontSize = 13 * s;
+  const beamLong = 26 * s;
+  const beamShort = 9 * s;
+  const beamArc = 28 * s;
 
   const gradId = uid('fd-siren-beam');
   const defs = g.append('defs');
@@ -238,7 +267,7 @@ function drawSiren(g, side, ctx) {
   const center = g.append('g').attr('transform', `translate(${cx}, ${cy})`);
 
   const beams = center.append('g').attr('class', 'siren-beams');
-  const beamPath = 'M 0,0 L 26,-9 A 28,28 0 0,1 26,9 Z';
+  const beamPath = `M 0,0 L ${beamLong},${-beamShort} A ${beamArc},${beamArc} 0 0,1 ${beamLong},${beamShort} Z`;
   beams.append('path').attr('d', beamPath).attr('fill', `url(#${gradId})`);
   beams
     .append('path')
@@ -257,7 +286,7 @@ function drawSiren(g, side, ctx) {
       .attr('repeatCount', 'indefinite');
   }
 
-  drawDisc(center, 0, 0, r, ctx.glyph);
+  drawDisc(center, 0, 0, r, ctx.glyph, fontSize);
 }
 
 // --- Style: Industrial Tape ------------------------------------------------
@@ -265,9 +294,11 @@ function drawSiren(g, side, ctx) {
 function drawIndustrialTape(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
+  const s = ctx.sizeScale;
 
-  const bandW = 28;
-  // Overhang vertically so the tape covers the rounded corners of the rect
+  // Band width scales with size; band height stays tied to node so the tape
+  // continues to cover exactly the failing edge, no more.
+  const bandW = 28 * s;
   const overhang = 10;
   const bandH = ctx.height + overhang * 2;
 
@@ -303,13 +334,14 @@ function drawIndustrialTape(g, side, ctx) {
     .attr('stroke-width', 1.2);
 
   // Red disc sits in the centre of the band — keeps the "red nose" signal
-  const r = 10.5;
+  const r = 10.5 * s;
+  const fontSize = 13 * s;
   g.append('circle')
     .attr('cx', cx)
     .attr('cy', cy)
     .attr('r', r + 2)
     .attr('fill', 'var(--fd-validation-tape-dark, #181311)');
-  drawDisc(g, cx, cy, r, ctx.glyph);
+  drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }
 
 // --- Style: Police Line ----------------------------------------------------
@@ -317,12 +349,13 @@ function drawIndustrialTape(g, side, ctx) {
 function drawPoliceLine(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
+  const s = ctx.sizeScale;
 
-  // Horizontal half-strap with repeating PRE/POST FAILED text.
-  // The strap is anchored on the failing edge and extends roughly to the
-  // middle of the node so it doesn't fully obscure the centre label.
-  const strapH = 22;
+  // Strap height scales with size; strap length stays tied to node width so
+  // the strap continues to fit the node body even when "huge".
+  const strapH = 22 * s;
   const strapLen = Math.max(80, ctx.width * 0.55);
+  const strapFont = 10 * s;
   // Sit the strap slightly below the centre so the title text stays visible
   const tyOffset = Math.min(20, Math.max(8, ctx.height * 0.18));
   const ty = cy + tyOffset;
@@ -363,22 +396,23 @@ function drawPoliceLine(g, side, ctx) {
   strap
     .append('text')
     .attr('x', 0)
-    .attr('y', 4)
+    .attr('y', strapFont * 0.32)
     .attr('text-anchor', 'middle')
     .attr('pointer-events', 'none')
     .attr('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace')
-    .attr('font-size', 10)
+    .attr('font-size', strapFont)
     .attr('font-weight', 700)
     .attr('fill', 'var(--fd-validation-tape-dark, #181311)')
     .attr('letter-spacing', '0.14em')
     .text(tokens);
 
   // Anchor disc on the failing edge so pre/post still reads by position
-  const r = 10.5;
+  const r = 10.5 * s;
+  const fontSize = 13 * s;
   g.append('circle')
     .attr('cx', cx)
     .attr('cy', cy)
     .attr('r', r + 2)
     .attr('fill', 'var(--fd-validation-tape-dark, #181311)');
-  drawDisc(g, cx, cy, r, ctx.glyph);
+  drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }

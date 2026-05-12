@@ -106,16 +106,146 @@ function rectPair(prefix, state) {
   ];
 }
 
-// Decorator: stamp validation errors on the Ready entry of a section, so the
-// theme overview always shows what a "red nose" looks like under the active
-// theme. See /dashboard/documentation/validation-indicators.md.
-function withValidationOnReady(section) {
-  for (const child of section.children) {
-    if (child.state === 'Ready') {
-      child.preValidationError = 'upstream contract violated';
-      child.postValidationError = 'output schema mismatch';
-    }
-  }
+// Exemplar nodes: one extra child appended to each section, demonstrating
+// a richer state — a status that warrants attention combined with a
+// validation indicator and meaningful child states. The page-level style
+// picker flips Pulse Halo / Siren / Industrial Tape / Police Line / None
+// live so reviewers can vet the indicator under every theme.
+// See /dashboard/documentation/validation-indicators.md.
+const EXEMPLARS = {
+  'sec-basic': () => ({
+    id: 'sec-basic-exemplar',
+    label: '★ Ready · pre',
+    type: 'rect',
+    state: 'Ready',
+    preValidationError: 'upstream contract violated',
+  }),
+  'sec-adapter': () => ({
+    id: 'sec-adapter-exemplar',
+    label: '★ Warning · post',
+    type: 'adapter',
+    state: 'Warning',
+    layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
+    children: [
+      {
+        id: 'sec-adapter-exemplar-staging',
+        label: 'STAGING',
+        type: 'node',
+        children: [],
+        state: 'Updated',
+        role: 'staging',
+        postValidationError: 'output schema mismatch',
+      },
+      {
+        id: 'sec-adapter-exemplar-archive',
+        label: 'ARCHIVE',
+        type: 'node',
+        children: [],
+        state: 'Ready',
+        role: 'archive',
+      },
+      {
+        id: 'sec-adapter-exemplar-transform',
+        label: 'TRANSFORM',
+        type: 'node',
+        children: [],
+        state: 'Ready',
+        role: 'transform',
+      },
+    ],
+  }),
+  'sec-columns': () => ({
+    id: 'sec-columns-exemplar',
+    label: '★ Warning · pre',
+    type: 'columns',
+    state: 'Warning',
+    layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
+    children: [
+      { id: 'sec-columns-exemplar-a', label: 'A', type: 'node', children: [], state: 'Updated' },
+      {
+        id: 'sec-columns-exemplar-b',
+        label: 'B',
+        type: 'node',
+        children: [],
+        state: 'Ready',
+        preValidationError: 'input column missing',
+      },
+    ],
+  }),
+  'sec-foundation': () => ({
+    id: 'sec-foundation-exemplar',
+    label: '★ Warning · pre & post',
+    type: 'foundation',
+    state: 'Warning',
+    layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
+    children: [
+      {
+        id: 'sec-foundation-exemplar-raw',
+        label: 'raw',
+        type: 'node',
+        children: [],
+        state: 'Updated',
+        role: 'raw',
+        category: 'raw',
+        width: 60,
+        postValidationError: 'base contract failed',
+      },
+      {
+        id: 'sec-foundation-exemplar-base',
+        label: 'base',
+        type: 'node',
+        children: [],
+        state: 'Ready',
+        role: 'base',
+        category: 'base',
+        width: 60,
+      },
+    ],
+  }),
+  'sec-lane': () => ({
+    id: 'sec-lane-exemplar',
+    label: '★ Warning · post',
+    type: 'lane',
+    state: 'Warning',
+    postValidationError: 'downstream contract failed',
+    children: [
+      { id: 'sec-lane-exemplar-a', label: 'A', type: 'node', children: [], state: 'Updated' },
+      { id: 'sec-lane-exemplar-b', label: 'B', type: 'node', children: [], state: 'Ready' },
+    ],
+  }),
+  'sec-mart': () => ({
+    id: 'sec-mart-exemplar',
+    label: '★ Warning · pre',
+    type: 'mart',
+    state: 'Warning',
+    layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
+    preValidationError: 'upstream snapshot stale',
+    children: [
+      {
+        id: 'sec-mart-exemplar-load',
+        label: 'load',
+        type: 'node',
+        children: [],
+        state: 'Updated',
+        role: 'load',
+        category: 'load',
+      },
+      {
+        id: 'sec-mart-exemplar-report',
+        label: 'report',
+        type: 'node',
+        children: [],
+        state: 'Ready',
+        role: 'report',
+        category: 'report',
+      },
+    ],
+  }),
+};
+
+function withExemplar(section) {
+  const make = EXEMPLARS[section.id];
+  if (make) section.children.push(make());
   return section;
 }
 
@@ -188,45 +318,53 @@ export const demoData = {
       type: 'columns',
       layout: { arrangement: 'default', display: 'content' },
       children: [
-        // First column: rect nodes — Ready entry carries pre+post validation
-        // errors so the indicator is visible under every theme.
-        withValidationOnReady(
-          buildSection({ id: 'sec-basic', label: 'Basic nodes (rect)', type: 'rect' }),
+        // Each section gets its 10 status entries plus one exemplar (★) that
+        // mixes a status with validation errors and meaningful child states.
+        withExemplar(buildSection({ id: 'sec-basic', label: 'Basic nodes (rect)', type: 'rect' })),
+        withExemplar(
+          buildSection({
+            id: 'sec-adapter',
+            label: 'Adapter nodes',
+            type: 'adapter',
+            makeChildren: adapterChildren,
+            layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
+          }),
         ),
-        buildSection({
-          id: 'sec-adapter',
-          label: 'Adapter nodes',
-          type: 'adapter',
-          makeChildren: adapterChildren,
-          layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
-        }),
-        buildSection({
-          id: 'sec-columns',
-          label: 'Columns',
-          type: 'columns',
-          makeChildren: rectPair,
-          layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
-        }),
-        buildSection({
-          id: 'sec-foundation',
-          label: 'Foundation',
-          type: 'foundation',
-          makeChildren: foundationChildren,
-          layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
-        }),
-        buildSection({
-          id: 'sec-lane',
-          label: 'Lane (2 rects)',
-          type: 'lane',
-          makeChildren: rectPair,
-        }),
-        buildSection({
-          id: 'sec-mart',
-          label: 'Marts',
-          type: 'mart',
-          makeChildren: martChildren,
-          layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
-        }),
+        withExemplar(
+          buildSection({
+            id: 'sec-columns',
+            label: 'Columns',
+            type: 'columns',
+            makeChildren: rectPair,
+            layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
+          }),
+        ),
+        withExemplar(
+          buildSection({
+            id: 'sec-foundation',
+            label: 'Foundation',
+            type: 'foundation',
+            makeChildren: foundationChildren,
+            layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
+          }),
+        ),
+        withExemplar(
+          buildSection({
+            id: 'sec-lane',
+            label: 'Lane (2 rects)',
+            type: 'lane',
+            makeChildren: rectPair,
+          }),
+        ),
+        withExemplar(
+          buildSection({
+            id: 'sec-mart',
+            label: 'Marts',
+            type: 'mart',
+            makeChildren: martChildren,
+            layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
+          }),
+        ),
       ],
     },
   ],

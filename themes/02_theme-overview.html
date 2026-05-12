@@ -62,6 +62,48 @@
         height: 100%;
         display: block;
       }
+      .validation-style-picker {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 16px 10px;
+        font-size: 13px;
+        border-bottom: 1px solid #eee;
+        flex: 0 0 auto;
+      }
+      .validation-style-picker strong {
+        font-weight: 600;
+        color: #333;
+      }
+      .validation-style-picker .group {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .validation-style-picker button {
+        border: none;
+        background: #fff;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        border-right: 1px solid #e5e5e5;
+      }
+      .validation-style-picker button:last-child {
+        border-right: none;
+      }
+      .validation-style-picker button[aria-pressed='true'] {
+        background: #1f2937;
+        color: #fff;
+      }
+      .validation-style-picker button:hover:not([aria-pressed='true']) {
+        background: #f3f4f6;
+      }
+      .validation-style-picker .hint {
+        color: #666;
+        font-size: 12px;
+      }
     </style>
   </head>
 
@@ -69,10 +111,24 @@
     <header class="demo-header">
       <h1>Theme Overview</h1>
       <p>
-        Each section below shows one node type rendered in all 10 statuses (Undetermined → Error).
-        Use the floating theme picker in the top-left to switch themes live.
+        Each section below shows one node type rendered in all 10 statuses (Undetermined → Error),
+        plus one <strong>★ exemplar</strong> node mixing a non-trivial status with validation
+        errors. Use the floating theme picker (top-left) to switch themes; use the validation-style
+        picker below to flip the red-nose treatment live.
       </p>
     </header>
+
+    <div class="validation-style-picker">
+      <strong>Validation style:</strong>
+      <div class="group" id="validationStylePicker">
+        <button data-style="pulse-halo" aria-pressed="true">Pulse Halo</button>
+        <button data-style="rotating-siren">Rotating Siren</button>
+        <button data-style="industrial-tape">Industrial Tape</button>
+        <button data-style="police-line">Police Line</button>
+        <button data-style="none">None</button>
+      </div>
+      <span class="hint">applies to every ★ exemplar across the columns</span>
+    </div>
 
     <div class="demo-container">
       <svg id="graph" class="canvas"></svg>
@@ -101,6 +157,17 @@
       await dashboard.initialize('#graph');
       window.flowdash = dashboard;
       window.dashboard = dashboard;
+
+      // Validation-style switcher — flips every ★ exemplar's red nose live.
+      const picker = document.getElementById('validationStylePicker');
+      picker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          dashboard.setValidationIndicatorStyle(btn.dataset.style);
+          picker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
     </script>
   </body>
 </html>

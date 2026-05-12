@@ -2230,6 +2230,26 @@ export class Dashboard {
     });
   }
 
+  /**
+   * Switch the validation-indicator size live across every node.
+   * Allowed sizes: 'normal' (1×), 'large' (1.5×), 'big' (2×), 'huge' (4×),
+   * 'gigantic' (8×).
+   *
+   * @param {string} size
+   */
+  setValidationIndicatorSize(size) {
+    if (!this.main?.root) return;
+    const settings = this.main.root.settings;
+    if (!settings.validationIndicator) settings.validationIndicator = {};
+    settings.validationIndicator.size = size;
+    const nodes = this.main.root.getAllNodes();
+    nodes.forEach((node) => {
+      if (typeof node._renderValidationIndicators === 'function') {
+        node._renderValidationIndicators();
+      }
+    });
+  }
+
   zoomRandom(dashboard) {
     const nodes = dashboard.main.root.getAllNodes();
     const node = nodes[Math.floor(Math.random() * nodes.length)];

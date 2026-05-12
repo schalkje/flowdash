@@ -55,13 +55,22 @@ falls back to `'pulse-halo'`.
 {
   validationIndicator: {
     style: 'pulse-halo',  // 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
+    size:  'normal',      // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×)
     glyph: '!',           // single character drawn inside the pulse-halo / siren disc
     animate: true,        // when false, halos/siren freeze (useful for screenshots & prerender)
   },
 }
 ```
 
-A value of `'none'` disables rendering entirely without touching the data.
+A value of `style: 'none'` disables rendering entirely without touching the data.
+
+### Size scaling
+
+`size` multiplies the indicator's iconographic measurements (disc radius,
+halo expansion, siren beam length, tape band width, police strap height,
+glyph font). Geometry that follows the node bounds — the tape band's height
+and the police strap's length — stays anchored to the node so the indicator
+never extends beyond the failing edge regardless of size.
 
 ## API
 
@@ -82,6 +91,7 @@ dashboard.setValidationErrorById(nodeId, 'post', 'duplicate keys');
 dashboard.clearValidationErrorById(nodeId); // both sides
 dashboard.clearValidationErrorById(nodeId, 'pre'); // one side
 dashboard.setValidationIndicatorStyle('rotating-siren'); // switch style live
+dashboard.setValidationIndicatorSize('big'); // switch size live
 ```
 
 `setValidationIndicatorStyle` mutates `settings.validationIndicator.style` and
