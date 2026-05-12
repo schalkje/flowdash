@@ -7,6 +7,16 @@
   --fd-accent: #6bb6ff; /* cool accent for focus */
   --fd-border: #2a3342; /* structural lines */
   --fd-edge: #5c6a82; /* edges/links */
+
+  /* Validation-indicator tokens — dark theme: brighter reds for contrast,
+     muted tape so it doesn't burn the eye on a dark canvas. */
+  --fd-validation-red: #ff3a3a;
+  --fd-validation-red-bright: #ff6b6b;
+  --fd-validation-red-deep: #7a0a0a;
+  --fd-validation-glow: rgba(255, 70, 70, 0.55);
+  --fd-validation-tape-yellow: #ffd23a;
+  --fd-validation-tape-dark: #0b0e14;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {

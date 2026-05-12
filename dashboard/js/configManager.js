@@ -48,6 +48,13 @@ export const DEFAULT_SETTINGS = {
     epsilonPct: 0.005,
     minTargetBBoxPx: { w: 24, h: 24 },
   },
+  // Validation indicators ("red noses"). Orthogonal to NodeStatus — see
+  // /dashboard/documentation/validation-indicators.md.
+  validationIndicator: {
+    style: 'pulse-halo', // 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
+    glyph: '!',
+    animate: true,
+  },
 };
 
 // Default settings for demo pages (other than flowdash-js and flowdash-bundle).

@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hazard Tape — Variations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,30;1,9..144,300..900,30&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #efe7d2;
+        --paper-card: #faf5e6;
+        --ink: #181311;
+        --ink-soft: #4a3f35;
+        --muted: #8a8170;
+        --rule: #c9bea3;
+        --rule-soft: #d8cfb5;
+        --oxblood: #6f0d0d;
+        --red: #c8181d;
+        --red-deep: #4a0606;
+        --tape-yellow: #f2c70b;
+        --tape-black: #181311;
+
+        --font-display: 'Fraunces', 'Times New Roman', serif;
+        --font-body: 'Fraunces', 'Georgia', serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--paper);
+        background-image:
+          radial-gradient(ellipse at top, rgba(255, 255, 255, 0.45), transparent 65%),
+          radial-gradient(ellipse at 30% 70%, rgba(122, 14, 14, 0.04), transparent 50%),
+          repeating-linear-gradient(0deg, transparent 0 31px, rgba(111, 13, 13, 0.035) 31px 32px),
+          repeating-linear-gradient(90deg, transparent 0 31px, rgba(111, 13, 13, 0.035) 31px 32px);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-variation-settings:
+          'opsz' 14,
+          'wght' 400,
+          'SOFT' 30;
+        line-height: 1.5;
+        min-height: 100vh;
+        padding: 0 32px 80px;
+        -webkit-font-smoothing: antialiased;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.05  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+        opacity: 0.45;
+        mix-blend-mode: multiply;
+      }
+
+      .document {
+        max-width: 1180px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      /* ========== Document head ========== */
+      .doc-head {
+        padding-top: 48px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--ink);
+        margin-bottom: 48px;
+      }
+      .doc-meta {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .doc-meta dt {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .doc-meta dd {
+        margin: 4px 0 0;
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .doc-meta > div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .doc-head h1 {
+        font-family: var(--font-display);
+        font-variation-settings:
+          'opsz' 144,
+          'wght' 600,
+          'SOFT' 30;
+        font-size: clamp(60px, 9vw, 130px);
+        line-height: 0.86;
+        letter-spacing: -0.035em;
+        margin: 0 0 20px;
+      }
+      .doc-head h1 em {
+        font-style: italic;
+        font-variation-settings:
+          'opsz' 144,
+          'wght' 400,
+          'SOFT' 80;
+        color: var(--red);
+      }
+      .doc-head h1 .amp {
+        font-style: italic;
+        font-variation-settings:
+          'opsz' 144,
+          'wght' 300,
+          'SOFT' 100;
+        color: var(--ink-soft);
+        margin: 0 0.04em;
+      }
+      .doc-deck p {
+        font-family: var(--font-body);
+        font-variation-settings:
+          'opsz' 24,
+          'wght' 400,
+          'SOFT' 30;
+        font-size: 17.5px;
+        line-height: 1.5;
+        margin: 0;
+        color: var(--ink-soft);
+        max-width: 70ch;
+      }
+      .doc-deck p em {
+        font-style: italic;
+        color: var(--oxblood);
+      }
+
+      /* ========== Specimens ========== */
+      .specimens {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .specimen {
+        position: relative;
+        background: var(--paper-card);
+        padding: 32px 36px 24px;
+        box-shadow:
+          0 1px 0 rgba(24, 19, 17, 0.06),
+          0 12px 24px -18px rgba(24, 19, 17, 0.2);
+      }
+      .specimen::before,
+      .specimen::after,
+      .specimen .b-bl,
+      .specimen .b-br {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--oxblood);
+        border-style: solid;
+        border-width: 0;
+      }
+      .specimen::before {
+        top: -1px;
+        left: -1px;
+        border-top-width: 2px;
+        border-left-width: 2px;
+      }
+      .specimen::after {
+        top: -1px;
+        right: -1px;
+        border-top-width: 2px;
+        border-right-width: 2px;
+      }
+      .specimen .b-bl {
+        bottom: -1px;
+        left: -1px;
+        border-bottom-width: 2px;
+        border-left-width: 2px;
+      }
+      .specimen .b-br {
+        bottom: -1px;
+        right: -1px;
+        border-bottom-width: 2px;
+        border-right-width: 2px;
+      }
+
+      .specimen-head {
+        display: grid;
+        grid-template-columns: 110px 1fr auto;
+        align-items: baseline;
+        gap: 28px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 20px;
+      }
+      .specimen-num {
+        font-family: var(--font-display);
+        font-variation-settings:
+          'opsz' 144,
+          'wght' 500,
+          'SOFT' 30;
+        font-size: 84px;
+        line-height: 0.8;
+        letter-spacing: -0.04em;
+      }
+      .specimen-num .nº {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+        text-transform: uppercase;
+        display: block;
+        line-height: 1;
+        margin-bottom: 8px;
+        font-variation-settings: normal;
+        font-weight: 500;
+      }
+      .specimen-name {
+        font-family: var(--font-display);
+        font-variation-settings:
+          'opsz' 96,
+          'wght' 500,
+          'SOFT' 30;
+        font-size: 38px;
+        line-height: 1;
+        letter-spacing: -0.018em;
+        margin: 0;
+      }
+      .specimen-name em {
+        font-style: italic;
+        color: var(--red);
+        font-variation-settings:
+          'opsz' 96,
+          'wght' 400,
+          'SOFT' 100;
+      }
+      .specimen-lever {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink);
+        padding: 4px 10px;
+        border: 1px solid var(--ink);
+        background: var(--paper);
+        white-space: nowrap;
+      }
+
+      .specimen-blurb {
+        font-family: var(--font-body);
+        font-variation-settings:
+          'opsz' 24,
+          'wght' 400,
+          'SOFT' 30;
+        font-size: 16.5px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+        margin: 0 0 24px;
+        max-width: 66ch;
+      }
+      .specimen-blurb em {
+        font-style: italic;
+        color: var(--oxblood);
+      }
+
+      .specimen-figures {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .specimen-figures figure {
+        margin: 0;
+        background: #fbfbf8;
+        border: 1px solid var(--rule-soft);
+        position: relative;
+        padding: 20px 16px 12px;
+      }
+      .specimen-figures figure::before,
+      .specimen-figures figure::after {
+        position: absolute;
+        top: 10px;
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .specimen-figures figure::before {
+        content: attr(data-side);
+        left: 14px;
+      }
+      .specimen-figures figure::after {
+        content: attr(data-axis);
+        right: 14px;
+      }
+      .specimen-figures svg {
+        display: block;
+        margin: 14px auto 8px;
+        overflow: visible;
+      }
+      .specimen-figures figcaption {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--ink-soft);
+        text-align: center;
+        border-top: 1px dotted var(--rule);
+        padding-top: 8px;
+        margin-top: 6px;
+        letter-spacing: 0.02em;
+      }
+      .specimen-figures figcaption .state {
+        color: var(--red);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-right: 8px;
+      }
+
+      .specimen-foot {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        margin-top: 20px;
+        padding-top: 14px;
+        border-top: 1px solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--ink-soft);
+      }
+      .specimen-foot dt {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 9.5px;
+        margin-bottom: 4px;
+      }
+      .specimen-foot dd {
+        margin: 0;
+        color: var(--ink);
+      }
+      .specimen-foot > div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ========== Reference (original) ========== */
+      .reference {
+        margin-top: 56px;
+        padding: 24px 32px 22px;
+        background: rgba(0, 0, 0, 0.025);
+        border: 1px solid var(--rule);
+        position: relative;
+      }
+      .reference::before {
+        content: 'REFERENCE · ORIGINAL HAZARD TAPE';
+        position: absolute;
+        top: -8px;
+        left: 22px;
+        background: var(--paper);
+        padding: 0 10px;
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        letter-spacing: 0.22em;
+        color: var(--oxblood);
+        font-weight: 700;
+      }
+      .reference-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 24px;
+        align-items: center;
+      }
+      .reference-grid svg {
+        display: block;
+        overflow: visible;
+      }
+      .reference-grid p {
+        font-family: var(--font-body);
+        font-variation-settings:
+          'opsz' 14,
+          'wght' 400;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        margin: 0;
+        max-width: 38ch;
+      }
+      .reference-grid p em {
+        font-style: italic;
+        color: var(--oxblood);
+      }
+
+      /* ========== Footer ========== */
+      .doc-foot {
+        margin-top: 48px;
+        padding-top: 16px;
+        border-top: 1px solid var(--ink);
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 24px;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .doc-foot .stamp {
+        border: 1.5px solid var(--oxblood);
+        color: var(--oxblood);
+        padding: 6px 14px;
+        transform: rotate(-3deg);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+      .doc-foot a {
+        color: var(--oxblood);
+        text-decoration: none;
+        border-bottom: 1px solid var(--rule);
+      }
+      .doc-foot .right {
+        text-align: right;
+      }
+
+      /* ========== Shared node styles ========== */
+      .node-rect {
+        fill: #fdfbf3;
+        stroke: #a89e87;
+        stroke-width: 1;
+      }
+      .node-titlebar {
+        fill: #efe7d2;
+      }
+      .node-titlesep {
+        stroke: #a89e87;
+        stroke-width: 0.6;
+      }
+      .node-title-text {
+        fill: var(--ink);
+        font-family: 'Fraunces', serif;
+        font-variation-settings:
+          'opsz' 24,
+          'wght' 600,
+          'SOFT' 30;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+      .node-body-text {
+        fill: var(--ink-soft);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9.5px;
+      }
+      .node-body-text.err {
+        fill: var(--red);
+        font-weight: 500;
+      }
+      .nose-glyph {
+        fill: white;
+        font-family: 'Fraunces', serif;
+        font-variation-settings:
+          'opsz' 24,
+          'wght' 800,
+          'SOFT' 30;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="document">
+      <!-- ============ DOCUMENT HEAD ============ -->
+      <header class="doc-head">
+        <dl class="doc-meta">
+          <div>
+            <dt>Document</dt>
+            <dd>FlowDash · Indicators</dd>
+          </div>
+          <div>
+            <dt>Series</dt>
+            <dd>Red Noses</dd>
+          </div>
+          <div>
+            <dt>Subject</dt>
+            <dd>Hazard Tape</dd>
+          </div>
+          <div>
+            <dt>Specimens</dt>
+            <dd>05 variations</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>spike</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>2026·05·11</dd>
+          </div>
+        </dl>
+
+        <h1>Hazard <em>Tape</em><span class="amp"> &mdash; </span>variations.</h1>
+
+        <div class="doc-deck">
+          <p>
+            Five different levers pulled on the same idea: <em>motion</em> (marching stripes),
+            <em>palette</em> (industrial yellow/black), <em>placement</em> (a horizontal police line
+            across the body), <em>geometry</em> (an X-cross sealing the edge), and
+            <em>direction</em> (chevron arrows replacing parallel stripes). Each is shown on the
+            input (pre) and output (post) edge. Original Hazard Tape sits at the foot for
+            comparison.
+          </p>
+        </div>
+      </header>
+
+      <!-- ============ SPECIMENS ============ -->
+      <div class="specimens">
+        <!-- ===== I — MARCHING STRIPES ===== -->
+        <article class="specimen">
+          <i class="b-bl"></i><i class="b-br"></i>
+
+          <header class="specimen-head">
+            <div class="specimen-num"><span class="nº">No.</span>01</div>
+            <h2 class="specimen-name">Marching <em>Stripes</em></h2>
+            <span class="specimen-lever">lever · motion</span>
+          </header>
+
+          <p class="specimen-blurb">
+            The original tape, but the stripes <em>drift along the diagonal</em> at a slow conveyor
+            pace. Adds urgency without changing footprint — the same barricade, but visibly active.
+            Reads from across the room like a working alarm rather than a printed sticker.
+          </p>
+
+          <div class="specimen-figures">
+            <figure data-side="◀ pre" data-axis="i.a">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern
+                    id="tape-march-pre"
+                    patternUnits="userSpaceOnUse"
+                    width="14"
+                    height="14"
+                    patternTransform="rotate(-45)"
+                  >
+                    <rect width="14" height="14" fill="#c8181d" />
+                    <rect x="0" y="0" width="7" height="14" fill="#f2c70b" />
+                    <animateTransform
+                      attributeName="patternTransform"
+                      type="rotate"
+                      from="-45"
+                      to="-45"
+                      dur="9999s"
+                    />
+                    <animateTransform
+                      attributeName="patternTransform"
+                      type="translate"
+                      values="0 0; 0 14"
+                      dur="0.9s"
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="60" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="60" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="60" y1="32" x2="340" y2="32" />
+
+                <rect
+                  x="44"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="url(#tape-march-pre)"
+                  stroke="#4a0606"
+                  stroke-width="1.2"
+                />
+
+                <text class="node-title-text" x="92" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="92" y="48">expected : invoices_*.csv</text>
+                <text class="node-body-text" x="92" y="62">received : 0 files</text>
+                <text class="node-body-text err" x="92" y="80">pre-check : input set empty</text>
+
+                <g transform="translate(61,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption>
+                <span class="state">pre</span>input barricade · stripes marching
+              </figcaption>
+            </figure>
+
+            <figure data-side="post ▶" data-axis="i.b">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern
+                    id="tape-march-post"
+                    patternUnits="userSpaceOnUse"
+                    width="14"
+                    height="14"
+                    patternTransform="rotate(-45)"
+                  >
+                    <rect width="14" height="14" fill="#c8181d" />
+                    <rect x="0" y="0" width="7" height="14" fill="#f2c70b" />
+                    <animateTransform
+                      attributeName="patternTransform"
+                      type="rotate"
+                      from="-45"
+                      to="-45"
+                      dur="9999s"
+                    />
+                    <animateTransform
+                      attributeName="patternTransform"
+                      type="translate"
+                      values="0 0; 0 14"
+                      dur="0.9s"
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="20" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="20" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="20" y1="32" x2="300" y2="32" />
+
+                <rect
+                  x="282"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="url(#tape-march-post)"
+                  stroke="#4a0606"
+                  stroke-width="1.2"
+                />
+
+                <text class="node-title-text" x="34" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="34" y="48">rows : 12 488</text>
+                <text class="node-body-text" x="34" y="62">dup keys : 37</text>
+                <text class="node-body-text err" x="34" y="80">
+                  post-check : duplicate primary keys
+                </text>
+
+                <g transform="translate(299,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption>
+                <span class="state">post</span>output barricade · stripes marching
+              </figcaption>
+            </figure>
+          </div>
+
+          <dl class="specimen-foot">
+            <div>
+              <dt>motion</dt>
+              <dd>stripe drift · 0.9s loop</dd>
+            </div>
+            <div>
+              <dt>strength</dt>
+              <dd>adds urgency without footprint change</dd>
+            </div>
+            <div>
+              <dt>caveat</dt>
+              <dd>visual "noise" across many failing nodes</dd>
+            </div>
+          </dl>
+        </article>
+
+        <!-- ===== II — INDUSTRIAL YELLOW / BLACK ===== -->
+        <article class="specimen">
+          <i class="b-bl"></i><i class="b-br"></i>
+
+          <header class="specimen-head">
+            <div class="specimen-num"><span class="nº">No.</span>02</div>
+            <h2 class="specimen-name">Industrial <em>Black</em></h2>
+            <span class="specimen-lever">lever · palette</span>
+          </header>
+
+          <p class="specimen-blurb">
+            Same shape, different palette: <em>yellow on black</em> like a factory-floor caution
+            sign or radiation door. Less "wound", more "do not operate". Pairs well with a
+            graphite/dark dashboard theme. The red nose remains as the only true-red element, so it
+            still carries the failure signal.
+          </p>
+
+          <div class="specimen-figures">
+            <figure data-side="◀ pre" data-axis="ii.a">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern
+                    id="tape-indu-pre"
+                    patternUnits="userSpaceOnUse"
+                    width="14"
+                    height="14"
+                    patternTransform="rotate(-45)"
+                  >
+                    <rect width="14" height="14" fill="#181311" />
+                    <rect x="0" y="0" width="7" height="14" fill="#f2c70b" />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="60" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="60" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="60" y1="32" x2="340" y2="32" />
+
+                <rect
+                  x="44"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="url(#tape-indu-pre)"
+                  stroke="#000"
+                  stroke-width="1.2"
+                />
+
+                <text class="node-title-text" x="92" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="92" y="48">expected : invoices_*.csv</text>
+                <text class="node-body-text" x="92" y="62">received : 0 files</text>
+                <text class="node-body-text err" x="92" y="80">pre-check : input set empty</text>
+
+                <g transform="translate(61,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">pre</span>input · industrial caution</figcaption>
+            </figure>
+
+            <figure data-side="post ▶" data-axis="ii.b">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern
+                    id="tape-indu-post"
+                    patternUnits="userSpaceOnUse"
+                    width="14"
+                    height="14"
+                    patternTransform="rotate(-45)"
+                  >
+                    <rect width="14" height="14" fill="#181311" />
+                    <rect x="0" y="0" width="7" height="14" fill="#f2c70b" />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="20" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="20" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="20" y1="32" x2="300" y2="32" />
+
+                <rect
+                  x="282"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="url(#tape-indu-post)"
+                  stroke="#000"
+                  stroke-width="1.2"
+                />
+
+                <text class="node-title-text" x="34" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="34" y="48">rows : 12 488</text>
+                <text class="node-body-text" x="34" y="62">dup keys : 37</text>
+                <text class="node-body-text err" x="34" y="80">
+                  post-check : duplicate primary keys
+                </text>
+
+                <g transform="translate(299,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">post</span>output · industrial caution</figcaption>
+            </figure>
+          </div>
+
+          <dl class="specimen-foot">
+            <div>
+              <dt>palette</dt>
+              <dd>yellow on black · red disc preserved</dd>
+            </div>
+            <div>
+              <dt>tone</dt>
+              <dd>"do not operate" · less wound, more lockout</dd>
+            </div>
+            <div>
+              <dt>caveat</dt>
+              <dd>less alarming if used alongside dark-theme UI</dd>
+            </div>
+          </dl>
+        </article>
+
+        <!-- ===== III — POLICE LINE (HORIZONTAL WITH TEXT) ===== -->
+        <article class="specimen">
+          <i class="b-bl"></i><i class="b-br"></i>
+
+          <header class="specimen-head">
+            <div class="specimen-num"><span class="nº">No.</span>03</div>
+            <h2 class="specimen-name">Police <em>Line</em></h2>
+            <span class="specimen-lever">lever · placement + text</span>
+          </header>
+
+          <p class="specimen-blurb">
+            A horizontal yellow-and-black strip slapped <em>across half the node</em>, slightly
+            skewed, with repeating "PRE/POST VALIDATION FAILED" text. The most literal of the set —
+            anyone in the room can read what's wrong without zooming. Costs you the lower half of
+            the node's content area.
+          </p>
+
+          <div class="specimen-figures">
+            <figure data-side="◀ pre" data-axis="iii.a">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <rect class="node-rect" x="60" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="60" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="60" y1="32" x2="340" y2="32" />
+                <text class="node-title-text" x="74" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="74" y="44">expected : invoices_*.csv</text>
+
+                <!-- police line strap, tilted, half-width -->
+                <g transform="translate(140, 70) rotate(-4)">
+                  <rect x="-86" y="-12" width="172" height="24" fill="#f2c70b" />
+                  <rect x="-86" y="-12" width="172" height="2" fill="#181311" />
+                  <rect x="-86" y="10" width="172" height="2" fill="#181311" />
+                  <text
+                    x="-78"
+                    y="4"
+                    font-family="JetBrains Mono"
+                    font-size="10"
+                    font-weight="700"
+                    fill="#181311"
+                    letter-spacing="0.16em"
+                  >
+                    PRE · FAILED · PRE · FAILED ·
+                  </text>
+                </g>
+
+                <g transform="translate(61,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">pre</span>input · police line strap</figcaption>
+            </figure>
+
+            <figure data-side="post ▶" data-axis="iii.b">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <rect class="node-rect" x="20" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="20" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="20" y1="32" x2="300" y2="32" />
+                <text class="node-title-text" x="34" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="34" y="44">rows : 12 488</text>
+
+                <g transform="translate(220, 70) rotate(-4)">
+                  <rect x="-86" y="-12" width="172" height="24" fill="#f2c70b" />
+                  <rect x="-86" y="-12" width="172" height="2" fill="#181311" />
+                  <rect x="-86" y="10" width="172" height="2" fill="#181311" />
+                  <text
+                    x="-80"
+                    y="4"
+                    font-family="JetBrains Mono"
+                    font-size="10"
+                    font-weight="700"
+                    fill="#181311"
+                    letter-spacing="0.14em"
+                  >
+                    POST · FAILED · POST · FAILED
+                  </text>
+                </g>
+
+                <g transform="translate(299,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">post</span>output · police line strap</figcaption>
+            </figure>
+          </div>
+
+          <dl class="specimen-foot">
+            <div>
+              <dt>placement</dt>
+              <dd>horizontal · half-node · −4°</dd>
+            </div>
+            <div>
+              <dt>strength</dt>
+              <dd>literal label · no hover needed</dd>
+            </div>
+            <div>
+              <dt>caveat</dt>
+              <dd>overlaps content · loud at scale</dd>
+            </div>
+          </dl>
+        </article>
+
+        <!-- ===== IV — X-CROSS ===== -->
+        <article class="specimen">
+          <i class="b-bl"></i><i class="b-br"></i>
+
+          <header class="specimen-head">
+            <div class="specimen-num"><span class="nº">No.</span>04</div>
+            <h2 class="specimen-name">X &mdash; <em>Cross</em></h2>
+            <span class="specimen-lever">lever · geometry</span>
+          </header>
+
+          <p class="specimen-blurb">
+            Two short strips of striped tape <em>cross over the failing edge</em>, like a door taped
+            shut. Doesn't barricade the side — it <em>condemns</em> it. Strongest "this is finished,
+            not in progress" reading. Compact footprint, no narrowing of usable node width.
+          </p>
+
+          <div class="specimen-figures">
+            <figure data-side="◀ pre" data-axis="iv.a">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern
+                    id="tape-x-pre"
+                    patternUnits="userSpaceOnUse"
+                    width="10"
+                    height="10"
+                    patternTransform="rotate(0)"
+                  >
+                    <rect width="10" height="10" fill="#c8181d" />
+                    <rect x="0" y="0" width="5" height="10" fill="#f2c70b" />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="60" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="60" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="60" y1="32" x2="340" y2="32" />
+                <text class="node-title-text" x="74" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="74" y="48">expected : invoices_*.csv</text>
+                <text class="node-body-text" x="74" y="62">received : 0 files</text>
+                <text class="node-body-text err" x="74" y="80">pre-check : input set empty</text>
+
+                <!-- two crossed tape strips -->
+                <g transform="translate(60, 50)">
+                  <g transform="rotate(38)">
+                    <rect
+                      x="-38"
+                      y="-7"
+                      width="76"
+                      height="14"
+                      fill="url(#tape-x-pre)"
+                      stroke="#4a0606"
+                      stroke-width="0.8"
+                    />
+                  </g>
+                  <g transform="rotate(-38)">
+                    <rect
+                      x="-38"
+                      y="-7"
+                      width="76"
+                      height="14"
+                      fill="url(#tape-x-pre)"
+                      stroke="#4a0606"
+                      stroke-width="0.8"
+                    />
+                  </g>
+                  <!-- center disc on top of the X -->
+                  <circle r="11" fill="#181311" />
+                  <circle r="9" fill="#c8181d" />
+                  <text class="nose-glyph" text-anchor="middle" y="3" font-size="11">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">pre</span>input edge · sealed by X</figcaption>
+            </figure>
+
+            <figure data-side="post ▶" data-axis="iv.b">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <defs>
+                  <pattern id="tape-x-post" patternUnits="userSpaceOnUse" width="10" height="10">
+                    <rect width="10" height="10" fill="#c8181d" />
+                    <rect x="0" y="0" width="5" height="10" fill="#f2c70b" />
+                  </pattern>
+                </defs>
+
+                <rect class="node-rect" x="20" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="20" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="20" y1="32" x2="300" y2="32" />
+                <text class="node-title-text" x="34" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="34" y="48">rows : 12 488</text>
+                <text class="node-body-text" x="34" y="62">dup keys : 37</text>
+                <text class="node-body-text err" x="34" y="80">
+                  post-check : duplicate primary keys
+                </text>
+
+                <g transform="translate(300, 50)">
+                  <g transform="rotate(38)">
+                    <rect
+                      x="-38"
+                      y="-7"
+                      width="76"
+                      height="14"
+                      fill="url(#tape-x-post)"
+                      stroke="#4a0606"
+                      stroke-width="0.8"
+                    />
+                  </g>
+                  <g transform="rotate(-38)">
+                    <rect
+                      x="-38"
+                      y="-7"
+                      width="76"
+                      height="14"
+                      fill="url(#tape-x-post)"
+                      stroke="#4a0606"
+                      stroke-width="0.8"
+                    />
+                  </g>
+                  <circle r="11" fill="#181311" />
+                  <circle r="9" fill="#c8181d" />
+                  <text class="nose-glyph" text-anchor="middle" y="3" font-size="11">!</text>
+                </g>
+              </svg>
+              <figcaption><span class="state">post</span>output edge · sealed by X</figcaption>
+            </figure>
+          </div>
+
+          <dl class="specimen-foot">
+            <div>
+              <dt>geometry</dt>
+              <dd>two strips · ±38° · centred on nose</dd>
+            </div>
+            <div>
+              <dt>tone</dt>
+              <dd>condemnation, not warning</dd>
+            </div>
+            <div>
+              <dt>caveat</dt>
+              <dd>protrudes outside node bounds</dd>
+            </div>
+          </dl>
+        </article>
+
+        <!-- ===== V — CHEVRON DIRECTIONAL ===== -->
+        <article class="specimen">
+          <i class="b-bl"></i><i class="b-br"></i>
+
+          <header class="specimen-head">
+            <div class="specimen-num"><span class="nº">No.</span>05</div>
+            <h2 class="specimen-name">Chevron <em>Bar</em></h2>
+            <span class="specimen-lever">lever · direction</span>
+          </header>
+
+          <p class="specimen-blurb">
+            Stripes give way to <em>arrows pointing the way data should flow</em> — toward the node
+            on the input edge, away from the node on the output edge. Same vertical band footprint
+            as the classic, but now the indicator also <em>narrates</em> the failure: "this was
+            supposed to come in here" / "this was supposed to go out there".
+          </p>
+
+          <div class="specimen-figures">
+            <figure data-side="◀ pre" data-axis="v.a">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <rect class="node-rect" x="60" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="60" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="60" y1="32" x2="340" y2="32" />
+
+                <!-- chevron band background -->
+                <rect
+                  x="44"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="#fdf6dc"
+                  stroke="#4a0606"
+                  stroke-width="1.2"
+                />
+
+                <!-- stack of chevrons pointing right (toward node), alternating yellow / red -->
+                <g
+                  transform="translate(54, 50)"
+                  fill="none"
+                  stroke-width="7"
+                  stroke-linecap="square"
+                  stroke-linejoin="miter"
+                >
+                  <polyline points="-7,-38 5,-30 -7,-22" stroke="#f2c70b" />
+                  <polyline points="-7,-22 5,-14 -7,-6" stroke="#c8181d" />
+                  <polyline points="-7,-6  5,2   -7,10" stroke="#f2c70b" />
+                  <polyline points="-7,10  5,18  -7,26" stroke="#c8181d" />
+                  <polyline points="-7,26  5,34  -7,42" stroke="#f2c70b" />
+                </g>
+
+                <text class="node-title-text" x="92" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="92" y="48">expected : invoices_*.csv</text>
+                <text class="node-body-text" x="92" y="62">received : 0 files</text>
+                <text class="node-body-text err" x="92" y="80">pre-check : input set empty</text>
+
+                <g transform="translate(61,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption>
+                <span class="state">pre</span>arrows point inward · expected inflow
+              </figcaption>
+            </figure>
+
+            <figure data-side="post ▶" data-axis="v.b">
+              <svg width="360" height="100" viewBox="0 0 360 100">
+                <rect class="node-rect" x="20" y="10" width="280" height="80" rx="2" />
+                <rect class="node-titlebar" x="20" y="10" width="280" height="22" />
+                <line class="node-titlesep" x1="20" y1="32" x2="300" y2="32" />
+
+                <rect
+                  x="282"
+                  y="6"
+                  width="34"
+                  height="88"
+                  fill="#fdf6dc"
+                  stroke="#4a0606"
+                  stroke-width="1.2"
+                />
+
+                <!-- chevrons pointing right (away from node), same shape as pre but at right -->
+                <g
+                  transform="translate(292, 50)"
+                  fill="none"
+                  stroke-width="7"
+                  stroke-linecap="square"
+                  stroke-linejoin="miter"
+                >
+                  <polyline points="-7,-38 5,-30 -7,-22" stroke="#f2c70b" />
+                  <polyline points="-7,-22 5,-14 -7,-6" stroke="#c8181d" />
+                  <polyline points="-7,-6  5,2   -7,10" stroke="#f2c70b" />
+                  <polyline points="-7,10  5,18  -7,26" stroke="#c8181d" />
+                  <polyline points="-7,26  5,34  -7,42" stroke="#f2c70b" />
+                </g>
+
+                <text class="node-title-text" x="34" y="26">VALIDATE INVOICE BATCH</text>
+                <text class="node-body-text" x="34" y="48">rows : 12 488</text>
+                <text class="node-body-text" x="34" y="62">dup keys : 37</text>
+                <text class="node-body-text err" x="34" y="80">
+                  post-check : duplicate primary keys
+                </text>
+
+                <g transform="translate(299,50)">
+                  <circle r="13.5" fill="#181311" />
+                  <circle r="11.5" fill="#c8181d" />
+                  <circle r="11.5" fill="none" stroke="#4a0606" stroke-width="0.7" />
+                  <text class="nose-glyph" text-anchor="middle" y="4">!</text>
+                </g>
+              </svg>
+              <figcaption>
+                <span class="state">post</span>arrows point outward · expected outflow
+              </figcaption>
+            </figure>
+          </div>
+
+          <dl class="specimen-foot">
+            <div>
+              <dt>shape</dt>
+              <dd>5 chevrons · alternating yellow / red</dd>
+            </div>
+            <div>
+              <dt>strength</dt>
+              <dd>indicator narrates the failure direction</dd>
+            </div>
+            <div>
+              <dt>caveat</dt>
+              <dd>L-to-R flow assumed · breaks on RTL graphs</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+
+      <!-- ============ REFERENCE: ORIGINAL ============ -->
+      <aside class="reference">
+        <div class="reference-grid">
+          <svg width="320" height="80" viewBox="0 0 320 80">
+            <defs>
+              <pattern
+                id="tape-orig-pre"
+                patternUnits="userSpaceOnUse"
+                width="11"
+                height="11"
+                patternTransform="rotate(-45)"
+              >
+                <rect width="11" height="11" fill="#c8181d" />
+                <rect x="0" y="0" width="5.5" height="11" fill="#f2c70b" />
+              </pattern>
+            </defs>
+            <rect class="node-rect" x="40" y="10" width="240" height="60" rx="2" />
+            <rect class="node-titlebar" x="40" y="10" width="240" height="16" />
+            <line class="node-titlesep" x1="40" y1="26" x2="280" y2="26" />
+            <rect
+              x="28"
+              y="6"
+              width="26"
+              height="68"
+              fill="url(#tape-orig-pre)"
+              stroke="#4a0606"
+              stroke-width="1"
+            />
+
+            <text class="node-title-text" x="64" y="22" font-size="10">VALIDATE INVOICE BATCH</text>
+            <text class="node-body-text" x="64" y="40" font-size="8">
+              expected : invoices_*.csv
+            </text>
+            <text class="node-body-text err" x="64" y="58" font-size="8">
+              pre-check : input set empty
+            </text>
+
+            <g transform="translate(41,40)">
+              <circle r="11" fill="#181311" />
+              <circle r="9" fill="#c8181d" />
+              <text class="nose-glyph" text-anchor="middle" y="3" font-size="10">!</text>
+            </g>
+          </svg>
+
+          <svg width="320" height="80" viewBox="0 0 320 80">
+            <defs>
+              <pattern
+                id="tape-orig-post"
+                patternUnits="userSpaceOnUse"
+                width="11"
+                height="11"
+                patternTransform="rotate(-45)"
+              >
+                <rect width="11" height="11" fill="#c8181d" />
+                <rect x="0" y="0" width="5.5" height="11" fill="#f2c70b" />
+              </pattern>
+            </defs>
+            <rect class="node-rect" x="20" y="10" width="240" height="60" rx="2" />
+            <rect class="node-titlebar" x="20" y="10" width="240" height="16" />
+            <line class="node-titlesep" x1="20" y1="26" x2="260" y2="26" />
+            <rect
+              x="246"
+              y="6"
+              width="26"
+              height="68"
+              fill="url(#tape-orig-post)"
+              stroke="#4a0606"
+              stroke-width="1"
+            />
+
+            <text class="node-title-text" x="32" y="22" font-size="10">VALIDATE INVOICE BATCH</text>
+            <text class="node-body-text" x="32" y="40" font-size="8">rows : 12 488</text>
+            <text class="node-body-text err" x="32" y="58" font-size="8">
+              post-check : dup primary keys
+            </text>
+
+            <g transform="translate(259,40)">
+              <circle r="11" fill="#181311" />
+              <circle r="9" fill="#c8181d" />
+              <text class="nose-glyph" text-anchor="middle" y="3" font-size="10">!</text>
+            </g>
+          </svg>
+
+          <p>
+            <em>Classic</em> · vertical band, static stripes, yellow on red. The point of departure
+            for the five variations above.
+          </p>
+        </div>
+      </aside>
+
+      <!-- ============ FOOTER ============ -->
+      <footer class="doc-foot">
+        <span>flowdash · hazard tape variations</span>
+        <span class="stamp">spike · iii</span>
+        <span class="right"
+          >prior: <a href="iterations-2.html">iter ii</a> · <a href="iterations.html">iter i</a> ·
+          <a href="index.html">index</a></span
+        >
+      </footer>
+    </div>
+  </body>
+</html>

@@ -521,6 +521,22 @@ export default class BaseContainerNode extends BaseNode {
         this.edgesContainer.selectAll('*').remove();
       }
 
+      // Lift the inner-container (which holds the child node groups, and any
+      // validation-indicator overlays inside them) to render AFTER the edges
+      // layer so node bodies — and red-noses on their edges — stack above the
+      // connector lines. Idempotent: if inner already follows edges, no-op.
+      try {
+        const parentEl = this.element.node();
+        const innerEl = parentEl?.querySelector(':scope > .zone-innerContainer');
+        const edgesEl = this.edgesContainer?.node();
+        if (parentEl && innerEl && edgesEl) {
+          const pos = innerEl.compareDocumentPosition(edgesEl);
+          if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+            parentEl.insertBefore(innerEl, edgesEl.nextSibling);
+          }
+        }
+      } catch {}
+
       this.childEdges.forEach((edge) => edge.init());
     }
 
@@ -655,6 +671,12 @@ export default class BaseContainerNode extends BaseNode {
 
     // you cannot move the g node,, move the child elements in stead
     this.element.attr('transform', `translate(${this.x}, ${this.y})`);
+
+    // Paint validation indicators (red noses) on top of the container shape
+    // if any are set. Render last so they stack over zone-container + header.
+    if (this._preValidationError || this._postValidationError) {
+      this._renderValidationIndicators();
+    }
 
     // Post-initialization: defer one re-measure to stabilize header width after fonts/styles
     // Skip this in pre-render mode since we already have the correct minimum size

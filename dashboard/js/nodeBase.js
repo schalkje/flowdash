@@ -3,6 +3,7 @@ import { EventManager } from './eventManager.js';
 import { StatusManager } from './statusManager.js';
 import { ConfigManager } from './configManager.js';
 import { ZoneManager } from './zones/index.js';
+import { renderValidationIndicators } from './validationIndicators.js';
 
 export const NodeStatus = Object.freeze({
   UNDETERMINED: 'Undetermined',
@@ -34,6 +35,8 @@ export default class BaseNode {
     this._status = nodeData.state ?? NodeStatus.UNKNOWN;
     this._visible = nodeData.visible ?? true;
     this._collapsed = nodeData.collapsed ?? false;
+    this._preValidationError = nodeData.preValidationError ?? false;
+    this._postValidationError = nodeData.postValidationError ?? false;
     this.suspenseDisplayChange = false;
 
     this.id = nodeData.id;
@@ -203,6 +206,50 @@ export default class BaseNode {
     if (this.element) {
       this.element.classed('selected', this._selected);
     }
+  }
+
+  // --- Validation indicators ("red noses") ---
+  // Orthogonal to status: a Ready node can carry a post-validation error to
+  // signal "the run completed but produced wrong data". See
+  // /dashboard/documentation/validation-indicators.md.
+
+  get preValidationError() {
+    return this._preValidationError;
+  }
+
+  set preValidationError(value) {
+    if (this._preValidationError === value) return;
+    this._preValidationError = value;
+    this._renderValidationIndicators();
+  }
+
+  get postValidationError() {
+    return this._postValidationError;
+  }
+
+  set postValidationError(value) {
+    if (this._postValidationError === value) return;
+    this._postValidationError = value;
+    this._renderValidationIndicators();
+  }
+
+  clearValidationErrors() {
+    this.preValidationError = false;
+    this.postValidationError = false;
+  }
+
+  _renderValidationIndicators() {
+    if (!this.element) return;
+    const vi = (this.settings && this.settings.validationIndicator) || {};
+    renderValidationIndicators(this.element, {
+      width: this.data.width,
+      height: this.data.height,
+      style: vi.style,
+      glyph: vi.glyph,
+      animate: vi.animate,
+      preError: this._preValidationError,
+      postError: this._postValidationError,
+    });
   }
 
   handleDisplayChange() {
@@ -495,6 +542,13 @@ export default class BaseNode {
       }
 
       this.update();
+
+      // Re-position validation indicators against the new bounds. Skip when
+      // no error is active to avoid restarting halo/siren animations on
+      // every resize.
+      if (this._preValidationError || this._postValidationError) {
+        this._renderValidationIndicators();
+      }
 
       this.handleDisplayChange();
     }

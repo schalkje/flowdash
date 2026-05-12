@@ -2173,6 +2173,63 @@ export class Dashboard {
     return null;
   }
 
+  /**
+   * Set a validation error ("red nose") on a node.
+   *
+   * Orthogonal to status — a Ready node can carry a post-validation error.
+   * See /dashboard/documentation/validation-indicators.md.
+   *
+   * @param {string} nodeId - The id of the target node.
+   * @param {'pre'|'post'} side - 'pre' for input side (left), 'post' for output side (right).
+   * @param {boolean|string} value - Truthy enables the indicator. A string is exposed as tooltip.
+   */
+  setValidationErrorById(nodeId, side, value) {
+    const node = this.main.root?.getNode(nodeId);
+    if (!node) {
+      console.error('setValidationErrorById: Node not found:', nodeId);
+      return;
+    }
+    if (side === 'pre') {
+      node.preValidationError = value;
+    } else if (side === 'post') {
+      node.postValidationError = value;
+    } else {
+      console.warn('setValidationErrorById: side must be "pre" or "post"');
+    }
+  }
+
+  /**
+   * Clear validation errors on a node. Omit `side` to clear both.
+   * @param {string} nodeId
+   * @param {'pre'|'post'} [side]
+   */
+  clearValidationErrorById(nodeId, side) {
+    const node = this.main.root?.getNode(nodeId);
+    if (!node) return;
+    if (side === undefined || side === 'pre') node.preValidationError = false;
+    if (side === undefined || side === 'post') node.postValidationError = false;
+  }
+
+  /**
+   * Switch the validation-indicator visual style live across every node.
+   * Allowed styles: 'pulse-halo', 'rotating-siren', 'industrial-tape',
+   * 'police-line', 'none'.
+   *
+   * @param {string} style
+   */
+  setValidationIndicatorStyle(style) {
+    if (!this.main?.root) return;
+    const settings = this.main.root.settings;
+    if (!settings.validationIndicator) settings.validationIndicator = {};
+    settings.validationIndicator.style = style;
+    const nodes = this.main.root.getAllNodes();
+    nodes.forEach((node) => {
+      if (typeof node._renderValidationIndicators === 'function') {
+        node._renderValidationIndicators();
+      }
+    });
+  }
+
   zoomRandom(dashboard) {
     const nodes = dashboard.main.root.getAllNodes();
     const node = nodes[Math.floor(Math.random() * nodes.length)];

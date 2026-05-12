@@ -1,4 +1,32 @@
 /*! flowdash | (c) schalken.net | Licensed under the MIT License. See https://opensource.org/licenses/MIT */
+
+/* ------------------------------------------------------------------
+   Validation-indicator tokens (defaults). Each theme may override
+   these in its own flowdash.css. See
+   /dashboard/documentation/validation-indicators.md.
+   ------------------------------------------------------------------ */
+:root {
+  --fd-validation-red: #c8181d;
+  --fd-validation-red-bright: #e63a3a;
+  --fd-validation-red-deep: #4a0606;
+  --fd-validation-glow: rgba(220, 30, 30, 0.45);
+  --fd-validation-tape-yellow: #f2c70b;
+  --fd-validation-tape-dark: #181311;
+  --fd-validation-text-on-red: #ffffff;
+}
+
+/* Indicators sit on top of node bodies and never absorb pointer events. */
+.validation-indicators,
+.validation-indicators * {
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .validation-indicators animate,
+  .validation-indicators animateTransform {
+    display: none;
+  }
+}
+
 .flowdash-fullscreen,
 #graph.fullscreen {
   position: fixed; /* Position the element relative to the viewport */

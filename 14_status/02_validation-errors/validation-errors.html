@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Validation Errors — red noses</title>
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+    <style>
+      .controls {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 8px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        font-size: 13px;
+      }
+      .controls .group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .controls .group strong {
+        font-weight: 600;
+        color: #333;
+      }
+      .controls .style-picker {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .controls .style-picker button {
+        border: none;
+        background: #fff;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        border-right: 1px solid #e5e5e5;
+      }
+      .controls .style-picker button:last-child {
+        border-right: none;
+      }
+      .controls .style-picker button[aria-pressed='true'] {
+        background: #1f2937;
+        color: #fff;
+      }
+      .controls .style-picker button:hover:not([aria-pressed='true']) {
+        background: #f3f4f6;
+      }
+      .controls .node-controls-grid {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .controls .node-controls-grid .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #888;
+        align-self: center;
+        padding: 0 4px;
+      }
+      .controls .node-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px 10px;
+        background: #fafafa;
+        border: 1px solid #e5e5e5;
+        border-radius: 4px;
+      }
+      .controls .node-controls.is-container {
+        background: #fff5e0;
+        border-color: #f0d8a8;
+      }
+      .controls .node-controls.is-child {
+        background: #f5fbff;
+        border-color: #c8ddee;
+      }
+      .controls .section {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 4px 8px 4px 6px;
+        border-left: 2px solid #d8d8d8;
+      }
+      .controls .section.section-rects {
+        border-left-color: #6b7280;
+      }
+      .controls .section.section-foundation {
+        border-left-color: #d97706;
+      }
+      .controls .section.section-adapter {
+        border-left-color: #b45309;
+      }
+      .controls .section.section-mart {
+        border-left-color: #ca8a04;
+      }
+      .controls .node-controls .node-id {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        color: #555;
+      }
+      .controls .node-controls .toggles {
+        display: flex;
+        gap: 6px;
+      }
+      .controls .node-controls .toggles button {
+        padding: 3px 8px;
+        font-size: 11px;
+        border: 1px solid #c8181d;
+        background: #fff;
+        color: #c8181d;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .controls .node-controls .toggles button[aria-pressed='true'] {
+        background: #c8181d;
+        color: #fff;
+      }
+      .legend {
+        font-size: 12px;
+        padding: 6px 12px;
+        color: #444;
+        background: #f8f8f8;
+        border-bottom: 1px solid #ddd;
+      }
+      .legend code {
+        background: #eee;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Validation Errors</h1>
+      <h2>red noses — pre &amp; post indicators</h2>
+      <p class="demo-description">
+        Indicators are <strong>orthogonal to status</strong>. Every node below is
+        <code>Ready</code> — the red noses signal a contract violation on either the input (left,
+        pre-validation) or output (right, post-validation) edge. Pick a style and toggle errors per
+        node to see how each treatment reads. Indicators retint via CSS variables when the theme
+        changes (top-left).
+      </p>
+    </header>
+
+    <div class="controls">
+      <div class="group">
+        <strong>Style:</strong>
+        <div class="style-picker" id="stylePicker">
+          <button data-style="pulse-halo" aria-pressed="true">Pulse Halo</button>
+          <button data-style="rotating-siren">Rotating Siren</button>
+          <button data-style="industrial-tape">Industrial Tape</button>
+          <button data-style="police-line">Police Line</button>
+          <button data-style="none">None</button>
+        </div>
+      </div>
+      <div class="node-controls-grid" id="nodeControls"></div>
+    </div>
+
+    <div class="legend">
+      Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
+      <code>dashboard.setValidationErrorById(id, 'pre' | 'post', value)</code>,
+      <code>dashboard.setValidationIndicatorStyle(style)</code>.
+    </div>
+
+    <div class="demo-container">
+      <svg id="graph" class="canvas"></svg>
+    </div>
+
+    <footer class="demo-info">
+      <div class="demo-metadata">
+        <p>
+          <strong>Settings:</strong>
+          <code>validationIndicator.style</code> · <code>validationIndicator.glyph</code> ·
+          <code>validationIndicator.animate</code>
+        </p>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { demoData } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+
+      let dashboard;
+      function build(data) {
+        document.querySelector('#graph').replaceChildren();
+        dashboard = new flowDashboard.Dashboard(JSON.parse(JSON.stringify(data)));
+        dashboard.initialize('#graph');
+        window.dashboard = dashboard;
+      }
+      build(demoData);
+
+      // --- Style picker --------------------------------------------------
+      const stylePicker = document.getElementById('stylePicker');
+      stylePicker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const style = btn.dataset.style;
+          dashboard.setValidationIndicatorStyle(style);
+          stylePicker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
+
+      // --- Per-node toggles ---------------------------------------------
+      // Grouped by section so the relationship between a container and its
+      // children is obvious. Each row has pre+post toggles wired straight to
+      // dashboard.setValidationErrorById.
+      const SECTIONS = [
+        {
+          key: 'rects',
+          label: 'rects',
+          rows: [
+            { id: 'extract', kind: 'leaf' },
+            { id: 'transform', kind: 'leaf' },
+            { id: 'load', kind: 'leaf' },
+            { id: 'report', kind: 'leaf' },
+          ],
+        },
+        {
+          key: 'foundation',
+          label: 'foundation',
+          rows: [
+            { id: 'foundation', kind: 'container' },
+            { id: 'foundation-raw', kind: 'child' },
+            { id: 'foundation-base', kind: 'child' },
+          ],
+        },
+        {
+          key: 'adapter',
+          label: 'adapter',
+          rows: [
+            { id: 'adapter', kind: 'container' },
+            { id: 'adapter-staging', kind: 'child' },
+            { id: 'adapter-archive', kind: 'child' },
+            { id: 'adapter-transform', kind: 'child' },
+          ],
+        },
+        {
+          key: 'mart',
+          label: 'mart',
+          rows: [
+            { id: 'mart', kind: 'container' },
+            { id: 'mart-load', kind: 'child' },
+            { id: 'mart-report', kind: 'child' },
+          ],
+        },
+      ];
+
+      const NODE_IDS = SECTIONS.flatMap((s) => s.rows.map((r) => r.id));
+      const nodeControls = document.getElementById('nodeControls');
+
+      // Track current pre/post state per node so the buttons reflect reality
+      const state = Object.fromEntries(NODE_IDS.map((id) => [id, { pre: false, post: false }]));
+
+      function syncStateFromDashboard() {
+        NODE_IDS.forEach((id) => {
+          const node = dashboard.main.root?.getNode(id);
+          if (!node) return;
+          state[id].pre = !!node.preValidationError;
+          state[id].post = !!node.postValidationError;
+        });
+      }
+
+      function makeNodeControl(id, kind) {
+        const wrap = document.createElement('div');
+        wrap.className =
+          'node-controls' +
+          (kind === 'container' ? ' is-container' : '') +
+          (kind === 'child' ? ' is-child' : '');
+        const label = document.createElement('div');
+        label.className = 'node-id';
+        label.textContent = id;
+        const toggles = document.createElement('div');
+        toggles.className = 'toggles';
+
+        const preBtn = document.createElement('button');
+        preBtn.textContent = 'pre';
+        preBtn.setAttribute('aria-pressed', String(state[id].pre));
+        preBtn.addEventListener('click', () => {
+          const next = !state[id].pre;
+          state[id].pre = next;
+          dashboard.setValidationErrorById(id, 'pre', next);
+          preBtn.setAttribute('aria-pressed', String(next));
+        });
+
+        const postBtn = document.createElement('button');
+        postBtn.textContent = 'post';
+        postBtn.setAttribute('aria-pressed', String(state[id].post));
+        postBtn.addEventListener('click', () => {
+          const next = !state[id].post;
+          state[id].post = next;
+          dashboard.setValidationErrorById(id, 'post', next);
+          postBtn.setAttribute('aria-pressed', String(next));
+        });
+
+        toggles.appendChild(preBtn);
+        toggles.appendChild(postBtn);
+        wrap.appendChild(label);
+        wrap.appendChild(toggles);
+        return wrap;
+      }
+
+      function renderNodeControls() {
+        nodeControls.replaceChildren();
+        SECTIONS.forEach((section) => {
+          const sec = document.createElement('div');
+          sec.className = `section section-${section.key}`;
+          const lbl = document.createElement('span');
+          lbl.className = 'label';
+          lbl.textContent = section.label;
+          sec.appendChild(lbl);
+          section.rows.forEach((row) => sec.appendChild(makeNodeControl(row.id, row.kind)));
+          nodeControls.appendChild(sec);
+        });
+      }
+
+      syncStateFromDashboard();
+      renderNodeControls();
+    </script>
+  </body>
+</html>

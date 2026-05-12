@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Red Noses — Iterations on the Pulse Halo</title>
+    <style>
+      :root {
+        --bg: #f4f5f7;
+        --card-bg: #ffffff;
+        --node-bg: #ffffff;
+        --node-border: #c8cdd4;
+        --node-title-bg: #eef1f5;
+        --node-title-text: #2f3a4a;
+        --node-body-text: #4a5564;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --red: #dc2626;
+        --red-deep: #7a0a0a;
+        --shadow: 0 2px 8px rgba(20, 30, 50, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 24px 80px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        background: var(--bg);
+        color: #1f2937;
+        line-height: 1.5;
+      }
+      header.page {
+        max-width: 1100px;
+        margin: 0 auto 32px;
+      }
+      header.page h1 {
+        margin: 0 0 6px;
+        font-size: 26px;
+        letter-spacing: -0.01em;
+      }
+      header.page p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        max-width: 760px;
+      }
+      header.page a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      header.page a:hover {
+        text-decoration: underline;
+      }
+
+      .designs {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        gap: 20px;
+      }
+
+      .design {
+        background: var(--card-bg);
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 20px 24px;
+      }
+      .design.baseline {
+        border-color: #bcd2ff;
+        background: #fafcff;
+      }
+      .design header.design-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+      .design h2 {
+        font-size: 17px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .design .num {
+        color: var(--accent);
+        font-weight: 700;
+        font-feature-settings: 'tnum';
+      }
+      .design.baseline .num {
+        color: #6b7280;
+      }
+      .design .baseline-badge {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: #1f2937;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+      .design .blurb {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 13.5px;
+        max-width: 760px;
+      }
+      .design .tags {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+      }
+      .tag {
+        font-size: 11px;
+        color: var(--muted);
+        background: #f1f3f7;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 2px 8px;
+        white-space: nowrap;
+      }
+
+      .examples {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 8px;
+      }
+      figure {
+        margin: 0;
+        background: #fafbfc;
+        border: 1px dashed #d6dae1;
+        border-radius: 10px;
+        padding: 16px 12px 10px;
+        text-align: center;
+      }
+      figure svg {
+        display: block;
+        margin: 0 auto;
+        overflow: visible;
+      }
+      figcaption {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+      figcaption strong {
+        color: #374151;
+        font-weight: 600;
+      }
+
+      /* Shared node */
+      .node-rect {
+        fill: var(--node-bg);
+        stroke: var(--node-border);
+        stroke-width: 1.2;
+      }
+      .node-title-bar {
+        fill: var(--node-title-bg);
+      }
+      .node-title-text {
+        fill: var(--node-title-text);
+        font:
+          600 12px -apple-system,
+          'Segoe UI',
+          Roboto;
+      }
+      .node-body-text {
+        fill: var(--node-body-text);
+        font:
+          11px -apple-system,
+          'Segoe UI',
+          Roboto;
+      }
+      .nose-text {
+        font:
+          700 11px -apple-system,
+          'Segoe UI',
+          Roboto;
+        fill: white;
+      }
+
+      /* Heartbeat: ECG decoration */
+      .ecg-line {
+        stroke: #dc2626;
+        stroke-width: 1.2;
+        fill: none;
+        opacity: 0.55;
+      }
+
+      footer.note {
+        max-width: 1100px;
+        margin: 32px auto 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>Red Noses — Iterations on the Pulse Halo</h1>
+      <p>
+        Sticking with the Pulse Halo direction (Design 1, kept as baseline at the top). Five new
+        variants below — each pushes a different lever: rhythm, propagation, mechanics, motion, or
+        environment. <a href="index.html">← back to the original spike</a>
+      </p>
+    </header>
+
+    <div class="designs">
+      <!-- =========================================================
+       DESIGN 1 — PULSE HALO (BASELINE, KEPT)
+       ========================================================= -->
+      <section class="design baseline">
+        <header class="design-header">
+          <h2><span class="num">1.</span> Pulse Halo</h2>
+          <span class="baseline-badge">baseline — kept</span>
+          <div class="tags"><span class="tag">animated</span><span class="tag">familiar</span></div>
+        </header>
+        <p class="blurb">
+          Solid circle + a single expanding halo. The reference point for everything below.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2" opacity="0.7">
+                  <animate attributeName="r" values="12;24" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2" opacity="0.7">
+                  <animate attributeName="r" values="12;24" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================================================
+       DESIGN 2 — SONAR PING (rhythm: stagger)
+       ========================================================= -->
+      <section class="design">
+        <header class="design-header">
+          <h2><span class="num">2.</span> Sonar Ping</h2>
+          <div class="tags"><span class="tag">rhythm</span><span class="tag">stagger</span></div>
+        </header>
+        <p class="blurb">
+          Three halos instead of one, staggered in time. Reads as a radar/sonar ping — feels
+          purposeful and rhythmic rather than a single nervous twitch. The eye locks on faster on a
+          busy dashboard.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                </circle>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0.7s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0.7s"
+                  />
+                </circle>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="1.4s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="1.4s"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                </circle>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0.7s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="0.7s"
+                  />
+                </circle>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;30"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="1.4s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.75;0"
+                    dur="2.1s"
+                    repeatCount="indefinite"
+                    begin="1.4s"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================================================
+       DESIGN 3 — HEARTBEAT (rhythm: organic)
+       ========================================================= -->
+      <section class="design">
+        <header class="design-header">
+          <h2><span class="num">3.</span> Heartbeat</h2>
+          <div class="tags">
+            <span class="tag">rhythm</span><span class="tag">organic urgency</span>
+          </div>
+        </header>
+        <p class="blurb">
+          Same halo, but with a "lub-dub" double-pulse on a long rest — the cadence of a heart
+          monitor. Small ECG trace underlines the metaphor. Feels alive and triggers the "patient in
+          distress" instinct from medical UIs.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <!-- lub -->
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;26"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                </circle>
+                <!-- dub -->
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;26"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0.22s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0.22s"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626">
+                  <animate
+                    attributeName="r"
+                    values="12;13.3;12;13.3;12;12;12"
+                    keyTimes="0;0.04;0.09;0.17;0.22;0.6;1"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+                <!-- ECG trace below the nose -->
+                <path
+                  class="ecg-line"
+                  d="M -18,26 L -8,26 L -5,18 L -1,34 L 3,12 L 7,28 L 18,28"
+                  stroke-dasharray="60"
+                  stroke-dashoffset="0"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    values="60;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </path>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;26"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0s"
+                  />
+                </circle>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate
+                    attributeName="r"
+                    values="12;26"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0.22s"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                    begin="0.22s"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626">
+                  <animate
+                    attributeName="r"
+                    values="12;13.3;12;13.3;12;12;12"
+                    keyTimes="0;0.04;0.09;0.17;0.22;0.6;1"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+                <path
+                  class="ecg-line"
+                  d="M -18,26 L -8,26 L -5,18 L -1,34 L 3,12 L 7,28 L 18,28"
+                  stroke-dasharray="60"
+                  stroke-dashoffset="0"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    values="60;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </path>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================================================
+       DESIGN 4 — SHOCKWAVE FRACTURE (mechanics)
+       ========================================================= -->
+      <section class="design">
+        <header class="design-header">
+          <h2><span class="num">4.</span> Shockwave Fracture</h2>
+          <div class="tags"><span class="tag">mechanics</span><span class="tag">impact</span></div>
+        </header>
+        <p class="blurb">
+          The halo is still there, but it leaves <em>radial cracks</em> behind it as it expands —
+          like an impact point. The static cracks remain visible between pulses, so the indicator
+          never "looks calm" even mid-animation.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <!-- jagged cracks radiating out, static -->
+                <g
+                  stroke="#dc2626"
+                  stroke-width="1.3"
+                  fill="none"
+                  opacity="0.7"
+                  stroke-linecap="round"
+                >
+                  <path d="M 0,0 L 4,-9 L 2,-16 L 7,-24 L 5,-30" />
+                  <path d="M 0,0 L 10,-6 L 18,-10 L 24,-16 L 30,-18" />
+                  <path d="M 0,0 L 12,2 L 22,4 L 30,2 L 36,6" />
+                  <path d="M 0,0 L 10,7 L 18,12 L 24,18 L 30,22" />
+                  <path d="M 0,0 L 3,11 L 1,18 L 6,26 L 4,32" />
+                  <path d="M 0,0 L -6,8 L -14,10 L -22,16 L -28,16" />
+                  <path d="M 0,0 L -6,-8 L -14,-10 L -22,-16 L -28,-16" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.4;0.85;0.4"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </g>
+                <!-- halo -->
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate attributeName="r" values="12;28" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <g
+                  stroke="#dc2626"
+                  stroke-width="1.3"
+                  fill="none"
+                  opacity="0.7"
+                  stroke-linecap="round"
+                >
+                  <path d="M 0,0 L 4,-9 L 2,-16 L 7,-24 L 5,-30" />
+                  <path d="M 0,0 L 10,-6 L 18,-10 L 24,-16 L 30,-18" />
+                  <path d="M 0,0 L 12,2 L 22,4 L 30,2 L 36,6" />
+                  <path d="M 0,0 L 10,7 L 18,12 L 24,18 L 30,22" />
+                  <path d="M 0,0 L 3,11 L 1,18 L 6,26 L 4,32" />
+                  <path d="M 0,0 L -6,8 L -14,10 L -22,16 L -28,16" />
+                  <path d="M 0,0 L -6,-8 L -14,-10 L -22,-16 L -28,-16" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.4;0.85;0.4"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </g>
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2">
+                  <animate attributeName="r" values="12;28" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================================================
+       DESIGN 5 — ROTATING SIREN (motion: angular)
+       ========================================================= -->
+      <section class="design">
+        <header class="design-header">
+          <h2><span class="num">5.</span> Rotating Siren</h2>
+          <div class="tags"><span class="tag">motion</span><span class="tag">emergency</span></div>
+        </header>
+        <p class="blurb">
+          Replace the radial halo with a rotating beam — two opposing red cones sweep around the
+          nose like a police beacon. Angular motion catches peripheral vision differently from
+          radial pulses, so this can coexist on a wall with other pulsing UI without blending in.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <defs>
+                <radialGradient id="beam-grad-5a" cx="0%" cy="50%" r="100%">
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <g>
+                  <path d="M 0,0 L 34,-13 A 36,36 0 0,1 34,13 Z" fill="url(#beam-grad-5a)" />
+                  <path
+                    d="M 0,0 L 34,-13 A 36,36 0 0,1 34,13 Z"
+                    fill="url(#beam-grad-5a)"
+                    transform="rotate(180)"
+                  />
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0"
+                    to="360"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                </g>
+                <circle r="12" fill="#dc2626" />
+                <circle r="12" fill="none" stroke="#7a0a0a" stroke-width="0.8" />
+                <!-- subtle inner highlight to read as 3D lens -->
+                <ellipse cx="-3" cy="-3" rx="4" ry="3" fill="#ff8a8a" opacity="0.55" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <defs>
+                <radialGradient id="beam-grad-5b" cx="0%" cy="50%" r="100%">
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <g>
+                  <path d="M 0,0 L 34,-13 A 36,36 0 0,1 34,13 Z" fill="url(#beam-grad-5b)" />
+                  <path
+                    d="M 0,0 L 34,-13 A 36,36 0 0,1 34,13 Z"
+                    fill="url(#beam-grad-5b)"
+                    transform="rotate(180)"
+                  />
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0"
+                    to="360"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                </g>
+                <circle r="12" fill="#dc2626" />
+                <circle r="12" fill="none" stroke="#7a0a0a" stroke-width="0.8" />
+                <ellipse cx="-3" cy="-3" rx="4" ry="3" fill="#ff8a8a" opacity="0.55" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- =========================================================
+       DESIGN 6 — EDGE BLEED (propagation: into the node)
+       ========================================================= -->
+      <section class="design">
+        <header class="design-header">
+          <h2><span class="num">6.</span> Edge Bleed</h2>
+          <div class="tags">
+            <span class="tag">propagation</span><span class="tag">infection</span>
+          </div>
+        </header>
+        <p class="blurb">
+          The nose stays put, but its colour <em>leaks along the node border</em> with a fading
+          gradient. The entire node looks "infected" from the failing side. From across the room,
+          you don't see a tiny dot — you see a node that's gone red on the input or output edge.
+        </p>
+        <div class="examples">
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <defs>
+                <linearGradient
+                  id="bleed-5a-v-up"
+                  x1="0"
+                  y1="60"
+                  x2="0"
+                  y2="20"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5a-v-dn"
+                  x1="0"
+                  y1="60"
+                  x2="0"
+                  y2="100"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5a-h-top"
+                  x1="50"
+                  y1="0"
+                  x2="160"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5a-h-bot"
+                  x1="50"
+                  y1="0"
+                  x2="160"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+
+              <!-- bleed strokes overlaid on border, from the nose -->
+              <g style="mix-blend-mode: multiply">
+                <line
+                  x1="50"
+                  y1="60"
+                  x2="50"
+                  y2="20"
+                  stroke="url(#bleed-5a-v-up)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.7;1;0.7"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="50"
+                  y1="60"
+                  x2="50"
+                  y2="100"
+                  stroke="url(#bleed-5a-v-dn)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.7;1;0.7"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="50"
+                  y1="20"
+                  x2="160"
+                  y2="20"
+                  stroke="url(#bleed-5a-h-top)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.55;0.9;0.55"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="50"
+                  y1="100"
+                  x2="160"
+                  y2="100"
+                  stroke="url(#bleed-5a-h-bot)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.55;0.9;0.55"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+              </g>
+
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">source: crm.customers</text>
+              <text class="node-body-text" x="62" y="76">rows: —</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">pre-validation failed</text>
+
+              <g transform="translate(50,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2" opacity="0.7">
+                  <animate attributeName="r" values="12;24" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Pre-validation</strong> failed (left)</figcaption>
+          </figure>
+
+          <figure>
+            <svg width="340" height="120" viewBox="0 0 340 120">
+              <defs>
+                <linearGradient
+                  id="bleed-5b-v-up"
+                  x1="0"
+                  y1="60"
+                  x2="0"
+                  y2="20"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5b-v-dn"
+                  x1="0"
+                  y1="60"
+                  x2="0"
+                  y2="100"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5b-h-top"
+                  x1="290"
+                  y1="0"
+                  x2="180"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bleed-5b-h-bot"
+                  x1="290"
+                  y1="0"
+                  x2="180"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stop-color="#dc2626" stop-opacity="0.85" />
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <rect class="node-rect" x="50" y="20" width="240" height="80" rx="6" />
+              <rect class="node-title-bar" x="50" y="20" width="240" height="22" rx="6" />
+              <rect class="node-title-bar" x="50" y="36" width="240" height="6" />
+
+              <g style="mix-blend-mode: multiply">
+                <line
+                  x1="290"
+                  y1="60"
+                  x2="290"
+                  y2="20"
+                  stroke="url(#bleed-5b-v-up)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.7;1;0.7"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="290"
+                  y1="60"
+                  x2="290"
+                  y2="100"
+                  stroke="url(#bleed-5b-v-dn)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.7;1;0.7"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="290"
+                  y1="20"
+                  x2="180"
+                  y2="20"
+                  stroke="url(#bleed-5b-h-top)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.55;0.9;0.55"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+                <line
+                  x1="290"
+                  y1="100"
+                  x2="180"
+                  y2="100"
+                  stroke="url(#bleed-5b-h-bot)"
+                  stroke-width="3.2"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.55;0.9;0.55"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </line>
+              </g>
+
+              <text class="node-title-text" x="62" y="35">Load Customer Data</text>
+              <text class="node-body-text" x="62" y="60">rows: 184 213</text>
+              <text class="node-body-text" x="62" y="76">duration: 3m 12s</text>
+              <text class="node-body-text" x="62" y="92" fill="#dc2626">
+                post-validation failed
+              </text>
+
+              <g transform="translate(290,60)">
+                <circle r="22" fill="none" stroke="#dc2626" stroke-width="2" opacity="0.7">
+                  <animate attributeName="r" values="12;24" dur="1.6s" repeatCount="indefinite" />
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;0"
+                    dur="1.6s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle r="12" fill="#dc2626" />
+                <text class="nose-text" text-anchor="middle" y="4">!</text>
+              </g>
+            </svg>
+            <figcaption><strong>Post-validation</strong> failed (right)</figcaption>
+          </figure>
+        </div>
+      </section>
+    </div>
+
+    <footer class="note">
+      Iterations on Design 1. Each variant changes one dimension of the baseline pulse:
+      <strong>2</strong> rhythm/stagger, <strong>3</strong> organic cadence,
+      <strong>4</strong> persistent mechanical damage, <strong>5</strong> angular vs. radial motion,
+      <strong>6</strong> propagation across the node body. They are also mixable — e.g. sonar timing
+      + edge bleed, or heartbeat cadence + cracks.
+    </footer>
+  </body>
+</html>

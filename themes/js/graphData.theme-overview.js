@@ -106,6 +106,19 @@ function rectPair(prefix, state) {
   ];
 }
 
+// Decorator: stamp validation errors on the Ready entry of a section, so the
+// theme overview always shows what a "red nose" looks like under the active
+// theme. See /dashboard/documentation/validation-indicators.md.
+function withValidationOnReady(section) {
+  for (const child of section.children) {
+    if (child.state === 'Ready') {
+      child.preValidationError = 'upstream contract violated';
+      child.postValidationError = 'output schema mismatch';
+    }
+  }
+  return section;
+}
+
 function buildSection({ id, label, type, makeChildren = null, layout = null, collapsed = false }) {
   return {
     id,
@@ -154,6 +167,14 @@ export const demoData = {
     // every container in this demo is a single status. Force-disable.
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
+    // Validation indicator default for this page — the rect Ready node carries
+    // both pre and post errors so the indicator can be sanity-checked under
+    // every theme. See /dashboard/documentation/validation-indicators.md.
+    validationIndicator: {
+      style: 'pulse-halo',
+      glyph: '!',
+      animate: true,
+    },
   },
 
   nodes: [
@@ -167,7 +188,11 @@ export const demoData = {
       type: 'columns',
       layout: { arrangement: 'default', display: 'content' },
       children: [
-        buildSection({ id: 'sec-basic', label: 'Basic nodes (rect)', type: 'rect' }),
+        // First column: rect nodes — Ready entry carries pre+post validation
+        // errors so the indicator is visible under every theme.
+        withValidationOnReady(
+          buildSection({ id: 'sec-basic', label: 'Basic nodes (rect)', type: 'rect' }),
+        ),
         buildSection({
           id: 'sec-adapter',
           label: 'Adapter nodes',
