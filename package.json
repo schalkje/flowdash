@@ -35,7 +35,8 @@
     "lint:fix": "eslint dashboard/js tests --fix",
     "format": "prettier --write \"**/*.{js,cjs,mjs,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,cjs,mjs,json,md}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "preversion": "node -e \"console.error('\\n  npm version is disabled at the repo root.\\n  The library is versioned in /dashboard. Run:\\n    cd dashboard && npm version <patch|minor|major>\\n'); process.exit(1)\""
   },
   "author": "Jeroen Schalken",
   "license": "MIT",
