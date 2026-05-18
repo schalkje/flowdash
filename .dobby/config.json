@@ -1,0 +1,7 @@
+{
+  "backend": "github",
+  "github": {
+    "owner": "schalkje",
+    "repo": "flowdash"
+  }
+}

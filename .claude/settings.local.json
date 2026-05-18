@@ -13,7 +13,14 @@
       "Read(//home/jeroen/.claude/plans/**)",
       "Read(//home/jeroen/.claude/**)",
       "Bash(export PATH=\"$HOME/.local/node/bin:$PATH\")",
-      "Bash(PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 node scripts/generate-prerender.mjs dashboard/data/All-randomState.json)"
+      "Bash(PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 node scripts/generate-prerender.mjs dashboard/data/All-randomState.json)",
+      "Bash(gh --version)",
+      "Bash(openspec --version)",
+      "Bash(gh auth *)",
+      "Bash(gh issue *)",
+      "Bash(gh api *)",
+      "Bash(openspec new *)",
+      "Bash(openspec *)"
     ]
   }
 }
