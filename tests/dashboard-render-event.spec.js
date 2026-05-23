@@ -142,7 +142,12 @@ test.describe('render event hook', () => {
       };
       window.dashboard.on('render', handler);
       window.dashboard.onMainDisplayChange();
-      await new Promise((r) => setTimeout(r, 100));
+      // First flush: handler fires (count=1) and schedules a re-entrant flush.
+      await window.dashboard.afterRender();
+      // Second flush: handler fires again (count=2). On webkit the rAF chain
+      // can take noticeably longer than chromium, so anchor on afterRender
+      // rather than a fixed setTimeout.
+      await window.dashboard.afterRender();
       return count;
     });
     expect(result).toBeGreaterThanOrEqual(2);
@@ -225,8 +230,10 @@ test.describe('render event hook', () => {
       };
       const beforeCount = count;
       await window.dashboard.setData(newData);
-      // Wait for the post-setData rAF emit.
-      await new Promise((r) => setTimeout(r, 200));
+      // setData itself resolves before the post-setData onMainDisplayChange
+      // rAF fires; afterRender() waits for that next emit. Robust across
+      // browsers (webkit's rAF cadence differs from chromium).
+      await window.dashboard.afterRender();
       return { beforeCount, afterCount: count };
     });
     expect(result.afterCount).toBeGreaterThan(result.beforeCount);
