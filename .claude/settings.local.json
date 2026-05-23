@@ -20,7 +20,26 @@
       "Bash(gh issue *)",
       "Bash(gh api *)",
       "Bash(openspec new *)",
-      "Bash(openspec *)"
+      "Bash(openspec *)",
+      "Bash(python3 *)",
+      "Bash(grep *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8000/)",
+      "Read(//tmp/**)",
+      "Bash(awk -F'›' '{print $1}')",
+      "Bash(awk -F'-' '{print $1\"-\"$2\"-\"$3}')",
+      "Bash(awk -F- '{ *)",
+      "Bash(awk '/^\\\\s*[0-9]+\\\\\\)/{count++} END{print \"Lines starting with N\\):\", count}' /tmp/full-chromium.log)",
+      "Bash(awk '/^\\\\s+[0-9]+\\\\\\) \\\\[chromium\\\\]/{print}' /tmp/full-chromium.log)",
+      "Bash(awk '/^[[:space:]]+[0-9]+\\\\\\)/' /tmp/full-chromium.log)",
+      "Bash(awk '/Error:/{print NR}' /tmp/full-chromium.log)",
+      "Bash(awk '/^[[:space:]]+[0-9]+\\\\\\) \\\\[chromium\\\\]/{print}' /tmp/full-chromium.log)",
+      "Bash(xargs -r kill)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8000/dashboard/flowdash-js.html)",
+      "Bash(cp -r /tmp/flowdash-screenshots/. /home/jeroen/repo/flowdash-screenshots-worktree/_screenshots/)",
+      "Bash(mkdir -p /home/jeroen/repo/flowdash-screenshots-worktree/_screenshots)",
+      "Bash(cp /tmp/flowdash-screenshots/*.png /home/jeroen/repo/flowdash-screenshots-worktree/_screenshots/)",
+      "Read(//home/jeroen/repo/flowdash-screenshots-worktree/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)"
     ]
   }
 }
