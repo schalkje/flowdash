@@ -6,8 +6,6 @@ metadata:
   version: '1.0'
 ---
 
-<!-- This file is a copy of `skills/dobby-gh-close-issue/SKILL.md` — edit the source, not this copy. Regenerate with `python scripts/sync-skills.py`. -->
-
 Close a GitHub Issue through its accompanying Pull Request, with implementation evidence committed to the PR branch and embedded in the PR description.
 
 This skill is the **GitHub implementation** invoked by the `dobby-close-pbi` dispatcher after it resolves `backend: "github"` from `.dobby/config.json`. Direct invocation is supported as an escape hatch.

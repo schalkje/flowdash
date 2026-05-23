@@ -1,12 +1,12 @@
 ---
-name: dobby-propose-from-pbi
-description: Generate an OpenSpec change proposal from a PBI/issue in this project's tracker. Auto-detects Azure DevOps, GitHub, or Combined mode from .dobby/config.json and hands off to the matching backend skill. Use this for any "spec from pbi", "propose from issue", or "create a proposal for ticket" request.
+name: dobby-update-pbi
+description: Update/refine a PBI, Bug, or Feature in this project's tracker. Auto-detects Azure DevOps, GitHub, or Combined mode from .dobby/config.json and hands off to the matching backend skill. Use this for any "update pbi", "refine pbi", "improve pbi", "update description", "update acceptance criteria", "fix pbi fields", or "make this PBI better" request.
 metadata:
   author: dobby
-  version: '3.0'
+  version: '2.0'
 ---
 
-Generate an OpenSpec change proposal from a work item in whichever tracker this project uses. This skill is a **dispatcher** — it reads the project's backend configuration and hands off to the right backend implementation. It does not talk to any tracker itself.
+Update or refine a work item in whichever tracker this project uses. This skill is a **dispatcher** — it reads the project's backend configuration and hands off to the right backend implementation. It does not talk to any tracker itself.
 
 ## Steps
 
@@ -49,22 +49,20 @@ Based on the `backend` value, use the Read tool to load the corresponding SKILL.
 
 | `backend` value | Read and follow                                                   |
 | --------------- | ----------------------------------------------------------------- |
-| `"ado"`         | `skills/dobby-ado-propose-from-pbi/SKILL.md`                      |
-| `"github"`      | `skills/dobby-gh-propose-from-issue/SKILL.md`                     |
-| `"combined"`    | `skills/dobby-ado-propose-from-pbi/SKILL.md` _(PBI lives in ADO)_ |
+| `"ado"`         | `skills/dobby-ado-update-pbi/SKILL.md`                            |
+| `"github"`      | `skills/dobby-gh-update-issue/SKILL.md`                           |
+| `"combined"`    | `skills/dobby-ado-update-pbi/SKILL.md` _(work items live in ADO)_ |
 
-**Combined mode note**: For `"combined"`, the work item lives in ADO, so the proposal is generated from the ADO PBI. Before handing off, verify both identities:
+**Combined mode note**: For `"combined"`, work item updates route to ADO. Before handing off, verify both identities:
 
 ```bash
 az account show --output json    # ADO identity
 gh auth status                   # GitHub identity
 ```
 
-Display both to the user so they can catch wrong-account issues early.
-
 ## Guardrails
 
-- This skill NEVER generates the proposal itself. Routing only.
-- Do not invoke `az`, `gh`, `openspec`, or any backend-specific helper script from this skill.
+- This skill NEVER updates a work item itself. Routing only.
+- Do not invoke `az`, `gh`, or any backend-specific helper script from this skill.
 - Do not collect backend connection details — those belong in the backend skill.
 - On an unrecognized `backend` value, stop and ask the user to correct the config. Never guess.

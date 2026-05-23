@@ -39,7 +39,8 @@
       "Bash(mkdir -p /home/jeroen/repo/flowdash-screenshots-worktree/_screenshots)",
       "Bash(cp /tmp/flowdash-screenshots/*.png /home/jeroen/repo/flowdash-screenshots-worktree/_screenshots/)",
       "Read(//home/jeroen/repo/flowdash-screenshots-worktree/**)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
+      "Bash(gh pr *)"
     ]
   }
 }

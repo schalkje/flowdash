@@ -6,8 +6,6 @@ metadata:
   version: '1.0'
 ---
 
-<!-- This file is a copy of `skills/dobby-gh-propose-from-issue/SKILL.md` — edit the source, not this copy. Regenerate with `python scripts/sync-skills.py`. -->
-
 Create an OpenSpec change proposal from an existing GitHub Issue.
 
 This skill is the **GitHub implementation** invoked by the `dobby-propose-from-pbi` dispatcher after it resolves `backend: "github"` from `.dobby/config.json`. Direct invocation is supported as an escape hatch.
@@ -308,6 +306,17 @@ Ready for implementation! Invoke `/openspec-apply-change <name>` or ask me to im
 - Do not update the issue automatically — always ask first.
 - Use `--output json` or `--json` on `gh` commands for reliable parsing.
 - Include `--repo "<owner>/<repo>"` on all `gh` commands.
+
+## Optional Quality Gate
+
+After successful proposal generation, suggest:
+
+> **Optional quality gates before implementation:**
+>
+> - Run `grill-proposal` to challenge the scope, goals, and feasibility of the proposal.
+> - Run `grill-design` to stress-test the architecture, trade-offs, and implementation risks.
+
+Do not invoke these automatically — only suggest them. The user decides whether to grill.
 
 ## Usage Examples
 

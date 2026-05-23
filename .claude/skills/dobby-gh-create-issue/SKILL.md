@@ -6,8 +6,6 @@ metadata:
   version: '1.0'
 ---
 
-<!-- This file is a copy of `skills/dobby-gh-create-issue/SKILL.md` — edit the source, not this copy. Regenerate with `python scripts/sync-skills.py`. -->
-
 Create a GitHub Issue from a conversational request.
 
 This skill is the **GitHub implementation** invoked by the `dobby-create-pbi` dispatcher after it resolves `backend: "github"` from `.dobby/config.json`. Direct invocation is supported as an escape hatch.
@@ -226,6 +224,14 @@ If yes, update `.dobby/config.json` so the `github` block contains the current v
 - Never retry creation without explicit user confirmation.
 - Use `--output json` or `--json` on all `gh` commands for reliable parsing.
 - Include `--repo "<owner>/<repo>"` on all `gh` commands rather than relying on the implicit current-directory inference.
+
+## Optional Quality Gate
+
+After successful issue creation, suggest:
+
+> **Optional:** Run `grill-pbi` to stress-test the requirements and acceptance criteria before moving to refinement or proposal generation.
+
+Do not invoke `grill-pbi` automatically — only suggest it. The user decides whether to grill.
 
 ## Usage Examples
 

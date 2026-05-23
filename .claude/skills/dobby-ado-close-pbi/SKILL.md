@@ -6,8 +6,6 @@ metadata:
   version: '2.0'
 ---
 
-<!-- This file is a copy of `skills/dobby-ado-close-pbi/SKILL.md` — edit the source, not this copy. Regenerate with `python scripts/sync-skills.py`. -->
-
 Close a Product Backlog Item (PBI) in Azure DevOps with implementation evidence and a closing summary.
 
 This skill is the **Azure DevOps implementation** invoked by the `dobby-close-pbi` dispatcher after it resolves `backend: "ado"` from `.dobby/config.json`. Direct invocation is supported as an escape hatch.
@@ -44,6 +42,11 @@ Read the `ado` block from `.dobby/config.json` in the repository root. Example s
 - `adoProjectId` / `adoRepoId`: GUIDs for ADO Repos. Required when `host: "ado"`. Find via `az repos show --repository <name> --query "{p:project.id, r:id}"`.
 
 ## Steps
+
+### ⛔ Command Execution Rules
+
+- **No piping.** Every `az` and `python` command in this skill is designed to be run standalone with `--output json`. Do NOT append any pipe (`|`) to transform, filter, or format the output — no `| ConvertFrom-Json`, `| Select-Object`, `| jq`, `| python -c "..."`, `| grep`, or any other pipe. Read the full JSON output and extract fields in your own reasoning.
+- **Use canonical `skills/` paths.** Reference scripts from the canonical `skills/` directory — e.g., `python skills/dobby-ado-close-pbi/scripts/...`, not from `.github/skills/` or `.claude/skills/` host copies.
 
 ### 1. Validate Prerequisites
 
@@ -519,6 +522,30 @@ openspec archive "<change-name>"
 - **Use clean markdown in closing comments** — no HTML comments (`<!-- -->`), no inline HTML. Omit empty sections rather than including placeholder text.
 - **Verify acceptance criteria against evidence** — do not blindly check all boxes. Cross-reference each criterion with implementation evidence.
 - **Multiple screenshots are welcome** — encourage capturing different states/views, not just a single screenshot.
+
+### Critical: Markdown Comment Format
+
+**Never use `az boards work-item update --discussion`** for comments that contain markdown. It produces HTML-only output that strips markdown formatting.
+
+Always use the `azdo-add-comment.py` script, which patches `System.History` with `multilineFieldsFormat: "Markdown"` (API version 7.2-preview.3). This is the ONLY way to get markdown rendered properly in ADO comments.
+
+### Evidence Upload Order
+
+When uploading screenshots as evidence:
+
+1. Upload images FIRST via `azdo-upload-attachment.py` to get attachment URLs
+2. Compose the markdown comment body using those attachment URLs
+3. Post the comment via `azdo-add-comment.py`
+
+Order matters — you need the attachment URLs before you can compose the comment.
+
+### Editing Comments
+
+Never use `PATCH /workItems/{id}/comments/{commentId}` to edit a comment — it silently downgrades markdown to HTML. Instead: delete the old comment with `azdo-delete-comment.py`, then re-post with `azdo-add-comment.py`.
+
+### Scope
+
+This skill handles evidence upload, acceptance criteria, state transitions, and closing comments. It does **not** create PRs or branches — those are the responsibility of the orchestrator (`dobby-implement-pbi`).
 
 ## Usage Examples
 
