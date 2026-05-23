@@ -367,6 +367,166 @@ The dashboard implements several optimizations to ensure smooth resize operation
 - **Performance**: Resize operations are optimized to preserve user context and avoid jarring transitions
 - **Theme Support**: All styling is handled through the theme system under `dashboard/themes/*`
 
+## Public API hooks
+
+A small, additive surface on the `Dashboard` instance for downstream
+find-and-navigate integrations (see GitHub issue #14). Existing behavior
+(`zoomToNodeById`, `id` attribute on rendered `<g>`, status cascade,
+auto-collapse settings) is unchanged.
+
+### Two identifier axes
+
+The library distinguishes two identifiers and the API splits along that axis:
+
+- **`id`** — globally unique per node. Single-node primitives (`getNodeBounds`,
+  `revealNode`, `setNodeClass`) accept only `id`.
+- **`datasetId`** — non-unique semantic identifier carried by `data.datasetId`.
+  Multiple nodes representing the same logical dataset share one `datasetId`.
+  Fan-out is exposed via `getDatasetNodeIds(datasetId)`.
+
+`getNode(id)` and the new single-node primitives return the first match in
+tree-walk order — consistent with how the library has always behaved.
+
+### Coordinate-frame contract
+
+`getNodeBounds(id)` and `panToBounds(bbox)` operate in the dashboard's
+internal coordinate frame: the local frame of `main.container`, **before**
+the zoom transform is applied. This is the same frame the existing helper
+`getBoundingBoxRelativeToParent(node.element, main.container)` produces
+via `parentCTM.inverse().multiply(elementCTM)` + `getBBox()`. The frame is
+independent of CSS transforms on the host SVG or any page ancestor,
+fullscreen state, device pixel ratio, and host-page zoom.
+
+Do not mix bounds from `getNodeBounds` with `getBoundingClientRect` math —
+they live in different coordinate spaces.
+
+### Methods
+
+- **`getNodeBounds(id) → { x, y, width, height } | null`** — bounding box in
+  the dashboard's internal frame. Returns `null` when the id matches no
+  node, or when the node's `<g>` is detached (collapsed ancestor).
+- **`getDatasetNodeIds(datasetId) → string[]`** — every node id whose
+  `data.datasetId === datasetId`, in tree-walk order. Always an array;
+  empty (never null) when no nodes match.
+- **`revealNode(id) → Promise<void>`** — expands every collapsed ancestor of
+  `id` exactly as user clicks on each toggle would. Status cascades and
+  auto-collapse settings still apply. Resolves after the resulting render
+  flush; rejects with a descriptive error for unknown / removed ids. The
+  library does not snapshot prior collapsed state — callers that need
+  restoration capture their own snapshot before calling.
+- **`panToBounds(bbox, { animate = true, padding = 0 } = {}) → Promise<void>`** —
+  pan-only viewport change at the current zoom level, clamped against the
+  diagram's outer bounds. Oversized bbox (`bbox + padding` larger than the
+  viewport at current zoom) centers the bbox; zoom does not change.
+- **`setNodeClass(id, className, enabled) → void`** — toggle a CSS class on
+  a node's top-level `<g>` element. Silent no-op for unknown ids and for
+  placements detached from the DOM.
+- **`on('render', handler) / once / off`** + **`afterRender() → Promise<void>`** —
+  notification when the dashboard has finished a layout pass. Fires once
+  per coalesced `onMainDisplayChange` flush AND once at the end of
+  `initialize()` after the `data-flowdash-ready` attribute is set, so
+  `afterRender()` is reliable as a "dashboard is ready" gate.
+
+### Rendered DOM contract
+
+Every rendered top-level node `<g>` whose node carries a non-empty
+`data.datasetId` carries `data-dataset-id="<datasetId>"` in addition to the
+existing `id="<id>"`. Callers can fan out with
+`querySelectorAll('[data-dataset-id="X"]')` without colliding with HTML
+id-uniqueness rules.
+
+### Worked example: multi-placement find-and-navigate
+
+```js
+const ids = dashboard.getDatasetNodeIds('orders_clean');
+for (const id of ids) {
+  if (dashboard.getNodeBounds(id) === null) {
+    await dashboard.revealNode(id);
+  }
+  dashboard.setNodeClass(id, 'search-active', true);
+}
+if (ids.length > 0) {
+  await dashboard.panToBounds(dashboard.getNodeBounds(ids[0]), { padding: 40 });
+}
+```
+
+### Render-event semantics
+
+The `render` event fires:
+
+1. Once at the end of `initialize()` (guaranteed baseline emit).
+2. Once per coalesced `onMainDisplayChange` flush thereafter — N node-level
+   `handleDisplayChange` bubbles within a single animation frame produce
+   exactly one emit.
+3. Once after each `setData()` re-init (via the internal
+   `onMainDisplayChange` call inside `setData`).
+
+The emit fires **after** the internal post-display work
+(`zoomManager.handleLayoutChange`, minimap update, DOM hierarchy
+enforcement) has completed for the current state, so handlers reading
+bounds via `getNodeBounds` see final positions for this flush.
+
+Handler errors are caught and logged via `console.error` with the
+`flowdash:` prefix; one throwing handler does not prevent subsequent
+handlers in the same emit from firing.
+
+`afterRender()` returns a microtask-resolved Promise when the dashboard is
+idle (no flush pending and at least one prior emit has occurred), and
+does **not** cause registered `on('render')` handlers to be invoked — only
+the awaiting caller is unblocked.
+
+#### Re-entrancy
+
+A handler that calls a mutating API (`revealNode`, `addNode`, status
+setters) triggers a fresh `requestAnimationFrame` for the new state — it
+is not coalesced into the in-flight emit. Subsequent post-display work
+runs for the new state, then a new `render` emit fires.
+
+#### Handler-set mutation during emit
+
+Handlers registered or removed during an emit take effect on the **next**
+emit (snapshot iteration, matching Node `EventEmitter` / DOM
+`EventTarget`). `once('render', h)` deregisters itself inside the snapshot
+walk and so fires exactly once.
+
+#### Memory and leaks
+
+`on('render', handler)` registers a strong reference. Long-lived host
+pages that attach short-lived handlers should call `off('render', handler)`
+when the handler's owning component unmounts; otherwise the handler keeps
+the closure (and anything it captures) alive for the dashboard's lifetime.
+
+### Lifecycle and re-init via `setData`
+
+Event handlers and the underlying `_eventHandlers` registry survive
+`Dashboard.setData(newData)` — `setData` rebuilds the SVG and node tree
+but does not clear the event registry. The post-`setData` render flush
+fires `render` so handlers can react to the new data:
+
+```js
+dashboard.on('render', () => syncFromBounds());
+await dashboard.setData(newData);
+await dashboard.afterRender(); // resolves on the post-setData emit
+```
+
+**Cached ids may become stale across `setData`** if the new data omits or
+renames them. Re-read ids via `getDatasetNodeIds` after `setData` rather
+than caching across re-init boundaries.
+
+### Theme switching
+
+Theme switches are CSS-only (stylesheet swap via `themeManager`). They do
+**not** cause a `handleDisplayChange` cascade or a `render` emit, and
+caller-applied classes set via `setNodeClass` persist across the swap.
+Callers that need to react to theme changes should listen on the existing
+window event:
+
+```js
+window.addEventListener('flowdash:themechange', (e) => {
+  console.log('theme is now', e.detail.theme);
+});
+```
+
 ## Navigation
 
 - Back to docs index: [Documentation Home](README.md)

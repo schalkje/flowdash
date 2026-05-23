@@ -65,15 +65,63 @@ export class ZoomManager {
   }
 
   applyTransform(transform, { animate = false, duration = 500 } = {}) {
-    // Apply via d3 zoom behavior to keep state and minimap in sync
+    // Apply via d3 zoom behavior to keep state and minimap in sync.
+    // Returns a Promise that resolves on transition end (animated) or in a
+    // microtask (synchronous), so callers like Dashboard.panToBounds can
+    // await viewport changes.
     if (animate) {
-      this.dashboard.main.svg
-        .transition()
-        .duration(duration)
-        .call(this.dashboard.main.zoom.transform, transform);
-    } else {
-      this.dashboard.main.svg.call(this.dashboard.main.zoom.transform, transform);
+      return new Promise((resolve) => {
+        const transition = this.dashboard.main.svg
+          .transition()
+          .duration(duration)
+          .call(this.dashboard.main.zoom.transform, transform);
+        let resolved = false;
+        const done = () => {
+          if (resolved) return;
+          resolved = true;
+          resolve();
+        };
+        transition.on('end', done).on('interrupt', done);
+      });
     }
+    this.dashboard.main.svg.call(this.dashboard.main.zoom.transform, transform);
+    return Promise.resolve();
+  }
+
+  /**
+   * Clamp a pan-only transform against the diagram's outer content bounds so
+   * the viewport never reveals whitespace beyond the diagram. Scale `k` is
+   * preserved. When the diagram is smaller than the viewport on an axis,
+   * the diagram is centered on that axis.
+   *
+   * Extracted as a reusable helper (issue #14, task 4.1) so both
+   * zoomToBoundingBox and panToBounds can share the clamp.
+   */
+  clampPanTransform(transform, { contentBounds = null } = {}) {
+    const bounds =
+      contentBounds || (this.dashboard.getContentBBox ? this.dashboard.getContentBBox() : null);
+    if (!bounds) return transform;
+    const vp = this.getViewport();
+    const k = transform.k || 1;
+    const bw = bounds.width || 0;
+    const bh = bounds.height || 0;
+    let tx = transform.x;
+    let ty = transform.y;
+    if (bw * k <= vp.width) {
+      tx = -k * (bounds.x + bw / 2);
+    } else {
+      const maxX = -vp.width / 2 - k * bounds.x;
+      const minX = vp.width / 2 - k * (bounds.x + bw);
+      tx = Math.min(maxX, Math.max(minX, tx));
+    }
+    if (bh * k <= vp.height) {
+      ty = -k * (bounds.y + bh / 2);
+    } else {
+      const maxY = -vp.height / 2 - k * bounds.y;
+      const minY = vp.height / 2 - k * (bounds.y + bh);
+      ty = Math.min(maxY, Math.max(minY, ty));
+    }
+    return d3.zoomIdentity.translate(tx, ty).scale(k);
   }
 
   initializeZoomBehavior() {

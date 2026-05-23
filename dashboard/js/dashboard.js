@@ -112,6 +112,15 @@ export class Dashboard {
     // Click delay timer to differentiate single click from double click
     this._clickDelayTimer = null;
     this._clickDelayMs = 250; // Delay before executing single click handler
+
+    // Public event hooks (issue #14). One supported event today: 'render'.
+    // Map<eventName, Set<handler>>. Snapshot iterated on each emit so handler
+    // mutations during emit affect only future emits (D12b in design.md).
+    this._eventHandlers = new Map();
+    // Used by afterRender() to short-circuit when the dashboard is idle.
+    // Flipped to true inside _emit('render'); covers prerender, init-end and
+    // per-flush emit paths (D10b).
+    this._hasEmittedSinceInit = false;
   }
 
   /**
@@ -121,6 +130,87 @@ export class Dashboard {
    */
   _debugLog(...args) {
     if (this.data?.settings?.isDebug) console.log(...args);
+  }
+
+  /**
+   * Internal: emit a public event. Snapshot the current handler set so that
+   * handlers registered or removed during emit only take effect on the next
+   * emit (D12b). Handler errors are logged via console.error with a grep-able
+   * `flowdash:` prefix and never break the emit loop (D12a).
+   */
+  _emit(eventName) {
+    this._hasEmittedSinceInit = true;
+    const set = this._eventHandlers.get(eventName);
+    if (!set || set.size === 0) return;
+    const handlers = [...set];
+    for (const h of handlers) {
+      try {
+        h();
+      } catch (err) {
+        console.error('flowdash: render handler threw:', err);
+      }
+    }
+  }
+
+  /**
+   * Register an event handler. Only `eventName === "render"` is supported
+   * today; other event names are accepted silently (future-proofing) but no
+   * handler will ever fire for them.
+   *
+   * @param {string} eventName
+   * @param {() => void} handler
+   */
+  on(eventName, handler) {
+    if (typeof handler !== 'function') return;
+    let set = this._eventHandlers.get(eventName);
+    if (!set) {
+      set = new Set();
+      this._eventHandlers.set(eventName, set);
+    }
+    set.add(handler);
+  }
+
+  /**
+   * Deregister an event handler by reference equality.
+   *
+   * @param {string} eventName
+   * @param {() => void} handler
+   */
+  off(eventName, handler) {
+    const set = this._eventHandlers.get(eventName);
+    if (!set) return;
+    set.delete(handler);
+  }
+
+  /**
+   * Register a handler that fires once. The deregistration takes effect on
+   * the next emit (D12b snapshot semantics): the wrapper removes itself
+   * before invoking the caller's handler.
+   *
+   * @param {string} eventName
+   * @param {() => void} handler
+   */
+  once(eventName, handler) {
+    if (typeof handler !== 'function') return;
+    const wrapper = () => {
+      this.off(eventName, wrapper);
+      handler();
+    };
+    this.on(eventName, wrapper);
+  }
+
+  /**
+   * Resolves on the next render emit, or in a microtask if the dashboard is
+   * idle (D10b). Does NOT cause a synthetic `render` emit for other `on`
+   * subscribers.
+   *
+   * @returns {Promise<void>}
+   */
+  afterRender() {
+    if (this._hasEmittedSinceInit && !this._displayChangeScheduled) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => this.once('render', resolve));
   }
 
   // --- Pre-Render Methods ---
@@ -816,6 +906,14 @@ export class Dashboard {
         }
       }
     } catch {}
+
+    // Guaranteed init-end `render` emit (D9 in design.md). Direct call —
+    // bypasses _suspendDisplayChange and rAF coalescing — so handlers
+    // registered before `init` always get at least one baseline emit
+    // regardless of which init path ran (prerender, zoomToRoot, or
+    // default). Idempotent with the prerender path; the spec requires
+    // handlers to tolerate multiple emits.
+    this._emit('render');
 
     // Ensure loading popup is hidden after initialization completes
     // This serves as a fallback if onMainDisplayChange doesn't trigger
@@ -2065,6 +2163,10 @@ export class Dashboard {
       }
 
       this._displayChangeScheduled = false;
+      // Public `render` event (issue #14). Emit AFTER clearing the
+      // coalescing flag so re-entrant mutations from handlers schedule
+      // their own fresh rAF instead of being swallowed (D10a in design.md).
+      this._emit('render');
     });
   }
 
@@ -2171,6 +2273,182 @@ export class Dashboard {
     }
 
     return null;
+  }
+
+  // ------------------------------------------------------------------
+  // Public find-and-navigate API hooks (issue #14)
+  //
+  // Single-node primitives key off the unique `id`. Fan-out is exposed via
+  // `getDatasetNodeIds(datasetId)` — see design.md (D4) and
+  // dashboard/documentation/dashboard.md "Public API hooks".
+  // ------------------------------------------------------------------
+
+  /**
+   * Return the bounding box of a node in the dashboard's internal coordinate
+   * frame — the local frame of `main.container`, before the zoom transform is
+   * applied. Independent of CSS transforms, fullscreen, device pixel ratio,
+   * and host-page zoom.
+   *
+   * @param {string|number} id
+   * @returns {{x: number, y: number, width: number, height: number} | null}
+   */
+  getNodeBounds(id) {
+    if (!this.main?.root) return null;
+    const node = this.main.root.getNode(id);
+    if (!node) return null;
+    // Detached <g> → no bounds. Two failure modes to guard against:
+    //   1. The element / selection itself is null (never created or torn down).
+    //   2. The element exists but its DOM node is detached (collapsed ancestor
+    //      destroyed the inner container, but the d3 selection still holds the
+    //      now-orphan reference). isConnected catches case 2; getCTM would also
+    //      return null for detached SVG nodes.
+    if (!node.element || typeof node.element.node !== 'function') return null;
+    const domNode = node.element.node();
+    if (!domNode || domNode.isConnected === false) return null;
+    const bbox = getBoundingBoxRelativeToParent(node.element, this.main.container);
+    if (!bbox) return null;
+    return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+  }
+
+  /**
+   * Return every node id whose `data.datasetId === datasetId`, in tree-walk
+   * order. Always a `string[]` — never null/undefined. Empty for unknown ids.
+   *
+   * @param {string} datasetId
+   * @returns {string[]}
+   */
+  getDatasetNodeIds(datasetId) {
+    if (!this.main?.root) return [];
+    const nodes = this.main.root.getNodesByDatasetId(datasetId) || [];
+    return nodes.map((n) => n.id);
+  }
+
+  /**
+   * Toggle a CSS class on a node's top-level `<g>` element. Silent no-op for
+   * unknown ids and for placements detached from the DOM (collapsed
+   * ancestor). Targets the first match in tree-walk order, consistent with
+   * `getNode(id)`.
+   *
+   * @param {string|number} id
+   * @param {string} className
+   * @param {boolean} enabled
+   */
+  setNodeClass(id, className, enabled) {
+    if (!this.main?.root || !className) return;
+    const node = this.main.root.getNode(id);
+    if (!node || !node.element || typeof node.element.node !== 'function') return;
+    const el = node.element.node();
+    // Same detached-element guard as getNodeBounds: a collapsed ancestor
+    // destroys the inner container DOM, but the d3 selection still holds
+    // the orphan reference. Silent no-op in that case (per spec).
+    if (!el || el.isConnected === false) return;
+    if (enabled) el.classList.add(className);
+    else el.classList.remove(className);
+  }
+
+  /**
+   * Collect collapsed ancestors of `node` from outermost-to-innermost.
+   * Stops at the root. Returns `[]` when no ancestor is collapsed.
+   * @private
+   */
+  _collectCollapsedAncestors(node) {
+    const chain = [];
+    let cur = node?.parentNode;
+    while (cur) {
+      if (cur.collapsed) chain.push(cur);
+      cur = cur.parentNode;
+    }
+    // Walked innermost-to-outermost; reverse to expand outermost first so the
+    // inner expand() calls find a re-attached DOM parent.
+    return chain.reverse();
+  }
+
+  /**
+   * Walk the ancestor chain of `id` and expand every collapsed container so
+   * the node becomes visible. Uses the existing collapse-setter path —
+   * status cascades and auto-collapse settings apply unchanged. Resolves
+   * after the resulting render flush completes; rejects if `id` is unknown.
+   *
+   * @param {string|number} id
+   * @returns {Promise<void>}
+   */
+  async revealNode(id) {
+    if (!this.main?.root) {
+      throw new Error(`flowdash.revealNode: dashboard not initialized`);
+    }
+    const node = this.main.root.getNode(id);
+    if (!node) {
+      throw new Error(`flowdash.revealNode: node not found: ${id}`);
+    }
+    const chain = this._collectCollapsedAncestors(node);
+    if (chain.length === 0) {
+      // Already visible — still await one flush for caller consistency.
+      // afterRender() resolves in a microtask when idle (D10b).
+      await this.afterRender();
+      return;
+    }
+    for (const ancestor of chain) {
+      try {
+        ancestor.collapsed = false;
+      } catch (e) {
+        console.warn('flowdash.revealNode: failed to expand ancestor', ancestor?.id, e);
+      }
+    }
+    await this.afterRender();
+  }
+
+  /**
+   * Pan the viewport so that `bbox` (expanded by `padding` on every side) is
+   * visible at the current zoom level. Does not change zoom. Clamped against
+   * the diagram outer bounds so no whitespace is revealed. If the padded
+   * bbox is larger than the viewport at the current zoom, the bbox center is
+   * aligned with the viewport center (overflow accepted, zoom unchanged).
+   *
+   * @param {{x:number, y:number, width:number, height:number}} bbox
+   * @param {{animate?: boolean, padding?: number}} [options]
+   * @returns {Promise<void>}
+   */
+  async panToBounds(bbox, { animate = true, padding = 0 } = {}) {
+    if (!bbox) throw new Error('flowdash.panToBounds: bbox is required');
+    if (!this.main?.svg) return;
+    const k = this.main.transform.k || 1;
+    const vp = this.zoomManager.getViewport();
+
+    const ex = bbox.x - padding;
+    const ey = bbox.y - padding;
+    const ew = bbox.width + 2 * padding;
+    const eh = bbox.height + 2 * padding;
+    const cx = ex + ew / 2;
+    const cy = ey + eh / 2;
+
+    let tx = this.main.transform.x;
+    let ty = this.main.transform.y;
+
+    // X axis
+    if (ew * k > vp.width) {
+      // Oversized — center on bbox center, zoom unchanged.
+      tx = -k * cx;
+    } else {
+      // Bring bbox into view; no-op if already in view.
+      const txLow = vp.width / 2 - k * (ex + ew);
+      const txHigh = -vp.width / 2 - k * ex;
+      if (tx < txLow) tx = txLow;
+      else if (tx > txHigh) tx = txHigh;
+    }
+    // Y axis
+    if (eh * k > vp.height) {
+      ty = -k * cy;
+    } else {
+      const tyLow = vp.height / 2 - k * (ey + eh);
+      const tyHigh = -vp.height / 2 - k * ey;
+      if (ty < tyLow) ty = tyLow;
+      else if (ty > tyHigh) ty = tyHigh;
+    }
+
+    let target = d3.zoomIdentity.translate(tx, ty).scale(k);
+    target = this.zoomManager.clampPanTransform(target);
+
+    return this.zoomManager.applyTransform(target, { animate, duration: 500 });
   }
 
   /**

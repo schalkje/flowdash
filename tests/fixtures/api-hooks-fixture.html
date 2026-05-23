@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API hooks test fixture</title>
+    <script src="/dashboard/libs/d3.min.js"></script>
+    <script src="/dashboard/libs/d3-shape.min.js"></script>
+    <script src="/dashboard/libs/d3-dag.iife.min.js"></script>
+    <link rel="stylesheet" href="/dashboard/flowdash.css" />
+    <style>
+      body {
+        margin: 0;
+      }
+      #graph-host {
+        width: 800px;
+        height: 600px;
+        position: relative;
+      }
+      #graph {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph-host">
+      <svg id="graph" class="canvas"></svg>
+    </div>
+    <script type="module">
+      import flowDashboard from '/dashboard/js/index.js';
+      import { getBoundingBoxRelativeToParent } from '/dashboard/js/utils.js';
+      window.flowDashboard = flowDashboard;
+      // Tests reference the canonical helper to assert frame equivalence
+      // (spec: getNodeBounds returns values equal to this helper's output).
+      window.getBoundingBoxRelativeToParent = getBoundingBoxRelativeToParent;
+
+      // Tests call buildDashboard(data) and then wait for [data-flowdash-ready="true"].
+      // Reuses the singleton SVG element across rebuilds; clears stale ready flag first.
+      window.buildDashboard = async (data, opts = {}) => {
+        const selector = opts.selector || '#graph';
+        const host = document.getElementById('graph-host');
+        if (host) host.removeAttribute('data-flowdash-ready');
+        const svg = document.querySelector(selector);
+        if (svg) svg.removeAttribute('data-flowdash-ready');
+        const dashboard = new flowDashboard.Dashboard(data);
+        window.dashboard = dashboard;
+        await dashboard.initialize(selector);
+        return dashboard;
+      };
+    </script>
+  </body>
+</html>

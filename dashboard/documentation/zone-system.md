@@ -7,6 +7,7 @@ The Zone System is a hierarchical layout architecture that provides automatic po
 ## Architecture
 
 ### Zone Hierarchy
+
 ```
 Container Zone (outermost)
 ├── Header Zone (top)
@@ -20,7 +21,9 @@ Container Zone (outermost)
 ```
 
 ### Zone Manager
+
 The `ZoneManager` is the central coordinator that manages all zones within a node:
+
 - **Zone Creation**: Automatic zone initialization
 - **Zone Positioning**: Coordinate system management
 - **Zone Sizing**: Dynamic size calculation
@@ -30,23 +33,28 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 ## Zone Types
 
 ### Container Zone
+
 **Purpose**: The outermost boundary of the node
 
 **Characteristics:**
+
 - Represents the total visual footprint of the node
 - Contains all other zones within its boundaries
 - Defines the node's position in the parent coordinate system
 - Used for collision detection and spatial queries
 
 **Visual Representation:**
+
 - Usually a rectangular border or shape outline
 - May have rounded corners or specific styling
 - Represents the maximum extent of the node's content
 
 ### Header Zone
+
 **Purpose**: Dedicated area for title, controls, and header elements
 
 **Characteristics:**
+
 - Contains the node's display name or label
 - Positioned at the top of the container zone
 - May include additional header elements (status indicators, icons, zoom buttons)
@@ -54,6 +62,7 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 - Serves as a distinct layout zone separate from content
 
 **Layout Behavior:**
+
 - Text is typically left-aligned with padding (default: 4px from left edge)
 - Height is calculated based on text content with minimum height constraint (default: 10px minimum)
 - Width spans the full container width minus left/right margins
@@ -62,21 +71,25 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 - Can handle text overflow and ellipsis for long labels
 
 ### Margin Zones
+
 **Purpose**: Spacing areas around content providing visual separation
 
 **Components:**
+
 - **Top Margin**: Space between header zone and content area
 - **Right Margin**: Space between content and right container edge
 - **Bottom Margin**: Space between content and bottom container edge
 - **Left Margin**: Space between content and left container edge
 
 **Default Values:**
+
 - Top: 4 pixels (from header bottom)
 - Right: 8 pixels
 - Bottom: 8 pixels
 - Left: 8 pixels
 
 **Behavior:**
+
 - Top margin is measured from the bottom of the header zone
 - All margins are configurable via settings
 - Margins are automatically applied to child content
@@ -84,9 +97,11 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 - Margins create the boundary between header zone and inner container zone
 
 ### Inner Container Zone
+
 **Purpose**: Dedicated content area where child nodes are positioned
 
 **Characteristics:**
+
 - Contains all child nodes and their content
 - Positioned below the header zone with top margin separation
 - Size is calculated based on child content and spacing
@@ -94,6 +109,7 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 - Has its own coordinate system relative to the container
 
 **Layout Behavior:**
+
 - Child nodes are positioned within this zone using the zone's coordinate system
 - Size adapts to accommodate child content and spacing
 - Spacing between children is managed within this zone
@@ -103,22 +119,26 @@ The `ZoneManager` is the central coordinator that manages all zones within a nod
 ## Coordinate Systems
 
 ### Container Zone Coordinate System
+
 - **Origin**: Center point of the container
 - **Positioning**: Container positioned by center point in parent coordinate system
 - **Transform**: Container applies transform to position itself
 
 ### Header Zone Coordinate System
+
 - **Origin**: Top-left of container zone
 - **Positioning**: Positioned at top of container (y=0)
 - **Width**: Full container width minus left/right margins
 - **Height**: Calculated from content with minimum constraint
 
 ### Inner Container Zone Coordinate System
+
 - **Origin**: Top-left of inner container (after margins and header)
 - **Positioning**: Positioned below header with top margin offset
 - **Transform**: Applied to account for container positioning and margins
 
 **Coordinate Calculation:**
+
 ```javascript
 // Origin: Top-left of inner container (after margins and header)
 const innerX = -this.size.width / 2 + marginSize.left;
@@ -130,6 +150,7 @@ const availableHeight = this.size.height - headerHeight - marginSize.top - margi
 ```
 
 ### Child Positioning
+
 - **Horizontal Centering**: `x = (availableWidth - childWidth) / 2`
 - **Vertical Centering**: `y = (availableHeight - childHeight) / 2`
 - **Stacking**: `y = currentY + childHeight + spacing`
@@ -138,6 +159,7 @@ const availableHeight = this.size.height - headerHeight - marginSize.top - margi
 ## Zone Management
 
 ### Zone Creation
+
 Zones are automatically created when a container node is initialized:
 
 ```javascript
@@ -145,7 +167,7 @@ Zones are automatically created when a container node is initialized:
 if (this.isContainer) {
   this.zoneManager = new ZoneManager(this);
   this.zoneManager.init();
-  
+
   // Resize zones with actual node dimensions
   if (this.zoneManager) {
     this.zoneManager.resize(this.data.width, this.data.height);
@@ -154,6 +176,7 @@ if (this.isContainer) {
 ```
 
 ### Zone Sizing
+
 Zones are automatically sized based on container dimensions:
 
 ```javascript
@@ -162,6 +185,7 @@ this.zoneManager.resize(this.data.width, this.data.height);
 ```
 
 ### Zone Positioning
+
 Each zone has its own positioning logic:
 
 ```javascript
@@ -177,6 +201,7 @@ innerContainerZone.position(innerX, innerY);
 ## Layout Algorithms
 
 ### Default Layout
+
 The zone system provides default layout algorithms:
 
 ```javascript
@@ -188,6 +213,7 @@ const y = (availableHeight - childHeight) / 2;
 ```
 
 ### Custom Layouts
+
 Node types can override layout algorithms:
 
 ```javascript
@@ -195,8 +221,8 @@ Node types can override layout algorithms:
 innerContainerZone.setLayoutAlgorithm((childNodes, coordinateSystem) => {
   const spacing = this.nodeSpacing?.vertical || 10;
   let currentY = 0;
-  
-  childNodes.forEach(childNode => {
+
+  childNodes.forEach((childNode) => {
     const x = coordinateSystem.size.width / 2 - childNode.data.width / 2;
     const y = currentY;
     childNode.move(x, y);
@@ -206,6 +232,7 @@ innerContainerZone.setLayoutAlgorithm((childNodes, coordinateSystem) => {
 ```
 
 ### Layout Triggers
+
 Layout algorithms are triggered by:
 
 - **Child Addition**: New children added to container
@@ -217,12 +244,14 @@ Layout algorithms are triggered by:
 ## Performance Considerations
 
 ### Zone Optimization
+
 - **Lazy Initialization**: Zones created only when needed
 - **Efficient Positioning**: Optimized coordinate calculations
 - **Batch Updates**: Multiple zone changes processed together
 - **Caching**: Zone dimensions and positions cached
 
 ### Memory Management
+
 - **Zone Cleanup**: Zones properly destroyed when node is removed
 - **Reference Management**: Avoiding circular references
 - **Event Cleanup**: Zone event listeners properly removed
@@ -230,6 +259,7 @@ Layout algorithms are triggered by:
 ## Integration with Node Types
 
 ### Container Nodes
+
 All container node types integrate with the zone system:
 
 - **LaneNode**: Uses zone system for vertical stacking
@@ -240,6 +270,7 @@ All container node types integrate with the zone system:
 - **GroupNode**: Uses zone system for dynamic positioning
 
 ### Non-Container Nodes
+
 Basic node types don't use the zone system:
 
 - **RectangularNode**: No zone system (leaf node)
@@ -248,35 +279,37 @@ Basic node types don't use the zone system:
 ## Configuration
 
 ### Zone Settings
+
 ```javascript
 const zoneSettings = {
   // Header zone configuration
   header: {
-    height: "auto",             // auto or fixed height
-    minHeight: 10,              // minimum height in pixels
+    height: 'auto', // auto or fixed height
+    minHeight: 10, // minimum height in pixels
     padding: { left: 4, right: 4, top: 2, bottom: 2 },
-    textOverflow: "ellipsis",   // text overflow handling
-    showControls: true          // show zoom/collapse controls
+    textOverflow: 'ellipsis', // text overflow handling
+    showControls: true, // show zoom/collapse controls
   },
-  
+
   // Margin configuration
   margins: {
-    top: 4,                     // space from header bottom
-    right: 8,                   // space from right edge
-    bottom: 8,                  // space from bottom edge
-    left: 8                     // space from left edge
+    top: 4, // space from header bottom
+    right: 8, // space from right edge
+    bottom: 8, // space from bottom edge
+    left: 8, // space from left edge
   },
-  
+
   // Inner container configuration
   innerContainer: {
-    layoutAlgorithm: "default", // default or custom
+    layoutAlgorithm: 'default', // default or custom
     childSpacing: { horizontal: 20, vertical: 10 },
-    childAlignment: "center"    // center, left, right, top, bottom
-  }
+    childAlignment: 'center', // center, left, right, top, bottom
+  },
 };
 ```
 
 ### Zone Styling
+
 ```css
 /* Container zone styling */
 .container-zone {
@@ -302,12 +335,14 @@ const zoneSettings = {
 ## Error Handling
 
 ### Zone Errors
+
 - **Creation Failures**: Graceful handling of zone creation errors
 - **Sizing Errors**: Fallback sizing when calculations fail
 - **Positioning Errors**: Fallback positioning for layout failures
 - **Child Integration Errors**: Error recovery for child positioning
 
 ### Recovery Mechanisms
+
 - **Fallback Layout**: Default layout when custom algorithms fail
 - **Zone Recreation**: Zone recreation on critical failures
 - **Error Logging**: Comprehensive error reporting
@@ -316,12 +351,14 @@ const zoneSettings = {
 ## Testing
 
 ### Zone Testing
+
 - **Zone Creation**: Proper zone initialization
 - **Zone Sizing**: Correct size calculations
 - **Zone Positioning**: Accurate positioning logic
 - **Child Integration**: Proper child positioning within zones
 
 ### Integration Testing
+
 - **Node Integration**: Zone system with different node types
 - **Layout Algorithms**: Custom layout algorithm testing
 - **Performance**: Large numbers of zones and children
@@ -334,23 +371,27 @@ const zoneSettings = {
 - **[LaneNode](nodes/lane-node.md)** - Zone system usage example
 - **[ColumnsNode](nodes/columns-node.md)** - Zone system usage example
 - **[Implementation Details](../implementation.md)** - Technical implementation
+- **[Public API hooks](dashboard.md#public-api-hooks)** - Coordinate-frame contract for `getNodeBounds` / `panToBounds` (uses the same `main.container` local frame zones operate in)
 
 ## Related Classes
 
 ### Dependencies
+
 - **ZoneManager** - Central zone coordination
 - **BaseContainerNode** - Container node integration
 - **LayoutManager** - Layout algorithm management
 - **ConfigManager** - Configuration management
 
 ### Zone Classes
+
 - **ContainerZone** - Outermost boundary zone
 - **HeaderZone** - Title and control zone
 - **MarginZone** - Spacing and margin zone
 - **InnerContainerZone** - Child positioning zone
 
 ### Related Systems
+
 - **Layout System** - Layout algorithm integration
 - **Event System** - Zone interaction handling
 - **Styling System** - Zone visual styling
-- **Coordinate System** - Zone positioning management 
+- **Coordinate System** - Zone positioning management

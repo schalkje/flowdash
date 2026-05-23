@@ -311,6 +311,15 @@ export default class BaseNode {
       .attr('id', this.id)
       .attr('status', this.status);
 
+    // Public DOM contract for find-and-navigate integrations (issue #14).
+    // Nodes carrying a non-empty datasetId expose it as `data-dataset-id` so
+    // callers can fan out via `querySelectorAll('[data-dataset-id="X"]')`
+    // without colliding with HTML id-uniqueness. The `id` attribute above is
+    // preserved unchanged.
+    if (typeof this.data?.datasetId === 'string' && this.data.datasetId.length > 0) {
+      this.element.attr('data-dataset-id', this.data.datasetId);
+    }
+
     // Apply pre-render transform immediately if available
     if (this.hasPrerenderData) {
       this.element.attr('transform', `translate(${this.x}, ${this.y})`);
