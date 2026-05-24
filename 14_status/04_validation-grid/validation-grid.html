@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validation — full state × mode grid</title>
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+    <style>
+      :root {
+        --cell-w: 110px;
+        --cell-h: 56px;
+        --label-w: 160px;
+      }
+      /* Use the theme's own foreground/background tokens so every panel,
+         cell, ref-rect, and label re-skins with the active theme. Falls
+         back to a neutral grey set when the theme variables aren't set. */
+      body {
+        background: var(--fd-bg, #f5f6f8);
+        color: var(--fd-text, #222);
+      }
+      .controls {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px 16px;
+        background: var(--fd-surface, #fff);
+        border-bottom: 1px solid var(--fd-border, #ddd);
+        font-size: 13px;
+      }
+      .controls .group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .controls .group strong {
+        color: var(--fd-text, #222);
+      }
+      .grid-wrap {
+        padding: 16px;
+        overflow-x: auto;
+      }
+      table.grid {
+        border-collapse: separate;
+        border-spacing: 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+      }
+      table.grid th,
+      table.grid td {
+        padding: 0;
+      }
+      table.grid th.col-head {
+        text-align: center;
+        padding: 4px 6px 6px;
+        color: var(--fd-text, #444);
+        font-weight: 600;
+        vertical-align: bottom;
+        min-width: var(--cell-w);
+      }
+      table.grid th.col-head .group-label {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fd-muted, #888);
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      table.grid th.row-head {
+        text-align: right;
+        padding-right: 10px;
+        vertical-align: middle;
+        color: var(--fd-text, #444);
+        font-weight: 600;
+        width: var(--label-w);
+        white-space: nowrap;
+      }
+      table.grid th.row-head .row-note {
+        display: block;
+        font-size: 10px;
+        font-weight: 400;
+        color: var(--fd-muted, #888);
+        margin-top: 2px;
+      }
+      .cell {
+        width: var(--cell-w);
+        height: var(--cell-h);
+        background: var(--fd-surface, #fafafa);
+        border: 1px solid var(--fd-border, #eaeaea);
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+      }
+      .cell svg {
+        display: block;
+      }
+      /* Striped "empty" cell — derived from the cell background via a
+         translucent overlay so it adapts to both light and dark themes
+         without needing explicit per-theme tokens. */
+      .cell.empty {
+        background:
+          repeating-linear-gradient(
+            135deg,
+            rgba(127, 127, 127, 0) 0,
+            rgba(127, 127, 127, 0) 6px,
+            rgba(127, 127, 127, 0.12) 6px,
+            rgba(127, 127, 127, 0.12) 12px
+          ),
+          var(--fd-surface, #fafafa);
+      }
+      .cell.empty::after {
+        content: '—';
+        color: var(--fd-muted, #c0c0c0);
+        opacity: 0.5;
+        font-size: 14px;
+      }
+      tr.loud-callout th.row-head {
+        color: var(--fd-validation-state-error, #c8181d);
+      }
+      tr.loud-callout .cell {
+        background: color-mix(
+          in srgb,
+          var(--fd-validation-state-error, #c8181d) 10%,
+          var(--fd-surface, #fff)
+        );
+        border-color: color-mix(
+          in srgb,
+          var(--fd-validation-state-error, #c8181d) 40%,
+          var(--fd-border, #ddd)
+        );
+      }
+      /* Cells render a real RectangularNode (not a hand-drawn rect) so the
+         rect's fill / stroke / status styling comes from the production
+         dashboard CSS in flowdash.css — which already themes correctly. */
+      .legend {
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--fd-muted, #555);
+        background: var(--fd-surface, #f8f8f8);
+        border-bottom: 1px solid var(--fd-border, #ddd);
+      }
+      .legend code {
+        background: color-mix(in srgb, var(--fd-text, #000) 10%, transparent);
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Validation — full state × mode grid</h1>
+      <h2>every state in every mode, side-by-side</h2>
+      <p class="demo-description">
+        Each cell renders a small reference rect with the post-validation indicator on its right
+        edge. The three minimal modes (bar / circle / corner) render the full eight-state
+        vocabulary. The four loud styles only render when state is <code>'error'</code>; for any
+        other state they emit nothing — that absence is the design, visualized below as dashed
+        cells. The dedicated <code>error (red nose)</code> row right under
+        <code>error</code> highlights how the same error condition switches register entirely when
+        the mode flips to loud.
+      </p>
+    </header>
+
+    <div class="controls">
+      <div class="group">
+        <strong>Loud-style size:</strong>
+        <select
+          id="sizePicker"
+          title="Applies to the four loud styles only; minimal modes are fixed pixel size by design."
+        >
+          <option value="normal">normal · 1×</option>
+          <option value="large">large · 1.5×</option>
+          <option value="big">big · 2×</option>
+          <option value="huge">huge · 4×</option>
+          <option value="gigantic">gigantic · 8×</option>
+        </select>
+      </div>
+      <div class="group">
+        <label
+          ><input type="checkbox" id="animateToggle" checked /> animate <code>busy</code></label
+        >
+      </div>
+    </div>
+
+    <div class="legend">
+      Cell layout: <code>[ref rect | indicator]</code>. Each cell calls
+      <code>renderValidationIndicators()</code> directly so the grid is a pure pixel comparison — no
+      full dashboard per cell. State→color resolves via the
+      <code>--fd-validation-state-*</code> theme variables — drive the active theme from the global
+      switcher in the top-left of the page (injected by <code>themeManager.js</code>); the grid
+      rebuilds on every theme change so fresh SVGs pick up the new palette. The size selector
+      affects only the four loud styles; the three minimal modes are fixed pixel size by design.
+    </div>
+
+    <div class="grid-wrap">
+      <table class="grid" id="grid"></table>
+    </div>
+
+    <script type="module">
+      // Use the real RectangularNode (not a hand-drawn SVG rect) so each cell
+      // inherits the same fill / stroke / status styling as production nodes,
+      // and so the validation indicator is painted by the node's own
+      // `_renderValidationIndicators()` — i.e. the actual code path that
+      // dashboards use in the wild.
+      import RectangularNode from '../../dashboard/js/nodeRect.js';
+      import { ConfigManager } from '../../dashboard/js/configManager.js';
+      import { VALIDATION_MODES } from '../../dashboard/js/validationIndicators.js';
+      import { VALIDATION_STATES } from '../../dashboard/js/nodeBase.js';
+
+      const MINIMAL_MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
+      const LOUD_MODES = ['pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line'];
+      // Render order: skip 'na' at the top (it's listed at the bottom as the "empty" sentinel)
+      const STATE_ORDER = ['unknown', 'ready', 'busy', 'error', 'warning', 'disabled', 'ok', 'na'];
+
+      // Cell sizing matches CSS (minus padding for safety)
+      const CELL_W = 100;
+      const CELL_H = 44;
+      const REF_W = 56;
+      const REF_H = 28;
+
+      // Track live node instances so the grid can be wiped + rebuilt cleanly.
+      const liveNodes = [];
+
+      function buildCell(state, mode) {
+        const td = document.createElement('td');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cell';
+
+        // Loud modes only render for 'error'; mark non-error cells as empty
+        if (LOUD_MODES.includes(mode) && state !== 'error') {
+          wrapper.classList.add('empty');
+          td.appendChild(wrapper);
+          return td;
+        }
+        // 'na' always renders nothing
+        if (state === 'na') {
+          wrapper.classList.add('empty');
+          td.appendChild(wrapper);
+          return td;
+        }
+
+        const svg = d3
+          .select(wrapper)
+          .append('svg')
+          .attr('width', CELL_W)
+          .attr('height', CELL_H)
+          .attr('viewBox', `0 0 ${CELL_W} ${CELL_H}`);
+
+        // Per-cell merged settings: pre-merged once with the loud-style size and
+        // animate flag the user picked. The per-cell mode override travels on
+        // the node's data, not the settings, so this object is safe to share
+        // structurally across cells of the same (size, animate) config.
+        const settings = ConfigManager.mergeWithDefaults({
+          demoMode: true,
+          // Suppress demo defaults that don't apply at this scale.
+          showBoundingBox: false,
+          minimap: { enabled: false },
+          validationIndicator: {
+            size: currentSize(),
+            animate: animateBusy(),
+            glyph: '!',
+          },
+        });
+
+        const valueObj =
+          state === 'error'
+            ? { state: 'error', message: 'sample error' }
+            : state === 'warning'
+              ? { state: 'warning', message: 'sample warning' }
+              : { state };
+
+        const nodeData = {
+          id: `cell-${state}-${mode}`,
+          label: '',
+          type: 'rect',
+          state: 'Ready',
+          width: REF_W,
+          height: REF_H,
+          layout: { layoutMode: 'fixed-size', width: REF_W, height: REF_H },
+          // Per-node validation-indicator-mode override (wins over dashboard
+          // default in BaseNode._renderValidationIndicators).
+          validationIndicatorMode: mode,
+          postValidationState: valueObj,
+        };
+
+        // Decorate the parent <g> so the rendered node's <g> sits inside it.
+        // We position THAT outer <g> at the cell center so the rect (which
+        // draws at -w/2..+w/2 around its own origin) lands inside the cell.
+        const cellG = svg
+          .append('g')
+          .attr('data-cell-mode', mode)
+          .attr('data-cell-state', state)
+          .attr('transform', `translate(${CELL_W / 2}, ${CELL_H / 2})`);
+
+        const node = new RectangularNode(nodeData, cellG, settings);
+        node.init(cellG);
+        // The node draws around (0,0) within `cellG`; the cellG transform
+        // already centers it in the cell, so no further move() is needed.
+        liveNodes.push(node);
+
+        td.appendChild(wrapper);
+        return td;
+      }
+
+      function animateBusy() {
+        return document.getElementById('animateToggle').checked;
+      }
+
+      function currentSize() {
+        return document.getElementById('sizePicker').value || 'normal';
+      }
+
+      function buildGrid() {
+        const grid = document.getElementById('grid');
+        grid.replaceChildren();
+        // Drop live-node references so the old nodes are GC-able.
+        liveNodes.length = 0;
+
+        const allModes = [...MINIMAL_MODES, ...LOUD_MODES];
+
+        // Header row: 2 grouped column-heads (minimal / loud) then per-mode tokens
+        const thead = document.createElement('thead');
+        const groupRow = document.createElement('tr');
+        groupRow.appendChild(document.createElement('th'));
+        const minimalGroup = document.createElement('th');
+        minimalGroup.colSpan = MINIMAL_MODES.length;
+        minimalGroup.className = 'col-head';
+        minimalGroup.innerHTML =
+          '<span class="group-label">minimal — full vocabulary</span> 3 modes';
+        groupRow.appendChild(minimalGroup);
+        const loudGroup = document.createElement('th');
+        loudGroup.colSpan = LOUD_MODES.length;
+        loudGroup.className = 'col-head';
+        loudGroup.innerHTML = '<span class="group-label">loud — error only</span> 4 styles';
+        groupRow.appendChild(loudGroup);
+        thead.appendChild(groupRow);
+
+        const modeRow = document.createElement('tr');
+        modeRow.appendChild(document.createElement('th'));
+        allModes.forEach((m) => {
+          const th = document.createElement('th');
+          th.className = 'col-head';
+          th.textContent = m;
+          modeRow.appendChild(th);
+        });
+        thead.appendChild(modeRow);
+        grid.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        STATE_ORDER.forEach((state) => {
+          const tr = document.createElement('tr');
+          const head = document.createElement('th');
+          head.className = 'row-head';
+          head.textContent = state;
+          if (state === 'na') {
+            const note = document.createElement('span');
+            note.className = 'row-note';
+            note.textContent = '(default — emits no DOM)';
+            head.appendChild(note);
+          }
+          tr.appendChild(head);
+          allModes.forEach((mode) => tr.appendChild(buildCell(state, mode)));
+          tbody.appendChild(tr);
+
+          // Right after 'error': the explicit "error (red nose)" callout row
+          if (state === 'error') {
+            const calloutTr = document.createElement('tr');
+            calloutTr.className = 'loud-callout';
+            const calloutHead = document.createElement('th');
+            calloutHead.className = 'row-head';
+            calloutHead.textContent = 'error (red nose)';
+            const note = document.createElement('span');
+            note.className = 'row-note';
+            note.textContent = 'same error · loud styles';
+            calloutHead.appendChild(note);
+            calloutTr.appendChild(calloutHead);
+            // Minimal columns: leave blank in the callout (they were already rendered above)
+            MINIMAL_MODES.forEach(() => {
+              const td = document.createElement('td');
+              const w = document.createElement('div');
+              w.className = 'cell empty';
+              td.appendChild(w);
+              calloutTr.appendChild(td);
+            });
+            // Loud columns: render the same error state under each loud style
+            LOUD_MODES.forEach((mode) => calloutTr.appendChild(buildCell('error', mode)));
+            tbody.appendChild(calloutTr);
+          }
+        });
+        grid.appendChild(tbody);
+      }
+
+      // --- Re-render on input / theme changes -----------------------------
+      document.getElementById('animateToggle').addEventListener('change', buildGrid);
+      document.getElementById('sizePicker').addEventListener('change', buildGrid);
+
+      // The global themeManager.js (top-left injected switcher) toggles which
+      // theme stylesheet is enabled and broadcasts `flowdash:themechange`.
+      // Rebuild on that signal so every cell's `fill="var(--fd-validation-state-X)"`
+      // re-resolves under the new palette — relying on var() cascade alone is
+      // brittle when the SVG was created against the previous active theme.
+      window.addEventListener('flowdash:themechange', buildGrid);
+
+      buildGrid();
+      window.__validationGrid = { rebuild: buildGrid };
+    </script>
+  </body>
+</html>

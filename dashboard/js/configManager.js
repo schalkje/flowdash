@@ -48,12 +48,18 @@ export const DEFAULT_SETTINGS = {
     epsilonPct: 0.005,
     minTargetBBoxPx: { w: 24, h: 24 },
   },
-  // Validation indicators ("red noses"). Orthogonal to NodeStatus — see
+  // Validation indicators. Orthogonal to NodeStatus — see
   // /dashboard/documentation/validation-indicators.md.
+  //
+  // Canonical setting: validationIndicatorMode. Three minimal modes render the
+  // full 8-state vocabulary; four loud styles render only when state==='error'.
+  // The legacy validationIndicator.style slot is kept for back-compat and is
+  // synchronized with validationIndicatorMode at runtime.
+  validationIndicatorMode: 'minimal-bar', // 'minimal-bar' | 'minimal-circle' | 'minimal-corner' | 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
   validationIndicator: {
-    style: 'pulse-halo', // 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
-    size: 'normal', // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×)
-    glyph: '!',
+    style: 'minimal-bar', // legacy alias for validationIndicatorMode
+    size: 'normal', // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×) — loud styles only
+    glyph: '!', // loud styles only
     animate: true,
   },
 };

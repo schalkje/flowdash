@@ -1,14 +1,17 @@
 // @ts-check
 //
-// Validation indicators ("red noses") — orthogonal to NodeStatus.
+// Validation indicators — orthogonal to NodeStatus.
 //
-// A node may carry a pre-validation error (input side, left edge) and/or a
-// post-validation error (output side, right edge). The renderer below paints
-// one of four visual treatments into the node's <g>, on top of everything
-// else, so that a Ready node with a broken output contract is unmistakable.
+// A node carries `preValidationState` (input side, left edge) and
+// `postValidationState` (output side, right edge), each `{ state, message? }`
+// where state is one of the 8-value VALIDATION_STATES enum below. The
+// renderer paints either a lightweight minimal indicator (bar / circle /
+// corner) or one of the four loud "red-nose" styles, on top of the node so
+// the signal is unmistakable.
 //
 // See /dashboard/documentation/validation-indicators.md for the spec.
 
+// The four loud styles + 'none' — kept for back-compat with existing demos.
 export const VALIDATION_STYLES = Object.freeze([
   'pulse-halo',
   'rotating-siren',
@@ -17,7 +20,40 @@ export const VALIDATION_STYLES = Object.freeze([
   'none',
 ]);
 
-const STYLE_SET = new Set(VALIDATION_STYLES);
+// All valid validationIndicatorMode values: 3 minimal + 4 loud + 'none'.
+export const VALIDATION_MODES = Object.freeze([
+  'minimal-bar',
+  'minimal-circle',
+  'minimal-corner',
+  'pulse-halo',
+  'rotating-siren',
+  'industrial-tape',
+  'police-line',
+  'none',
+]);
+
+const MODE_SET = new Set(VALIDATION_MODES);
+
+const LOUD_MODES = new Set(['pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line']);
+
+const MINIMAL_MODES = new Set(['minimal-bar', 'minimal-circle', 'minimal-corner']);
+
+// State→color fallbacks. Themes override via the matching CSS custom property
+// (--fd-validation-state-<name>) on dashboard/themes/<name>/flowdash.css. 'na'
+// is not in this map — when a side's state is 'na' the renderer emits no DOM.
+const STATE_FALLBACK = Object.freeze({
+  error: '#c8181d',
+  warning: '#f2c70b',
+  ok: '#1f8a3d',
+  busy: '#2563eb',
+  ready: '#cbd5e1',
+  unknown: '#9ca3af',
+  disabled: '#4b5563',
+});
+
+function colorForState(state) {
+  return `var(--fd-validation-state-${state}, ${STATE_FALLBACK[state] || '#9ca3af'})`;
+}
 
 // Size tokens → scale factor applied to disc radius, halo expansion, siren
 // beam length, tape band width, police strap height and the glyph font.
@@ -47,75 +83,103 @@ function prefersReducedMotion() {
   }
 }
 
+// Single source of truth for animation gating. Honours an explicit
+// opts.animate=false **or** the user's prefers-reduced-motion preference.
+// Exported so tests can spy on it / consumers can compose with it.
+export function shouldAnimate(opts) {
+  if (opts && opts.animate === false) return false;
+  return !prefersReducedMotion();
+}
+
 /**
  * Idempotent: removes any existing indicator layer and re-paints from scratch
- * based on the supplied flags.
+ * based on the supplied pre/post validation states.
  *
  * @param {*} nodeG       D3 selection of the node's <g>
  * @param {object} opts
  * @param {number} opts.width   effective node width
  * @param {number} opts.height  effective node height
- * @param {string} [opts.style]   one of VALIDATION_STYLES; defaults to 'pulse-halo'
- * @param {string} [opts.size]    one of VALIDATION_SIZES; defaults to 'normal'
+ * @param {string} [opts.style]   one of VALIDATION_MODES; defaults to 'minimal-bar'
+ * @param {string} [opts.size]    one of VALIDATION_SIZES (loud styles only); defaults to 'normal'
  * @param {string} [opts.glyph]   single character drawn in pulse-halo/siren disc; default '!'
  * @param {boolean} [opts.animate] enable animations; default true (honours prefers-reduced-motion)
- * @param {boolean|string} opts.preError  truthy = pre-validation failed
- * @param {boolean|string} opts.postError truthy = post-validation failed
+ * @param {{state: string, message?: string}} opts.preState   pre-validation state object
+ * @param {{state: string, message?: string}} opts.postState  post-validation state object
  */
 export function renderValidationIndicators(nodeG, opts) {
   if (!nodeG || typeof nodeG.node !== 'function') return;
   clearValidationIndicators(nodeG);
 
-  const style = STYLE_SET.has(opts.style) ? opts.style : 'pulse-halo';
-  if (style === 'none') return;
+  const mode = MODE_SET.has(opts.style) ? opts.style : 'minimal-bar';
+  if (mode === 'none') return;
 
-  const preErr = opts.preError;
-  const postErr = opts.postError;
-  if (!preErr && !postErr) return;
+  const preState = opts.preState || { state: 'na' };
+  const postState = opts.postState || { state: 'na' };
+  if (preState.state === 'na' && postState.state === 'na') return;
 
   const w = Number(opts.width) || 0;
   const h = Number(opts.height) || 0;
   if (w <= 0 || h <= 0) return;
 
-  const glyph = opts.glyph ?? '!';
-  const animate = opts.animate !== false && !prefersReducedMotion();
-  const sizeKey = opts.size && SIZE_SCALES[opts.size] ? opts.size : 'normal';
-  const sizeScale = SIZE_SCALES[sizeKey];
+  const animate = shouldAnimate({ animate: opts.animate });
 
   const layer = nodeG
     .append('g')
     .attr('class', 'validation-indicators')
-    .attr('data-style', style)
-    .attr('data-size', sizeKey);
+    .attr('data-mode', mode)
+    .attr('data-style', mode);
 
   const messages = [];
-  if (typeof preErr === 'string' && preErr) messages.push(`pre: ${preErr}`);
-  if (typeof postErr === 'string' && postErr) messages.push(`post: ${postErr}`);
+  if (preState.state === 'error' || preState.state === 'warning') {
+    if (typeof preState.message === 'string' && preState.message) {
+      messages.push(`pre: ${preState.message}`);
+    }
+  }
+  if (postState.state === 'error' || postState.state === 'warning') {
+    if (typeof postState.message === 'string' && postState.message) {
+      messages.push(`post: ${postState.message}`);
+    }
+  }
   if (messages.length) layer.attr('aria-label', messages.join(' · '));
 
-  if (preErr) {
-    drawSide(layer, 'pre', {
-      anchorX: -w / 2,
-      width: w,
-      height: h,
-      glyph,
-      animate,
-      style,
-      sizeScale,
-      message: typeof preErr === 'string' ? preErr : null,
-    });
+  if (MINIMAL_MODES.has(mode)) {
+    if (preState.state !== 'na') drawMinimal(layer, 'pre', preState, mode, w, h, animate);
+    if (postState.state !== 'na') drawMinimal(layer, 'post', postState, mode, w, h, animate);
+    return;
   }
-  if (postErr) {
-    drawSide(layer, 'post', {
-      anchorX: w / 2,
-      width: w,
-      height: h,
-      glyph,
-      animate,
-      style,
-      sizeScale,
-      message: typeof postErr === 'string' ? postErr : null,
-    });
+
+  if (LOUD_MODES.has(mode)) {
+    const glyph = opts.glyph ?? '!';
+    const sizeKey = opts.size && SIZE_SCALES[opts.size] ? opts.size : 'normal';
+    const sizeScale = SIZE_SCALES[sizeKey];
+    layer.attr('data-size', sizeKey);
+    // Loud styles render only on 'error' — for all other 7 states, render nothing.
+    const preErr = preState.state === 'error' ? preState.message || true : false;
+    const postErr = postState.state === 'error' ? postState.message || true : false;
+    if (preErr) {
+      drawSide(layer, 'pre', {
+        anchorX: -w / 2,
+        width: w,
+        height: h,
+        glyph,
+        animate,
+        style: mode,
+        sizeScale,
+        message: typeof preErr === 'string' ? preErr : null,
+      });
+    }
+    if (postErr) {
+      drawSide(layer, 'post', {
+        anchorX: w / 2,
+        width: w,
+        height: h,
+        glyph,
+        animate,
+        style: mode,
+        sizeScale,
+        message: typeof postErr === 'string' ? postErr : null,
+      });
+    }
   }
 }
 
@@ -415,4 +479,127 @@ function drawPoliceLine(g, side, ctx) {
     .attr('r', r + 2)
     .attr('fill', 'var(--fd-validation-tape-dark, #181311)');
   drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
+}
+
+// --- Minimal modes ---------------------------------------------------------
+//
+// Three small, low-visual-cost indicators that render the full 8-state
+// vocabulary (minus 'na', which produces no DOM). Fixed pixel sizes,
+// independent of the VALIDATION_SIZES token system. Colors come from
+// var(--fd-validation-state-<state>, <fallback>) so themes can override per
+// aesthetic without renderer changes.
+
+function drawMinimal(layer, side, stateObj, mode, w, h, animate) {
+  const g = layer
+    .append('g')
+    .attr('class', `validation-indicator side-${side}`)
+    .attr('data-side', side)
+    .attr('data-mode', mode)
+    .attr('data-validation-state', stateObj.state);
+
+  // Tooltip: only for error/warning with a non-empty message
+  if (
+    (stateObj.state === 'error' || stateObj.state === 'warning') &&
+    typeof stateObj.message === 'string' &&
+    stateObj.message.length > 0
+  ) {
+    g.append('title').text(stateObj.message);
+  }
+
+  if (stateObj.state === 'busy') {
+    g.classed('validation-indicator--busy', true);
+  }
+
+  switch (mode) {
+    case 'minimal-circle':
+      return drawMinimalCircle(g, side, stateObj.state, w, h, animate);
+    case 'minimal-corner':
+      return drawMinimalCorner(g, side, stateObj.state, w, h, animate);
+    case 'minimal-bar':
+    default:
+      return drawMinimalBar(g, side, stateObj.state, w, h, animate);
+  }
+}
+
+function drawMinimalBar(g, side, state, w, h, animate) {
+  // 3px-wide vertical bar, 60% of edge height, centered vertically, 1px inset
+  // from the edge. Left edge = pre, right edge = post.
+  const barW = 3;
+  const barH = h * 0.6;
+  const x = side === 'pre' ? -w / 2 + 1 : w / 2 - 1 - barW;
+  const y = -barH / 2;
+  const fill = colorForState(state);
+
+  const rect = g
+    .append('rect')
+    .attr('class', 'validation-bar')
+    .attr('x', x)
+    .attr('y', y)
+    .attr('width', barW)
+    .attr('height', barH)
+    .attr('fill', fill);
+
+  if (state === 'busy' && animate) {
+    rect
+      .append('animate')
+      .attr('attributeName', 'opacity')
+      .attr('values', '1;0.35;1')
+      .attr('dur', '1.4s')
+      .attr('repeatCount', 'indefinite');
+  }
+}
+
+function drawMinimalCircle(g, side, state, w, h, animate) {
+  // Filled circle, radius 4px, centered on the inbound (left) / outbound
+  // (right) connection point in node-local coordinates.
+  const r = 4;
+  const cx = side === 'pre' ? -w / 2 : w / 2;
+  const cy = 0;
+  const fill = colorForState(state);
+
+  const circle = g
+    .append('circle')
+    .attr('class', 'validation-circle')
+    .attr('cx', cx)
+    .attr('cy', cy)
+    .attr('r', r)
+    .attr('fill', fill);
+
+  if (state === 'busy' && animate) {
+    circle
+      .append('animate')
+      .attr('attributeName', 'r')
+      .attr('values', `${r};${r + 1.5};${r}`)
+      .attr('dur', '1.4s')
+      .attr('repeatCount', 'indefinite');
+  }
+}
+
+function drawMinimalCorner(g, side, state, w, h, animate) {
+  // 6×6px right-triangle chevron seated on the corner. Top-left = pre,
+  // top-right = post. Hypotenuse lies along the corner so the chevron
+  // points outside the rect.
+  const len = 6;
+  const fill = colorForState(state);
+  let d;
+  if (side === 'pre') {
+    const ax = -w / 2;
+    const ay = -h / 2;
+    d = `M ${ax},${ay + len} L ${ax},${ay} L ${ax + len},${ay} Z`;
+  } else {
+    const ax = w / 2;
+    const ay = -h / 2;
+    d = `M ${ax - len},${ay} L ${ax},${ay} L ${ax},${ay + len} Z`;
+  }
+
+  const path = g.append('path').attr('class', 'validation-corner').attr('d', d).attr('fill', fill);
+
+  if (state === 'busy' && animate) {
+    path
+      .append('animate')
+      .attr('attributeName', 'opacity')
+      .attr('values', '1;0.35;1')
+      .attr('dur', '1.4s')
+      .attr('repeatCount', 'indefinite');
+  }
 }

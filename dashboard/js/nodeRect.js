@@ -69,9 +69,9 @@ export default class RectangularNode extends BaseNode {
     this.draw();
     // Ensure connection points reflect final node dimensions
     this.update();
-    // Paint validation indicators (red noses) on top of the shape if the node
-    // carries any. Render-order: draw() → indicators last so they stack on top.
-    if (this._preValidationError || this._postValidationError) {
+    // Paint validation indicators on top of the shape when the node carries a
+    // non-'na' state. Render-order: draw() → indicators last so they stack on top.
+    if (this.hasActiveValidationState()) {
       this._renderValidationIndicators();
     }
   }

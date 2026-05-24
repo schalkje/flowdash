@@ -17,6 +17,15 @@
   --fd-validation-tape-yellow: #ffd23a;
   --fd-validation-tape-dark: #0b0e14;
   --fd-validation-text-on-red: #ffffff;
+
+  /* Validation-state palette — dark theme: brighter tones for contrast. */
+  --fd-validation-state-error: #ef4444;
+  --fd-validation-state-warning: #fbbf24;
+  --fd-validation-state-ok: #4ade80;
+  --fd-validation-state-busy: #60a5fa;
+  --fd-validation-state-ready: #94a3b8;
+  --fd-validation-state-unknown: #6b7280;
+  --fd-validation-state-disabled: #374151;
 }
 
 body {

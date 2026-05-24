@@ -16,6 +16,24 @@
   --fd-neon-cyan: #00e5ff;
   --fd-neon-purple: #7c4dff;
   --fd-neon-pink: #ff4dff;
+
+  /* Validation-state palette — cyberpunk: neon-lit, drawn from the neon set. */
+  --fd-validation-state-error: #ff3366;
+  --fd-validation-state-warning: #ffc400;
+  --fd-validation-state-ok: #00ffa8;
+  --fd-validation-state-busy: #7c4dff;
+  --fd-validation-state-ready: #00e5ff;
+  --fd-validation-state-unknown: #94a3b8;
+  --fd-validation-state-disabled: #4a4860;
+
+  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  --fd-validation-red: #ff3366;
+  --fd-validation-red-bright: #ff4dff;
+  --fd-validation-red-deep: #7a0a2a;
+  --fd-validation-glow: rgba(255, 51, 102, 0.6);
+  --fd-validation-tape-yellow: #ffc400;
+  --fd-validation-tape-dark: #0b0a10;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {

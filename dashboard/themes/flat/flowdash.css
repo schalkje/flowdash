@@ -7,6 +7,24 @@
   --fd-accent: #2563eb;
   --fd-border: #e5e7eb;
   --fd-edge: #3b82f6;
+
+  /* Validation-state palette — flat: clean modern flat colors. */
+  --fd-validation-state-error: #ef4444;
+  --fd-validation-state-warning: #f59e0b;
+  --fd-validation-state-ok: #10b981;
+  --fd-validation-state-busy: #3b82f6;
+  --fd-validation-state-ready: #cbd5e1;
+  --fd-validation-state-unknown: #94a3b8;
+  --fd-validation-state-disabled: #64748b;
+
+  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  --fd-validation-red: #ef4444;
+  --fd-validation-red-bright: #f87171;
+  --fd-validation-red-deep: #7f1d1d;
+  --fd-validation-glow: rgba(239, 68, 68, 0.45);
+  --fd-validation-tape-yellow: #f59e0b;
+  --fd-validation-tape-dark: #1f2937;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {

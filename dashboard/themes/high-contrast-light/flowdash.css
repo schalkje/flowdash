@@ -45,6 +45,25 @@
   --fd-status-warning-stroke: #7a3300; /* dark orange, 8.5:1 */
   --fd-status-error: #ffcccc;
   --fd-status-error-stroke: #a30000; /* dark red, 7.5:1 */
+
+  /* Validation-state palette — high-contrast-light: dark saturated hues
+     against white, all ≥ 7:1 contrast. */
+  --fd-validation-state-error: #a30000;
+  --fd-validation-state-warning: #7a3300;
+  --fd-validation-state-ok: #005500;
+  --fd-validation-state-busy: #003a7a;
+  --fd-validation-state-ready: #000000;
+  --fd-validation-state-unknown: #4a4a4a;
+  --fd-validation-state-disabled: #808080;
+
+  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  --fd-validation-red: #a30000;
+  --fd-validation-red-bright: #d10000;
+  --fd-validation-red-deep: #4a0000;
+  --fd-validation-glow: rgba(163, 0, 0, 0.55);
+  --fd-validation-tape-yellow: #ffd000;
+  --fd-validation-tape-dark: #000000;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {

@@ -118,7 +118,7 @@ const EXEMPLARS = {
     label: '★ Ready · pre',
     type: 'rect',
     state: 'Ready',
-    preValidationError: 'upstream contract violated',
+    preValidationState: { state: 'error', message: 'upstream contract violated' },
   }),
   'sec-adapter': () => ({
     id: 'sec-adapter-exemplar',
@@ -134,7 +134,7 @@ const EXEMPLARS = {
         children: [],
         state: 'Updated',
         role: 'staging',
-        postValidationError: 'output schema mismatch',
+        postValidationState: { state: 'error', message: 'output schema mismatch' },
       },
       {
         id: 'sec-adapter-exemplar-archive',
@@ -168,7 +168,7 @@ const EXEMPLARS = {
         type: 'node',
         children: [],
         state: 'Ready',
-        preValidationError: 'input column missing',
+        preValidationState: { state: 'error', message: 'input column missing' },
       },
     ],
   }),
@@ -188,7 +188,7 @@ const EXEMPLARS = {
         role: 'raw',
         category: 'raw',
         width: 60,
-        postValidationError: 'base contract failed',
+        postValidationState: { state: 'error', message: 'base contract failed' },
       },
       {
         id: 'sec-foundation-exemplar-base',
@@ -207,7 +207,7 @@ const EXEMPLARS = {
     label: '★ Warning · post',
     type: 'lane',
     state: 'Warning',
-    postValidationError: 'downstream contract failed',
+    postValidationState: { state: 'error', message: 'downstream contract failed' },
     children: [
       { id: 'sec-lane-exemplar-a', label: 'A', type: 'node', children: [], state: 'Updated' },
       { id: 'sec-lane-exemplar-b', label: 'B', type: 'node', children: [], state: 'Ready' },
@@ -219,7 +219,7 @@ const EXEMPLARS = {
     type: 'mart',
     state: 'Warning',
     layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
-    preValidationError: 'upstream snapshot stale',
+    preValidationState: { state: 'error', message: 'upstream snapshot stale' },
     children: [
       {
         id: 'sec-mart-exemplar-load',
