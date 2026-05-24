@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.6.0
+
+Validation indicator overhaul ([issue #15](https://github.com/schalkje/flowdash/issues/15)).
+**Breaking change**: the binary `preValidationError` / `postValidationError`
+(boolean | string) fields are replaced by object-typed `preValidationState` /
+`postValidationState` (`{ state, message? }`). The public methods
+`setValidationErrorById` and `clearValidationErrorById` are removed and
+replaced by `setValidationStateById` and `clearValidationStateById`. No
+deprecation shim — stale call sites fail at runtime. See the migration
+cookbook in `documentation/validation-indicators.md`.
+
+New 8-state validation vocabulary, independent of `NodeStatus`:
+`unknown` · `ready` · `busy` · `error` · `warning` · `disabled` · `ok` · `na`.
+
+Three new minimal indicator modes — `minimal-bar`, `minimal-circle`,
+`minimal-corner` — each rendering the full vocabulary at low visual cost.
+The four existing loud styles (`pulse-halo`, `rotating-siren`,
+`industrial-tape`, `police-line`) are unchanged in appearance but now
+render only when `state === 'error'`.
+
+New `Dashboard` API:
+
+- `setValidationStateById(nodeId, side, { state, message? })`
+- `clearValidationStateById(nodeId, side?)`
+- `setValidationIndicatorMode(mode)` (canonical; `setValidationIndicatorStyle`
+  is preserved as a thin alias)
+
+Themed CSS contract: every theme under `dashboard/themes/<name>/flowdash.css`
+declares a `--fd-validation-state-{error,warning,ok,busy,ready,unknown,disabled}`
+palette plus the legacy `--fd-validation-red` / `--fd-validation-tape-*`
+token set used by the loud styles.
+
+Demos:
+
+- `14_status/02_validation-errors/` — migrated to the new API; renders
+  identically to before.
+- `14_status/03_validation-minimal/` — new demo exercising the three
+  minimal modes across the eight states (interactive row + matrix view).
+- `14_status/04_validation-grid/` — new full state × mode grid, every
+  cell renders a real `RectangularNode`, with theme switcher, busy-animate
+  toggle, and loud-style size selector.
+
+See the proposal at
+`openspec/changes/2026-05-23-issue-15-validation-indicator-modes/` for
+the full design rationale and the migration cookbook in the docs.
+
 ## 1.5.0
 
 Public API hooks for find-and-navigate integrations
