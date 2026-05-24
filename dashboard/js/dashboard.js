@@ -9,7 +9,8 @@ import { fetchDashboardFile } from './data.js';
 import { LoadingOverlay, resolveLoadingContainer as resolveLoadingHost } from './loadingOverlay.js';
 import { Minimap } from './minimap.js';
 import ZoomManager from './zoomManager.js';
-import { NodeStatus } from './nodeBase.js';
+import { NodeStatus, VALIDATION_STATES } from './nodeBase.js';
+import { VALIDATION_MODES } from './validationIndicators.js';
 import { computeFingerprint, validatePrerenderFreshness } from './prerenderValidator.js';
 
 export class Dashboard {
@@ -2452,60 +2453,97 @@ export class Dashboard {
   }
 
   /**
-   * Set a validation error ("red nose") on a node.
+   * Set the validation state on a node.
    *
-   * Orthogonal to status — a Ready node can carry a post-validation error.
-   * See /dashboard/documentation/validation-indicators.md.
+   * Orthogonal to NodeStatus — a Ready node may carry a post-validation
+   * 'busy' or 'error' state while an out-of-band validator runs. See
+   * /dashboard/documentation/validation-indicators.md.
    *
    * @param {string} nodeId - The id of the target node.
    * @param {'pre'|'post'} side - 'pre' for input side (left), 'post' for output side (right).
-   * @param {boolean|string} value - Truthy enables the indicator. A string is exposed as tooltip.
+   * @param {{ state: string, message?: string }} valueObj - Validation state object.
+   *   `state` is one of 'unknown'|'ready'|'busy'|'error'|'warning'|'disabled'|'ok'|'na'.
+   *   `message` (optional) surfaces as a hover tooltip for 'error'/'warning' states.
    */
-  setValidationErrorById(nodeId, side, value) {
+  setValidationStateById(nodeId, side, valueObj) {
     const node = this.main.root?.getNode(nodeId);
     if (!node) {
-      console.error('setValidationErrorById: Node not found:', nodeId);
+      console.error('setValidationStateById: Node not found:', nodeId);
+      return;
+    }
+    if (side !== 'pre' && side !== 'post') {
+      console.warn('setValidationStateById: side must be "pre" or "post"');
+      return;
+    }
+    if (!valueObj || typeof valueObj !== 'object' || typeof valueObj.state !== 'string') {
+      console.warn('setValidationStateById: value must be { state, message? }');
+      return;
+    }
+    if (!VALIDATION_STATES.includes(valueObj.state)) {
+      console.warn(
+        `setValidationStateById: unknown state "${valueObj.state}". Allowed: ${VALIDATION_STATES.join(', ')}`,
+      );
       return;
     }
     if (side === 'pre') {
-      node.preValidationError = value;
-    } else if (side === 'post') {
-      node.postValidationError = value;
+      node.preValidationState = valueObj;
     } else {
-      console.warn('setValidationErrorById: side must be "pre" or "post"');
+      node.postValidationState = valueObj;
     }
   }
 
   /**
-   * Clear validation errors on a node. Omit `side` to clear both.
+   * Clear the validation state on a node (sets to { state: 'na' }). Omit
+   * `side` to clear both.
    * @param {string} nodeId
    * @param {'pre'|'post'} [side]
    */
-  clearValidationErrorById(nodeId, side) {
+  clearValidationStateById(nodeId, side) {
     const node = this.main.root?.getNode(nodeId);
     if (!node) return;
-    if (side === undefined || side === 'pre') node.preValidationError = false;
-    if (side === undefined || side === 'post') node.postValidationError = false;
+    if (side === undefined || side === 'pre') node.preValidationState = { state: 'na' };
+    if (side === undefined || side === 'post') node.postValidationState = { state: 'na' };
   }
 
   /**
-   * Switch the validation-indicator visual style live across every node.
-   * Allowed styles: 'pulse-halo', 'rotating-siren', 'industrial-tape',
-   * 'police-line', 'none'.
+   * Switch the validation-indicator visual mode live across every node.
+   * Allowed modes: 'minimal-bar', 'minimal-circle', 'minimal-corner' (the
+   * three lightweight modes that render the full state vocabulary);
+   * 'pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line' (the
+   * four loud styles, which only render on state === 'error'); 'none'.
    *
-   * @param {string} style
+   * @param {string} mode
    */
-  setValidationIndicatorStyle(style) {
+  setValidationIndicatorMode(mode) {
     if (!this.main?.root) return;
+    if (typeof mode !== 'string' || !VALIDATION_MODES.includes(mode)) {
+      console.warn(
+        `setValidationIndicatorMode: unknown mode "${mode}". Allowed: ${VALIDATION_MODES.join(', ')}`,
+      );
+      return;
+    }
     const settings = this.main.root.settings;
+    settings.validationIndicatorMode = mode;
+    // Keep the legacy slot in sync so callers reading `settings.validationIndicator.style`
+    // see the same value.
     if (!settings.validationIndicator) settings.validationIndicator = {};
-    settings.validationIndicator.style = style;
+    settings.validationIndicator.style = mode;
     const nodes = this.main.root.getAllNodes();
     nodes.forEach((node) => {
       if (typeof node._renderValidationIndicators === 'function') {
         node._renderValidationIndicators();
       }
     });
+  }
+
+  /**
+   * Back-compat thin wrapper over `setValidationIndicatorMode`. The four loud
+   * styles continue to be referred to as "styles" in the existing demo's UI;
+   * new code should call `setValidationIndicatorMode` instead.
+   * @param {string} style
+   */
+  setValidationIndicatorStyle(style) {
+    return this.setValidationIndicatorMode(style);
   }
 
   /**

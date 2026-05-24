@@ -20,6 +20,32 @@ export const NodeStatus = Object.freeze({
   ERROR: 'Error',
 });
 
+// Validation state vocabulary — independent of NodeStatus. A node may be
+// NodeStatus.UPDATED while its postValidationState is 'busy'. The two systems
+// do not derive from each other. See /dashboard/documentation/validation-indicators.md.
+export const VALIDATION_STATES = Object.freeze([
+  'unknown',
+  'ready',
+  'busy',
+  'error',
+  'warning',
+  'disabled',
+  'ok',
+  'na',
+]);
+const VALIDATION_STATE_SET = new Set(VALIDATION_STATES);
+
+function normalizeValidationState(raw) {
+  if (raw && typeof raw === 'object' && VALIDATION_STATE_SET.has(raw.state)) {
+    const out = { state: raw.state };
+    if (typeof raw.message === 'string' && raw.message.length > 0) {
+      out.message = raw.message;
+    }
+    return out;
+  }
+  return { state: 'na' };
+}
+
 export default class BaseNode {
   constructor(nodeData, parentElement, settings, parentNode = null) {
     this.isContainer = false;
@@ -35,8 +61,8 @@ export default class BaseNode {
     this._status = nodeData.state ?? NodeStatus.UNKNOWN;
     this._visible = nodeData.visible ?? true;
     this._collapsed = nodeData.collapsed ?? false;
-    this._preValidationError = nodeData.preValidationError ?? false;
-    this._postValidationError = nodeData.postValidationError ?? false;
+    this._preValidationState = normalizeValidationState(nodeData.preValidationState);
+    this._postValidationState = normalizeValidationState(nodeData.postValidationState);
     this.suspenseDisplayChange = false;
 
     this.id = nodeData.id;
@@ -208,48 +234,73 @@ export default class BaseNode {
     }
   }
 
-  // --- Validation indicators ("red noses") ---
-  // Orthogonal to status: a Ready node can carry a post-validation error to
-  // signal "the run completed but produced wrong data". See
+  // --- Validation indicators ---
+  // Orthogonal to status: a Ready node can carry a post-validation 'busy' or
+  // 'error' state while running an out-of-band validator. See
   // /dashboard/documentation/validation-indicators.md.
 
-  get preValidationError() {
-    return this._preValidationError;
+  get preValidationState() {
+    return this._preValidationState;
   }
 
-  set preValidationError(value) {
-    if (this._preValidationError === value) return;
-    this._preValidationError = value;
+  set preValidationState(value) {
+    const next = normalizeValidationState(value);
+    if (
+      this._preValidationState.state === next.state &&
+      this._preValidationState.message === next.message
+    ) {
+      return;
+    }
+    this._preValidationState = next;
     this._renderValidationIndicators();
   }
 
-  get postValidationError() {
-    return this._postValidationError;
+  get postValidationState() {
+    return this._postValidationState;
   }
 
-  set postValidationError(value) {
-    if (this._postValidationError === value) return;
-    this._postValidationError = value;
+  set postValidationState(value) {
+    const next = normalizeValidationState(value);
+    if (
+      this._postValidationState.state === next.state &&
+      this._postValidationState.message === next.message
+    ) {
+      return;
+    }
+    this._postValidationState = next;
     this._renderValidationIndicators();
   }
 
-  clearValidationErrors() {
-    this.preValidationError = false;
-    this.postValidationError = false;
+  clearValidationStates() {
+    this.preValidationState = { state: 'na' };
+    this.postValidationState = { state: 'na' };
+  }
+
+  hasActiveValidationState() {
+    return this._preValidationState.state !== 'na' || this._postValidationState.state !== 'na';
   }
 
   _renderValidationIndicators() {
     if (!this.element) return;
-    const vi = (this.settings && this.settings.validationIndicator) || {};
+    const settings = this.settings || {};
+    const vi = settings.validationIndicator || {};
+    // Mode resolution: per-node override wins over dashboard-wide setting; both
+    // fall back to the legacy `validationIndicator.style` slot and then to the
+    // canonical default.
+    const mode =
+      this.data?.validationIndicatorMode ??
+      settings.validationIndicatorMode ??
+      vi.style ??
+      'minimal-bar';
     renderValidationIndicators(this.element, {
       width: this.data.width,
       height: this.data.height,
-      style: vi.style,
+      style: mode,
       size: vi.size,
       glyph: vi.glyph,
       animate: vi.animate,
-      preError: this._preValidationError,
-      postError: this._postValidationError,
+      preState: this._preValidationState,
+      postState: this._postValidationState,
     });
   }
 
@@ -554,9 +605,9 @@ export default class BaseNode {
       this.update();
 
       // Re-position validation indicators against the new bounds. Skip when
-      // no error is active to avoid restarting halo/siren animations on
+      // no state is active to avoid restarting busy/halo/siren animations on
       // every resize.
-      if (this._preValidationError || this._postValidationError) {
+      if (this.hasActiveValidationState()) {
         this._renderValidationIndicators();
       }
 

@@ -41,8 +41,8 @@ export default class CircleNode extends BaseNode {
       }
     }
 
-    // Paint validation indicators (red noses) on top of the shape if set
-    if (this._preValidationError || this._postValidationError) {
+    // Paint validation indicators on top of the shape when state is non-'na'.
+    if (this.hasActiveValidationState()) {
       this._renderValidationIndicators();
     }
   }

@@ -32,6 +32,15 @@
   --fd-validation-tape-yellow: #f2c70b;
   --fd-validation-tape-dark: #181311;
   --fd-validation-text-on-red: #ffffff;
+
+  /* Validation-state palette (8-state vocab; 'na' has no variable — nothing renders) */
+  --fd-validation-state-error: #c8181d;
+  --fd-validation-state-warning: #f2c70b;
+  --fd-validation-state-ok: #1f8a3d;
+  --fd-validation-state-busy: #2563eb;
+  --fd-validation-state-ready: #cbd5e1;
+  --fd-validation-state-unknown: #9ca3af;
+  --fd-validation-state-disabled: #4b5563;
 }
 
 body {

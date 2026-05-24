@@ -7,6 +7,15 @@
   --fd-accent: #000000;
   --fd-border: #000000;
   --fd-edge: #000000;
+
+  /* Validation-state palette — brutalism: saturated, maximum contrast. */
+  --fd-validation-state-error: #ff0000;
+  --fd-validation-state-warning: #ffd400;
+  --fd-validation-state-ok: #00aa3a;
+  --fd-validation-state-busy: #0040ff;
+  --fd-validation-state-ready: #000000;
+  --fd-validation-state-unknown: #888888;
+  --fd-validation-state-disabled: #444444;
 }
 
 body {

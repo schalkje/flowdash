@@ -7,6 +7,15 @@
   --fd-accent: #2563eb;
   --fd-border: #e5e7eb;
   --fd-edge: #3b82f6;
+
+  /* Validation-state palette — flat: clean modern flat colors. */
+  --fd-validation-state-error: #ef4444;
+  --fd-validation-state-warning: #f59e0b;
+  --fd-validation-state-ok: #10b981;
+  --fd-validation-state-busy: #3b82f6;
+  --fd-validation-state-ready: #cbd5e1;
+  --fd-validation-state-unknown: #94a3b8;
+  --fd-validation-state-disabled: #64748b;
 }
 
 body {

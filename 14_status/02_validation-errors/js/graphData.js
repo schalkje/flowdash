@@ -14,6 +14,7 @@ export const demoData = {
     demoMode: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
+    validationIndicatorMode: 'pulse-halo',
     validationIndicator: {
       style: 'pulse-halo',
       glyph: '!',
@@ -37,7 +38,7 @@ export const demoData = {
               label: 'Extract — crm.customers',
               type: 'rect',
               state: 'Ready',
-              preValidationError: 'upstream partition missing',
+              preValidationState: { state: 'error', message: 'upstream partition missing' },
             },
             {
               id: 'transform',
@@ -50,15 +51,15 @@ export const demoData = {
               label: 'Load — dwh.customers',
               type: 'rect',
               state: 'Ready',
-              postValidationError: 'null rate on revenue exceeds 1%',
+              postValidationState: { state: 'error', message: 'null rate on revenue exceeds 1%' },
             },
             {
               id: 'report',
               label: 'Build daily mart',
               type: 'rect',
               state: 'Ready',
-              preValidationError: true,
-              postValidationError: 'duplicate primary keys (37)',
+              preValidationState: { state: 'error' },
+              postValidationState: { state: 'error', message: 'duplicate primary keys (37)' },
             },
           ],
         },
@@ -70,7 +71,7 @@ export const demoData = {
           type: 'foundation',
           state: 'Ready',
           layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
-          preValidationError: 'raw source unavailable',
+          preValidationState: { state: 'error', message: 'raw source unavailable' },
           children: [
             {
               id: 'foundation-raw',
@@ -102,7 +103,7 @@ export const demoData = {
           type: 'adapter',
           state: 'Ready',
           layout: { mode: 'full', arrangement: 1, displayMode: 'full' },
-          postValidationError: 'transform output schema mismatch',
+          postValidationState: { state: 'error', message: 'transform output schema mismatch' },
           children: [
             {
               id: 'adapter-staging',
@@ -138,8 +139,8 @@ export const demoData = {
           type: 'mart',
           state: 'Ready',
           layout: { mode: 'auto', displayMode: 'role', orientation: 'horizontal' },
-          preValidationError: true,
-          postValidationError: 'downstream contract failed',
+          preValidationState: { state: 'error' },
+          postValidationState: { state: 'error', message: 'downstream contract failed' },
           children: [
             {
               id: 'mart-load',

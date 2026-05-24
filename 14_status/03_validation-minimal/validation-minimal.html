@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Validation Minimal — bar · circle · corner</title>
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script src="../../dashboard/libs/d3-shape.min.js"></script>
+    <script src="../../dashboard/libs/d3-dag.iife.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+    <style>
+      .controls {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 8px 12px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        font-size: 13px;
+      }
+      .controls .group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .controls .group strong {
+        font-weight: 600;
+        color: #333;
+      }
+      .mode-picker,
+      .state-picker {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .mode-picker button,
+      .state-picker button {
+        border: none;
+        background: #fff;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        border-right: 1px solid #e5e5e5;
+        font-family: ui-monospace, monospace;
+      }
+      .mode-picker button:last-child,
+      .state-picker button:last-child {
+        border-right: none;
+      }
+      .mode-picker button[aria-pressed='true'],
+      .state-picker button[aria-pressed='true'] {
+        background: #1f2937;
+        color: #fff;
+      }
+      .legend {
+        font-size: 12px;
+        padding: 6px 12px;
+        color: #444;
+        background: #f8f8f8;
+        border-bottom: 1px solid #ddd;
+      }
+      .legend code {
+        background: #eee;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+      h3.section-title {
+        margin: 18px 12px 6px;
+        font-size: 14px;
+        color: #333;
+        font-family: ui-monospace, monospace;
+      }
+      .matrix-row {
+        margin: 0 0 18px;
+      }
+      .matrix-row svg {
+        width: 100%;
+        height: 180px;
+      }
+      #mainGraph {
+        width: 100%;
+        height: 280px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Validation — Minimal modes</h1>
+      <h2>bar · circle · corner</h2>
+      <p class="demo-description">
+        Three lightweight indicator modes that render the full eight-state validation vocabulary at
+        low visual cost. The interactive row at the top is driven by the mode and state pickers; the
+        matrix below shows the same eight states rendered in each of the three minimal modes for
+        side-by-side comparison.
+      </p>
+    </header>
+
+    <div class="controls">
+      <div class="group">
+        <strong>Dashboard mode:</strong>
+        <div class="mode-picker" id="modePicker">
+          <button data-mode="minimal-bar" aria-pressed="true">minimal-bar</button>
+          <button data-mode="minimal-circle">minimal-circle</button>
+          <button data-mode="minimal-corner">minimal-corner</button>
+        </div>
+      </div>
+      <div class="group">
+        <strong>Set all post-states:</strong>
+        <div class="state-picker" id="stateBulk">
+          <button data-state="unknown">unknown</button>
+          <button data-state="ready">ready</button>
+          <button data-state="busy">busy</button>
+          <button data-state="error">error</button>
+          <button data-state="warning">warning</button>
+          <button data-state="disabled">disabled</button>
+          <button data-state="ok">ok</button>
+          <button data-state="na">na</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
+      <code>dashboard.setValidationStateById(id, 'pre' | 'post', { state, message? })</code>,
+      <code>dashboard.setValidationIndicatorMode(mode)</code>. Modes: <code>minimal-bar</code> ·
+      <code>minimal-circle</code> · <code>minimal-corner</code>.
+    </div>
+
+    <h3 class="section-title">Interactive row — mode and state pickers above</h3>
+    <div class="demo-container">
+      <svg id="mainGraph" class="canvas"></svg>
+    </div>
+
+    <h3 class="section-title">Matrix — same 8 states rendered in each minimal mode</h3>
+    <div id="matrixContainer"></div>
+
+    <script type="module">
+      import { demoData, buildFixtureForMode, STATE_VOCABULARY } from './js/graphData.js';
+      import flowDashboard from '../../dashboard/js/index.js';
+
+      // --- Main interactive dashboard --------------------------------------
+      const main = new flowDashboard.Dashboard(JSON.parse(JSON.stringify(demoData)));
+      main.initialize('#mainGraph');
+      window.dashboard = main;
+
+      const modePicker = document.getElementById('modePicker');
+      modePicker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.mode;
+          main.setValidationIndicatorMode(mode);
+          modePicker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
+
+      const bulkPicker = document.getElementById('stateBulk');
+      bulkPicker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetState = btn.dataset.state;
+          STATE_VOCABULARY.forEach((s) => {
+            const id = `node-${s}`;
+            const obj =
+              targetState === 'error' || targetState === 'warning'
+                ? { state: targetState, message: `bulk set: ${targetState}` }
+                : { state: targetState };
+            main.setValidationStateById(id, 'post', obj);
+          });
+          bulkPicker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
+
+      // --- Matrix dashboards ----------------------------------------------
+      const MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
+      const container = document.getElementById('matrixContainer');
+      const matrixDashboards = MODES.map((mode) => {
+        const row = document.createElement('div');
+        row.className = 'matrix-row';
+        const title = document.createElement('h3');
+        title.className = 'section-title';
+        title.textContent = mode;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = `graph-${mode}`;
+        svg.classList.add('canvas');
+        svg.setAttribute('data-validation-mode', mode);
+        row.appendChild(title);
+        row.appendChild(svg);
+        container.appendChild(row);
+
+        const d = new flowDashboard.Dashboard(buildFixtureForMode(mode));
+        d.initialize(`#graph-${mode}`);
+        return d;
+      });
+      window.matrixDashboards = matrixDashboards;
+    </script>
+  </body>
+</html>

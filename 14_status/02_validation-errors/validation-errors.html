@@ -183,8 +183,8 @@
 
     <div class="legend">
       Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
-      <code>dashboard.setValidationErrorById(id, 'pre' | 'post', value)</code>,
-      <code>dashboard.setValidationIndicatorStyle(style)</code>,
+      <code>dashboard.setValidationStateById(id, 'pre' | 'post', { state, message? })</code>,
+      <code>dashboard.setValidationIndicatorMode(mode)</code>,
       <code>dashboard.setValidationIndicatorSize(size)</code>.
     </div>
 
@@ -242,7 +242,7 @@
       // --- Per-node toggles ---------------------------------------------
       // Grouped by section so the relationship between a container and its
       // children is obvious. Each row has pre+post toggles wired straight to
-      // dashboard.setValidationErrorById.
+      // dashboard.setValidationStateById.
       const SECTIONS = [
         {
           key: 'rects',
@@ -294,8 +294,8 @@
         NODE_IDS.forEach((id) => {
           const node = dashboard.main.root?.getNode(id);
           if (!node) return;
-          state[id].pre = !!node.preValidationError;
-          state[id].post = !!node.postValidationError;
+          state[id].pre = node.preValidationState?.state === 'error';
+          state[id].post = node.postValidationState?.state === 'error';
         });
       }
 
@@ -317,7 +317,7 @@
         preBtn.addEventListener('click', () => {
           const next = !state[id].pre;
           state[id].pre = next;
-          dashboard.setValidationErrorById(id, 'pre', next);
+          dashboard.setValidationStateById(id, 'pre', { state: next ? 'error' : 'na' });
           preBtn.setAttribute('aria-pressed', String(next));
         });
 
@@ -327,7 +327,7 @@
         postBtn.addEventListener('click', () => {
           const next = !state[id].post;
           state[id].post = next;
-          dashboard.setValidationErrorById(id, 'post', next);
+          dashboard.setValidationStateById(id, 'post', { state: next ? 'error' : 'na' });
           postBtn.setAttribute('aria-pressed', String(next));
         });
 

@@ -10,6 +10,15 @@
   --fd-amber: #ffd166;
   --fd-cyan: #6fffe9;
   --fd-red: #ff4d4d;
+
+  /* Validation-state palette — retro: phosphor-CRT palette, green-base. */
+  --fd-validation-state-error: #ff4d4d;
+  --fd-validation-state-warning: #ffd166;
+  --fd-validation-state-ok: #00ff66;
+  --fd-validation-state-busy: #6fffe9;
+  --fd-validation-state-ready: #a8ff60;
+  --fd-validation-state-unknown: #66aa55;
+  --fd-validation-state-disabled: #1a3b1a;
 }
 
 body {

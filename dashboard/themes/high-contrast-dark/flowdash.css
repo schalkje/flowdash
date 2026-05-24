@@ -44,6 +44,16 @@
   --fd-status-warning-stroke: #ff8000; /* orange, 11:1 */
   --fd-status-error: #3a0000;
   --fd-status-error-stroke: #ff4040; /* red, 7.4:1 */
+
+  /* Validation-state palette — high-contrast-dark: pure saturated hues
+     against black, all ≥ 7:1 contrast. */
+  --fd-validation-state-error: #ff4040;
+  --fd-validation-state-warning: #ffff00;
+  --fd-validation-state-ok: #00ff00;
+  --fd-validation-state-busy: #00d4ff;
+  --fd-validation-state-ready: #ffffff;
+  --fd-validation-state-unknown: #d4d4d4;
+  --fd-validation-state-disabled: #888888;
 }
 
 body {

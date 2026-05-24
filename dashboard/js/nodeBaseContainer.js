@@ -672,9 +672,10 @@ export default class BaseContainerNode extends BaseNode {
     // you cannot move the g node,, move the child elements in stead
     this.element.attr('transform', `translate(${this.x}, ${this.y})`);
 
-    // Paint validation indicators (red noses) on top of the container shape
-    // if any are set. Render last so they stack over zone-container + header.
-    if (this._preValidationError || this._postValidationError) {
+    // Paint validation indicators on top of the container shape if any side
+    // carries a non-'na' state. Render last so they stack over the zone
+    // container + header.
+    if (this.hasActiveValidationState()) {
       this._renderValidationIndicators();
     }
 
