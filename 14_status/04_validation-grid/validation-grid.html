@@ -17,20 +17,30 @@
         --cell-h: 56px;
         --label-w: 160px;
       }
+      /* Use the theme's own foreground/background tokens so every panel,
+         cell, ref-rect, and label re-skins with the active theme. Falls
+         back to a neutral grey set when the theme variables aren't set. */
+      body {
+        background: var(--fd-bg, #f5f6f8);
+        color: var(--fd-text, #222);
+      }
       .controls {
         display: flex;
         gap: 16px;
         flex-wrap: wrap;
         align-items: center;
         padding: 10px 16px;
-        background: #fff;
-        border-bottom: 1px solid #ddd;
+        background: var(--fd-surface, #fff);
+        border-bottom: 1px solid var(--fd-border, #ddd);
         font-size: 13px;
       }
       .controls .group {
         display: flex;
         gap: 6px;
         align-items: center;
+      }
+      .controls .group strong {
+        color: var(--fd-text, #222);
       }
       .grid-wrap {
         padding: 16px;
@@ -49,7 +59,7 @@
       table.grid th.col-head {
         text-align: center;
         padding: 4px 6px 6px;
-        color: #444;
+        color: var(--fd-text, #444);
         font-weight: 600;
         vertical-align: bottom;
         min-width: var(--cell-w);
@@ -59,7 +69,7 @@
         font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #888;
+        color: var(--fd-muted, #888);
         font-weight: 500;
         margin-bottom: 2px;
       }
@@ -67,7 +77,7 @@
         text-align: right;
         padding-right: 10px;
         vertical-align: middle;
-        color: #444;
+        color: var(--fd-text, #444);
         font-weight: 600;
         width: var(--label-w);
         white-space: nowrap;
@@ -76,14 +86,14 @@
         display: block;
         font-size: 10px;
         font-weight: 400;
-        color: #888;
+        color: var(--fd-muted, #888);
         margin-top: 2px;
       }
       .cell {
         width: var(--cell-w);
         height: var(--cell-h);
-        background: #fafafa;
-        border: 1px solid #eaeaea;
+        background: var(--fd-surface, #fafafa);
+        border: 1px solid var(--fd-border, #eaeaea);
         border-radius: 4px;
         display: grid;
         place-items: center;
@@ -91,31 +101,46 @@
       .cell svg {
         display: block;
       }
+      /* Striped "empty" cell — derived from the cell background via a
+         translucent overlay so it adapts to both light and dark themes
+         without needing explicit per-theme tokens. */
       .cell.empty {
-        background: repeating-linear-gradient(
-          135deg,
-          #fafafa,
-          #fafafa 6px,
-          #f0f0f0 6px,
-          #f0f0f0 12px
-        );
+        background:
+          repeating-linear-gradient(
+            135deg,
+            rgba(127, 127, 127, 0) 0,
+            rgba(127, 127, 127, 0) 6px,
+            rgba(127, 127, 127, 0.12) 6px,
+            rgba(127, 127, 127, 0.12) 12px
+          ),
+          var(--fd-surface, #fafafa);
       }
       .cell.empty::after {
         content: '—';
-        color: #c0c0c0;
+        color: var(--fd-muted, #c0c0c0);
+        opacity: 0.5;
         font-size: 14px;
       }
       tr.loud-callout th.row-head {
-        color: #c8181d;
+        color: var(--fd-validation-state-error, #c8181d);
       }
       tr.loud-callout .cell {
-        background: #fff3f3;
-        border-color: #f0caca;
+        background: color-mix(
+          in srgb,
+          var(--fd-validation-state-error, #c8181d) 10%,
+          var(--fd-surface, #fff)
+        );
+        border-color: color-mix(
+          in srgb,
+          var(--fd-validation-state-error, #c8181d) 40%,
+          var(--fd-border, #ddd)
+        );
       }
-      /* Visual reference rect under each indicator */
+      /* Visual reference rect under each indicator — themed so the rect
+         body itself matches the active theme. */
       .ref-rect {
-        fill: #ffffff;
-        stroke: #c8c8c8;
+        fill: var(--fd-surface, #ffffff);
+        stroke: var(--fd-border, #c8c8c8);
         stroke-width: 1;
         rx: 4;
         ry: 4;
@@ -123,12 +148,12 @@
       .legend {
         padding: 8px 16px;
         font-size: 12px;
-        color: #555;
-        background: #f8f8f8;
-        border-bottom: 1px solid #ddd;
+        color: var(--fd-muted, #555);
+        background: var(--fd-surface, #f8f8f8);
+        border-bottom: 1px solid var(--fd-border, #ddd);
       }
       .legend code {
-        background: #eee;
+        background: color-mix(in srgb, var(--fd-text, #000) 10%, transparent);
         padding: 1px 4px;
         border-radius: 3px;
       }
