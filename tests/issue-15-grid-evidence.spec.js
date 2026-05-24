@@ -49,5 +49,33 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
     fullPage: true,
   });
 
+  // Size selector: switching to 'big' rebuilds; loud-style cells should
+  // contain SVGs whose disc radius is bigger than at 'normal'.
+  const normalRadius = await page.evaluate(() => {
+    const cell = document.querySelector('g[data-cell-mode="pulse-halo"][data-cell-state="error"]');
+    const disc = cell?.querySelector('circle.disc');
+    return disc ? Number(disc.getAttribute('r')) : null;
+  });
+  expect(normalRadius).toBeGreaterThan(0);
+
+  await page.selectOption('#sizePicker', 'big');
+  await page.waitForTimeout(150);
+  const bigRadius = await page.evaluate(() => {
+    const cell = document.querySelector('g[data-cell-mode="pulse-halo"][data-cell-state="error"]');
+    const disc = cell?.querySelector('circle.disc');
+    return disc ? Number(disc.getAttribute('r')) : null;
+  });
+  expect(bigRadius).toBeGreaterThan(normalRadius);
+
+  // Theme change broadcast triggers a rebuild
+  const rebuildCount = await page.evaluate(() => {
+    let count = 0;
+    const observer = new MutationObserver(() => count++);
+    observer.observe(document.querySelector('table.grid'), { childList: true });
+    window.dispatchEvent(new CustomEvent('flowdash:themechange', { detail: { theme: 'dark' } }));
+    return new Promise((resolve) => setTimeout(() => resolve(count), 80));
+  });
+  expect(rebuildCount).toBeGreaterThan(0);
+
   expect(errors, 'no page or console errors').toEqual([]);
 });

@@ -152,18 +152,16 @@
 
     <div class="controls">
       <div class="group">
-        <strong>Theme:</strong>
-        <select id="themePicker">
-          <option value="light">light</option>
-          <option value="dark">dark</option>
-          <option value="brutalism">brutalism</option>
-          <option value="cyberpunk">cyberpunk</option>
-          <option value="flat">flat</option>
-          <option value="glassmorphism">glassmorphism</option>
-          <option value="neumorphism">neumorphism</option>
-          <option value="retro">retro</option>
-          <option value="high-contrast-light">high-contrast-light</option>
-          <option value="high-contrast-dark">high-contrast-dark</option>
+        <strong>Loud-style size:</strong>
+        <select
+          id="sizePicker"
+          title="Applies to the four loud styles only; minimal modes are fixed pixel size by design."
+        >
+          <option value="normal">normal · 1×</option>
+          <option value="large">large · 1.5×</option>
+          <option value="big">big · 2×</option>
+          <option value="huge">huge · 4×</option>
+          <option value="gigantic">gigantic · 8×</option>
         </select>
       </div>
       <div class="group">
@@ -177,7 +175,10 @@
       Cell layout: <code>[ref rect | indicator]</code>. Each cell calls
       <code>renderValidationIndicators()</code> directly so the grid is a pure pixel comparison — no
       full dashboard per cell. State→color resolves via the
-      <code>--fd-validation-state-*</code> theme variables.
+      <code>--fd-validation-state-*</code> theme variables — drive the active theme from the global
+      switcher in the top-left of the page (injected by <code>themeManager.js</code>); the grid
+      rebuilds on every theme change so fresh SVGs pick up the new palette. The size selector
+      affects only the four loud styles; the three minimal modes are fixed pixel size by design.
     </div>
 
     <div class="grid-wrap">
@@ -250,7 +251,7 @@
           width: REF_W,
           height: REF_H,
           style: mode,
-          size: 'normal',
+          size: currentSize(),
           glyph: '!',
           animate: animateBusy(),
           preState: { state: 'na' },
@@ -263,6 +264,10 @@
 
       function animateBusy() {
         return document.getElementById('animateToggle').checked;
+      }
+
+      function currentSize() {
+        return document.getElementById('sizePicker').value || 'normal';
       }
 
       function buildGrid() {
@@ -343,18 +348,16 @@
         grid.appendChild(tbody);
       }
 
-      // --- Theme switcher --------------------------------------------------
-      const themePicker = document.getElementById('themePicker');
-      themePicker.addEventListener('change', () => {
-        const theme = themePicker.value;
-        if (window.flowDashThemeManager?.setTheme) {
-          window.flowDashThemeManager.setTheme(theme);
-        } else {
-          document.documentElement.setAttribute('data-theme', theme);
-        }
-      });
-
+      // --- Re-render on input / theme changes -----------------------------
       document.getElementById('animateToggle').addEventListener('change', buildGrid);
+      document.getElementById('sizePicker').addEventListener('change', buildGrid);
+
+      // The global themeManager.js (top-left injected switcher) toggles which
+      // theme stylesheet is enabled and broadcasts `flowdash:themechange`.
+      // Rebuild on that signal so every cell's `fill="var(--fd-validation-state-X)"`
+      // re-resolves under the new palette — relying on var() cascade alone is
+      // brittle when the SVG was created against the previous active theme.
+      window.addEventListener('flowdash:themechange', buildGrid);
 
       buildGrid();
       window.__validationGrid = { rebuild: buildGrid };
