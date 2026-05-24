@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validation — full state × mode grid</title>
+    <link rel="stylesheet" href="../../dashboard/flowdash.css" />
+    <link rel="stylesheet" href="../../dashboard/flowdash-demo.css" />
+    <script src="../../dashboard/libs/d3.min.js"></script>
+    <script>
+      window.FLOWDASH_THEME = { default: 'light' };
+    </script>
+    <script src="../../dashboard/js/themeManager.js"></script>
+    <style>
+      :root {
+        --cell-w: 110px;
+        --cell-h: 56px;
+        --label-w: 160px;
+      }
+      .controls {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px 16px;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        font-size: 13px;
+      }
+      .controls .group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .grid-wrap {
+        padding: 16px;
+        overflow-x: auto;
+      }
+      table.grid {
+        border-collapse: separate;
+        border-spacing: 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+      }
+      table.grid th,
+      table.grid td {
+        padding: 0;
+      }
+      table.grid th.col-head {
+        text-align: center;
+        padding: 4px 6px 6px;
+        color: #444;
+        font-weight: 600;
+        vertical-align: bottom;
+        min-width: var(--cell-w);
+      }
+      table.grid th.col-head .group-label {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #888;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      table.grid th.row-head {
+        text-align: right;
+        padding-right: 10px;
+        vertical-align: middle;
+        color: #444;
+        font-weight: 600;
+        width: var(--label-w);
+        white-space: nowrap;
+      }
+      table.grid th.row-head .row-note {
+        display: block;
+        font-size: 10px;
+        font-weight: 400;
+        color: #888;
+        margin-top: 2px;
+      }
+      .cell {
+        width: var(--cell-w);
+        height: var(--cell-h);
+        background: #fafafa;
+        border: 1px solid #eaeaea;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+      }
+      .cell svg {
+        display: block;
+      }
+      .cell.empty {
+        background: repeating-linear-gradient(
+          135deg,
+          #fafafa,
+          #fafafa 6px,
+          #f0f0f0 6px,
+          #f0f0f0 12px
+        );
+      }
+      .cell.empty::after {
+        content: '—';
+        color: #c0c0c0;
+        font-size: 14px;
+      }
+      tr.loud-callout th.row-head {
+        color: #c8181d;
+      }
+      tr.loud-callout .cell {
+        background: #fff3f3;
+        border-color: #f0caca;
+      }
+      /* Visual reference rect under each indicator */
+      .ref-rect {
+        fill: #ffffff;
+        stroke: #c8c8c8;
+        stroke-width: 1;
+        rx: 4;
+        ry: 4;
+      }
+      .legend {
+        padding: 8px 16px;
+        font-size: 12px;
+        color: #555;
+        background: #f8f8f8;
+        border-bottom: 1px solid #ddd;
+      }
+      .legend code {
+        background: #eee;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+    <script defer src="/dashboard/demo-nav.js"></script>
+  </head>
+  <body>
+    <header class="demo-header">
+      <h1>Validation — full state × mode grid</h1>
+      <h2>every state in every mode, side-by-side</h2>
+      <p class="demo-description">
+        Each cell renders a small reference rect with the post-validation indicator on its right
+        edge. The three minimal modes (bar / circle / corner) render the full eight-state
+        vocabulary. The four loud styles only render when state is <code>'error'</code>; for any
+        other state they emit nothing — that absence is the design, visualized below as dashed
+        cells. The dedicated <code>error (red nose)</code> row right under
+        <code>error</code> highlights how the same error condition switches register entirely when
+        the mode flips to loud.
+      </p>
+    </header>
+
+    <div class="controls">
+      <div class="group">
+        <strong>Theme:</strong>
+        <select id="themePicker">
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+          <option value="brutalism">brutalism</option>
+          <option value="cyberpunk">cyberpunk</option>
+          <option value="flat">flat</option>
+          <option value="glassmorphism">glassmorphism</option>
+          <option value="neumorphism">neumorphism</option>
+          <option value="retro">retro</option>
+          <option value="high-contrast-light">high-contrast-light</option>
+          <option value="high-contrast-dark">high-contrast-dark</option>
+        </select>
+      </div>
+      <div class="group">
+        <label
+          ><input type="checkbox" id="animateToggle" checked /> animate <code>busy</code></label
+        >
+      </div>
+    </div>
+
+    <div class="legend">
+      Cell layout: <code>[ref rect | indicator]</code>. Each cell calls
+      <code>renderValidationIndicators()</code> directly so the grid is a pure pixel comparison — no
+      full dashboard per cell. State→color resolves via the
+      <code>--fd-validation-state-*</code> theme variables.
+    </div>
+
+    <div class="grid-wrap">
+      <table class="grid" id="grid"></table>
+    </div>
+
+    <script type="module">
+      import {
+        renderValidationIndicators,
+        VALIDATION_MODES,
+      } from '../../dashboard/js/validationIndicators.js';
+      import { VALIDATION_STATES } from '../../dashboard/js/nodeBase.js';
+
+      const MINIMAL_MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
+      const LOUD_MODES = ['pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line'];
+      // Render order: skip 'na' at the top (it's listed at the bottom as the "empty" sentinel)
+      const STATE_ORDER = ['unknown', 'ready', 'busy', 'error', 'warning', 'disabled', 'ok', 'na'];
+
+      // Cell sizing matches CSS (minus padding for safety)
+      const CELL_W = 100;
+      const CELL_H = 44;
+      const REF_W = 56;
+      const REF_H = 28;
+
+      function buildCell(state, mode) {
+        const td = document.createElement('td');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cell';
+
+        // Loud modes only render for 'error'; mark non-error cells as empty
+        if (LOUD_MODES.includes(mode) && state !== 'error') {
+          wrapper.classList.add('empty');
+          td.appendChild(wrapper);
+          return td;
+        }
+        // 'na' always renders nothing
+        if (state === 'na') {
+          wrapper.classList.add('empty');
+          td.appendChild(wrapper);
+          return td;
+        }
+
+        const svg = d3
+          .select(wrapper)
+          .append('svg')
+          .attr('width', CELL_W)
+          .attr('height', CELL_H)
+          .attr('viewBox', `${-CELL_W / 2} ${-CELL_H / 2} ${CELL_W} ${CELL_H}`);
+
+        // Reference rect so the indicator has visual context
+        svg
+          .append('rect')
+          .attr('class', 'ref-rect')
+          .attr('x', -REF_W / 2)
+          .attr('y', -REF_H / 2)
+          .attr('width', REF_W)
+          .attr('height', REF_H);
+
+        // The validation-indicators renderer wants a parent <g> centered on the node origin
+        const g = svg.append('g').attr('data-cell-mode', mode).attr('data-cell-state', state);
+
+        const valueObj =
+          state === 'error'
+            ? { state: 'error', message: 'sample error' }
+            : state === 'warning'
+              ? { state: 'warning', message: 'sample warning' }
+              : { state };
+
+        renderValidationIndicators(g, {
+          width: REF_W,
+          height: REF_H,
+          style: mode,
+          size: 'normal',
+          glyph: '!',
+          animate: animateBusy(),
+          preState: { state: 'na' },
+          postState: valueObj,
+        });
+
+        td.appendChild(wrapper);
+        return td;
+      }
+
+      function animateBusy() {
+        return document.getElementById('animateToggle').checked;
+      }
+
+      function buildGrid() {
+        const grid = document.getElementById('grid');
+        grid.replaceChildren();
+
+        const allModes = [...MINIMAL_MODES, ...LOUD_MODES];
+
+        // Header row: 2 grouped column-heads (minimal / loud) then per-mode tokens
+        const thead = document.createElement('thead');
+        const groupRow = document.createElement('tr');
+        groupRow.appendChild(document.createElement('th'));
+        const minimalGroup = document.createElement('th');
+        minimalGroup.colSpan = MINIMAL_MODES.length;
+        minimalGroup.className = 'col-head';
+        minimalGroup.innerHTML =
+          '<span class="group-label">minimal — full vocabulary</span> 3 modes';
+        groupRow.appendChild(minimalGroup);
+        const loudGroup = document.createElement('th');
+        loudGroup.colSpan = LOUD_MODES.length;
+        loudGroup.className = 'col-head';
+        loudGroup.innerHTML = '<span class="group-label">loud — error only</span> 4 styles';
+        groupRow.appendChild(loudGroup);
+        thead.appendChild(groupRow);
+
+        const modeRow = document.createElement('tr');
+        modeRow.appendChild(document.createElement('th'));
+        allModes.forEach((m) => {
+          const th = document.createElement('th');
+          th.className = 'col-head';
+          th.textContent = m;
+          modeRow.appendChild(th);
+        });
+        thead.appendChild(modeRow);
+        grid.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        STATE_ORDER.forEach((state) => {
+          const tr = document.createElement('tr');
+          const head = document.createElement('th');
+          head.className = 'row-head';
+          head.textContent = state;
+          if (state === 'na') {
+            const note = document.createElement('span');
+            note.className = 'row-note';
+            note.textContent = '(default — emits no DOM)';
+            head.appendChild(note);
+          }
+          tr.appendChild(head);
+          allModes.forEach((mode) => tr.appendChild(buildCell(state, mode)));
+          tbody.appendChild(tr);
+
+          // Right after 'error': the explicit "error (red nose)" callout row
+          if (state === 'error') {
+            const calloutTr = document.createElement('tr');
+            calloutTr.className = 'loud-callout';
+            const calloutHead = document.createElement('th');
+            calloutHead.className = 'row-head';
+            calloutHead.textContent = 'error (red nose)';
+            const note = document.createElement('span');
+            note.className = 'row-note';
+            note.textContent = 'same error · loud styles';
+            calloutHead.appendChild(note);
+            calloutTr.appendChild(calloutHead);
+            // Minimal columns: leave blank in the callout (they were already rendered above)
+            MINIMAL_MODES.forEach(() => {
+              const td = document.createElement('td');
+              const w = document.createElement('div');
+              w.className = 'cell empty';
+              td.appendChild(w);
+              calloutTr.appendChild(td);
+            });
+            // Loud columns: render the same error state under each loud style
+            LOUD_MODES.forEach((mode) => calloutTr.appendChild(buildCell('error', mode)));
+            tbody.appendChild(calloutTr);
+          }
+        });
+        grid.appendChild(tbody);
+      }
+
+      // --- Theme switcher --------------------------------------------------
+      const themePicker = document.getElementById('themePicker');
+      themePicker.addEventListener('change', () => {
+        const theme = themePicker.value;
+        if (window.flowDashThemeManager?.setTheme) {
+          window.flowDashThemeManager.setTheme(theme);
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+      });
+
+      document.getElementById('animateToggle').addEventListener('change', buildGrid);
+
+      buildGrid();
+      window.__validationGrid = { rebuild: buildGrid };
+    </script>
+  </body>
+</html>
