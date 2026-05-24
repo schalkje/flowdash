@@ -136,15 +136,9 @@
           var(--fd-border, #ddd)
         );
       }
-      /* Visual reference rect under each indicator — themed so the rect
-         body itself matches the active theme. */
-      .ref-rect {
-        fill: var(--fd-surface, #ffffff);
-        stroke: var(--fd-border, #c8c8c8);
-        stroke-width: 1;
-        rx: 4;
-        ry: 4;
-      }
+      /* Cells render a real RectangularNode (not a hand-drawn rect) so the
+         rect's fill / stroke / status styling comes from the production
+         dashboard CSS in flowdash.css — which already themes correctly. */
       .legend {
         padding: 8px 16px;
         font-size: 12px;
@@ -211,10 +205,14 @@
     </div>
 
     <script type="module">
-      import {
-        renderValidationIndicators,
-        VALIDATION_MODES,
-      } from '../../dashboard/js/validationIndicators.js';
+      // Use the real RectangularNode (not a hand-drawn SVG rect) so each cell
+      // inherits the same fill / stroke / status styling as production nodes,
+      // and so the validation indicator is painted by the node's own
+      // `_renderValidationIndicators()` — i.e. the actual code path that
+      // dashboards use in the wild.
+      import RectangularNode from '../../dashboard/js/nodeRect.js';
+      import { ConfigManager } from '../../dashboard/js/configManager.js';
+      import { VALIDATION_MODES } from '../../dashboard/js/validationIndicators.js';
       import { VALIDATION_STATES } from '../../dashboard/js/nodeBase.js';
 
       const MINIMAL_MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
@@ -227,6 +225,9 @@
       const CELL_H = 44;
       const REF_W = 56;
       const REF_H = 28;
+
+      // Track live node instances so the grid can be wiped + rebuilt cleanly.
+      const liveNodes = [];
 
       function buildCell(state, mode) {
         const td = document.createElement('td');
@@ -251,19 +252,23 @@
           .append('svg')
           .attr('width', CELL_W)
           .attr('height', CELL_H)
-          .attr('viewBox', `${-CELL_W / 2} ${-CELL_H / 2} ${CELL_W} ${CELL_H}`);
+          .attr('viewBox', `0 0 ${CELL_W} ${CELL_H}`);
 
-        // Reference rect so the indicator has visual context
-        svg
-          .append('rect')
-          .attr('class', 'ref-rect')
-          .attr('x', -REF_W / 2)
-          .attr('y', -REF_H / 2)
-          .attr('width', REF_W)
-          .attr('height', REF_H);
-
-        // The validation-indicators renderer wants a parent <g> centered on the node origin
-        const g = svg.append('g').attr('data-cell-mode', mode).attr('data-cell-state', state);
+        // Per-cell merged settings: pre-merged once with the loud-style size and
+        // animate flag the user picked. The per-cell mode override travels on
+        // the node's data, not the settings, so this object is safe to share
+        // structurally across cells of the same (size, animate) config.
+        const settings = ConfigManager.mergeWithDefaults({
+          demoMode: true,
+          // Suppress demo defaults that don't apply at this scale.
+          showBoundingBox: false,
+          minimap: { enabled: false },
+          validationIndicator: {
+            size: currentSize(),
+            animate: animateBusy(),
+            glyph: '!',
+          },
+        });
 
         const valueObj =
           state === 'error'
@@ -272,16 +277,34 @@
               ? { state: 'warning', message: 'sample warning' }
               : { state };
 
-        renderValidationIndicators(g, {
+        const nodeData = {
+          id: `cell-${state}-${mode}`,
+          label: '',
+          type: 'rect',
+          state: 'Ready',
           width: REF_W,
           height: REF_H,
-          style: mode,
-          size: currentSize(),
-          glyph: '!',
-          animate: animateBusy(),
-          preState: { state: 'na' },
-          postState: valueObj,
-        });
+          layout: { layoutMode: 'fixed-size', width: REF_W, height: REF_H },
+          // Per-node validation-indicator-mode override (wins over dashboard
+          // default in BaseNode._renderValidationIndicators).
+          validationIndicatorMode: mode,
+          postValidationState: valueObj,
+        };
+
+        // Decorate the parent <g> so the rendered node's <g> sits inside it.
+        // We position THAT outer <g> at the cell center so the rect (which
+        // draws at -w/2..+w/2 around its own origin) lands inside the cell.
+        const cellG = svg
+          .append('g')
+          .attr('data-cell-mode', mode)
+          .attr('data-cell-state', state)
+          .attr('transform', `translate(${CELL_W / 2}, ${CELL_H / 2})`);
+
+        const node = new RectangularNode(nodeData, cellG, settings);
+        node.init(cellG);
+        // The node draws around (0,0) within `cellG`; the cellG transform
+        // already centers it in the cell, so no further move() is needed.
+        liveNodes.push(node);
 
         td.appendChild(wrapper);
         return td;
@@ -298,6 +321,8 @@
       function buildGrid() {
         const grid = document.getElementById('grid');
         grid.replaceChildren();
+        // Drop live-node references so the old nodes are GC-able.
+        liveNodes.length = 0;
 
         const allModes = [...MINIMAL_MODES, ...LOUD_MODES];
 
