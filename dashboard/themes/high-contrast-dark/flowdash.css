@@ -54,6 +54,15 @@
   --fd-validation-state-ready: #ffffff;
   --fd-validation-state-unknown: #d4d4d4;
   --fd-validation-state-disabled: #888888;
+
+  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  --fd-validation-red: #ff4040;
+  --fd-validation-red-bright: #ff8080;
+  --fd-validation-red-deep: #3a0000;
+  --fd-validation-glow: rgba(255, 64, 64, 0.65);
+  --fd-validation-tape-yellow: #ffff00;
+  --fd-validation-tape-dark: #000000;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {

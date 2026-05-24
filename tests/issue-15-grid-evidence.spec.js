@@ -49,6 +49,17 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
     fullPage: true,
   });
 
+  // Bonus: a cyberpunk screenshot proves the loud-token backfill works.
+  await page.evaluate(() => window.flowdashTheme.set('cyberpunk'));
+  await page.waitForTimeout(200);
+  await page.screenshot({
+    path: path.join(evidenceDir, 'after-04-validation-grid-cyberpunk.png'),
+    fullPage: true,
+  });
+  // Restore the default theme for the remaining assertions.
+  await page.evaluate(() => window.flowdashTheme.set('light'));
+  await page.waitForTimeout(150);
+
   // Size selector: switching to 'big' rebuilds; loud-style cells should
   // contain SVGs whose disc radius is bigger than at 'normal'.
   const normalRadius = await page.evaluate(() => {
@@ -78,4 +89,53 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
   expect(rebuildCount).toBeGreaterThan(0);
 
   expect(errors, 'no page or console errors').toEqual([]);
+});
+
+// Regression guard: every theme must drive BOTH the minimal cells and the
+// loud-style cells. Originally 8 of 10 themes lacked --fd-validation-red
+// etc., so loud cells fell back to a hardcoded hex and didn't repaint on
+// theme switch — the user-visible failure that motivated this guard.
+test('every theme drives minimal AND loud cells with distinct reds', async ({ page }) => {
+  await page.goto('/14_status/04_validation-grid/validation-grid.html');
+  await page.waitForSelector('table.grid tbody tr');
+  await page.waitForTimeout(200);
+
+  const THEMES = [
+    'light',
+    'dark',
+    'brutalism',
+    'cyberpunk',
+    'flat',
+    'glassmorphism',
+    'neumorphism',
+    'retro',
+    'high-contrast-light',
+    'high-contrast-dark',
+  ];
+  const minimalSel = 'g[data-cell-mode="minimal-bar"][data-cell-state="error"] rect.validation-bar';
+  const loudSel = 'g[data-cell-mode="pulse-halo"][data-cell-state="error"] circle.disc';
+
+  const minimalFills = [];
+  const loudFills = [];
+  for (const theme of THEMES) {
+    await page.evaluate((t) => window.flowdashTheme.set(t), theme);
+    await page.waitForTimeout(120);
+    const sample = await page.evaluate(
+      ({ ms, ls }) => ({
+        minimal: document.querySelector(ms)
+          ? getComputedStyle(document.querySelector(ms)).fill
+          : null,
+        loud: document.querySelector(ls) ? getComputedStyle(document.querySelector(ls)).fill : null,
+      }),
+      { ms: minimalSel, ls: loudSel },
+    );
+    expect.soft(sample.minimal, `${theme}: minimal-bar error cell missing`).toBeTruthy();
+    expect.soft(sample.loud, `${theme}: pulse-halo error disc missing`).toBeTruthy();
+    minimalFills.push(sample.minimal);
+    loudFills.push(sample.loud);
+  }
+
+  // Both axes must vary across themes — at least 4 distinct reds out of 10 themes.
+  expect(new Set(minimalFills).size).toBeGreaterThanOrEqual(4);
+  expect(new Set(loudFills).size).toBeGreaterThanOrEqual(4);
 });

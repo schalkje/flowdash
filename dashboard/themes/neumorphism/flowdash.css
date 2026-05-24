@@ -16,6 +16,15 @@
   --fd-validation-state-ready: #d1d5db;
   --fd-validation-state-unknown: #a8b0c0;
   --fd-validation-state-disabled: #6b7280;
+
+  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  --fd-validation-red: #e57373;
+  --fd-validation-red-bright: #f48a8a;
+  --fd-validation-red-deep: #7a2a2a;
+  --fd-validation-glow: rgba(229, 115, 115, 0.4);
+  --fd-validation-tape-yellow: #f5cf6f;
+  --fd-validation-tape-dark: #2d3142;
+  --fd-validation-text-on-red: #ffffff;
 }
 
 body {
