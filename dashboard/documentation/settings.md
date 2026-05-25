@@ -290,6 +290,56 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
         w: 24,
         h: 24
       }
+    },
+
+    // ============================================================
+    // VALIDATION INDICATORS
+    // ============================================================
+    // Per-node validation state is orthogonal to NodeStatus. See
+    // /dashboard/documentation/validation-indicators.md.
+
+    // Type: string (enum)
+    // Values: 'minimal-bar' | 'minimal-circle' | 'minimal-corner' |
+    //         'pulse-halo' | 'rotating-siren' | 'industrial-tape' |
+    //         'police-line' | 'none'
+    // Default: 'minimal-bar'
+    // UI: Select / Dropdown
+    // Description: Canonical dashboard-wide indicator mode. The 3 minimal
+    //              modes render the full 8-state validation vocabulary at
+    //              low visual cost; the 4 loud styles render only when
+    //              state is 'error'. Per-node overrides are set via
+    //              `node.validationIndicatorMode` on the node data.
+    validationIndicatorMode: 'minimal-bar',
+
+    validationIndicator: {
+      // Type: string (enum)
+      // Default: 'minimal-bar'
+      // Description: Legacy alias for `validationIndicatorMode` (above).
+      //              Reads/writes the same slot. Preserved so existing demos
+      //              calling `setValidationIndicatorStyle` keep working.
+      style: 'minimal-bar',
+
+      // Type: string (enum)
+      // Values: 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×)
+      // Default: 'normal'
+      // Description: Size scale for the four loud styles. Minimal modes
+      //              are fixed pixel size by design and ignore this.
+      size: 'normal',
+
+      // Type: string (single character)
+      // Default: '!'
+      // Description: Glyph drawn in the centre disc of the pulse-halo and
+      //              rotating-siren loud styles. Minimal modes do not
+      //              render a glyph.
+      glyph: '!',
+
+      // Type: boolean
+      // Default: true
+      // Description: Master animation toggle. When false, all indicator
+      //              animations freeze (useful for screenshots / prerender).
+      //              Independently, the renderer always honours
+      //              `prefers-reduced-motion: reduce` regardless of this flag.
+      animate: true
     }
   },
 
@@ -415,6 +465,52 @@ zoom: {
 **`epsilonPct`** - Precision threshold for zoom calculations (0.005 = 0.5%).
 
 **`minTargetBBoxPx`** - Minimum bounding box size in pixels to prevent over-zooming on tiny nodes.
+
+### Validation Indicators
+
+Per-node validation state is **orthogonal to `NodeStatus`**. A node can be `Ready` while its post-validation indicator shows `'busy'` or `'error'`. See [Validation Indicators Documentation](validation-indicators.md) for the full spec.
+
+**`validationIndicatorMode`** - Canonical dashboard-wide indicator mode. One of:
+
+- Minimal (render the full 8-state vocabulary at low visual cost): `'minimal-bar'`, `'minimal-circle'`, `'minimal-corner'`
+- Loud (only render when state is `'error'`): `'pulse-halo'`, `'rotating-siren'`, `'industrial-tape'`, `'police-line'`
+- Off: `'none'`
+
+Default: `'minimal-bar'`. Per-node overrides via `node.validationIndicatorMode` on the node data.
+
+**`validationIndicator.style`** - Legacy alias for `validationIndicatorMode`; reads/writes the same slot. Preserved so existing demos calling `setValidationIndicatorStyle(...)` continue to work.
+
+**`validationIndicator.size`** - Size scale (`'normal'` 1× → `'gigantic'` 8×) for the four loud styles. Minimal modes are fixed pixel size by design and ignore this.
+
+**`validationIndicator.glyph`** - Single character drawn in the centre disc of the pulse-halo and rotating-siren loud styles. Default: `'!'`.
+
+**`validationIndicator.animate`** - Master animation toggle. When `false`, all indicator animations freeze (useful for screenshots / prerender). Independently, the renderer always honours `prefers-reduced-motion: reduce` regardless of this flag.
+
+#### State vocabulary
+
+`preValidationState` and `postValidationState` on each node carry `{ state, message? }` where `state` is one of:
+
+| Value        | Meaning                                                |
+| ------------ | ------------------------------------------------------ |
+| `'unknown'`  | Validator not yet run                                  |
+| `'ready'`    | Configured and waiting                                 |
+| `'busy'`     | Validator currently running (animated indicator)       |
+| `'error'`    | Validator failed (only state where loud styles render) |
+| `'warning'`  | Validator produced a non-blocking warning              |
+| `'disabled'` | Explicitly turned off                                  |
+| `'ok'`       | Clean pass                                             |
+| `'na'`       | No validator on this side — default; emits no DOM      |
+
+Public API: `dashboard.setValidationStateById(id, side, { state, message? })`, `dashboard.clearValidationStateById(id, side?)`, `dashboard.setValidationIndicatorMode(mode)`.
+
+#### Theming
+
+Each theme under `dashboard/themes/<name>/flowdash.css` declares two related palettes:
+
+- `--fd-validation-state-{error,warning,ok,busy,ready,unknown,disabled}` — used by the minimal modes.
+- `--fd-validation-red`, `--fd-validation-red-bright`, `--fd-validation-red-deep`, `--fd-validation-glow`, `--fd-validation-tape-yellow`, `--fd-validation-tape-dark`, `--fd-validation-text-on-red` — used by the loud styles.
+
+The renderer reads colors via `var(--fd-validation-state-<state>, <fallback>)`, so theme switching re-tints indicators without re-rendering nodes.
 
 ## Usage Examples
 
