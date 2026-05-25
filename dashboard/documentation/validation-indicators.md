@@ -52,9 +52,12 @@ anything outside this set with a `console.warn`.
 
 The library ships **seven** visual modes plus `'none'`. Three are **minimal**
 (lightweight, render every state in a single small element). Four are the
-**loud** styles inherited from the original "red noses" implementation —
-they only render when state is `'error'` and continue to look exactly as
-they did before issue #15.
+**loud** styles — also known as **red nose** styles, the original
+visualisation the operations team named when this surface first shipped.
+"Loud" and "red nose" refer to the same four modes (`pulse-halo`,
+`rotating-siren`, `industrial-tape`, `police-line`); the doc and source
+use both terms interchangeably. They only render when state is `'error'`
+and continue to look exactly as they did before issue #15.
 
 The active mode is chosen via `settings.validationIndicatorMode` (dashboard-
 wide) or `node.validationIndicatorMode` (per-node override; wins).
@@ -76,7 +79,17 @@ All three minimal modes:
 - Are **fixed pixel size** — independent of the `VALIDATION_SIZES` token system
   (which continues to apply only to loud styles).
 
-### Loud styles (unchanged, error-only)
+### Loud styles — a.k.a. "red nose" styles (unchanged, error-only)
+
+These four modes are collectively the **red nose** family: they paint a
+dramatic, hard-to-miss overlay on the failing edge, designed for
+"this contract is broken — look at me" alerting. The name comes from the
+original red disc that anchored every loud treatment in the first
+implementation. Use any of the four when you want the error-on-this-edge
+signal to dominate the canvas; use a minimal mode when you want a calm,
+glance-friendly indicator instead. **Loud** and **red nose** refer to
+the same four modes and are used interchangeably throughout the docs
+and source.
 
 | Token               | Visual                                                             | Renders when                       |
 | ------------------- | ------------------------------------------------------------------ | ---------------------------------- |

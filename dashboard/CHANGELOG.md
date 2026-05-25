@@ -16,9 +16,9 @@ New 8-state validation vocabulary, independent of `NodeStatus`:
 
 Three new minimal indicator modes — `minimal-bar`, `minimal-circle`,
 `minimal-corner` — each rendering the full vocabulary at low visual cost.
-The four existing loud styles (`pulse-halo`, `rotating-siren`,
-`industrial-tape`, `police-line`) are unchanged in appearance but now
-render only when `state === 'error'`.
+The four existing **loud** styles, a.k.a. **red nose** styles
+(`pulse-halo`, `rotating-siren`, `industrial-tape`, `police-line`), are
+unchanged in appearance but now render only when `state === 'error'`.
 
 New `Dashboard` API:
 

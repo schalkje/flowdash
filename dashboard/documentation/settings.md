@@ -306,8 +306,10 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // UI: Select / Dropdown
     // Description: Canonical dashboard-wide indicator mode. The 3 minimal
     //              modes render the full 8-state validation vocabulary at
-    //              low visual cost; the 4 loud styles render only when
-    //              state is 'error'. Per-node overrides are set via
+    //              low visual cost; the 4 loud styles (a.k.a. "red nose"
+    //              styles: pulse-halo, rotating-siren, industrial-tape,
+    //              police-line) render only when state is 'error'.
+    //              Per-node overrides are set via
     //              `node.validationIndicatorMode` on the node data.
     validationIndicatorMode: 'minimal-bar',
 
@@ -473,10 +475,12 @@ Per-node validation state is **orthogonal to `NodeStatus`**. A node can be `Read
 **`validationIndicatorMode`** - Canonical dashboard-wide indicator mode. One of:
 
 - Minimal (render the full 8-state vocabulary at low visual cost): `'minimal-bar'`, `'minimal-circle'`, `'minimal-corner'`
-- Loud (only render when state is `'error'`): `'pulse-halo'`, `'rotating-siren'`, `'industrial-tape'`, `'police-line'`
+- Loud — a.k.a. **red nose** styles, the dramatic edge-anchored treatments that only render when state is `'error'`: `'pulse-halo'`, `'rotating-siren'`, `'industrial-tape'`, `'police-line'`
 - Off: `'none'`
 
 Default: `'minimal-bar'`. Per-node overrides via `node.validationIndicatorMode` on the node data.
+
+> "Loud" and "red nose" refer to the same four modes; the docs and source use both terms interchangeably. The name comes from the original red disc that anchored every loud treatment in the first implementation.
 
 **`validationIndicator.style`** - Legacy alias for `validationIndicatorMode`; reads/writes the same slot. Preserved so existing demos calling `setValidationIndicatorStyle(...)` continue to work.
 
