@@ -159,12 +159,12 @@
 
     <div class="controls">
       <div class="group">
-        <strong>Style:</strong>
+        <strong>Loud error:</strong>
         <div class="style-picker" id="stylePicker">
-          <button data-style="pulse-halo" aria-pressed="true">Pulse Halo</button>
-          <button data-style="rotating-siren">Rotating Siren</button>
-          <button data-style="industrial-tape">Industrial Tape</button>
-          <button data-style="police-line">Police Line</button>
+          <button data-style="pulse" aria-pressed="true">Pulse Halo</button>
+          <button data-style="siren">Rotating Siren</button>
+          <button data-style="tape">Industrial Tape</button>
+          <button data-style="police">Police Line</button>
           <button data-style="none">None</button>
         </div>
       </div>
@@ -184,7 +184,8 @@
     <div class="legend">
       Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
       <code>dashboard.setValidationStateById(id, 'pre' | 'post', { state, message? })</code>,
-      <code>dashboard.setValidationIndicatorMode(mode)</code>,
+      <code>dashboard.setValidationMode(mode)</code>,
+      <code>dashboard.setValidationLoudError(value)</code>,
       <code>dashboard.setValidationIndicatorSize(size)</code>.
     </div>
 
@@ -196,7 +197,8 @@
       <div class="demo-metadata">
         <p>
           <strong>Settings:</strong>
-          <code>validationIndicator.style</code> · <code>validationIndicator.glyph</code> ·
+          <code>validationMode</code> · <code>validationLoudError</code> ·
+          <code>validationIndicator.glyph</code> ·
           <code>validationIndicator.animate</code>
         </p>
       </div>
@@ -215,12 +217,12 @@
       }
       build(demoData);
 
-      // --- Style picker --------------------------------------------------
+      // --- Loud-error picker ---------------------------------------------
       const stylePicker = document.getElementById('stylePicker');
       stylePicker.querySelectorAll('button').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const style = btn.dataset.style;
-          dashboard.setValidationIndicatorStyle(style);
+          const value = btn.dataset.style;
+          dashboard.setValidationLoudError(value);
           stylePicker.querySelectorAll('button').forEach((b) => {
             b.setAttribute('aria-pressed', String(b === btn));
           });

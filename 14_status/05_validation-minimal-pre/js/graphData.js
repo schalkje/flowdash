@@ -1,9 +1,10 @@
-// Demo: minimal validation-indicator modes.
+// Demo: minimal validation-indicator modes — PRE side variant.
 //
-// Renders a row of 8 nodes, one per state in the validation vocabulary, so
-// each cell exercises a different (state, mode) combination. The matrix
-// dashboards below (constructed dynamically in the HTML) use this same shape
-// for each of the three minimal modes.
+// Mirror of 03_validation-minimal but drives the **pre** (left) side instead
+// of the post side. Renders a row of 8 nodes (one per state), so each cell
+// exercises a different (state, mode) combination on the inbound edge. The
+// matrix dashboards below (constructed dynamically in the HTML) use this
+// same shape for each of the three baseline modes.
 
 const STATES = ['unknown', 'ready', 'busy', 'error', 'warning', 'disabled', 'ok', 'na'];
 
@@ -15,10 +16,10 @@ function makeNode(state) {
     state: 'Ready',
     width: 96,
   };
-  // Drive the post-validation state on each node — pre stays 'na' so the
-  // post indicator on the right edge is the focus.
+  // Drive the pre-validation state on each node — post stays 'na' so the
+  // pre indicator on the left edge is the focus.
   if (state !== 'na') {
-    node.postValidationState =
+    node.preValidationState =
       state === 'error'
         ? { state: 'error', message: 'sample error message' }
         : state === 'warning'
@@ -32,9 +33,9 @@ export const STATE_VOCABULARY = STATES.slice();
 
 export const demoData = {
   metadata: {
-    name: 'validation-minimal',
+    name: 'validation-minimal-pre',
     description:
-      'Three minimal validation-indicator modes (bar / circle / corner) rendering the full 8-state vocabulary.',
+      'Three baseline validation-indicator modes (bar / circle / corner) rendering the full 8-state vocabulary on the pre (inbound) side.',
   },
   settings: {
     demoMode: true,
@@ -46,7 +47,7 @@ export const demoData = {
   nodes: [
     {
       id: 'root',
-      label: 'Validation states',
+      label: 'Validation states (pre side)',
       type: 'lane',
       children: STATES.map(makeNode),
     },
@@ -58,7 +59,7 @@ export const demoData = {
 // matrix-row dashboard (one per mode).
 export function buildFixtureForMode(mode) {
   return {
-    metadata: { name: `validation-minimal-${mode}`, description: `Matrix row: mode=${mode}` },
+    metadata: { name: `validation-minimal-pre-${mode}`, description: `Matrix row: mode=${mode}` },
     settings: {
       demoMode: true,
       toggleCollapseOnStatusChange: false,

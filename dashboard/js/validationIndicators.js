@@ -4,39 +4,39 @@
 //
 // A node carries `preValidationState` (input side, left edge) and
 // `postValidationState` (output side, right edge), each `{ state, message? }`
-// where state is one of the 8-value VALIDATION_STATES enum below. The
-// renderer paints either a lightweight minimal indicator (bar / circle /
-// corner) or one of the four loud "red-nose" styles, on top of the node so
-// the signal is unmistakable.
+// where state is one of the 8-value vocabulary defined in nodeBase.js.
+//
+// Two orthogonal style axes, composed per side by resolveEffectiveStyleForSide:
+//   validationMode      — baseline indicator (bar / circle / corner / none).
+//                         Renders every state ≠ 'na'.
+//   validationLoudError — error-only overlay (pulse / siren / tape / police / none).
+//                         Fires only on state === 'error'; replaces the baseline
+//                         on that side.
 //
 // See /dashboard/documentation/validation-indicators.md for the spec.
 
-// The four loud styles + 'none' — kept for back-compat with existing demos.
+// Two orthogonal axes — see resolveEffectiveStyleForSide() for composition.
+//   Baseline styles render every visible state ≠ 'na'.
+//   Loud styles fire only when state === 'error' and replace the baseline.
+export const VALIDATION_BASELINE_STYLES = Object.freeze(['none', 'bar', 'circle', 'corner']);
+export const VALIDATION_LOUD_STYLES = Object.freeze(['none', 'pulse', 'siren', 'tape', 'police']);
+
+// Full union of allowed style values across both axes. Used by the renderer
+// to validate the incoming opts and by tests / debug logs.
 export const VALIDATION_STYLES = Object.freeze([
-  'pulse-halo',
-  'rotating-siren',
-  'industrial-tape',
-  'police-line',
   'none',
+  'bar',
+  'circle',
+  'corner',
+  'pulse',
+  'siren',
+  'tape',
+  'police',
 ]);
 
-// All valid validationIndicatorMode values: 3 minimal + 4 loud + 'none'.
-export const VALIDATION_MODES = Object.freeze([
-  'minimal-bar',
-  'minimal-circle',
-  'minimal-corner',
-  'pulse-halo',
-  'rotating-siren',
-  'industrial-tape',
-  'police-line',
-  'none',
-]);
-
-const MODE_SET = new Set(VALIDATION_MODES);
-
-const LOUD_MODES = new Set(['pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line']);
-
-const MINIMAL_MODES = new Set(['minimal-bar', 'minimal-circle', 'minimal-corner']);
+const BASELINE_SET = new Set(VALIDATION_BASELINE_STYLES);
+const LOUD_SET = new Set(VALIDATION_LOUD_STYLES);
+const STYLE_SET = new Set(VALIDATION_STYLES);
 
 // State→color fallbacks. Themes override via the matching CSS custom property
 // (--fd-validation-state-<name>) on dashboard/themes/<name>/flowdash.css. 'na'
@@ -92,16 +92,34 @@ export function shouldAnimate(opts) {
 }
 
 /**
+ * Pure: resolves the style to render for a single side given the two axes
+ * and the side's state. Returns the style name (one of VALIDATION_STYLES,
+ * minus 'none') or `null` for "emit no DOM."
+ *
+ * @param {string} validationMode      one of VALIDATION_BASELINE_STYLES
+ * @param {string} validationLoudError one of VALIDATION_LOUD_STYLES
+ * @param {string} state               one of the 8-state vocabulary
+ * @returns {string|null}
+ */
+export function resolveEffectiveStyleForSide(validationMode, validationLoudError, state) {
+  if (state === 'na') return null;
+  if (state === 'error' && validationLoudError !== 'none') return validationLoudError;
+  if (validationMode !== 'none') return validationMode;
+  return null;
+}
+
+/**
  * Idempotent: removes any existing indicator layer and re-paints from scratch
- * based on the supplied pre/post validation states.
+ * based on the supplied pre/post validation states and the two-axis config.
  *
  * @param {*} nodeG       D3 selection of the node's <g>
  * @param {object} opts
  * @param {number} opts.width   effective node width
  * @param {number} opts.height  effective node height
- * @param {string} [opts.style]   one of VALIDATION_MODES; defaults to 'minimal-bar'
- * @param {string} [opts.size]    one of VALIDATION_SIZES (loud styles only); defaults to 'normal'
- * @param {string} [opts.glyph]   single character drawn in pulse-halo/siren disc; default '!'
+ * @param {string} [opts.validationMode]      one of VALIDATION_BASELINE_STYLES; defaults to 'bar'
+ * @param {string} [opts.validationLoudError] one of VALIDATION_LOUD_STYLES; defaults to 'none'
+ * @param {string} [opts.size]    one of VALIDATION_SIZES (loud overlay only); defaults to 'normal'
+ * @param {string} [opts.glyph]   single character drawn in pulse/siren disc; default '!'
  * @param {boolean} [opts.animate] enable animations; default true (honours prefers-reduced-motion)
  * @param {{state: string, message?: string}} opts.preState   pre-validation state object
  * @param {{state: string, message?: string}} opts.postState  post-validation state object
@@ -110,12 +128,29 @@ export function renderValidationIndicators(nodeG, opts) {
   if (!nodeG || typeof nodeG.node !== 'function') return;
   clearValidationIndicators(nodeG);
 
-  const mode = MODE_SET.has(opts.style) ? opts.style : 'minimal-bar';
-  if (mode === 'none') return;
+  const validationMode = BASELINE_SET.has(opts.validationMode) ? opts.validationMode : 'bar';
+  const validationLoudError = LOUD_SET.has(opts.validationLoudError)
+    ? opts.validationLoudError
+    : 'none';
+
+  // Fast path: both axes off — never any DOM.
+  if (validationMode === 'none' && validationLoudError === 'none') return;
 
   const preState = opts.preState || { state: 'na' };
   const postState = opts.postState || { state: 'na' };
-  if (preState.state === 'na' && postState.state === 'na') return;
+
+  const preStyle = resolveEffectiveStyleForSide(
+    validationMode,
+    validationLoudError,
+    preState.state,
+  );
+  const postStyle = resolveEffectiveStyleForSide(
+    validationMode,
+    validationLoudError,
+    postState.state,
+  );
+
+  if (preStyle === null && postStyle === null) return;
 
   const w = Number(opts.width) || 0;
   const h = Number(opts.height) || 0;
@@ -126,8 +161,8 @@ export function renderValidationIndicators(nodeG, opts) {
   const layer = nodeG
     .append('g')
     .attr('class', 'validation-indicators')
-    .attr('data-mode', mode)
-    .attr('data-style', mode);
+    .attr('data-validation-mode', validationMode)
+    .attr('data-validation-loud-error', validationLoudError);
 
   const messages = [];
   if (preState.state === 'error' || preState.state === 'warning') {
@@ -142,44 +177,37 @@ export function renderValidationIndicators(nodeG, opts) {
   }
   if (messages.length) layer.attr('aria-label', messages.join(' · '));
 
-  if (MINIMAL_MODES.has(mode)) {
-    if (preState.state !== 'na') drawMinimal(layer, 'pre', preState, mode, w, h, animate);
-    if (postState.state !== 'na') drawMinimal(layer, 'post', postState, mode, w, h, animate);
+  const glyph = opts.glyph ?? '!';
+  const sizeKey = opts.size && SIZE_SCALES[opts.size] ? opts.size : 'normal';
+  const sizeScale = SIZE_SCALES[sizeKey];
+  layer.attr('data-size', sizeKey);
+
+  if (preStyle !== null)
+    drawForSide(layer, 'pre', preStyle, preState, w, h, animate, sizeScale, glyph);
+  if (postStyle !== null)
+    drawForSide(layer, 'post', postStyle, postState, w, h, animate, sizeScale, glyph);
+}
+
+// Dispatch to the right drawer based on which axis the resolved style belongs to.
+function drawForSide(layer, side, style, stateObj, w, h, animate, sizeScale, glyph) {
+  if (BASELINE_SET.has(style)) {
+    drawBaseline(layer, side, stateObj, style, w, h, animate);
     return;
   }
-
-  if (LOUD_MODES.has(mode)) {
-    const glyph = opts.glyph ?? '!';
-    const sizeKey = opts.size && SIZE_SCALES[opts.size] ? opts.size : 'normal';
-    const sizeScale = SIZE_SCALES[sizeKey];
-    layer.attr('data-size', sizeKey);
-    // Loud styles render only on 'error' — for all other 7 states, render nothing.
-    const preErr = preState.state === 'error' ? preState.message || true : false;
-    const postErr = postState.state === 'error' ? postState.message || true : false;
-    if (preErr) {
-      drawSide(layer, 'pre', {
-        anchorX: -w / 2,
-        width: w,
-        height: h,
-        glyph,
-        animate,
-        style: mode,
-        sizeScale,
-        message: typeof preErr === 'string' ? preErr : null,
-      });
-    }
-    if (postErr) {
-      drawSide(layer, 'post', {
-        anchorX: w / 2,
-        width: w,
-        height: h,
-        glyph,
-        animate,
-        style: mode,
-        sizeScale,
-        message: typeof postErr === 'string' ? postErr : null,
-      });
-    }
+  if (LOUD_SET.has(style)) {
+    const anchorX = side === 'pre' ? -w / 2 : w / 2;
+    const message =
+      stateObj.message && typeof stateObj.message === 'string' ? stateObj.message : null;
+    drawLoudSide(layer, side, {
+      anchorX,
+      width: w,
+      height: h,
+      glyph,
+      animate,
+      style,
+      sizeScale,
+      message,
+    });
   }
 }
 
@@ -201,27 +229,28 @@ export function clearValidationIndicators(nodeG) {
   }
 }
 
-function drawSide(layer, side, ctx) {
+function drawLoudSide(layer, side, ctx) {
   const g = layer
     .append('g')
     .attr('class', `validation-indicator side-${side}`)
     .attr('data-side', side)
-    .attr('data-style', ctx.style);
+    .attr('data-validation-style', ctx.style)
+    .attr('data-validation-state', 'error');
 
   if (ctx.message) {
     g.append('title').text(ctx.message);
   }
 
   switch (ctx.style) {
-    case 'rotating-siren':
+    case 'siren':
       return drawSiren(g, side, ctx);
-    case 'industrial-tape':
-      return drawIndustrialTape(g, side, ctx);
-    case 'police-line':
-      return drawPoliceLine(g, side, ctx);
-    case 'pulse-halo':
+    case 'tape':
+      return drawTape(g, side, ctx);
+    case 'police':
+      return drawPolice(g, side, ctx);
+    case 'pulse':
     default:
-      return drawPulseHalo(g, side, ctx);
+      return drawPulse(g, side, ctx);
   }
 }
 
@@ -258,9 +287,9 @@ function drawDisc(parent, cx, cy, r, glyph, fontSize = 13) {
     .text(glyph);
 }
 
-// --- Style: Pulse Halo -----------------------------------------------------
+// --- Style: Pulse ----------------------------------------------------------
 
-function drawPulseHalo(g, side, ctx) {
+function drawPulse(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
   const r = 11 * ctx.sizeScale;
@@ -297,7 +326,7 @@ function drawPulseHalo(g, side, ctx) {
   drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }
 
-// --- Style: Rotating Siren -------------------------------------------------
+// --- Style: Siren ----------------------------------------------------------
 
 function drawSiren(g, side, ctx) {
   const cx = ctx.anchorX;
@@ -353,9 +382,9 @@ function drawSiren(g, side, ctx) {
   drawDisc(center, 0, 0, r, ctx.glyph, fontSize);
 }
 
-// --- Style: Industrial Tape ------------------------------------------------
+// --- Style: Tape -----------------------------------------------------------
 
-function drawIndustrialTape(g, side, ctx) {
+function drawTape(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
   const s = ctx.sizeScale;
@@ -408,9 +437,9 @@ function drawIndustrialTape(g, side, ctx) {
   drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }
 
-// --- Style: Police Line ----------------------------------------------------
+// --- Style: Police ---------------------------------------------------------
 
-function drawPoliceLine(g, side, ctx) {
+function drawPolice(g, side, ctx) {
   const cx = ctx.anchorX;
   const cy = 0;
   const s = ctx.sizeScale;
@@ -481,7 +510,7 @@ function drawPoliceLine(g, side, ctx) {
   drawDisc(g, cx, cy, r, ctx.glyph, fontSize);
 }
 
-// --- Minimal modes ---------------------------------------------------------
+// --- Baseline styles -------------------------------------------------------
 //
 // Three small, low-visual-cost indicators that render the full 8-state
 // vocabulary (minus 'na', which produces no DOM). Fixed pixel sizes,
@@ -489,12 +518,12 @@ function drawPoliceLine(g, side, ctx) {
 // var(--fd-validation-state-<state>, <fallback>) so themes can override per
 // aesthetic without renderer changes.
 
-function drawMinimal(layer, side, stateObj, mode, w, h, animate) {
+function drawBaseline(layer, side, stateObj, style, w, h, animate) {
   const g = layer
     .append('g')
     .attr('class', `validation-indicator side-${side}`)
     .attr('data-side', side)
-    .attr('data-mode', mode)
+    .attr('data-validation-style', style)
     .attr('data-validation-state', stateObj.state);
 
   // Tooltip: only for error/warning with a non-empty message
@@ -510,18 +539,18 @@ function drawMinimal(layer, side, stateObj, mode, w, h, animate) {
     g.classed('validation-indicator--busy', true);
   }
 
-  switch (mode) {
-    case 'minimal-circle':
-      return drawMinimalCircle(g, side, stateObj.state, w, h, animate);
-    case 'minimal-corner':
-      return drawMinimalCorner(g, side, stateObj.state, w, h, animate);
-    case 'minimal-bar':
+  switch (style) {
+    case 'circle':
+      return drawBaselineCircle(g, side, stateObj.state, w, h, animate);
+    case 'corner':
+      return drawBaselineCorner(g, side, stateObj.state, w, h, animate);
+    case 'bar':
     default:
-      return drawMinimalBar(g, side, stateObj.state, w, h, animate);
+      return drawBaselineBar(g, side, stateObj.state, w, h, animate);
   }
 }
 
-function drawMinimalBar(g, side, state, w, h, animate) {
+function drawBaselineBar(g, side, state, w, h, animate) {
   // 3px-wide vertical bar, 60% of edge height, centered vertically, 1px inset
   // from the edge. Left edge = pre, right edge = post.
   const barW = 3;
@@ -549,7 +578,7 @@ function drawMinimalBar(g, side, state, w, h, animate) {
   }
 }
 
-function drawMinimalCircle(g, side, state, w, h, animate) {
+function drawBaselineCircle(g, side, state, w, h, animate) {
   // Filled circle, radius 4px, centered on the inbound (left) / outbound
   // (right) connection point in node-local coordinates.
   const r = 4;
@@ -575,7 +604,7 @@ function drawMinimalCircle(g, side, state, w, h, animate) {
   }
 }
 
-function drawMinimalCorner(g, side, state, w, h, animate) {
+function drawBaselineCorner(g, side, state, w, h, animate) {
   // 6×6px right-triangle chevron seated on the corner. Top-left = pre,
   // top-right = post. Hypotenuse lies along the corner so the chevron
   // points outside the rect.

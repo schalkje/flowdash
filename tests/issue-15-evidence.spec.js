@@ -26,33 +26,33 @@ test.describe(`issue-15 evidence — ${PHASE}`, () => {
     await page.waitForSelector('[data-flowdash-ready="true"]', { timeout: 8000 });
     await page.waitForTimeout(400); // settle initial render
 
-    // pulse-halo default
+    // pulse default
     await page.screenshot({
-      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-pulse-halo.png`),
+      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-pulse.png`),
       fullPage: true,
     });
 
-    // rotating-siren
-    await page.evaluate(() => window.dashboard?.setValidationIndicatorStyle?.('rotating-siren'));
+    // siren
+    await page.evaluate(() => window.dashboard?.setValidationLoudError?.('siren'));
     await page.waitForTimeout(300);
     await page.screenshot({
-      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-rotating-siren.png`),
+      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-siren.png`),
       fullPage: true,
     });
 
-    // industrial-tape
-    await page.evaluate(() => window.dashboard?.setValidationIndicatorStyle?.('industrial-tape'));
+    // tape
+    await page.evaluate(() => window.dashboard?.setValidationLoudError?.('tape'));
     await page.waitForTimeout(300);
     await page.screenshot({
-      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-industrial-tape.png`),
+      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-tape.png`),
       fullPage: true,
     });
 
-    // police-line
-    await page.evaluate(() => window.dashboard?.setValidationIndicatorStyle?.('police-line'));
+    // police
+    await page.evaluate(() => window.dashboard?.setValidationLoudError?.('police'));
     await page.waitForTimeout(300);
     await page.screenshot({
-      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-police-line.png`),
+      path: path.join(evidenceDir, `${PHASE}-02-validation-errors-police.png`),
       fullPage: true,
     });
 

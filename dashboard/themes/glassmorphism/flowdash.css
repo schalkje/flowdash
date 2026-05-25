@@ -17,7 +17,7 @@
   --fd-validation-state-unknown: rgba(203, 213, 225, 0.7);
   --fd-validation-state-disabled: rgba(100, 116, 139, 0.6);
 
-  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  /* Validation loud-overlay tokens (pulse / siren / tape / police) */
   --fd-validation-red: #ff6b7a;
   --fd-validation-red-bright: #ff8da0;
   --fd-validation-red-deep: #5a0f1a;

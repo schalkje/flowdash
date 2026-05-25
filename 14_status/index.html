@@ -32,17 +32,31 @@
         <li>
           <a href="03_validation-minimal/validation-minimal.html">Validation — minimal modes</a>
           <div class="demo-description">
-            Three lightweight indicator modes (minimal-bar, minimal-circle, minimal-corner) that
-            render the full eight-state validation vocabulary (unknown / ready / busy / error /
-            warning / disabled / ok / na). Interactive row + 3-mode × 8-state matrix view.
+            Three lightweight baseline modes (bar, circle, corner) that render the full eight-state
+            validation vocabulary (unknown / ready / busy / error / warning / disabled / ok / na),
+            plus a loud-error overlay (pulse / siren / tape / police). Interactive row + 3-mode ×
+            8-state matrix view.
           </div>
         </li>
         <li>
           <a href="04_validation-grid/validation-grid.html">Validation — full state × mode grid</a>
           <div class="demo-description">
-            Compact pixel-grid: 8 states × 7 modes (3 minimal + 4 loud), one screen, theme picker.
-            Includes a dedicated <code>error (red nose)</code> callout row right under
-            <code>error</code> highlighting how the loud styles reframe the same condition.
+            Compact pixel-grid: 8 states × 7 columns (3 baseline <code>validationMode</code> + 4
+            loud <code>validationLoudError</code>), one screen, theme picker. Includes a dedicated
+            <code>error (red nose)</code> callout row right under <code>error</code> highlighting
+            how the loud overlay reframes the same condition.
+          </div>
+        </li>
+        <li>
+          <a href="05_validation-minimal-pre/validation-minimal-pre.html"
+            >Validation — minimal modes (pre side)</a
+          >
+          <div class="demo-description">
+            Mirror of <code>03_validation-minimal</code> driving the
+            <strong>pre (left) side</strong>
+            of each node instead of the post side. Same three baseline modes and same loud-error
+            overlay, attached to the inbound edge. Useful for catching one-sided regressions where a
+            renderer change to post happens to break pre (or vice versa).
           </div>
         </li>
       </ul>

@@ -119,12 +119,12 @@
     </header>
 
     <div class="validation-style-picker">
-      <strong>Validation style:</strong>
+      <strong>Loud error:</strong>
       <div class="group" id="validationStylePicker">
-        <button data-style="pulse-halo" aria-pressed="true">Pulse Halo</button>
-        <button data-style="rotating-siren">Rotating Siren</button>
-        <button data-style="industrial-tape">Industrial Tape</button>
-        <button data-style="police-line">Police Line</button>
+        <button data-style="pulse" aria-pressed="true">Pulse Halo</button>
+        <button data-style="siren">Rotating Siren</button>
+        <button data-style="tape">Industrial Tape</button>
+        <button data-style="police">Police Line</button>
         <button data-style="none">None</button>
       </div>
       <span class="hint">applies to every ★ exemplar across the columns</span>
@@ -158,11 +158,11 @@
       window.flowdash = dashboard;
       window.dashboard = dashboard;
 
-      // Validation-style switcher — flips every ★ exemplar's red nose live.
+      // Loud-error switcher — flips every ★ exemplar's red nose live.
       const picker = document.getElementById('validationStylePicker');
       picker.querySelectorAll('button').forEach((btn) => {
         btn.addEventListener('click', () => {
-          dashboard.setValidationIndicatorStyle(btn.dataset.style);
+          dashboard.setValidationLoudError(btn.dataset.style);
           picker.querySelectorAll('button').forEach((b) => {
             b.setAttribute('aria-pressed', String(b === btn));
           });

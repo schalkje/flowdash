@@ -51,15 +51,16 @@ export const DEFAULT_SETTINGS = {
   // Validation indicators. Orthogonal to NodeStatus — see
   // /dashboard/documentation/validation-indicators.md.
   //
-  // Canonical setting: validationIndicatorMode. Three minimal modes render the
-  // full 8-state vocabulary; four loud styles render only when state==='error'.
-  // The legacy validationIndicator.style slot is kept for back-compat and is
-  // synchronized with validationIndicatorMode at runtime.
-  validationIndicatorMode: 'minimal-bar', // 'minimal-bar' | 'minimal-circle' | 'minimal-corner' | 'pulse-halo' | 'rotating-siren' | 'industrial-tape' | 'police-line' | 'none'
+  // Two orthogonal axes:
+  //   validationMode      — always-on baseline. Renders every state ≠ 'na'.
+  //   validationLoudError — error-only overlay. Fires only when state === 'error';
+  //                         replaces the baseline on that side.
+  // Per-node override: node.validationMode / node.validationLoudError on nodeData.
+  validationMode: 'bar', // 'bar' | 'circle' | 'corner' | 'none'
+  validationLoudError: 'none', // 'pulse' | 'siren' | 'tape' | 'police' | 'none'
   validationIndicator: {
-    style: 'minimal-bar', // legacy alias for validationIndicatorMode
-    size: 'normal', // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×) — loud styles only
-    glyph: '!', // loud styles only
+    size: 'normal', // 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×) — loud overlay only
+    glyph: '!', // loud overlay only
     animate: true,
   },
 };

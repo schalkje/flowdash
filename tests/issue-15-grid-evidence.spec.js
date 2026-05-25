@@ -60,10 +60,10 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
   await page.evaluate(() => window.flowdashTheme.set('light'));
   await page.waitForTimeout(150);
 
-  // Size selector: switching to 'big' rebuilds; loud-style cells should
+  // Size selector: switching to 'big' rebuilds; loud-overlay cells should
   // contain SVGs whose disc radius is bigger than at 'normal'.
   const normalRadius = await page.evaluate(() => {
-    const cell = document.querySelector('g[data-cell-mode="pulse-halo"][data-cell-state="error"]');
+    const cell = document.querySelector('g[data-cell-col="pulse"][data-cell-state="error"]');
     const disc = cell?.querySelector('circle.disc');
     return disc ? Number(disc.getAttribute('r')) : null;
   });
@@ -72,7 +72,7 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
   await page.selectOption('#sizePicker', 'big');
   await page.waitForTimeout(150);
   const bigRadius = await page.evaluate(() => {
-    const cell = document.querySelector('g[data-cell-mode="pulse-halo"][data-cell-state="error"]');
+    const cell = document.querySelector('g[data-cell-col="pulse"][data-cell-state="error"]');
     const disc = cell?.querySelector('circle.disc');
     return disc ? Number(disc.getAttribute('r')) : null;
   });
@@ -91,11 +91,11 @@ test('04_validation-grid renders the full state × mode grid', async ({ page }) 
   expect(errors, 'no page or console errors').toEqual([]);
 });
 
-// Regression guard: every theme must drive BOTH the minimal cells and the
-// loud-style cells. Originally 8 of 10 themes lacked --fd-validation-red
+// Regression guard: every theme must drive BOTH the baseline cells and the
+// loud-overlay cells. Originally 8 of 10 themes lacked --fd-validation-red
 // etc., so loud cells fell back to a hardcoded hex and didn't repaint on
 // theme switch — the user-visible failure that motivated this guard.
-test('every theme drives minimal AND loud cells with distinct reds', async ({ page }) => {
+test('every theme drives baseline AND loud cells with distinct reds', async ({ page }) => {
   await page.goto('/14_status/04_validation-grid/validation-grid.html');
   await page.waitForSelector('table.grid tbody tr');
   await page.waitForTimeout(200);
@@ -112,30 +112,30 @@ test('every theme drives minimal AND loud cells with distinct reds', async ({ pa
     'high-contrast-light',
     'high-contrast-dark',
   ];
-  const minimalSel = 'g[data-cell-mode="minimal-bar"][data-cell-state="error"] rect.validation-bar';
-  const loudSel = 'g[data-cell-mode="pulse-halo"][data-cell-state="error"] circle.disc';
+  const baselineSel = 'g[data-cell-col="bar"][data-cell-state="error"] rect.validation-bar';
+  const loudSel = 'g[data-cell-col="pulse"][data-cell-state="error"] circle.disc';
 
-  const minimalFills = [];
+  const baselineFills = [];
   const loudFills = [];
   for (const theme of THEMES) {
     await page.evaluate((t) => window.flowdashTheme.set(t), theme);
     await page.waitForTimeout(120);
     const sample = await page.evaluate(
-      ({ ms, ls }) => ({
-        minimal: document.querySelector(ms)
-          ? getComputedStyle(document.querySelector(ms)).fill
+      ({ bs, ls }) => ({
+        baseline: document.querySelector(bs)
+          ? getComputedStyle(document.querySelector(bs)).fill
           : null,
         loud: document.querySelector(ls) ? getComputedStyle(document.querySelector(ls)).fill : null,
       }),
-      { ms: minimalSel, ls: loudSel },
+      { bs: baselineSel, ls: loudSel },
     );
-    expect.soft(sample.minimal, `${theme}: minimal-bar error cell missing`).toBeTruthy();
-    expect.soft(sample.loud, `${theme}: pulse-halo error disc missing`).toBeTruthy();
-    minimalFills.push(sample.minimal);
+    expect.soft(sample.baseline, `${theme}: baseline bar error cell missing`).toBeTruthy();
+    expect.soft(sample.loud, `${theme}: pulse error disc missing`).toBeTruthy();
+    baselineFills.push(sample.baseline);
     loudFills.push(sample.loud);
   }
 
   // Both axes must vary across themes — at least 4 distinct reds out of 10 themes.
-  expect(new Set(minimalFills).size).toBeGreaterThanOrEqual(4);
+  expect(new Set(baselineFills).size).toBeGreaterThanOrEqual(4);
   expect(new Set(loudFills).size).toBeGreaterThanOrEqual(4);
 });

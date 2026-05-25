@@ -56,7 +56,7 @@
   --fd-validation-state-unknown: #4a4a4a;
   --fd-validation-state-disabled: #808080;
 
-  /* Validation loud-style tokens (pulse-halo / siren / tape / police) */
+  /* Validation loud-overlay tokens (pulse / siren / tape / police) */
   --fd-validation-red: #a30000;
   --fd-validation-red-bright: #d10000;
   --fd-validation-red-deep: #4a0000;
