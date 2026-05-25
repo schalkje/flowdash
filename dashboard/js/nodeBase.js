@@ -284,18 +284,16 @@ export default class BaseNode {
     if (!this.element) return;
     const settings = this.settings || {};
     const vi = settings.validationIndicator || {};
-    // Mode resolution: per-node override wins over dashboard-wide setting; both
-    // fall back to the legacy `validationIndicator.style` slot and then to the
-    // canonical default.
-    const mode =
-      this.data?.validationIndicatorMode ??
-      settings.validationIndicatorMode ??
-      vi.style ??
-      'minimal-bar';
+    // Two-axis resolution: per-node override wins over dashboard-wide setting.
+    // Each axis resolves independently.
+    const validationMode = this.data?.validationMode ?? settings.validationMode ?? 'bar';
+    const validationLoudError =
+      this.data?.validationLoudError ?? settings.validationLoudError ?? 'none';
     renderValidationIndicators(this.element, {
       width: this.data.width,
       height: this.data.height,
-      style: mode,
+      validationMode,
+      validationLoudError,
       size: vi.size,
       glyph: vi.glyph,
       animate: vi.animate,

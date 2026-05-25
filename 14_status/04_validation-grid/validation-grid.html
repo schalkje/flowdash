@@ -212,11 +212,13 @@
       // dashboards use in the wild.
       import RectangularNode from '../../dashboard/js/nodeRect.js';
       import { ConfigManager } from '../../dashboard/js/configManager.js';
-      import { VALIDATION_MODES } from '../../dashboard/js/validationIndicators.js';
       import { VALIDATION_STATES } from '../../dashboard/js/nodeBase.js';
 
-      const MINIMAL_MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
-      const LOUD_MODES = ['pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line'];
+      // Two orthogonal axes:
+      //   baseline column → node.validationMode = <col>, validationLoudError = 'none'
+      //   loud column     → node.validationMode = 'none', validationLoudError = <col>
+      const BASELINE_MODES = ['bar', 'circle', 'corner'];
+      const LOUD_ERRORS = ['pulse', 'siren', 'tape', 'police'];
       // Render order: skip 'na' at the top (it's listed at the bottom as the "empty" sentinel)
       const STATE_ORDER = ['unknown', 'ready', 'busy', 'error', 'warning', 'disabled', 'ok', 'na'];
 
@@ -229,13 +231,15 @@
       // Track live node instances so the grid can be wiped + rebuilt cleanly.
       const liveNodes = [];
 
-      function buildCell(state, mode) {
+      function buildCell(state, col) {
         const td = document.createElement('td');
         const wrapper = document.createElement('div');
         wrapper.className = 'cell';
 
-        // Loud modes only render for 'error'; mark non-error cells as empty
-        if (LOUD_MODES.includes(mode) && state !== 'error') {
+        const isLoud = LOUD_ERRORS.includes(col);
+
+        // Loud overlay only renders for 'error'; mark non-error cells as empty
+        if (isLoud && state !== 'error') {
           wrapper.classList.add('empty');
           td.appendChild(wrapper);
           return td;
@@ -278,16 +282,18 @@
               : { state };
 
         const nodeData = {
-          id: `cell-${state}-${mode}`,
+          id: `cell-${state}-${col}`,
           label: '',
           type: 'rect',
           state: 'Ready',
           width: REF_W,
           height: REF_H,
           layout: { layoutMode: 'fixed-size', width: REF_W, height: REF_H },
-          // Per-node validation-indicator-mode override (wins over dashboard
-          // default in BaseNode._renderValidationIndicators).
-          validationIndicatorMode: mode,
+          // Per-node attribute overrides — see BaseNode._renderValidationIndicators.
+          // Baseline columns drive the baseline; loud columns drive the overlay
+          // (with baseline 'none' so the loud value is the only thing that renders).
+          validationMode: isLoud ? 'none' : col,
+          validationLoudError: isLoud ? col : 'none',
           postValidationState: valueObj,
         };
 
@@ -296,7 +302,7 @@
         // draws at -w/2..+w/2 around its own origin) lands inside the cell.
         const cellG = svg
           .append('g')
-          .attr('data-cell-mode', mode)
+          .attr('data-cell-col', col)
           .attr('data-cell-state', state)
           .attr('transform', `translate(${CELL_W / 2}, ${CELL_H / 2})`);
 
@@ -324,34 +330,35 @@
         // Drop live-node references so the old nodes are GC-able.
         liveNodes.length = 0;
 
-        const allModes = [...MINIMAL_MODES, ...LOUD_MODES];
+        const allColumns = [...BASELINE_MODES, ...LOUD_ERRORS];
 
-        // Header row: 2 grouped column-heads (minimal / loud) then per-mode tokens
+        // Header row: 2 grouped column-heads (baseline / loud) then per-column tokens
         const thead = document.createElement('thead');
         const groupRow = document.createElement('tr');
         groupRow.appendChild(document.createElement('th'));
-        const minimalGroup = document.createElement('th');
-        minimalGroup.colSpan = MINIMAL_MODES.length;
-        minimalGroup.className = 'col-head';
-        minimalGroup.innerHTML =
-          '<span class="group-label">minimal — full vocabulary</span> 3 modes';
-        groupRow.appendChild(minimalGroup);
+        const baselineGroup = document.createElement('th');
+        baselineGroup.colSpan = BASELINE_MODES.length;
+        baselineGroup.className = 'col-head';
+        baselineGroup.innerHTML =
+          '<span class="group-label">validationMode — baseline (full vocabulary)</span> 3 styles';
+        groupRow.appendChild(baselineGroup);
         const loudGroup = document.createElement('th');
-        loudGroup.colSpan = LOUD_MODES.length;
+        loudGroup.colSpan = LOUD_ERRORS.length;
         loudGroup.className = 'col-head';
-        loudGroup.innerHTML = '<span class="group-label">loud — error only</span> 4 styles';
+        loudGroup.innerHTML =
+          '<span class="group-label">validationLoudError — error only</span> 4 styles';
         groupRow.appendChild(loudGroup);
         thead.appendChild(groupRow);
 
-        const modeRow = document.createElement('tr');
-        modeRow.appendChild(document.createElement('th'));
-        allModes.forEach((m) => {
+        const colRow = document.createElement('tr');
+        colRow.appendChild(document.createElement('th'));
+        allColumns.forEach((c) => {
           const th = document.createElement('th');
           th.className = 'col-head';
-          th.textContent = m;
-          modeRow.appendChild(th);
+          th.textContent = c;
+          colRow.appendChild(th);
         });
-        thead.appendChild(modeRow);
+        thead.appendChild(colRow);
         grid.appendChild(thead);
 
         const tbody = document.createElement('tbody');
@@ -367,7 +374,7 @@
             head.appendChild(note);
           }
           tr.appendChild(head);
-          allModes.forEach((mode) => tr.appendChild(buildCell(state, mode)));
+          allColumns.forEach((col) => tr.appendChild(buildCell(state, col)));
           tbody.appendChild(tr);
 
           // Right after 'error': the explicit "error (red nose)" callout row
@@ -379,19 +386,19 @@
             calloutHead.textContent = 'error (red nose)';
             const note = document.createElement('span');
             note.className = 'row-note';
-            note.textContent = 'same error · loud styles';
+            note.textContent = 'same error · loud overlay';
             calloutHead.appendChild(note);
             calloutTr.appendChild(calloutHead);
-            // Minimal columns: leave blank in the callout (they were already rendered above)
-            MINIMAL_MODES.forEach(() => {
+            // Baseline columns: leave blank in the callout (they were already rendered above)
+            BASELINE_MODES.forEach(() => {
               const td = document.createElement('td');
               const w = document.createElement('div');
               w.className = 'cell empty';
               td.appendChild(w);
               calloutTr.appendChild(td);
             });
-            // Loud columns: render the same error state under each loud style
-            LOUD_MODES.forEach((mode) => calloutTr.appendChild(buildCell('error', mode)));
+            // Loud columns: render the same error state under each loud overlay
+            LOUD_ERRORS.forEach((col) => calloutTr.appendChild(buildCell('error', col)));
             tbody.appendChild(calloutTr);
           }
         });

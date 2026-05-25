@@ -10,7 +10,7 @@ import { LoadingOverlay, resolveLoadingContainer as resolveLoadingHost } from '.
 import { Minimap } from './minimap.js';
 import ZoomManager from './zoomManager.js';
 import { NodeStatus, VALIDATION_STATES } from './nodeBase.js';
-import { VALIDATION_MODES } from './validationIndicators.js';
+import { VALIDATION_BASELINE_STYLES, VALIDATION_LOUD_STYLES } from './validationIndicators.js';
 import { computeFingerprint, validatePrerenderFreshness } from './prerenderValidator.js';
 
 export class Dashboard {
@@ -2506,28 +2506,22 @@ export class Dashboard {
   }
 
   /**
-   * Switch the validation-indicator visual mode live across every node.
-   * Allowed modes: 'minimal-bar', 'minimal-circle', 'minimal-corner' (the
-   * three lightweight modes that render the full state vocabulary);
-   * 'pulse-halo', 'rotating-siren', 'industrial-tape', 'police-line' (the
-   * four loud styles, which only render on state === 'error'); 'none'.
+   * Switch the baseline validation indicator live across every node. The
+   * baseline renders for every state ≠ 'na' (loud overlay aside).
+   * Allowed values: 'bar', 'circle', 'corner', 'none'.
    *
    * @param {string} mode
    */
-  setValidationIndicatorMode(mode) {
+  setValidationMode(mode) {
     if (!this.main?.root) return;
-    if (typeof mode !== 'string' || !VALIDATION_MODES.includes(mode)) {
+    if (typeof mode !== 'string' || !VALIDATION_BASELINE_STYLES.includes(mode)) {
       console.warn(
-        `setValidationIndicatorMode: unknown mode "${mode}". Allowed: ${VALIDATION_MODES.join(', ')}`,
+        `setValidationMode: invalid value "${mode}". Allowed: ${VALIDATION_BASELINE_STYLES.join(', ')}`,
       );
       return;
     }
     const settings = this.main.root.settings;
-    settings.validationIndicatorMode = mode;
-    // Keep the legacy slot in sync so callers reading `settings.validationIndicator.style`
-    // see the same value.
-    if (!settings.validationIndicator) settings.validationIndicator = {};
-    settings.validationIndicator.style = mode;
+    settings.validationMode = mode;
     const nodes = this.main.root.getAllNodes();
     nodes.forEach((node) => {
       if (typeof node._renderValidationIndicators === 'function') {
@@ -2537,13 +2531,28 @@ export class Dashboard {
   }
 
   /**
-   * Back-compat thin wrapper over `setValidationIndicatorMode`. The four loud
-   * styles continue to be referred to as "styles" in the existing demo's UI;
-   * new code should call `setValidationIndicatorMode` instead.
-   * @param {string} style
+   * Switch the loud error-overlay live across every node. The overlay
+   * replaces the baseline on whichever side is in state === 'error'.
+   * Allowed values: 'pulse', 'siren', 'tape', 'police', 'none'.
+   *
+   * @param {string} value
    */
-  setValidationIndicatorStyle(style) {
-    return this.setValidationIndicatorMode(style);
+  setValidationLoudError(value) {
+    if (!this.main?.root) return;
+    if (typeof value !== 'string' || !VALIDATION_LOUD_STYLES.includes(value)) {
+      console.warn(
+        `setValidationLoudError: invalid value "${value}". Allowed: ${VALIDATION_LOUD_STYLES.join(', ')}`,
+      );
+      return;
+    }
+    const settings = this.main.root.settings;
+    settings.validationLoudError = value;
+    const nodes = this.main.root.getAllNodes();
+    nodes.forEach((node) => {
+      if (typeof node._renderValidationIndicators === 'function') {
+        node._renderValidationIndicators();
+      }
+    });
   }
 
   /**

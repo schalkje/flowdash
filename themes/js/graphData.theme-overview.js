@@ -300,8 +300,9 @@ export const demoData = {
     // Validation indicator default for this page — the rect Ready node carries
     // both pre and post errors so the indicator can be sanity-checked under
     // every theme. See /dashboard/documentation/validation-indicators.md.
+    validationMode: 'circle',
+    validationLoudError: 'pulse',
     validationIndicator: {
-      style: 'pulse-halo',
       glyph: '!',
       animate: true,
     },

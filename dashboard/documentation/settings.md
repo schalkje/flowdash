@@ -299,40 +299,38 @@ The Dashboard uses a comprehensive settings system managed by `ConfigManager`. S
     // /dashboard/documentation/validation-indicators.md.
 
     // Type: string (enum)
-    // Values: 'minimal-bar' | 'minimal-circle' | 'minimal-corner' |
-    //         'pulse-halo' | 'rotating-siren' | 'industrial-tape' |
-    //         'police-line' | 'none'
-    // Default: 'minimal-bar'
+    // Values: 'bar' | 'circle' | 'corner' | 'none'
+    // Default: 'bar'
     // UI: Select / Dropdown
-    // Description: Canonical dashboard-wide indicator mode. The 3 minimal
-    //              modes render the full 8-state validation vocabulary at
-    //              low visual cost; the 4 loud styles (a.k.a. "red nose"
-    //              styles: pulse-halo, rotating-siren, industrial-tape,
-    //              police-line) render only when state is 'error'.
-    //              Per-node overrides are set via
-    //              `node.validationIndicatorMode` on the node data.
-    validationIndicatorMode: 'minimal-bar',
+    // Description: Always-on baseline indicator. Renders for every state ≠ 'na'
+    //              (with `var(--fd-validation-state-<state>)` color). Per-node
+    //              override: `node.validationMode` on the node data.
+    validationMode: 'bar',
+
+    // Type: string (enum)
+    // Values: 'pulse' | 'siren' | 'tape' | 'police' | 'none'
+    // Default: 'none'
+    // UI: Select / Dropdown
+    // Description: Error-only loud overlay (a.k.a. "red nose"). When a side's
+    //              state is exactly 'error' AND this is not 'none', the loud
+    //              overlay replaces the baseline on that side. Strictly tied
+    //              to state === 'error' — 'warning' and other states render
+    //              via the baseline. Per-node override:
+    //              `node.validationLoudError` on the node data.
+    validationLoudError: 'none',
 
     validationIndicator: {
       // Type: string (enum)
-      // Default: 'minimal-bar'
-      // Description: Legacy alias for `validationIndicatorMode` (above).
-      //              Reads/writes the same slot. Preserved so existing demos
-      //              calling `setValidationIndicatorStyle` keep working.
-      style: 'minimal-bar',
-
-      // Type: string (enum)
       // Values: 'normal' (1×) | 'large' (1.5×) | 'big' (2×) | 'huge' (4×) | 'gigantic' (8×)
       // Default: 'normal'
-      // Description: Size scale for the four loud styles. Minimal modes
-      //              are fixed pixel size by design and ignore this.
+      // Description: Size scale for the four loud overlay styles. Baseline
+      //              modes are fixed pixel size by design and ignore this.
       size: 'normal',
 
       // Type: string (single character)
       // Default: '!'
-      // Description: Glyph drawn in the centre disc of the pulse-halo and
-      //              rotating-siren loud styles. Minimal modes do not
-      //              render a glyph.
+      // Description: Glyph drawn in the centre disc of the pulse and siren
+      //              loud overlay styles. Baseline modes do not render a glyph.
       glyph: '!',
 
       // Type: boolean
@@ -472,21 +470,30 @@ zoom: {
 
 Per-node validation state is **orthogonal to `NodeStatus`**. A node can be `Ready` while its post-validation indicator shows `'busy'` or `'error'`. See [Validation Indicators Documentation](validation-indicators.md) for the full spec.
 
-**`validationIndicatorMode`** - Canonical dashboard-wide indicator mode. One of:
+**`validationMode`** - Always-on baseline validation indicator. Renders for every state ≠ `'na'`. One of:
 
-- Minimal (render the full 8-state vocabulary at low visual cost): `'minimal-bar'`, `'minimal-circle'`, `'minimal-corner'`
-- Loud — a.k.a. **red nose** styles, the dramatic edge-anchored treatments that only render when state is `'error'`: `'pulse-halo'`, `'rotating-siren'`, `'industrial-tape'`, `'police-line'`
-- Off: `'none'`
+- `'bar'` — 3 px-wide vertical bar, 60% of edge height
+- `'circle'` — 4 px-radius filled circle on the connection point
+- `'corner'` — 6×6 px right-triangle chevron on the top corner
+- `'none'` — disables the baseline
 
-Default: `'minimal-bar'`. Per-node overrides via `node.validationIndicatorMode` on the node data.
+Default: `'bar'`. Per-node override: `node.validationMode` on the node data (wins over the dashboard default; resolved independently from `validationLoudError`).
 
-> "Loud" and "red nose" refer to the same four modes; the docs and source use both terms interchangeably. The name comes from the original red disc that anchored every loud treatment in the first implementation.
+**`validationLoudError`** - Error-only loud overlay, a.k.a. **red nose**. Replaces the baseline on a side whose state is exactly `'error'` (strictly error-only — does NOT fire on `'warning'` or other states). One of:
 
-**`validationIndicator.style`** - Legacy alias for `validationIndicatorMode`; reads/writes the same slot. Preserved so existing demos calling `setValidationIndicatorStyle(...)` continue to work.
+- `'pulse'` — red disc + expanding radial halo
+- `'siren'` — red disc + two rotating beam cones
+- `'tape'` — yellow-on-black diagonal-striped band wrapping the failing edge
+- `'police'` — horizontal half-node yellow strap with repeating `PRE/POST FAILED`
+- `'none'` — disables the loud overlay; baseline drives error sides too
 
-**`validationIndicator.size`** - Size scale (`'normal'` 1× → `'gigantic'` 8×) for the four loud styles. Minimal modes are fixed pixel size by design and ignore this.
+Default: `'none'`. Per-node override: `node.validationLoudError` on the node data.
 
-**`validationIndicator.glyph`** - Single character drawn in the centre disc of the pulse-halo and rotating-siren loud styles. Default: `'!'`.
+> "Loud" and "red nose" refer to the same four overlay styles; the docs and source use both terms interchangeably. The name comes from the original red disc that anchored every loud treatment in the first implementation.
+
+**`validationIndicator.size`** - Size scale (`'normal'` 1× → `'gigantic'` 8×) for the four loud overlay styles. Baseline modes are fixed pixel size by design and ignore this.
+
+**`validationIndicator.glyph`** - Single character drawn in the centre disc of the pulse and siren loud overlay styles. Default: `'!'`.
 
 **`validationIndicator.animate`** - Master animation toggle. When `false`, all indicator animations freeze (useful for screenshots / prerender). Independently, the renderer always honours `prefers-reduced-motion: reduce` regardless of this flag.
 
@@ -494,25 +501,25 @@ Default: `'minimal-bar'`. Per-node overrides via `node.validationIndicatorMode` 
 
 `preValidationState` and `postValidationState` on each node carry `{ state, message? }` where `state` is one of:
 
-| Value        | Meaning                                                |
-| ------------ | ------------------------------------------------------ |
-| `'unknown'`  | Validator not yet run                                  |
-| `'ready'`    | Configured and waiting                                 |
-| `'busy'`     | Validator currently running (animated indicator)       |
-| `'error'`    | Validator failed (only state where loud styles render) |
-| `'warning'`  | Validator produced a non-blocking warning              |
-| `'disabled'` | Explicitly turned off                                  |
-| `'ok'`       | Clean pass                                             |
-| `'na'`       | No validator on this side — default; emits no DOM      |
+| Value        | Meaning                                                         |
+| ------------ | --------------------------------------------------------------- |
+| `'unknown'`  | Validator not yet run                                           |
+| `'ready'`    | Configured and waiting                                          |
+| `'busy'`     | Validator currently running (animated indicator)                |
+| `'error'`    | Validator failed (only state where `validationLoudError` fires) |
+| `'warning'`  | Validator produced a non-blocking warning                       |
+| `'disabled'` | Explicitly turned off                                           |
+| `'ok'`       | Clean pass                                                      |
+| `'na'`       | No validator on this side — default; emits no DOM               |
 
-Public API: `dashboard.setValidationStateById(id, side, { state, message? })`, `dashboard.clearValidationStateById(id, side?)`, `dashboard.setValidationIndicatorMode(mode)`.
+Public API: `dashboard.setValidationStateById(id, side, { state, message? })`, `dashboard.clearValidationStateById(id, side?)`, `dashboard.setValidationMode(mode)`, `dashboard.setValidationLoudError(value)`.
 
 #### Theming
 
 Each theme under `dashboard/themes/<name>/flowdash.css` declares two related palettes:
 
-- `--fd-validation-state-{error,warning,ok,busy,ready,unknown,disabled}` — used by the minimal modes.
-- `--fd-validation-red`, `--fd-validation-red-bright`, `--fd-validation-red-deep`, `--fd-validation-glow`, `--fd-validation-tape-yellow`, `--fd-validation-tape-dark`, `--fd-validation-text-on-red` — used by the loud styles.
+- `--fd-validation-state-{error,warning,ok,busy,ready,unknown,disabled}` — used by the baseline modes (`bar` / `circle` / `corner`).
+- `--fd-validation-red`, `--fd-validation-red-bright`, `--fd-validation-red-deep`, `--fd-validation-glow`, `--fd-validation-tape-yellow`, `--fd-validation-tape-dark`, `--fd-validation-text-on-red` — used by the loud overlay styles (`pulse` / `siren` / `tape` / `police`).
 
 The renderer reads colors via `var(--fd-validation-state-<state>, <fallback>)`, so theme switching re-tints indicators without re-rendering nodes.
 

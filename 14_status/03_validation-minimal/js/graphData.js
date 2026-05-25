@@ -40,7 +40,7 @@ export const demoData = {
     demoMode: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
-    validationIndicatorMode: 'minimal-bar',
+    validationMode: 'bar',
     validationIndicator: { animate: true },
   },
   nodes: [
@@ -63,7 +63,7 @@ export function buildFixtureForMode(mode) {
       demoMode: true,
       toggleCollapseOnStatusChange: false,
       cascadeOnStatusChange: false,
-      validationIndicatorMode: mode,
+      validationMode: mode,
       validationIndicator: { animate: true },
     },
     nodes: [

@@ -14,9 +14,9 @@ export const demoData = {
     demoMode: true,
     toggleCollapseOnStatusChange: false,
     cascadeOnStatusChange: false,
-    validationIndicatorMode: 'pulse-halo',
+    validationMode: 'circle',
+    validationLoudError: 'pulse',
     validationIndicator: {
-      style: 'pulse-halo',
       glyph: '!',
       animate: true,
     },

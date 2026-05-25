@@ -105,11 +105,22 @@
 
     <div class="controls">
       <div class="group">
-        <strong>Dashboard mode:</strong>
+        <strong>Baseline mode:</strong>
         <div class="mode-picker" id="modePicker">
-          <button data-mode="minimal-bar" aria-pressed="true">minimal-bar</button>
-          <button data-mode="minimal-circle">minimal-circle</button>
-          <button data-mode="minimal-corner">minimal-corner</button>
+          <button data-mode="bar" aria-pressed="true">bar</button>
+          <button data-mode="circle">circle</button>
+          <button data-mode="corner">corner</button>
+          <button data-mode="none">none</button>
+        </div>
+      </div>
+      <div class="group">
+        <strong>Loud error:</strong>
+        <div class="mode-picker" id="loudPicker">
+          <button data-loud="none" aria-pressed="true">none</button>
+          <button data-loud="pulse">pulse</button>
+          <button data-loud="siren">siren</button>
+          <button data-loud="tape">tape</button>
+          <button data-loud="police">police</button>
         </div>
       </div>
       <div class="group">
@@ -130,8 +141,11 @@
     <div class="legend">
       Reference: <code>/dashboard/documentation/validation-indicators.md</code>. API:
       <code>dashboard.setValidationStateById(id, 'pre' | 'post', { state, message? })</code>,
-      <code>dashboard.setValidationIndicatorMode(mode)</code>. Modes: <code>minimal-bar</code> ·
-      <code>minimal-circle</code> · <code>minimal-corner</code>.
+      <code>dashboard.setValidationMode(mode)</code>,
+      <code>dashboard.setValidationLoudError(value)</code>. Baseline modes: <code>bar</code> ·
+      <code>circle</code> · <code>corner</code> · <code>none</code>. Loud error:
+      <code>pulse</code> · <code>siren</code> · <code>tape</code> · <code>police</code> ·
+      <code>none</code>.
     </div>
 
     <h3 class="section-title">Interactive row — mode and state pickers above</h3>
@@ -155,8 +169,19 @@
       modePicker.querySelectorAll('button').forEach((btn) => {
         btn.addEventListener('click', () => {
           const mode = btn.dataset.mode;
-          main.setValidationIndicatorMode(mode);
+          main.setValidationMode(mode);
           modePicker.querySelectorAll('button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b === btn));
+          });
+        });
+      });
+
+      const loudPicker = document.getElementById('loudPicker');
+      loudPicker.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const value = btn.dataset.loud;
+          main.setValidationLoudError(value);
+          loudPicker.querySelectorAll('button').forEach((b) => {
             b.setAttribute('aria-pressed', String(b === btn));
           });
         });
@@ -181,7 +206,7 @@
       });
 
       // --- Matrix dashboards ----------------------------------------------
-      const MODES = ['minimal-bar', 'minimal-circle', 'minimal-corner'];
+      const MODES = ['bar', 'circle', 'corner'];
       const container = document.getElementById('matrixContainer');
       const matrixDashboards = MODES.map((mode) => {
         const row = document.createElement('div');
